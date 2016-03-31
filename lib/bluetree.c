@@ -7,21 +7,24 @@
  * (at your option) any later version.
  */
 
+#include <stdlib.h>
 #include "bluetree.h"
 #include "tree_struct.h"
 
 struct bt_tree_tag {
-	bt_node *root;
+	node *root;
 	unsigned int max_branch_depth;
 	float tree_height;
 };
 
-bt_tree *bt_new_tree()
+bt_tree bt_new_tree()
 {
-	
+	bt_tree tree = (bt_tree)malloc(sizeof(struct bt_tree_tag));
+	return tree;
 }
 
-void bt_delete_tree()
+void bt_delete_tree(bt_tree tree)
 {
-
+	free(tree);
 }
+

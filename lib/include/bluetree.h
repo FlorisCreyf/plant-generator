@@ -7,7 +7,12 @@
  * (at your option) any later version.
  */
 
-typedef struct bt_tree_tag bt_tree;
+#ifndef BLUETREE
+#define BLUETREE
 
-extern bt_tree *bt_new_tree();
-extern void bt_delete_tree();
+typedef struct bt_tree_tag *bt_tree;
+
+bt_tree bt_new_tree();
+void bt_delete_tree(bt_tree tree);
+
+#endif

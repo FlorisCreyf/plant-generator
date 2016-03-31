@@ -7,9 +7,14 @@
  * (at your option) any later version.
  */
 
+extern "C"{
 #include "bluetree.h"
+}
 
 int main(int argc, char *argv[])
 {
+	bt_tree tree = bt_new_tree();
+	bt_delete_tree(tree);
+
 	return 0;
 }

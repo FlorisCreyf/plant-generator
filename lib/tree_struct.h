@@ -12,7 +12,7 @@
 
 #include "vector.h"
 
-typedef struct bt_node_tag {
+typedef struct node_tag {
 	float radius;
 	float tapper;
 	int branch_resolution;
@@ -20,6 +20,6 @@ typedef struct bt_node_tag {
 	int branch_depth;
 	struct node_tag *left;
 	struct node_tag *right;
-} bt_node;
+} node;
 
 #endif

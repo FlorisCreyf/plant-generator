@@ -1,5 +1,5 @@
 exec: library
-	g++ editor/*.cpp -Ilib/include -L -llib/bluetree -o bluetree;
+	g++ -o bluetree editor/main.cpp -I ./lib/include -L ./lib -lbluetree ; \
 	chmod +x bluetree;
 
 library:
@@ -8,9 +8,9 @@ library:
 	mkdir -p build/; \
 	mv *.o build/; \
 	cd build/; \
-	ar rvs bluetree.a *.o; \
+	ar rvs libbluetree.a *.o; \
 	mv *.a ../; \
 	cd ../../; \
 
 clean:
-	rm -rf lib/build lib/bluetree.a bluetree;
+	rm -rf lib/build lib/libbluetree.a bluetree;
