@@ -1,0 +1,10 @@
+CONFIG += release
+SOURCES += editor/main.cpp
+TARGET = bluetree
+QT = core gui widgets opengl
+MOC_DIR = editor/qt
+RCC_DIR = editor/qt
+UI_DIR = editor/qt
+OBJECTS_DIR = build
+LIBS += -L ./lib -lbluetree
+INCLUDEPATH = ./lib/include

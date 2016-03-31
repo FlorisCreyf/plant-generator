@@ -1,6 +1,8 @@
+QMAKE = qmake-qt4
+
 exec: library
-	g++ -o bluetree editor/main.cpp -I ./lib/include -L ./lib -lbluetree ; \
-	chmod +x bluetree;
+	${QMAKE} -o qt.mk bluetree.pro; \
+	make -f qt.mk;
 
 library:
 	cd lib/; \
@@ -10,7 +12,8 @@ library:
 	cd build/; \
 	ar rvs libbluetree.a *.o; \
 	mv *.a ../; \
-	cd ../../; \
+	cd ../../;
 
 clean:
-	rm -rf lib/build lib/libbluetree.a bluetree;
+	make -f qt.mk clean; \
+	rm -rf lib/build lib/libbluetree.a bluetree qt.mk build;
