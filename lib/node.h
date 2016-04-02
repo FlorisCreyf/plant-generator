@@ -7,10 +7,20 @@
  * (at your option) any later version.
  */
 
-#ifndef TREE_STRUCT_H
-#define TREE_STRUCT_H
+#ifndef NODE_H
+#define NODE_H
 
 #include "vector.h"
-#include "node.h"
 
-#endif /* TREE_STRUCT_H */
+typedef struct node_tag {
+	float radius;
+	float tapper;
+	int branch_resolution;
+	bt_vec3 direction;
+	int branch_depth;
+	struct node_tag *left;
+	struct node_tag *right;
+} node;
+
+#endif /* NODE_H */
+

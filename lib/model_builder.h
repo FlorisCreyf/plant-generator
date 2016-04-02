@@ -7,10 +7,10 @@
  * (at your option) any later version.
  */
 
-#ifndef TREE_STRUCT_H
-#define TREE_STRUCT_H
+#ifndef MODEL_BUILDER_H
+#define MODEL_BUILDER_H
 
-#include "vector.h"
-#include "node.h"
+void build_model(float *vertexBuffer, unsigned short elementBuffer);
 
-#endif /* TREE_STRUCT_H */
+#endif /* MODEL_BUILDER_H */
+
