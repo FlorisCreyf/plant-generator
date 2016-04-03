@@ -10,9 +10,13 @@
 #include "tree_struct.h"
 #include <stdlib.h>
 
-int max_branch_depth = 0;
+typedef bt_vec3 vec3;
 
-node *add_node(node *parent)
+static int max_branch_depth;
+static int vertex_count;
+static int index_count;
+
+node *add_node(node *parent, char direction)
 {
 	node *stem = (node *)malloc(sizeof(struct node_tag));
 	stem->branch_depth = parent->branch_depth + 1;
@@ -24,9 +28,13 @@ node *add_node(node *parent)
 		stem->left = NULL;
 		stem->right = NULL;
 	} else {
-		stem->left = add_node(stem);
-		stem->right = add_node(stem);
+		stem->left = add_node(stem, 'l');
+		stem->right = add_node(stem, 'r');
 	}
+
+	vertex_count += stem->branch_resolution;
+
+	return stem;
 }
 
 void remove_node(node *stem)
@@ -38,9 +46,22 @@ void remove_node(node *stem)
 	}
 }
 
-void new_tree_structure()
-{
+node *new_tree_structure(tree_data *td)
+{	
 	node *root = (node *)malloc(sizeof(struct node_tag));
+	root->branch_depth = 1;
+	root->direction = (vec3){0.0f, 1.0f, 0.0f};
+	root->radius = td->trunk_radius;
+	root->branch_resolution = td->resolution;
+
+	vertex_count = root->branch_resolution;
+	index_count = vertex_count * 3;
+	max_branch_depth = td->max_branch_depth;
+
+	root->left = add_node(root, 'l');
+	root->right = add_node(root, 'r');
+
+	return root;
 }
 
 void free_tree_structure(node *root)

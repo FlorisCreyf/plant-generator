@@ -7,15 +7,16 @@
  * (at your option) any later version.
  */
 
-#ifndef BLUETREE_H
-#define BLUETREE_H
+#ifndef TREE_DATA_H
+#define TREE_DATA_H
 
-typedef struct bt_tree_tag bt_tree;
+typedef struct tree_data_tag {
+	int vbo_size;
+	int ebo_size;
+	int resolution;
+	int max_branch_depth;
+	float trunk_radius;
+} tree_data;
 
-bt_tree *bt_new_tree();
-void bt_delete_tree(bt_tree *tree);
-void bt_generate_tree(bt_tree *tree, float *vertex_buffer,
-		unsigned short *element_buffer);
-
-#endif /* BLUETREE_H  */
+#endif /* TREE_DATA_H */
 

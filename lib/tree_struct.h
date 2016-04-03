@@ -10,10 +10,10 @@
 #ifndef TREE_STRUCT_H
 #define TREE_STRUCT_H
 
-#include "vector.h"
 #include "node.h"
+#include "tree_data.h"
 
-void new_tree_structure();
+node *new_tree_structure(tree_data *td);
 void free_tree_structure(node *root);
 
 #endif /* TREE_STRUCT_H */
