@@ -26,6 +26,15 @@ vec3 bt_crossvec3(vec3 *a, vec3 *b)
 	return (vec3){x, y, z};
 }
 
+vec3 bt_add_vec3(vec3 *a, vec3 *b) 
+{
+	float x = a->x + b->x;
+	float y = a->y + b->y;
+	float z = a->z + b->z;
+
+	return (vec3){x, y, z};
+}
+
 mat4 bt_rotate_into_vec(vec3 *normal, vec3 *direction)
 {
 	vec3 v = bt_crossvec3(normal, direction);

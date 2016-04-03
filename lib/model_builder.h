@@ -10,7 +10,10 @@
 #ifndef MODEL_BUILDER_H
 #define MODEL_BUILDER_H
 
-void build_model(float *vertexBuffer, unsigned short elementBuffer);
+#include "node.h"
+
+void build_model(float *vertex_buffer, unsigned short *element_buffer, 
+		node *root);
 
 #endif /* MODEL_BUILDER_H */
 

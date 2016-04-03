@@ -13,4 +13,8 @@
 #include "vector.h"
 #include "node.h"
 
+void new_tree_structure();
+void free_tree_structure(node *root);
+
 #endif /* TREE_STRUCT_H */
+
