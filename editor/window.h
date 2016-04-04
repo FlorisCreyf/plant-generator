@@ -7,16 +7,27 @@
  * (at your option) any later version.
  */
 
-#include "window.h"
-#include <QApplication>
+#ifndef WINDOW_H
+#define WINDOW_H
 
-int main(int argc, char *argv[])
+#include "qt/ui_window.h"
+
+class Window : public QMainWindow
 {
-	QApplication app(argc, argv);
+	Q_OBJECT
 
-	Window window;
-	window.show();
+public:
+	Window();
+	virtual ~Window();
 
-	return app.exec();
-}
+public Q_SLOTS:
+	void openDialogBox();
+	void exportDialogBox();
+	void saveDialogBox();
+
+private:
+	Ui::Window widget;
+};
+
+#endif /* WINDOW_H */
 

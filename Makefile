@@ -1,10 +1,10 @@
 QMAKE = qmake-qt4
 
-exec: library
+all: libbluetree
 	${QMAKE} -o qt.mk bluetree.pro; \
 	make -f qt.mk;
 
-library:
+libbluetree:
 	cd lib/; \
 	gcc -c *.c -Iinclude/ -I../; \
 	mkdir -p build/; \
@@ -17,3 +17,4 @@ library:
 clean:
 	make -f qt.mk clean; \
 	rm -rf lib/build lib/libbluetree.a bluetree qt.mk build;
+
