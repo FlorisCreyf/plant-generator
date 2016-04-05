@@ -37,7 +37,7 @@ bt_vec3 bt_crossvec3(bt_vec3 *a, bt_vec3 *b);
 bt_vec3 bt_add_vec3(bt_vec3 *a, bt_vec3 *b);
 bt_mat4 bt_rotate_into_vec(bt_vec3 *normal, bt_vec3 *direction);
 void bt_add_translation(bt_mat4 *m, bt_vec3 *translation);
-void bt_multiply_transform(bt_vec3 *vec, bt_mat4 *transform);
+void bt_point_transform(bt_vec3 *v, bt_mat4 *t);
 
 #endif /* VECTOR_H */
 

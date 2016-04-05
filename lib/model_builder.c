@@ -39,7 +39,7 @@ void make_cross_section(float *buffer, node *stem, vec3 *position)
 		buffer[i++] = point.y;
 		buffer[i++] = point.z;
 		
-		bt_multiply_transform(&point, &t);
+		bt_point_transform(&point, &t);
 
 		angle += ROTATION;
 	}

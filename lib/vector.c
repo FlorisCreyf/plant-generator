@@ -55,8 +55,14 @@ void bt_add_translation(mat4 *m, vec3 *translation)
 	m->z4 = translation->z;
 }
 
-void bt_multiply_transform(vec3 *vec, mat4 *transform)
+void bt_point_transform(vec3 *v, mat4 *t)
 {
+	float x = v->x*t->x1 + v->y*t->x2 + v->z*t->x3 + t->x4;
+	float y = v->x*t->y1 + v->y*t->y2 + v->z*t->y3 + t->y4;
+	float z = v->x*t->z1 + v->z*t->z2 + v->z*t->z3 + t->z4;
 	
+	v->x = x;
+	v->y = y;
+	v->z = z;
 }
 
