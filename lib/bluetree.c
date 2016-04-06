@@ -30,13 +30,40 @@ void bt_delete_tree(bt_tree *tree)
 	free(tree);
 }
 
-void bt_generate_tree(bt_tree *tree, float *vertex_buffer,
+void bt_set_trunk_radius(bt_tree *tree, float radius)
+{
+	tree->td.trunk_radius;
+}
+
+void bt_set_resolution(bt_tree *tree, int resolution)
+{
+	tree->td.resolution = resolution;
+}
+
+void bt_set_max_branch_depth(bt_tree *tree, int depth)
+{
+	tree->td.max_branch_depth = depth;
+}
+
+void bt_generate_structure(bt_tree *tree)
+{
+	free_tree_structure(tree->root);
+	tree->root = new_tree_structure(&(tree->td));
+}
+
+int bt_get_vbo_size(bt_tree *tree)
+{
+	return tree->td.vbo_size;
+}
+
+int bt_get_ebo_size(bt_tree *tree)
+{
+	return tree->td.ebo_size;
+}
+
+void bt_generate_mesh(bt_tree *tree, float *vertex_buffer,
 		unsigned short *element_buffer)
 {
-	/* If bt_gen_tree() is called multiple times with the same struct: */
-	free_tree_structure(tree->root);
-
-	tree->root = new_tree_structure(&(tree->td));
 	build_model(vertex_buffer, element_buffer, tree->root);
 }
 
