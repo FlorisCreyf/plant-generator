@@ -8,6 +8,8 @@
  */
 
 #include "view_editor.h"
+#include "grid.h"
+#include "bluetree.h"
 #include <QtGui/QKeyEvent>
 #include <QtGui/QMouseEvent>
 #include <QtOpenGL/QGLFormat>
