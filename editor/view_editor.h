@@ -26,17 +26,24 @@ public:
 protected:
 	void initializeGL();
 	void paintGL();
-	void resizeGL(int, int);
+	void resizeGL(int width, int height);
 	void mousePressEvent(QMouseEvent *);
 	void keyPressEvent(QKeyEvent *);
 	void mouseMoveEvent(QMouseEvent *);
 
 private:
+	GLint programs[2];
 	struct ShaderInfo {
 		GLenum type;
 		const char *filename;
 	};
 	
+	GLuint VAOs[2];
+	GLfloat *vbo;
+	GLushort *ebo;
+
+	void initializeGrid();
+	void initializeTree();
 	GLuint loadShaders(ShaderInfo *info, int size);
 };
 

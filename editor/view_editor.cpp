@@ -10,6 +10,7 @@
 #include "view_editor.h"
 #include "grid.h"
 #include "bluetree.h"
+#include <cstdio>
 #include <QtGui/QKeyEvent>
 #include <QtGui/QMouseEvent>
 #include <QtOpenGL/QGLFormat>
@@ -32,9 +33,35 @@ ViewEditor::~ViewEditor()
 void ViewEditor::initializeGL()
 {
 	glClearColor(0.5, 0.5, 0.5, 1.0);
+
+	glGenVertexArrays(2, VAOs);
+	initializeGrid();
+	initializeTree();
+
+	ShaderInfo shaders[] = {
+		{GL_VERTEX_SHADER, "shaders/basic.vert"},
+		{GL_FRAGMENT_SHADER, "shaders/basic.frag"},
+		{GL_VERTEX_SHADER, "shaders/flat.vert"},
+		{GL_FRAGMENT_SHADER, "shaders/flat.vert"}
+	};
+
+	programs[0] = loadShaders(&shaders[0], 2);
+	programs[1] = loadShaders(&shaders[2], 2);
 }
 
-void ViewEditor::resizeGL(int w, int h)
+void ViewEditor::resizeGL(int width, int height)
+{
+	float aspectRatio = (float)width / (float)height;
+	glViewport(0, 0, width, height);
+	glDraw();
+}
+
+void ViewEditor::initializeGrid()
+{
+
+}
+
+void ViewEditor::initializeTree()
 {
 
 }
@@ -61,6 +88,48 @@ void ViewEditor::paintGL()
 
 GLuint ViewEditor::loadShaders(ShaderInfo *info, int size)
 {
+	GLuint program = glCreateProgram();
 
+	for (int i = 0; i < size; i++) {
+		GLuint shader = glCreateShader(info[i].type);
+		FILE *file = fopen(info[i].filename, "r");
+		GLchar *buffer;
+		int size;
+		GLint status;
+
+		if (file == NULL) {
+			fclose(file);
+			fprintf(stderr, "%s not found.\n", info[i].filename);
+			continue;
+		}
+
+		fseek(file, 0, SEEK_END);
+		size = ftell(file);
+		rewind(file);
+		
+		buffer = new GLchar[size];
+		fread(buffer, 1, size, file);
+		fclose(file);
+
+		glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
+		
+		if (status == GL_FALSE) {
+			GLsizei size;
+			GLchar *log;
+			
+			glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &size);
+			log = new GLchar[size + 1];
+			glGetShaderInfoLog(shader, size, &size, log);
+			fprintf(stderr, "Shader error:\n%s\n", log);
+
+			delete[] log;
+		}
+		
+		glAttachShader(program, shader);	
+		delete[] buffer;
+	}
+
+	glLinkProgram(program);
+	return program;
 }
 
