@@ -10,6 +10,7 @@
 #include "view_editor.h"
 #include "grid.h"
 #include "bluetree.h"
+#include "terminal.h"
 #include <cstdio>
 #include <QtGui/QKeyEvent>
 #include <QtGui/QMouseEvent>
@@ -111,16 +112,20 @@ GLuint ViewEditor::loadShaders(ShaderInfo *info, int size)
 		fread(buffer, 1, size, file);
 		fclose(file);
 
+		glShaderSource(shader, 1, &buffer, &size);
+		glCompileShader(shader);
+
 		glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
 		
 		if (status == GL_FALSE) {
-			GLsizei size;
+			GLsizei lsize;
 			GLchar *log;
 			
-			glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &size);
-			log = new GLchar[size + 1];
-			glGetShaderInfoLog(shader, size, &size, log);
-			fprintf(stderr, "Shader error:\n%s\n", log);
+			glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &lsize);
+			log = new GLchar[lsize + 1];
+			glGetShaderInfoLog(shader, lsize, &lsize, log);
+			fprintf(stderr, BOLDWHITE "%s: " BOLDRED "error:" RESET
+					"\n%s", info[i].filename, log);
 
 			delete[] log;
 		}

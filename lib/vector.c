@@ -66,3 +66,10 @@ void bt_point_transform(vec3 *v, mat4 *t)
 	v->z = z;
 }
 
+mat4 bt_mult_mat4(mat4 *a, mat4 *b)
+{
+	bt_mat4 m;
+
+	return m;
+}
+

@@ -10,6 +10,10 @@
 #ifndef VECTOR_H
 #define VECTOR_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct bt_vec3_tag {
 	union {
 		float x;
@@ -38,6 +42,11 @@ bt_vec3 bt_add_vec3(bt_vec3 *a, bt_vec3 *b);
 bt_mat4 bt_rotate_into_vec(bt_vec3 *normal, bt_vec3 *direction);
 void bt_add_translation(bt_mat4 *m, bt_vec3 *translation);
 void bt_point_transform(bt_vec3 *v, bt_mat4 *t);
+void bt_mult_mat4(bt_mat4 *a, bt_mat4 *b);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* VECTOR_H */
 
