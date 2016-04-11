@@ -8,21 +8,24 @@
  */
 
 #include "grid.h"
+#include <iostream>
+using namespace std;
 
 Grid::Grid(int sections)
 {
 	const int VERTEX_COUNT = this->vertexCount = 8 * sections + 4;
 	const int SIZE = VERTEX_COUNT * 3;
-	float *grid = new float[SIZE];
 	const int Y = 0.0f;
 	int i = 0;
 
+	grid = new float[SIZE];
+	
 	grid[i++] = 0; grid[i++] = Y; grid[i++] =  sections;
 	grid[i++] = 0; grid[i++] = Y; grid[i++] = -sections;
 	grid[i++] =  sections; grid[i++] = Y; grid[i++] = 0;
 	grid[i++] = -sections; grid[i++] = Y; grid[i++] = 0;
 
-	for (int j = 0; j <= sections; j++) {
+	for (int j = 1; j <= sections; j++) {
 		grid[i++] =  j; grid[i++] = Y; grid[i++] =  sections;
 		grid[i++] =  j; grid[i++] = Y; grid[i++] = -sections;
 		grid[i++] = -j; grid[i++] = Y; grid[i++] =  sections;

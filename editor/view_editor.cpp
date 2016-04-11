@@ -14,7 +14,7 @@
 #include <QtGui/QMouseEvent>
 #include <QtOpenGL/QGLFormat>
 
-ViewEditor::ViewEditor(QWidget *parent) : QGLWidget(parent), grid(10)
+ViewEditor::ViewEditor(QWidget *parent) : QGLWidget(parent), grid(Grid(10))
 {
 	QGLFormat format;
 	format.setVersion(3, 3);
