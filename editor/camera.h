@@ -23,7 +23,6 @@ public:
 	bt_mat4 getCrystalBallMatrix();
 
 private:
-
 	struct point {
 		float x;
 		float y;

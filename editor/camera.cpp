@@ -9,6 +9,7 @@
 
 #include "camera.h"
 #include <cmath>
+#include <stdio.h>
 
 Camera::Camera()
 {
@@ -61,7 +62,10 @@ bt_mat4 Camera::getCrystalBallMatrix()
 	bt_vec3 target = (bt_vec3){0.0f, 0.0f, 0.0f};
 	bt_vec3 up = (bt_vec3){0.0f, 1.0f, 0.0f};
 
-	bt_mat4 l = getLookAtMatrix(&eye, &target, &up);
+	bt_mat4 l = getLookAtMatrix(&eye, &target, &up);	
+	
+	bt_mat4 t = bt_translate(0.0f, -1.0f, 0.0f);
+	l = bt_mult_mat4(&l, &t);
 
 	return bt_mult_mat4(&perspective, &l);
 }
@@ -69,20 +73,22 @@ bt_mat4 Camera::getCrystalBallMatrix()
 bt_mat4 Camera::getLookAtMatrix(bt_vec3 *eye, bt_vec3 *center, bt_vec3 *up)
 {
 	float x, y, z;
-	bt_vec3 a = bt_sub_vec3(center, eye);
-	bt_vec3 b = bt_cross_vec3(&a, up);
-	bt_vec3 c = bt_cross_vec3(&b, &a);
+	bt_vec3 a, b, c;
+
+	a = bt_sub_vec3(center, eye);
 	bt_normalize_vec3(&a);
+	b = bt_cross_vec3(&a, up);
 	bt_normalize_vec3(&b);
+	c = bt_cross_vec3(&b, &a);
 	
 	x = -bt_dot_vec3(&b, eye);
 	y = -bt_dot_vec3(&c, eye);
 	z = bt_dot_vec3(&a, eye);
 
 	return (bt_mat4){
-		a.x, b.x, -c.x, 0.0f,
-		a.y, b.y, -c.y, 0.0f,
-		a.z, b.z, -c.z, 0.0f,
+		b.x, c.x, -a.x, 0.0f,
+		b.y, c.y, -a.y, 0.0f,
+		b.z, c.z, -a.z, 0.0f,
 		x, y, z, 1.0f
 	};
 }

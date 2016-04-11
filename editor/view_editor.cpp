@@ -8,13 +8,14 @@
  */
 
 #include "view_editor.h"
+#include "grid.h"
+#include "bluetree.h"
 #include "terminal.h"
-#include <cstdio>
 #include <QtGui/QKeyEvent>
 #include <QtGui/QMouseEvent>
 #include <QtOpenGL/QGLFormat>
 
-ViewEditor::ViewEditor(QWidget *parent) : QGLWidget(parent), grid(Grid(10))
+ViewEditor::ViewEditor(QWidget *parent) : QGLWidget(parent), grid(Grid(5))
 {
 	QGLFormat format;
 	format.setVersion(3, 3);
@@ -38,10 +39,10 @@ void ViewEditor::initializeGL()
 	initializeTree();
 
 	ShaderInfo shaders[] = {
-		{GL_VERTEX_SHADER, "shaders/basic.vert"},
-		{GL_FRAGMENT_SHADER, "shaders/basic.frag"},
 		{GL_VERTEX_SHADER, "shaders/flat.vert"},
-		{GL_FRAGMENT_SHADER, "shaders/flat.vert"}
+		{GL_FRAGMENT_SHADER, "shaders/flat.frag"},
+		{GL_VERTEX_SHADER, "shaders/basic.vert"},
+		{GL_FRAGMENT_SHADER, "shaders/basic.frag"}
 	};
 
 	programs[0] = loadShaders(&shaders[0], 2);
@@ -51,13 +52,24 @@ void ViewEditor::initializeGL()
 void ViewEditor::resizeGL(int width, int height)
 {
 	float aspectRatio = (float)width / (float)height;
+	camera.setPerspective(45.0f, 0.0f, 200.0f, aspectRatio);
+
 	glViewport(0, 0, width, height);
 	glDraw();
 }
 
 void ViewEditor::initializeGrid()
 {
+	GLfloat *vertices = grid.getBuffer();
+	int size = grid.getVertexCount() * 3 * sizeof(float);
+	GLuint buffer;
 
+	glBindVertexArray(VAOs[0]);
+	glGenBuffers(1, &buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, buffer);
+	glBufferData(GL_ARRAY_BUFFER, size, vertices, GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void *)0);
+	glEnableVertexAttribArray(0);
 }
 
 void ViewEditor::initializeTree()
@@ -72,17 +84,39 @@ void ViewEditor::keyPressEvent(QKeyEvent *event)
 
 void ViewEditor::mousePressEvent(QMouseEvent *event)
 {
+	QPoint point = event->pos();
+	camera.setStartCoordinates(point.x(), point.y());
 
+	setFocus();
 }
 
 void ViewEditor::mouseMoveEvent(QMouseEvent *event)
 {
-
+	QPoint point = event->pos();
+	camera.setCoordinates(point.x(), point.y());
+	
+	glDraw();
 }
 
 void ViewEditor::paintGL()
 {
+	bt_mat4 m = camera.getCrystalBallMatrix();
+	GLint mLocation;
 
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	glUseProgram(programs[0]);
+
+	mLocation = glGetUniformLocation(programs[0], "matrix");
+	glUniformMatrix4fv(mLocation, 1, GL_FALSE, &(m.m[0][0]));
+
+	glBindVertexArray(VAOs[0]);
+	glLineWidth(2);
+	glDrawArrays(GL_LINES, 0, 4);
+	glLineWidth(0.5);
+	glDrawArrays(GL_LINES, 4, grid.getVertexCount() - 4);
+
+	glFlush();
 }
 
 GLuint ViewEditor::loadShaders(ShaderInfo *info, int size)
@@ -95,7 +129,7 @@ GLuint ViewEditor::loadShaders(ShaderInfo *info, int size)
 		GLchar *buffer;
 		int size;
 		GLint status;
-
+		
 		if (file == NULL) {
 			fclose(file);
 			fprintf(stderr, "%s not found.\n", info[i].filename);
@@ -106,8 +140,12 @@ GLuint ViewEditor::loadShaders(ShaderInfo *info, int size)
 		size = ftell(file);
 		rewind(file);
 		
-		buffer = new GLchar[size];
-		fread(buffer, 1, size, file);
+		buffer = new GLchar[size];	
+		if (!fread(buffer, 1, size, file)) {
+			fprintf(stderr, "Failed to read %s.\n", info[i].filename);
+			continue;
+		}
+
 		fclose(file);
 
 		glShaderSource(shader, 1, &buffer, &size);
@@ -128,7 +166,7 @@ GLuint ViewEditor::loadShaders(ShaderInfo *info, int size)
 			delete[] log;
 		}
 		
-		glAttachShader(program, shader);
+		glAttachShader(program, shader);	
 		delete[] buffer;
 	}
 

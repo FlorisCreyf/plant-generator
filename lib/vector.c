@@ -13,7 +13,7 @@
 typedef bt_vec3 vec3;
 typedef bt_mat4 mat4;
 
-int bt_dot_vec3(vec3 *a, vec3 *b)
+float bt_dot_vec3(vec3 *a, vec3 *b)
 {
 	return a->x*b->x + a->y*b->y + a->z*b->z;
 }
@@ -51,14 +51,14 @@ mat4 bt_mult_mat4(mat4 *a, mat4 *b)
 	int col = 0;
 	mat4 m;
 
-	for (col = 0; col < 4; col++)
-		for (row = 0; row < 4; row++)	
+	for (row = 0; row < 4; row++)
+		for (col = 0; col < 4; col++)	
 			m.m[row][col] =
-				a->m[col][row]*b->m[row][col] +
-				a->m[col][row]*b->m[row][col] +
-				a->m[col][row]*b->m[row][col] +
-				a->m[col][row]*a->m[row][col];
-
+				a->m[0][col]*b->m[row][0] +
+				a->m[1][col]*b->m[row][1] +
+				a->m[2][col]*b->m[row][2] +
+				a->m[3][col]*b->m[row][3];
+	
 	return m;
 }
 
@@ -84,11 +84,14 @@ mat4 bt_rotate_into_vec(vec3 *normal, vec3 *direction)
 	};
 }
 
-void bt_add_translation(mat4 *m, vec3 *translation)
+mat4 bt_translate(float x, float y, float z)
 {
-	m->m[3][0] = translation->x;
-	m->m[3][1] = translation->y;
-	m->m[3][2] = translation->z;
+	return (mat4){
+		1.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 1.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 1.0f, 0.0f,
+		x, y, z, 1.0f
+	};
 }
 
 void bt_point_transform(vec3 *v, mat4 *t)
