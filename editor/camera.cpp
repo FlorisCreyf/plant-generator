@@ -38,10 +38,10 @@ void Camera::setPerspective(float fovy, float near, float far, float aspect)
 	float e = -(2.0f * far * near) / (far - near);
 
 	perspective = (bt_mat4){
-		a,    0.0f, 0.0f, 0.0f,
-		0.0f, b,    0.0f, 0.0f,
-		0.0f, 0.0f, c,    d,
-		0.0f, 0.0f, e,    0.0f
+		a, 0.0f, 0.0f, 0.0f,
+		0.0f, b, 0.0f, 0.0f,
+		0.0f, 0.0f, c, d,
+		0.0f, 0.0f, e, 0.0f
 	};
 }
 
@@ -61,15 +61,29 @@ bt_mat4 Camera::getCrystalBallMatrix()
 	bt_vec3 target = (bt_vec3){0.0f, 0.0f, 0.0f};
 	bt_vec3 up = (bt_vec3){0.0f, 1.0f, 0.0f};
 
-	bt_mat4 l = getLookAtMatrix(eye, target, up);
+	bt_mat4 l = getLookAtMatrix(&eye, &target, &up);
 
 	return bt_mult_mat4(&perspective, &l);
 }
 
-bt_mat4 Camera::getLookAtMatrix(bt_vec3 eye, bt_vec3 center, bt_vec3 up)
+bt_mat4 Camera::getLookAtMatrix(bt_vec3 *eye, bt_vec3 *center, bt_vec3 *up)
 {
-	bt_mat4 l;
+	float x, y, z;
+	bt_vec3 a = bt_sub_vec3(center, eye);
+	bt_vec3 b = bt_cross_vec3(&a, up);
+	bt_vec3 c = bt_cross_vec3(&b, &a);
+	bt_normalize_vec3(&a);
+	bt_normalize_vec3(&b);
+	
+	x = -bt_dot_vec3(&b, eye);
+	y = -bt_dot_vec3(&c, eye);
+	z = bt_dot_vec3(&a, eye);
 
-	return l;
+	return (bt_mat4){
+		a.x, b.x, -c.x, 0.0f,
+		a.y, b.y, -c.y, 0.0f,
+		a.z, b.z, -c.z, 0.0f,
+		x, y, z, 1.0f
+	};
 }
 

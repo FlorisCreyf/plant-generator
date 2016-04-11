@@ -8,15 +8,13 @@
  */
 
 #include "view_editor.h"
-#include "grid.h"
-#include "bluetree.h"
 #include "terminal.h"
 #include <cstdio>
 #include <QtGui/QKeyEvent>
 #include <QtGui/QMouseEvent>
 #include <QtOpenGL/QGLFormat>
 
-ViewEditor::ViewEditor(QWidget *parent) : QGLWidget(parent)
+ViewEditor::ViewEditor(QWidget *parent) : QGLWidget(parent), grid(10)
 {
 	QGLFormat format;
 	format.setVersion(3, 3);
@@ -130,7 +128,7 @@ GLuint ViewEditor::loadShaders(ShaderInfo *info, int size)
 			delete[] log;
 		}
 		
-		glAttachShader(program, shader);	
+		glAttachShader(program, shader);
 		delete[] buffer;
 	}
 

@@ -12,6 +12,9 @@
 
 #define GL_GLEXT_PROTOTYPES
 
+#include "bluetree.h"
+#include "grid.h"
+#include "camera.h"
 #include <GL/gl.h>
 #include <QtOpenGL/QGLWidget>
 
@@ -32,6 +35,10 @@ protected:
 	void mouseMoveEvent(QMouseEvent *);
 
 private:
+	bt_tree tree;
+	Camera camera;
+	Grid grid;
+
 	GLint programs[2];
 	struct ShaderInfo {
 		GLenum type;

@@ -29,20 +29,19 @@ typedef struct bt_vec3_tag {
 	};
 } bt_vec3;
 
-typedef struct bt_mat4_tag {
-	float x1, x2, x3, x4;
-	float y1, y2, y3, y4;
-	float z1, z2, z3, z4;
-	float w1, w2, w3, w4;
+typedef struct mat4_tag {
+	float m[4][4];
 } bt_mat4;
 
-int bt_dotvec3(bt_vec3 *a, bt_vec3 *b);
-bt_vec3 bt_crossvec3(bt_vec3 *a, bt_vec3 *b);
+int bt_dot_vec3(bt_vec3 *a, bt_vec3 *b);
+bt_vec3 bt_cross_vec3(bt_vec3 *a, bt_vec3 *b);
 bt_vec3 bt_add_vec3(bt_vec3 *a, bt_vec3 *b);
+bt_vec3 bt_sub_vec3(bt_vec3 *a, bt_vec3 *b);
+void bt_normalize_vec3(bt_vec3 *a);
+bt_mat4 bt_mult_mat4(bt_mat4 *a, bt_mat4 *b);
 bt_mat4 bt_rotate_into_vec(bt_vec3 *normal, bt_vec3 *direction);
 void bt_add_translation(bt_mat4 *m, bt_vec3 *translation);
 void bt_point_transform(bt_vec3 *v, bt_mat4 *t);
-void bt_mult_mat4(bt_mat4 *a, bt_mat4 *b);
 
 #ifdef __cplusplus
 }

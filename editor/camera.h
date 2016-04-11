@@ -30,7 +30,7 @@ private:
 	} startPosition, position;
 	bt_mat4 perspective;
 
-	bt_mat4 getLookAtMatrix(bt_vec3 eye, bt_vec3 target, bt_vec3 up);
+	bt_mat4 getLookAtMatrix(bt_vec3 *eye, bt_vec3 *target, bt_vec3 *up);
 };
 
 #endif /* CAMERA_H */
