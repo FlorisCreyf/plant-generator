@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Window</class>
+ <widget class="QMainWindow" name="Window">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1200</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>BlueTree</string>
+  </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>../logo.png</normaloff>../logo.png</iconset>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QMenu {
+	background-color:#666;
+	border:1px solid #777;	
+	font-family:&quot;arial&quot; ;
+	font-size:9pt;
+	color:#fff;
+} QMenu::item {
+	margin:0;
+	color:#eee;
+	padding:5px 20px 5px 30px;
+	background-color:transparent;
+} QMenu::item:selected {
+	background:#5a5a5a;
+} QMenu::shortcut {
+	color:#eee;
+	padding-left:10px;
+} QMenu::separator {
+	background-color:#777;
+	height:1px;
+} QMenuBar {
+	font-family:&quot;arial&quot; ;
+	font-size:9pt;
+	margin:0;
+	spacing:0;
+	background-color:#666;
+} QMenuBar::item {
+	color:#ddd;
+	margin:3px;
+	spacing:0;
+	border-radius:2px;
+	background-color:transparent;
+	padding:2px 10px 2px 10px;
+} QMenuBar::item:pressed {
+	background-color:#777;
+	background-color:#5391c6;
+} QWidget {
+	color:#fff;
+}</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <property name="styleSheet">
+    <string notr="true">background-color:#333;</string>
+   </property>
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <property name="spacing">
+     <number>0</number>
+    </property>
+    <property name="margin">
+     <number>0</number>
+    </property>
+    <item>
+     <widget class="ViewEditor" name="widget" native="true"/>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1200</width>
+     <height>24</height>
+    </rect>
+   </property>
+  </widget>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ViewEditor</class>
+   <extends>QWidget</extends>
+   <header>../view_editor.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>
