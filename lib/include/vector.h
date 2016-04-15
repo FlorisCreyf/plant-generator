@@ -29,26 +29,17 @@ typedef struct bt_vec3_tag {
 	};
 } bt_vec3;
 
-typedef struct bt_vec4_tag {
+typedef struct bt_quat_tag {
 	union {
-		float x;
-		float r;
+		struct {
+			float x;
+			float y;
+			float z;
+		};
+		bt_vec3 v;
 	};
-	union {
-		float y;
-		float g;
-	};
-	union {
-		float z;
-		float b;
-	};
-	union {
-		float w;
-		float a;
-	};
-} bt_vec4;
-
-typedef bt_vec4 bt_quat;
+	float w;
+} bt_quat;
 
 typedef struct bt_mat4_tag {
 	float m[4][4];
@@ -58,14 +49,16 @@ float bt_dot_vec3(bt_vec3 *a, bt_vec3 *b);
 bt_vec3 bt_cross_vec3(bt_vec3 *a, bt_vec3 *b);
 bt_vec3 bt_add_vec3(bt_vec3 *a, bt_vec3 *b);
 bt_vec3 bt_sub_vec3(bt_vec3 *a, bt_vec3 *b);
+bt_vec3 bt_mult_vec3(float a, bt_vec3 *b);
 void bt_normalize_vec3(bt_vec3 *a);
-void bt_normalize_vec4(bt_vec4 *a);
 bt_mat4 bt_mult_mat4(bt_mat4 *a, bt_mat4 *b);
 bt_mat4 bt_rotate_into_vec(bt_vec3 *normal, bt_vec3 *direction);
 bt_mat4 bt_translate(float x, float y, float z);
 void bt_point_transform(bt_vec3 *v, bt_mat4 *t);
 bt_quat bt_from_axis_angle(float x, float y, float z, float theta);
-bt_mat4 bt_quat_to_mat4(bt_quat q);
+bt_mat4 bt_quat_to_mat4(bt_quat *q);
+void bt_normalize_vec4(bt_quat *a);
+bt_quat bt_mult_quat(bt_quat *a, bt_quat *b);
 
 #ifdef __cplusplus
 }
