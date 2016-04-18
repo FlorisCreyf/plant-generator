@@ -27,7 +27,7 @@ ViewEditor::ViewEditor(QWidget *parent) : QGLWidget(parent), grid(Grid(5))
 
 ViewEditor::~ViewEditor()
 {
-
+	bt_delete_tree(tree);
 }
 
 void ViewEditor::initializeGL()
@@ -74,7 +74,9 @@ void ViewEditor::initializeGrid()
 
 void ViewEditor::initializeTree()
 {
-
+	tree = bt_new_tree();
+	bt_set_trunk_radius(tree, 1.0f);
+	bt_set_resolution(tree, 10);
 }
 
 void ViewEditor::keyPressEvent(QKeyEvent *event)
@@ -142,7 +144,8 @@ GLuint ViewEditor::loadShaders(ShaderInfo *info, int size)
 		
 		buffer = new GLchar[size];	
 		if (!fread(buffer, 1, size, file)) {
-			fprintf(stderr, "Failed to read %s.\n", info[i].filename);
+			fprintf(stderr, "Failed to read %s.\n",
+					info[i].filename);
 			continue;
 		}
 
