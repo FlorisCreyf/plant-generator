@@ -28,6 +28,8 @@ ViewEditor::ViewEditor(QWidget *parent) : QGLWidget(parent), grid(Grid(5))
 ViewEditor::~ViewEditor()
 {
 	bt_delete_tree(tree);
+	delete[] vbo;
+	delete[] ebo;
 }
 
 void ViewEditor::initializeGL()
@@ -74,9 +76,24 @@ void ViewEditor::initializeGrid()
 
 void ViewEditor::initializeTree()
 {
+	int size = 600;	
+	GLuint buffer;
+	
+	GLfloat *vbo = new GLfloat[size];
+	GLushort *ebo = new GLushort[size];	
+
 	tree = bt_new_tree();
 	bt_set_trunk_radius(tree, 1.0f);
 	bt_set_resolution(tree, 10);
+	bt_set_max_branch_depth(tree, 1);
+	//bt_generate_structure(tree);
+
+	glBindVertexArray(VAOs[1]);
+	glGenBuffers(1, &buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, buffer);
+	glBufferData(GL_ARRAY_BUFFER, size, vbo, GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void *)0);
+	glEnableVertexAttribArray(0);
 }
 
 void ViewEditor::keyPressEvent(QKeyEvent *event)
@@ -117,6 +134,14 @@ void ViewEditor::paintGL()
 	glDrawArrays(GL_LINES, 0, 4);
 	glLineWidth(0.5);
 	glDrawArrays(GL_LINES, 4, grid.getVertexCount() - 4);
+	
+	glUseProgram(programs[1]);
+
+	mLocation = glGetUniformLocation(programs[1], "matrix");
+	glUniformMatrix4fv(mLocation, 1, GL_FALSE, &(m.m[0][0]));		
+
+	glBindVertexArray(VAOs[1]);
+	glDrawArrays(GL_POINTS, 0, bt_get_vbo_size(tree));
 
 	glFlush();
 }

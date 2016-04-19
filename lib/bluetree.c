@@ -16,11 +16,16 @@
 struct bt_tree_tag {
 	node *root;
 	tree_data td;
+	float *vertex_buffer;
+	unsigned short *element_buffer;
 };
 
 bt_tree bt_new_tree()
 {
 	bt_tree tree = (bt_tree)malloc(sizeof(struct bt_tree_tag));
+	tree->root = NULL;
+	tree->td.vbo_size = 0;
+	tree->td.ebo_size = 0;
 	return tree;
 }
 
@@ -61,9 +66,9 @@ int bt_get_ebo_size(bt_tree tree)
 	return tree->td.ebo_size;
 }
 
-void bt_generate_mesh(bt_tree tree, float *vertex_buffer,
-		unsigned short *element_buffer)
+void bt_generate_mesh(bt_tree tree, float *vb, int vb_size,
+		unsigned short *eb, int eb_size)
 {
-	build_model(vertex_buffer, element_buffer, tree->root);
+	build_model(vb, vb_size, eb, eb_size, tree->root);
 }
 
