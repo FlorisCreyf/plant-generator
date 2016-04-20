@@ -37,7 +37,7 @@ void bt_delete_tree(bt_tree tree)
 
 void bt_set_trunk_radius(bt_tree tree, float radius)
 {
-	tree->td.trunk_radius;
+	tree->td.trunk_radius = radius;
 }
 
 void bt_set_resolution(bt_tree tree, int resolution)
@@ -58,7 +58,7 @@ void bt_generate_structure(bt_tree tree)
 
 int bt_get_vbo_size(bt_tree tree)
 {
-	return tree->td.vbo_size;
+	return get_vbo_size();
 }
 
 int bt_get_ebo_size(bt_tree tree)

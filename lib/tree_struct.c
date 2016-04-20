@@ -41,11 +41,12 @@ node *add_node(node *parent, char direction)
 	node *stem = (node *)malloc(sizeof(struct node_tag));
 	stem->branch_depth = parent->branch_depth + 1;
 	stem->radius = parent->radius * 0.8;
+	
 	stem->branch_resolution = parent->branch_resolution;
 	stem->direction = get_branch_direction();
 	stem->position = get_position(stem, parent);
 
-	if (max_branch_depth >= stem->branch_depth) {
+	if (max_branch_depth <= stem->branch_depth) {
 		stem->left = NULL;
 		stem->right = NULL;
 	} else {
@@ -61,8 +62,8 @@ node *add_node(node *parent, char direction)
 void remove_nodes(node *stem)
 {
 	if (stem != NULL) {
-		remove_node(stem->left);
-		remove_node(stem->right);
+		remove_nodes(stem->left);
+		remove_nodes(stem->right);
 		free(stem);
 	}
 }
@@ -75,6 +76,7 @@ node *new_tree_structure(tree_data *td)
 	root->position = (bt_vec3){0.0f, 0.0f, 0.0f};
 	root->radius = td->trunk_radius;
 	root->branch_resolution = td->resolution;
+	root->cross_sections = 1;
 
 	vertex_count = root->branch_resolution;
 	index_count = vertex_count * 3;

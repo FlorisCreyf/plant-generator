@@ -7,14 +7,15 @@
  * (at your option) any later version.
  */
 
-#ifndef MODEL_BUILDER_H
-#define MODEL_BUILDER_H
+#include "mesh_size.h"
 
-#include "node.h"
+int get_branch_vcount(node *stem)
+{
+	return stem->cross_sections * stem->branch_resolution * 3;
+}
 
-int get_vbo_size();
-void build_model(float *vb, int vb_size, unsigned short *eb, int eb_size, 
-		node *root);
-
-#endif /* MODEL_BUILDER_H */
+int get_dichotomous_seam_size()
+{
+	return 0;
+}
 

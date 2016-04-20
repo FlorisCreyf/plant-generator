@@ -7,14 +7,13 @@
  * (at your option) any later version.
  */
 
-#ifndef MODEL_BUILDER_H
-#define MODEL_BUILDER_H
+#ifndef MESH_SIZE_H
+#define MESH_SIZE_H
 
 #include "node.h"
 
-int get_vbo_size();
-void build_model(float *vb, int vb_size, unsigned short *eb, int eb_size, 
-		node *root);
+int get_branch_vcount(node *stem);
+int get_seam_size();
 
-#endif /* MODEL_BUILDER_H */
+#endif /* MESH_SIZE_H */
 

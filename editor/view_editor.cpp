@@ -86,7 +86,8 @@ void ViewEditor::initializeTree()
 	bt_set_trunk_radius(tree, 1.0f);
 	bt_set_resolution(tree, 10);
 	bt_set_max_branch_depth(tree, 1);
-	//bt_generate_structure(tree);
+	bt_generate_structure(tree);
+	bt_generate_mesh(tree, vbo, size, ebo, size);
 
 	glBindVertexArray(VAOs[1]);
 	glGenBuffers(1, &buffer);
@@ -139,8 +140,9 @@ void ViewEditor::paintGL()
 
 	mLocation = glGetUniformLocation(programs[1], "matrix");
 	glUniformMatrix4fv(mLocation, 1, GL_FALSE, &(m.m[0][0]));		
-
+	
 	glBindVertexArray(VAOs[1]);
+	glPointSize(7);
 	glDrawArrays(GL_POINTS, 0, bt_get_vbo_size(tree));
 
 	glFlush();
