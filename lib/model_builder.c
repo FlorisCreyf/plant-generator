@@ -88,6 +88,6 @@ void build_model(float *vb, int vb_size, unsigned short *eb, int eb_size,
 
 int get_vbo_size()
 {
-	return vbo_index;
+	return vbo_index / 3;
 }
 

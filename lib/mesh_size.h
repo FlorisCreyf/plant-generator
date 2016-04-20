@@ -12,8 +12,15 @@
 
 #include "node.h"
 
-int get_branch_vcount(node *stem);
-int get_seam_size();
+static inline int get_branch_vcount(node *stem)
+{
+	return stem->cross_sections * stem->branch_resolution * 3;
+}
+
+static inline int get_branch_ecount(node *stem)
+{
+	return stem->cross_sections * stem->branch_resolution * 6;
+}
 
 #endif /* MESH_SIZE_H */
 
