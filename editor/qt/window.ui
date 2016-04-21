@@ -43,6 +43,7 @@
 	margin:0;
 	spacing:0;
 	background-color:#666;
+	border-bottom:1px solid #444;
 } QMenuBar::item {
 	color:#ddd;
 	margin:3px;
@@ -95,6 +96,7 @@
     <property name="title">
      <string>File</string>
     </property>
+    <addaction name="actionNew"/>
     <addaction name="actionOpen"/>
     <addaction name="separator"/>
     <addaction name="actionSave"/>
@@ -201,6 +203,14 @@
     <string>&amp;Report Issue...</string>
    </property>
   </action>
+  <action name="actionNew">
+   <property name="text">
+    <string>&amp;New</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+N</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>
@@ -217,24 +227,64 @@
    <signal>triggered()</signal>
    <receiver>Window</receiver>
    <slot>close()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
   </connection>
   <connection>
    <sender>actionOpen</sender>
    <signal>triggered()</signal>
    <receiver>Window</receiver>
    <slot>openDialogBox()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
   </connection>
   <connection>
    <sender>actionSaveAs</sender>
    <signal>triggered()</signal>
    <receiver>Window</receiver>
    <slot>saveDialogBox()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
   </connection>
   <connection>
    <sender>actionExportMesh</sender>
    <signal>triggered()</signal>
    <receiver>Window</receiver>
    <slot>exportDialogBox()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
   </connection>
  </connections>
 </ui>
