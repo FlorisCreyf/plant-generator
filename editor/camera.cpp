@@ -21,7 +21,7 @@ void Camera::setStartCoordinates(float x, float y)
 {
 	startPosition.x = x - (position.x - startPosition.x);
 	startPosition.y = y - (position.y - startPosition.y);
-	position = startPosition;
+	position = (point){x, y};
 }
 
 void Camera::setCoordinates(float x, float y)
