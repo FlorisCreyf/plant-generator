@@ -23,27 +23,24 @@ static int ebo_size;
 static unsigned short vbo_index;
 static unsigned short ebo_index;
 
-void make_cross_section(float *buffer, node *stem)
+void make_cross_section(float *buffer, bt_mat4 *t, float radius, float res)
 {
 	vec3 point;
-	vec3 normal = (vec3){0.0f, 1.0f, 0.0f};
-	mat4 t = bt_quat_to_mat4(&(stem->direction));
-	int i = 0;
-	const int SIZE = stem->branch_resolution * 3;
-	const float TO_RAD = M_PI / 180.0f;
-	const float ROTATION = 360.0f / stem->branch_resolution * TO_RAD;
+	const int SIZE = res * 3;
+	const float ROTATION = 360.0f / res * M_PI / 180.0f;
 	float angle = 0.0f;
+	int i = 0;
 
 	while (i < SIZE) {
-		point.x = cosf(angle) * stem->radius;
-		point.z = sinf(angle) * stem->radius;
+		point.x = cosf(angle) * radius;
+		point.z = sinf(angle) * radius;
 		point.y = 0.0f;
 		
+		bt_point_transform(&point, t);
+
 		buffer[i++] = point.x;
 		buffer[i++] = point.y;
 		buffer[i++] = point.z;
-		
-		bt_point_transform(&point, &t);
 
 		angle += ROTATION;
 	}
@@ -54,28 +51,55 @@ void add_element_indices()
 
 }
 
-unsigned short add_segment(node *stem, vec3 position, node *parent)
+bt_mat4 get_branch_transform(node *stem, float offset)
+{
+	bt_mat4 rotation = bt_quat_to_mat4(&(stem->direction));
+	bt_mat4 translation;
+	bt_vec3 pos = stem->position;
+	bt_vec3 seg_pos = (bt_vec3){0.0f, offset, 0.0f};
+	pos = bt_add_vec3(&pos, &seg_pos);
+	translation = bt_translate(pos.x, pos.y, pos.z);
+
+	return bt_mult_mat4(&translation, &rotation);
+}
+
+float scale_branch(node *stem, float i)
+{
+	float c = stem->cross_sections;
+	return (c - i) / c;
+}
+
+unsigned short add_branch(node *stem, node *parent)
 {
 	unsigned short l_index;
 	unsigned short r_index;
+	float offset;
+	float percent;
+	float radius;
+	bt_mat4 transform;
+	int i;
 	
 	if (stem == NULL)
 		return 0;
-	
-	make_cross_section(&vbo[vbo_index], stem);
-	vbo_index += get_branch_vcount(stem);	
 
-	//l_index = add_segment(stem->left, position, stem);
-	//r_index = add_segment(stem->right, position, stem);
-	
+	for (i = 0; i < stem->cross_sections; i++) {
+		offset = stem->branch_length / stem->cross_sections * i;
+		radius = stem->radius * scale_branch(stem, i);
+		transform = get_branch_transform(stem, offset);
+		make_cross_section(&vbo[vbo_index], &transform,
+				radius, stem->branch_resolution);
+		vbo_index += get_branch_vcount(stem);	
+	}
+
+	l_index = add_branch(stem->left, stem);
+	r_index = add_branch(stem->right, stem);
+
 	return vbo_index;
 }
 
 void build_model(float *vb, int vb_size, unsigned short *eb, int eb_size,
 		node *root)
 {
-	vec3 origin = (vec3){0.0f, 0.0f, 0.0f};
-
 	vbo = vb;	
 	ebo = eb;
 	vbo_size = vb_size;
@@ -83,7 +107,7 @@ void build_model(float *vb, int vb_size, unsigned short *eb, int eb_size,
 	vbo_index = 0;
 	ebo_index = 0;
 
-	add_segment(root, origin, NULL);
+	add_branch(root, NULL);
 }
 
 int get_vbo_size()

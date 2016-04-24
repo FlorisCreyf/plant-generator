@@ -75,16 +75,16 @@ void ViewEditor::initializeGrid()
 }
 
 void ViewEditor::initializeTree()
-{
-	int size = 600;	
+{int i;
+	int size = 1200;	
 	GLuint buffer;
 	
 	GLfloat *vbo = new GLfloat[size];
 	GLushort *ebo = new GLushort[size];	
 
 	tree = bt_new_tree();
-	bt_set_trunk_radius(tree, 1.0f);
-	bt_set_resolution(tree, 10);
+	bt_set_trunk_radius(tree, 0.4f);
+	bt_set_resolution(tree, 8);
 	bt_set_max_branch_depth(tree, 1);
 	bt_generate_structure(tree);
 	bt_generate_mesh(tree, vbo, size, ebo, size);
