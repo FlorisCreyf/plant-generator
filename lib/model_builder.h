@@ -13,6 +13,7 @@
 #include "node.h"
 
 int get_vbo_size();
+int get_ebo_size();
 void build_model(float *vb, int vb_size, unsigned short *eb, int eb_size, 
 		node *root);
 

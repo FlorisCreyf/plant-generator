@@ -75,7 +75,7 @@ void ViewEditor::initializeGrid()
 }
 
 void ViewEditor::initializeTree()
-{int i;
+{
 	int size = 1200;	
 	GLuint buffer;
 	
@@ -95,6 +95,10 @@ void ViewEditor::initializeTree()
 	glBufferData(GL_ARRAY_BUFFER, size, vbo, GL_STATIC_DRAW);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void *)0);
 	glEnableVertexAttribArray(0);
+
+	glGenBuffers(1, &buffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, ebo, GL_STATIC_DRAW);
 }
 
 void ViewEditor::keyPressEvent(QKeyEvent *event)
@@ -135,15 +139,15 @@ void ViewEditor::paintGL()
 	glDrawArrays(GL_LINES, 0, 4);
 	glLineWidth(0.5);
 	glDrawArrays(GL_LINES, 4, grid.getVertexCount() - 4);
-	
+
 	glUseProgram(programs[1]);
 
 	mLocation = glGetUniformLocation(programs[1], "matrix");
 	glUniformMatrix4fv(mLocation, 1, GL_FALSE, &(m.m[0][0]));		
 	
 	glBindVertexArray(VAOs[1]);
-	glPointSize(7);
-	glDrawArrays(GL_POINTS, 0, bt_get_vbo_size(tree));
+	glDrawElements(GL_TRIANGLES, bt_get_ebo_size(tree),
+			GL_UNSIGNED_SHORT, NULL);
 
 	glFlush();
 }

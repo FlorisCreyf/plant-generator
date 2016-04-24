@@ -58,7 +58,7 @@ void bt_generate_structure(bt_tree tree)
 
 int bt_get_vbo_size(bt_tree tree)
 {
-	return get_vbo_size();
+	return tree->td.vbo_size;
 }
 
 int bt_get_ebo_size(bt_tree tree)
@@ -70,5 +70,7 @@ void bt_generate_mesh(bt_tree tree, float *vb, int vb_size,
 		unsigned short *eb, int eb_size)
 {
 	build_model(vb, vb_size, eb, eb_size, tree->root);
+	tree->td.ebo_size = get_ebo_size();
+	tree->td.vbo_size = get_vbo_size();
 }
 

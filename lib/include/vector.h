@@ -45,6 +45,10 @@ typedef struct bt_mat4_tag {
 	float m[4][4];
 } bt_mat4;
 
+typedef bt_mat4 mat4;
+typedef bt_quat quat;
+typedef bt_vec3 vec3;
+
 float bt_dot_vec3(bt_vec3 *a, bt_vec3 *b);
 bt_vec3 bt_cross_vec3(bt_vec3 *a, bt_vec3 *b);
 bt_vec3 bt_add_vec3(bt_vec3 *a, bt_vec3 *b);

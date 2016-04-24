@@ -13,9 +13,6 @@
 #include <math.h>
 #include <stdlib.h>
 
-typedef bt_vec3 vec3;
-typedef bt_mat4 mat4;
-
 static float *vbo;
 static unsigned short *ebo;
 static int vbo_size;
@@ -46,17 +43,39 @@ void make_cross_section(float *buffer, bt_mat4 *t, float radius, float res)
 	}
 }
 
-void add_element_indices()
+void add_element_indices(unsigned short *buffer, int l, int h, int res)
 {
+	const int SIZE = (res - 1) * 6;
+	const int INIT_H = h;
+	const int INIT_L = l;
+	int i = 0;
 
+	while (i < SIZE) {
+		buffer[i++] = h;
+		buffer[i++] = ++h;
+		buffer[i++] = l;
+
+		buffer[i++] = l;
+		buffer[i++] = ++l;
+		buffer[i++] = h;
+	}
+
+	/* Connect last vertices with first. */
+	buffer[i++] = l;
+	buffer[i++] = INIT_L;
+	buffer[i++] = h;
+
+	buffer[i++] = h;
+	buffer[i++] = INIT_H;
+	buffer[i++] = INIT_L;
 }
 
-bt_mat4 get_branch_transform(node *stem, float offset)
+mat4 get_branch_transform(node *stem, float offset)
 {
-	bt_mat4 rotation = bt_quat_to_mat4(&(stem->direction));
-	bt_mat4 translation;
-	bt_vec3 pos = stem->position;
-	bt_vec3 seg_pos = (bt_vec3){0.0f, offset, 0.0f};
+	mat4 rotation = bt_quat_to_mat4(&(stem->direction));
+	mat4 translation;
+	vec3 pos = stem->position;
+	vec3 seg_pos = (vec3){0.0f, offset, 0.0f};
 	pos = bt_add_vec3(&pos, &seg_pos);
 	translation = bt_translate(pos.x, pos.y, pos.z);
 
@@ -73,10 +92,10 @@ unsigned short add_branch(node *stem, node *parent)
 {
 	unsigned short l_index;
 	unsigned short r_index;
+	float prev_index;
 	float offset;
-	float percent;
 	float radius;
-	bt_mat4 transform;
+	mat4 transform;
 	int i;
 	
 	if (stem == NULL)
@@ -88,7 +107,14 @@ unsigned short add_branch(node *stem, node *parent)
 		transform = get_branch_transform(stem, offset);
 		make_cross_section(&vbo[vbo_index], &transform,
 				radius, stem->branch_resolution);
-		vbo_index += get_branch_vcount(stem);	
+
+		prev_index = vbo_index;
+		vbo_index += get_branch_vcount(stem);
+
+		add_element_indices(&ebo[ebo_index], prev_index /3, vbo_index/3,
+				stem->branch_resolution);
+
+		ebo_index += get_branch_ecount(stem);
 	}
 
 	l_index = add_branch(stem->left, stem);
@@ -113,5 +139,10 @@ void build_model(float *vb, int vb_size, unsigned short *eb, int eb_size,
 int get_vbo_size()
 {
 	return vbo_index / 3;
+}
+
+int get_ebo_size()
+{
+	return ebo_index;
 }
 

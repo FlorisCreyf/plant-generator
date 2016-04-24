@@ -19,7 +19,7 @@ static inline int get_branch_vcount(node *stem)
 
 static inline int get_branch_ecount(node *stem)
 {
-	return stem->cross_sections * stem->branch_resolution * 6;
+	return stem->branch_resolution * 6;
 }
 
 #endif /* MESH_SIZE_H */
