@@ -11,6 +11,7 @@
 #include "mesh_size.h"
 #include "vector.h"
 #include <math.h>
+#include <time.h>
 #include <stdlib.h>
 
 static float *vbo;
@@ -63,21 +64,28 @@ void add_element_indices(unsigned short *buffer, int l, int h, int res)
 	/* Connect last vertices with first. */
 	buffer[i++] = l;
 	buffer[i++] = INIT_L;
-	buffer[i++] = h;
-
-	buffer[i++] = h;
 	buffer[i++] = INIT_H;
-	buffer[i++] = INIT_L;
+
+	buffer[i++] = INIT_H;
+	buffer[i++] = h;
+	buffer[i++] = l;
 }
+
 
 mat4 get_branch_transform(node *stem, float offset)
 {
+	float r1, r2;
 	mat4 rotation = bt_quat_to_mat4(&(stem->direction));
 	mat4 translation;
 	vec3 pos = stem->position;
 	vec3 seg_pos = (vec3){0.0f, offset, 0.0f};
 	pos = bt_add_vec3(&pos, &seg_pos);
-	translation = bt_translate(pos.x, pos.y, pos.z);
+	
+	/* Add noise because we do not want a perfect cylinder. */
+	r1 = ((float)rand() / RAND_MAX - 0.5f) * 0.1f;
+	r2 = ((float)rand() / RAND_MAX - 0.5f) * 0.1f;
+
+	translation = bt_translate(pos.x + r1, pos.y + r1, pos.z + r2);
 
 	return bt_mult_mat4(&translation, &rotation);
 }
@@ -85,7 +93,8 @@ mat4 get_branch_transform(node *stem, float offset)
 float scale_branch(node *stem, float i)
 {
 	float c = stem->cross_sections;
-	return (c - i) / c;
+	float s = (c - i) / c;
+	return pow(s, 0.75f);
 }
 
 unsigned short add_branch(node *stem, node *parent)
@@ -111,8 +120,8 @@ unsigned short add_branch(node *stem, node *parent)
 		prev_index = vbo_index;
 		vbo_index += get_branch_vcount(stem);
 
-		add_element_indices(&ebo[ebo_index], prev_index /3, vbo_index/3,
-				stem->branch_resolution);
+		add_element_indices(&ebo[ebo_index], prev_index / 3, 
+				vbo_index / 3, stem->branch_resolution);
 
 		ebo_index += get_branch_ecount(stem);
 	}
@@ -126,6 +135,7 @@ unsigned short add_branch(node *stem, node *parent)
 void build_model(float *vb, int vb_size, unsigned short *eb, int eb_size,
 		node *root)
 {
+	srand(time(0));
 	vbo = vb;	
 	ebo = eb;
 	vbo_size = vb_size;

@@ -76,8 +76,8 @@ node *new_tree_structure(tree_data *td)
 	root->position = (bt_vec3){0.0f, 0.0f, 0.0f};
 	root->radius = td->trunk_radius;
 	root->branch_resolution = td->resolution;
-	root->cross_sections = 5;
-	root->branch_length = 5.0f;
+	root->cross_sections = 6;
+	root->branch_length = 6.0f;
 
 	vertex_count = root->branch_resolution;
 	index_count = vertex_count * 3;

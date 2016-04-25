@@ -40,6 +40,11 @@ void ViewEditor::initializeGL()
 	initializeGrid();
 	initializeTree();
 
+	glEnable(GL_DEPTH_TEST);
+	glDepthMask(GL_TRUE);
+	glDepthFunc(GL_LEQUAL);
+	glDepthRange(0.0f, 1.0f);
+
 	ShaderInfo shaders[] = {
 		{GL_VERTEX_SHADER, "shaders/flat.vert"},
 		{GL_FRAGMENT_SHADER, "shaders/flat.frag"},
@@ -54,7 +59,7 @@ void ViewEditor::initializeGL()
 void ViewEditor::resizeGL(int width, int height)
 {
 	float aspectRatio = (float)width / (float)height;
-	camera.setPerspective(45.0f, 0.0f, 200.0f, aspectRatio);
+	camera.setPerspective(45.0f, 0.5f, 200.0f, aspectRatio);
 
 	glViewport(0, 0, width, height);
 	glDraw();
@@ -83,7 +88,7 @@ void ViewEditor::initializeTree()
 	GLushort *ebo = new GLushort[size];	
 
 	tree = bt_new_tree();
-	bt_set_trunk_radius(tree, 0.4f);
+	bt_set_trunk_radius(tree, 0.25f);
 	bt_set_resolution(tree, 8);
 	bt_set_max_branch_depth(tree, 1);
 	bt_generate_structure(tree);
@@ -127,27 +132,39 @@ void ViewEditor::paintGL()
 	bt_mat4 m = camera.getCrystalBallMatrix();
 	GLint mLocation;
 
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClearColor(0.5, 0.5, 0.5, 1.0);
+	glClearDepth(1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glUseProgram(programs[1]);
+	mLocation = glGetUniformLocation(programs[1], "matrix");
+	glUniformMatrix4fv(mLocation, 1, GL_FALSE, &(m.m[0][0]));		
+	
+	glBindVertexArray(VAOs[1]);
+	
+	glDrawElements(GL_TRIANGLES, bt_get_ebo_size(tree),
+			GL_UNSIGNED_SHORT, NULL);
 
 	glUseProgram(programs[0]);
-
 	mLocation = glGetUniformLocation(programs[0], "matrix");
 	glUniformMatrix4fv(mLocation, 1, GL_FALSE, &(m.m[0][0]));
+
+	glPolygonOffset(-1.0f, -1.0f);
+	glEnable(GL_POLYGON_OFFSET_LINE);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	
+	glLineWidth(1);
+	glDrawElements(GL_TRIANGLES, bt_get_ebo_size(tree),
+			GL_UNSIGNED_SHORT, NULL);
+	
+	glDisable(GL_POLYGON_OFFSET_LINE);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	glBindVertexArray(VAOs[0]);
 	glLineWidth(2);
 	glDrawArrays(GL_LINES, 0, 4);
 	glLineWidth(0.5);
 	glDrawArrays(GL_LINES, 4, grid.getVertexCount() - 4);
-
-	glUseProgram(programs[1]);
-
-	mLocation = glGetUniformLocation(programs[1], "matrix");
-	glUniformMatrix4fv(mLocation, 1, GL_FALSE, &(m.m[0][0]));		
-	
-	glBindVertexArray(VAOs[1]);
-	glDrawElements(GL_TRIANGLES, bt_get_ebo_size(tree),
-			GL_UNSIGNED_SHORT, NULL);
 
 	glFlush();
 }
