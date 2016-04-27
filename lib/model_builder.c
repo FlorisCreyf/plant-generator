@@ -97,34 +97,36 @@ float scale_branch(node *stem, float i)
 	return pow(s, 0.75f);
 }
 
+void add_cross_section(node *stem, int i)
+{
+	float offset = stem->branch_length / stem->cross_sections * i;
+	float radius = stem->radius * scale_branch(stem, i);
+	mat4 transform = get_branch_transform(stem, offset);
+	make_cross_section(&vbo[vbo_index], &transform, radius,
+			stem->branch_resolution);
+}
+
 unsigned short add_branch(node *stem, node *parent)
 {
 	unsigned short l_index;
 	unsigned short r_index;
 	float prev_index;
-	float offset;
-	float radius;
-	mat4 transform;
 	int i;
 	
 	if (stem == NULL)
 		return 0;
 
-	for (i = 0; i < stem->cross_sections; i++) {
-		offset = stem->branch_length / stem->cross_sections * i;
-		radius = stem->radius * scale_branch(stem, i);
-		transform = get_branch_transform(stem, offset);
-		make_cross_section(&vbo[vbo_index], &transform,
-				radius, stem->branch_resolution);
-
+	for (i = 0; i < stem->cross_sections - 1; i++) {
+		add_cross_section(stem, i);
 		prev_index = vbo_index;
 		vbo_index += get_branch_vcount(stem);
-
 		add_element_indices(&ebo[ebo_index], prev_index / 3, 
 				vbo_index / 3, stem->branch_resolution);
-
 		ebo_index += get_branch_ecount(stem);
 	}
+
+	add_cross_section(stem, i);
+	vbo_index += get_branch_vcount(stem);
 
 	l_index = add_branch(stem->left, stem);
 	r_index = add_branch(stem->right, stem);
