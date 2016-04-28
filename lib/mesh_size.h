@@ -14,7 +14,7 @@
 
 static inline int get_branch_vcount(node *stem)
 {
-	return stem->branch_resolution * 3;
+	return stem->branch_resolution * 3 * 2;
 }
 
 static inline int get_branch_ecount(node *stem)

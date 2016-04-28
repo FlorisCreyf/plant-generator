@@ -19,7 +19,7 @@ bt_vec3 get_position(node *stem, node *parent)
 	bt_quat q_rot = bt_mult_quat(&(parent->direction), &(stem->direction));
 	bt_mat4 m_rot = bt_quat_to_mat4(&q_rot);
 	bt_vec3 pos = (bt_vec3){0.0f, 1.0f, 0.0f};
-	bt_point_transform(&pos, &m_rot);
+	bt_transform(&pos, &m_rot, 1.0f);
 	return pos;
 }
 

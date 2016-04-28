@@ -100,12 +100,12 @@ mat4 bt_translate(float x, float y, float z)
 	};
 }
 
-void bt_point_transform(vec3 *v, mat4 *t)
+void bt_transform(vec3 *v, mat4 *t, float w)
 {
 	float x, y, z;
-	x = v->x*t->m[0][0] + v->y*t->m[1][0] + v->z*t->m[2][0] + t->m[3][0];
-	y = v->x*t->m[0][1] + v->y*t->m[1][1] + v->z*t->m[2][1] + t->m[3][1];
-	z = v->x*t->m[0][2] + v->z*t->m[1][2] + v->z*t->m[2][2] + t->m[3][2];
+	x = v->x*t->m[0][0] + v->y*t->m[1][0] + v->z*t->m[2][0] + t->m[3][0]*w;
+	y = v->x*t->m[0][1] + v->y*t->m[1][1] + v->z*t->m[2][1] + t->m[3][1]*w;
+	z = v->x*t->m[0][2] + v->z*t->m[1][2] + v->z*t->m[2][2] + t->m[3][2]*w;
 
 	v->x = x;
 	v->y = y;

@@ -81,29 +81,34 @@ void ViewEditor::initializeGrid()
 
 void ViewEditor::initializeTree()
 {
-	int size = 1200;	
+	int ebSize = 1200;
+	int vbSize = 1200 * 2;
+	GLsizei stride = sizeof(float) * 3;
 	GLuint buffer;
 	
-	GLfloat *vbo = new GLfloat[size];
-	GLushort *ebo = new GLushort[size];	
+	vbo = new GLfloat[vbSize];
+	ebo = new GLushort[ebSize];	
 
 	tree = bt_new_tree();
 	bt_set_trunk_radius(tree, 0.25f);
 	bt_set_resolution(tree, 8);
 	bt_set_max_branch_depth(tree, 1);
 	bt_generate_structure(tree);
-	bt_generate_mesh(tree, vbo, size, ebo, size);
+	bt_generate_mesh(tree, vbo, vbSize, ebo, ebSize);
 
 	glBindVertexArray(VAOs[1]);
 	glGenBuffers(1, &buffer);
 	glBindBuffer(GL_ARRAY_BUFFER, buffer);
-	glBufferData(GL_ARRAY_BUFFER, size, vbo, GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void *)0);
+	glBufferData(GL_ARRAY_BUFFER, vbSize, vbo, GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride*2, (GLvoid *)0);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride*2, 
+			(GLvoid *)(sizeof(float) * 3));
 	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
 
 	glGenBuffers(1, &buffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, ebo, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, ebSize, ebo, GL_STATIC_DRAW);
 }
 
 void ViewEditor::keyPressEvent(QKeyEvent *event)

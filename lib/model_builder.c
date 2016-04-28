@@ -24,21 +24,29 @@ static unsigned short ebo_index;
 void make_cross_section(float *buffer, bt_mat4 *t, float radius, float res)
 {
 	vec3 point;
-	const int SIZE = res * 3;
+	vec3 normal;
+	const int SIZE = res * 6;
 	const float ROTATION = 360.0f / res * M_PI / 180.0f;
 	float angle = 0.0f;
 	int i = 0;
 
 	while (i < SIZE) {
-		point.x = cosf(angle) * radius;
-		point.z = sinf(angle) * radius;
-		point.y = 0.0f;
-		
-		bt_point_transform(&point, t);
+		normal.x = cosf(angle);
+		normal.y = 0.0f;
+		normal.z = sinf(angle);
+		point.x = normal.x * radius;
+		point.y = normal.y * radius;
+		point.z = normal.z * radius;		
+
+		bt_transform(&normal, t, 0.0f);
+		bt_transform(&point, t, 1.0f);		
 
 		buffer[i++] = point.x;
 		buffer[i++] = point.y;
 		buffer[i++] = point.z;
+		buffer[i++] = normal.x;
+		buffer[i++] = normal.y;
+		buffer[i++] = normal.z;
 
 		angle += ROTATION;
 	}
@@ -71,7 +79,6 @@ void add_element_indices(unsigned short *buffer, int l, int h, int res)
 	buffer[i++] = l;
 }
 
-
 mat4 get_branch_transform(node *stem, float offset)
 {
 	float r1, r2;
@@ -82,8 +89,8 @@ mat4 get_branch_transform(node *stem, float offset)
 	pos = bt_add_vec3(&pos, &seg_pos);
 	
 	/* Add noise because we do not want a perfect cylinder. */
-	r1 = ((float)rand() / RAND_MAX - 0.5f) * 0.1f;
-	r2 = ((float)rand() / RAND_MAX - 0.5f) * 0.1f;
+	r1 = ((float)rand() / RAND_MAX - 0.5f) * 0.05f;
+	r2 = ((float)rand() / RAND_MAX - 0.5f) * 0.05f;
 
 	translation = bt_translate(pos.x + r1, pos.y + r1, pos.z + r2);
 
@@ -120,8 +127,8 @@ unsigned short add_branch(node *stem, node *parent)
 		add_cross_section(stem, i);
 		prev_index = vbo_index;
 		vbo_index += get_branch_vcount(stem);
-		add_element_indices(&ebo[ebo_index], prev_index / 3, 
-				vbo_index / 3, stem->branch_resolution);
+		add_element_indices(&ebo[ebo_index], prev_index / 6, 
+				vbo_index / 6, stem->branch_resolution);
 		ebo_index += get_branch_ecount(stem);
 	}
 
@@ -150,7 +157,7 @@ void build_model(float *vb, int vb_size, unsigned short *eb, int eb_size,
 
 int get_vbo_size()
 {
-	return vbo_index / 3;
+	return vbo_index / 6;
 }
 
 int get_ebo_size()
