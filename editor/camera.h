@@ -20,6 +20,7 @@ public:
 	void setStartCoordinates(float x, float y);
 	void setCoordinates(float x, float y);
 	void setPerspective(float fovy, float near, float far, float aspect);
+	bt_vec3 getPosition();
 	bt_mat4 getCrystalBallMatrix();
 
 private:
@@ -28,7 +29,9 @@ private:
 		float y;
 	} startPosition, position;
 	bt_mat4 perspective;
+	bt_vec3 cameraPos;
 
+	bt_vec3 getCameraPosition();
 	bt_mat4 getLookAtMatrix(bt_vec3 *eye, bt_vec3 *target, bt_vec3 *up);
 };
 

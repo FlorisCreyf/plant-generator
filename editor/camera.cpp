@@ -48,17 +48,7 @@ void Camera::setPerspective(float fovy, float near, float far, float aspect)
 
 bt_mat4 Camera::getCrystalBallMatrix()
 {
-	const float TO_RADIAN = M_PI / 180.0f;
-
-	float distance = 10.0f;
-	float x = (position.x - startPosition.x) * TO_RADIAN;
-	float y = (position.y - startPosition.y) * TO_RADIAN;
-
-	float cameraX = distance * cos(x) * cos(y);
-	float cameraY = distance * sin(y);
-	float cameraZ = distance * sin(x) * cos(y);
-
-	bt_vec3 eye = (bt_vec3){cameraX, cameraY, cameraZ};
+	bt_vec3 eye = getCameraPosition();
 	bt_vec3 target = (bt_vec3){0.0f, 0.0f, 0.0f};
 	bt_vec3 up = (bt_vec3){0.0f, 1.0f, 0.0f};
 
@@ -68,6 +58,18 @@ bt_mat4 Camera::getCrystalBallMatrix()
 	l = bt_mult_mat4(&l, &t);
 
 	return bt_mult_mat4(&perspective, &l);
+}
+
+bt_vec3 Camera::getCameraPosition()
+{
+	const float toRadian = M_PI / 180.0f;
+	float distance = 10.0f;
+	float x = (position.x - startPosition.x) * toRadian;
+	float y = (position.y - startPosition.y) * toRadian;
+	cameraPos.x = distance * cos(x) * cos(y);
+	cameraPos.y = distance * sin(y);
+	cameraPos.z = distance * sin(x) * cos(y);
+	return cameraPos;
 }
 
 bt_mat4 Camera::getLookAtMatrix(bt_vec3 *eye, bt_vec3 *center, bt_vec3 *up)
@@ -91,5 +93,10 @@ bt_mat4 Camera::getLookAtMatrix(bt_vec3 *eye, bt_vec3 *center, bt_vec3 *up)
 		b.z, c.z, -a.z, 0.0f,
 		x, y, z, 1.0f
 	};
+}
+
+bt_vec3 Camera::getPosition()
+{
+	return cameraPos;
 }
 
