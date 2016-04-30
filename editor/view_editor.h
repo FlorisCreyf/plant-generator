@@ -51,6 +51,7 @@ private:
 
 	void initializeGrid();
 	void initializeTree();
+	void initializeShader(bt_mat4 *mvp);
 	GLuint loadShaders(ShaderInfo *info, int size);
 };
 

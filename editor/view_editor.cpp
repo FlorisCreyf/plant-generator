@@ -132,9 +132,21 @@ void ViewEditor::mouseMoveEvent(QMouseEvent *event)
 	glDraw();
 }
 
+void ViewEditor::initializeShader(bt_mat4 *mvp)
+{
+	bt_vec3 c = camera.getPosition();	
+	GLint loc;
+
+	loc = glGetUniformLocation(programs[1], "matrix");
+	glUniformMatrix4fv(loc, 1, GL_FALSE, &(mvp->m[0][0]));
+	
+	loc = glGetUniformLocation(programs[1], "cameraPos");
+	glUniform4f(loc, c.x, c.y, c.z, 0.0f);
+}
+
 void ViewEditor::paintGL()
 {
-	bt_mat4 m = camera.getCrystalBallMatrix();
+	bt_mat4 mvp = camera.getCrystalBallMatrix();
 	GLint mLocation;
 
 	glClearColor(0.5, 0.5, 0.5, 1.0);
@@ -142,8 +154,7 @@ void ViewEditor::paintGL()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glUseProgram(programs[1]);
-	mLocation = glGetUniformLocation(programs[1], "matrix");
-	glUniformMatrix4fv(mLocation, 1, GL_FALSE, &(m.m[0][0]));		
+	initializeShader(&mvp);		
 	
 	glBindVertexArray(VAOs[1]);
 	
@@ -151,8 +162,8 @@ void ViewEditor::paintGL()
 			GL_UNSIGNED_SHORT, NULL);
 
 	glUseProgram(programs[0]);
-	mLocation = glGetUniformLocation(programs[0], "matrix");
-	glUniformMatrix4fv(mLocation, 1, GL_FALSE, &(m.m[0][0]));
+	mLocation = glGetUniformLocation(programs[1], "matrix");
+	glUniformMatrix4fv(mLocation, 1, GL_FALSE, &(mvp.m[0][0]));
 
 	glPolygonOffset(-1.0f, -1.0f);
 	glEnable(GL_POLYGON_OFFSET_LINE);
