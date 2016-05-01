@@ -9,6 +9,8 @@
 
 #include "tree_struct.h"
 #include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
 
 static int max_branch_depth;
 static int vertex_count;
@@ -28,8 +30,9 @@ bt_quat get_branch_direction()
 	float ax, ay;
 	bt_quat qx, qy;
 	
-	ax = rand() / RAND_MAX * 20;
-	ay = rand() / RAND_MAX * 20;
+	ax = (float)rand() / RAND_MAX;
+	ay = (float)rand() / RAND_MAX;
+	
 	qx = bt_from_axis_angle(1.0f, 0.0f, 0.0f, ax);
 	qy = bt_from_axis_angle(0.0f, 1.0f, 0.0f, ay);
 	

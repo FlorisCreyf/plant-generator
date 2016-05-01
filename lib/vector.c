@@ -105,7 +105,7 @@ void bt_transform(vec3 *v, mat4 *t, float w)
 	float x, y, z;
 	x = v->x*t->m[0][0] + v->y*t->m[1][0] + v->z*t->m[2][0] + t->m[3][0]*w;
 	y = v->x*t->m[0][1] + v->y*t->m[1][1] + v->z*t->m[2][1] + t->m[3][1]*w;
-	z = v->x*t->m[0][2] + v->z*t->m[1][2] + v->z*t->m[2][2] + t->m[3][2]*w;
+	z = v->x*t->m[0][2] + v->y*t->m[1][2] + v->z*t->m[2][2] + t->m[3][2]*w;
 
 	v->x = x;
 	v->y = y;
@@ -116,28 +116,26 @@ quat bt_from_axis_angle(float x, float y, float z, float theta)
 {
 	float a = theta / 2.0f;
 	float b = sin(a);	
-	return (quat){x*a, y*a, z*a, cos(a)};
+	return (quat){x*b, y*b, z*b, cos(a)};
 }
 
 mat4 bt_quat_to_mat4(quat *q)
 {
 	mat4 m;
 	m.m[0][0] = 1.0f - 2.0f*(q->y*q->y + q->z*q->z);
-	m.m[0][1] = 2.0f*(q->x*q->y - q->w*q->z);
-	m.m[0][2] = 2.0f*(q->x*q->z + q->w*q->y);
-	m.m[1][0] = 2.0f*(q->x*q->y + q->w*q->z);
+	m.m[1][0] = 2.0f*(q->x*q->y - q->w*q->z);
+	m.m[2][0] = 2.0f*(q->x*q->z + q->w*q->y);
+	m.m[0][1] = 2.0f*(q->x*q->y + q->w*q->z);
 	m.m[1][1] = 1.0f - 2.0f*(q->x*q->x + q->z*q->z);
-	m.m[1][2] = 2.0f*(q->y*q->z - q->w*q->x);
-	m.m[2][0] = 2.0f*(q->x*q->z - q->w*q->y);
-	m.m[2][1] = 2.0f*(q->y*q->z + q->w*q->x);
+	m.m[2][1] = 2.0f*(q->y*q->z - q->w*q->x);
+	m.m[0][2] = 2.0f*(q->x*q->z - q->w*q->y);
+	m.m[1][2] = 2.0f*(q->y*q->z + q->w*q->x);
 	m.m[2][2] = 1.0f - 2.0f*(q->x*q->x + q->y*q->y);
 	m.m[3][0] = m.m[3][1] = m.m[3][2] = 0.0f;
 	m.m[0][3] = m.m[1][3] = m.m[2][3] = 0.0f;
 	m.m[3][3] = 1.0f;
 	return m;
 }
-
-
 
 quat bt_mult_quat(quat *a, quat *b)
 {

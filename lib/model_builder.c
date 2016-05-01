@@ -33,13 +33,14 @@ void make_cross_section(float *buffer, bt_mat4 *t, float radius, float res)
 	while (i < SIZE) {
 		normal.x = cosf(angle);
 		normal.y = 0.0f;
-		normal.z = sinf(angle);
+		normal.z = sinf(angle);//radius = 1;
+
 		point.x = normal.x * radius;
 		point.y = normal.y * radius;
-		point.z = normal.z * radius;		
+		point.z = normal.z * radius;
 
 		bt_transform(&normal, t, 0.0f);
-		bt_transform(&point, t, 1.0f);		
+		bt_transform(&point, t, 1.0f);
 
 		buffer[i++] = point.x;
 		buffer[i++] = point.y;
@@ -86,15 +87,16 @@ mat4 get_branch_transform(node *stem, float offset)
 	mat4 translation;
 	vec3 pos = stem->position;
 	vec3 seg_pos = (vec3){0.0f, offset, 0.0f};
-	pos = bt_add_vec3(&pos, &seg_pos);
 	
+	pos = bt_add_vec3(&pos, &seg_pos);
+
 	/* Add noise because we do not want a perfect cylinder. */
 	r1 = ((float)rand() / RAND_MAX - 0.5f) * 0.05f;
 	r2 = ((float)rand() / RAND_MAX - 0.5f) * 0.05f;
 
 	translation = bt_translate(pos.x + r1, pos.y + r1, pos.z + r2);
 
-	return bt_mult_mat4(&translation, &rotation);
+	return bt_mult_mat4(&rotation, &translation);
 }
 
 float scale_branch(node *stem, float i)
@@ -144,7 +146,6 @@ unsigned short add_branch(node *stem, node *parent)
 void build_model(float *vb, int vb_size, unsigned short *eb, int eb_size,
 		node *root)
 {
-	srand(time(0));
 	vbo = vb;	
 	ebo = eb;
 	vbo_size = vb_size;
