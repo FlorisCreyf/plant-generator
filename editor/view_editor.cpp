@@ -10,6 +10,7 @@
 #include "view_editor.h"
 #include "grid.h"
 #include "bluetree.h"
+#include "file_export.h"
 #include "terminal.h"
 #include <QtGui/QKeyEvent>
 #include <QtGui/QMouseEvent>
@@ -30,6 +31,14 @@ ViewEditor::~ViewEditor()
 	bt_delete_tree(tree);
 	delete[] vbo;
 	delete[] ebo;
+}
+
+void ViewEditor::exportObject(const char *filename)
+{
+	FileExport e;
+	e.setVertexBuffer(vbo, bt_get_vbo_size(tree));
+	e.setElementBuffer(ebo, bt_get_ebo_size(tree));
+	e.exportObj(filename);
 }
 
 void ViewEditor::initializeGL()

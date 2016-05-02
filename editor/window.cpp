@@ -13,6 +13,7 @@
 Window::Window()
 {
 	widget.setupUi(this);
+
 }
 
 Window::~Window()
@@ -39,5 +40,7 @@ void Window::exportDialogBox()
 	QString filename;
 	filename = QFileDialog::getSaveFileName(this, tr("Export File"),
 		"untitled.obj", tr("Wavefront (*.obj)"));
+	QByteArray b = filename.toLatin1();
+	widget.scene->exportObject(b.data());
 }
 

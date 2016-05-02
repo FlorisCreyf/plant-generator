@@ -26,6 +26,8 @@ public:
 	ViewEditor(QWidget *parent = 0);
 	~ViewEditor();
 	
+	void exportObject(const char *filename);	
+
 protected:
 	void initializeGL();
 	void paintGL();

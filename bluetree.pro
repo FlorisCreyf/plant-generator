@@ -1,8 +1,8 @@
 CONFIG += release
 TARGET = bluetree
 QT = core gui widgets opengl
-SOURCES += editor/main.cpp editor/window.cpp editor/view_editor.cpp editor/grid.cpp editor/camera.cpp
-HEADERS += editor/window.h editor/view_editor.h editor/grid.h editor/camera.h
+SOURCES += editor/main.cpp editor/window.cpp editor/view_editor.cpp editor/grid.cpp editor/camera.cpp editor/file_export.cpp
+HEADERS += editor/window.h editor/view_editor.h editor/grid.h editor/camera.h editor/file_export.h
 FORMS += editor/qt/window.ui
 MOC_DIR = editor/qt
 RCC_DIR = editor/qt
