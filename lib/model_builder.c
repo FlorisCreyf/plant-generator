@@ -66,18 +66,18 @@ void add_element_indices(unsigned short *buffer, int l, int h, int res)
 		buffer[i++] = l;
 
 		buffer[i++] = l;
-		buffer[i++] = ++l;
 		buffer[i++] = h;
+		buffer[i++] = ++l;
 	}
 
-	/* Connect last vertices with first. */
-	buffer[i++] = l;
+	/* Connect last vertices with first. */	
+	buffer[i++] = INIT_H;
 	buffer[i++] = INIT_L;
-	buffer[i++] = INIT_H;
-
-	buffer[i++] = INIT_H;
-	buffer[i++] = h;
 	buffer[i++] = l;
+
+	buffer[i++] = l;
+	buffer[i++] = h;
+	buffer[i++] = INIT_H;
 }
 
 mat4 get_branch_transform(node *stem, float offset)
