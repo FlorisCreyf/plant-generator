@@ -13,8 +13,6 @@
 #include <math.h>
 
 static int max_branch_depth;
-static int vertex_count;
-static int index_count;
 
 bt_vec3 get_position(node *stem, node *parent)
 {
@@ -39,26 +37,17 @@ bt_quat get_branch_direction()
 	return bt_mult_quat(&qy, &qx);
 }
 
-node *add_node(node *parent, char direction)
+node *add_node(node *parent, quat direction)
 {
 	node *stem = (node *)malloc(sizeof(struct node_tag));
 	stem->branch_depth = parent->branch_depth + 1;
 	stem->radius = parent->radius * 0.8;
 	stem->cross_sections = 0;
 	stem->branch_resolution = parent->branch_resolution;
-	stem->direction = get_branch_direction();
+	stem->direction = direction;
 	stem->position = get_position(stem, parent);
-
-	if (max_branch_depth <= stem->branch_depth) {
-		stem->left = NULL;
-		stem->right = NULL;
-	} else {
-		stem->left = add_node(stem, 'l');
-		stem->right = add_node(stem, 'r');
-	}
-
-	vertex_count += stem->branch_resolution;
-
+	stem->left = NULL;
+	stem->right = NULL;
 	return stem;
 }
 
@@ -69,6 +58,22 @@ void remove_nodes(node *stem)
 		remove_nodes(stem->right);
 		free(stem);
 	}
+}
+
+void add_lateral_branch(node *stem)
+{
+
+}
+
+void add_dichotomous_branches(node *stem)
+{
+	quat direction = get_branch_direction();
+	
+	stem->left = add_node(stem, direction);
+
+	direction.x = -direction.x;
+	direction.z = -direction.z;
+	stem->right = add_node(stem, direction);
 }
 
 node *new_tree_structure(tree_data *td)
@@ -82,12 +87,8 @@ node *new_tree_structure(tree_data *td)
 	root->cross_sections = 6;
 	root->branch_length = 6.0f;
 
-	vertex_count = root->branch_resolution;
-	index_count = vertex_count * 3;
 	max_branch_depth = td->max_branch_depth;
-
-	root->left = add_node(root, 'l');
-	root->right = add_node(root, 'r');
+	add_dichotomous_branches(root);	
 
 	return root;
 }
