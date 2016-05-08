@@ -33,7 +33,7 @@ void make_cross_section(float *buffer, bt_mat4 *t, float radius, float res)
 	while (i < SIZE) {
 		normal.x = cosf(angle);
 		normal.y = 0.0f;
-		normal.z = sinf(angle);//radius = 1;
+		normal.z = sinf(angle);
 
 		point.x = normal.x * radius;
 		point.y = normal.y * radius;
@@ -85,18 +85,21 @@ mat4 get_branch_transform(node *stem, float offset)
 	float r1, r2;
 	mat4 rotation = bt_quat_to_mat4(&(stem->direction));
 	mat4 translation;
-	vec3 pos = stem->position;
-	vec3 seg_pos = (vec3){0.0f, offset, 0.0f};
-	
-	pos = bt_add_vec3(&pos, &seg_pos);
+	mat4 transform;
 
 	/* Add noise because we do not want a perfect cylinder. */
 	r1 = ((float)rand() / RAND_MAX - 0.5f) * 0.05f;
 	r2 = ((float)rand() / RAND_MAX - 0.5f) * 0.05f;
 
-	translation = bt_translate(pos.x + r1, pos.y + r1, pos.z + r2);
+	translation = bt_translate(r1, offset + r1, r2);
+	
+	transform = bt_translate(
+			stem->position.x,
+			stem->position.y,
+			stem->position.z);
+	transform = bt_mult_mat4(&transform, &rotation);
 
-	return bt_mult_mat4(&rotation, &translation);
+	return bt_mult_mat4(&transform, &translation);
 }
 
 float scale_branch(node *stem, float i)
@@ -106,9 +109,10 @@ float scale_branch(node *stem, float i)
 	return pow(s, 0.75f);
 }
 
-void add_cross_section(node *stem, int i)
+void add_cross_section(node *stem, float i)
 {
-	float offset = stem->branch_length / stem->cross_sections * i;
+	float inc = i + i / (stem->cross_sections - 1);
+	float offset = stem->branch_length / stem->cross_sections * inc;
 	float radius = stem->radius * scale_branch(stem, i);
 	mat4 transform = get_branch_transform(stem, offset);
 	make_cross_section(&vbo[vbo_index], &transform, radius,
@@ -137,15 +141,13 @@ unsigned short add_branch(node *stem, node *parent)
 	add_cross_section(stem, i);
 	vbo_index += get_branch_vcount(stem);
 
-	l_index = add_branch(stem->left, stem);
-	r_index = add_branch(stem->right, stem);
-
 	return vbo_index;
 }
 
 void build_model(float *vb, int vb_size, unsigned short *eb, int eb_size,
 		node *root)
 {
+	int i;
 	vbo = vb;	
 	ebo = eb;
 	vbo_size = vb_size;
@@ -154,6 +156,9 @@ void build_model(float *vb, int vb_size, unsigned short *eb, int eb_size,
 	ebo_index = 0;
 
 	add_branch(root, NULL);
+	
+	for (i = 0; i < root->branch_count; i++)
+		add_branch(&root->branches[i], root);
 }
 
 int get_vbo_size()

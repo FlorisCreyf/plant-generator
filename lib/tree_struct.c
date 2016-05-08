@@ -14,49 +14,38 @@
 
 static int max_branch_depth;
 
-bt_vec3 get_position(node *stem, node *parent)
+vec3 get_position(node *stem, node *parent, float i)
 {
-	bt_quat q_rot = bt_mult_quat(&(parent->direction), &(stem->direction));
-	bt_mat4 m_rot = bt_quat_to_mat4(&q_rot);
-	bt_vec3 pos = (bt_vec3){0.0f, 1.0f, 0.0f};
-	bt_transform(&pos, &m_rot, 1.0f);
+	mat4 rot = bt_quat_to_mat4(&(parent->direction));
+	float height = (i+1)/(parent->branch_count+1)*parent->branch_length;
+	vec3 pos = (vec3){0.0f, height, 0.0f};
+	bt_transform(&pos, &rot, 1.0f);
 	return pos;
 }
 
-bt_quat get_branch_direction()
+quat get_branch_direction()
 {
 	float ax, ay;
-	bt_quat qx, qy;
+	quat qx, qy;
 	
 	ax = (float)rand() / RAND_MAX;
 	ay = (float)rand() / RAND_MAX;
 	
-	qx = bt_from_axis_angle(1.0f, 0.0f, 0.0f, ax);
-	qy = bt_from_axis_angle(0.0f, 1.0f, 0.0f, ay);
+	qx = bt_from_axis_angle(1.0f, 0.0f, 0.0f, M_PI / 2.0f - ax);
+	qy = bt_from_axis_angle(0.0f, 1.0f, 0.0f, ay * M_PI * 2.0f);
 	
 	return bt_mult_quat(&qy, &qx);
 }
 
-node *add_node(node *parent, quat direction)
-{
-	node *stem = (node *)malloc(sizeof(struct node_tag));
-	stem->branch_depth = parent->branch_depth + 1;
-	stem->radius = parent->radius * 0.8;
-	stem->cross_sections = 0;
-	stem->branch_resolution = parent->branch_resolution;
-	stem->direction = direction;
-	stem->position = get_position(stem, parent);
-	stem->left = NULL;
-	stem->right = NULL;
-	return stem;
-}
-
 void remove_nodes(node *stem)
 {
+	int i;
 	if (stem != NULL) {
-		remove_nodes(stem->left);
-		remove_nodes(stem->right);
-		free(stem);
+		for (i = 0; i < stem->branch_count; i++)
+			remove_nodes(&stem->branches[i]);
+
+		if (stem->branch_count > 0)
+			free(stem->branches);
 	}
 }
 
@@ -65,30 +54,53 @@ void add_lateral_branch(node *stem)
 
 }
 
+void add_lateral_branches(node *stem)
+{
+	node *n;
+	float diff;
+	const int total = 7;
+	int i;
+	
+	stem->branches = malloc(sizeof(node) * total);
+	stem->branch_count += total;
+
+	for (i = 0; i < total; i++) {
+		diff = pow(i + 1.0f, 0.3f);
+		n = &stem->branches[i];
+		n->radius = stem->radius * 0.4f / diff;
+		n->cross_sections = 3;
+		n->branch_resolution = stem->branch_resolution / 2;
+		n->branch_length = stem->branch_length * 0.5f / diff;
+		n->direction = get_branch_direction();;
+		n->position = get_position(n, stem, i);
+		n->branch_count = 0;
+	}
+}
+
 void add_dichotomous_branches(node *stem)
 {
 	quat direction = get_branch_direction();
-	
-	stem->left = add_node(stem, direction);
 
 	direction.x = -direction.x;
 	direction.z = -direction.z;
-	stem->right = add_node(stem, direction);
+	
 }
 
 node *new_tree_structure(tree_data *td)
 {	
 	node *root = (node *)malloc(sizeof(struct node_tag));
 	root->branch_depth = 1;
-	root->direction = get_branch_direction();
-	root->position = (bt_vec3){0.0f, 0.0f, 0.0f};
+	root->direction = (quat){0.0f, 0.0f, 0.0f, 0.0f};
+	root->position = (vec3){0.0f, 0.0f, 0.0f};
 	root->radius = td->trunk_radius;
 	root->branch_resolution = td->resolution;
 	root->cross_sections = 6;
-	root->branch_length = 6.0f;
+	root->branch_length = 5.0f;
+	root->branch_count = 0;
 
 	max_branch_depth = td->max_branch_depth;
-	add_dichotomous_branches(root);	
+
+	add_lateral_branches(root);	
 
 	return root;
 }
@@ -97,3 +109,4 @@ void free_tree_structure(node *root)
 {
 	remove_nodes(root);
 }
+

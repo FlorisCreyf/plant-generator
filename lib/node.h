@@ -16,14 +16,13 @@ typedef struct node_tag {
 	float radius;
 	float tapper;
 	float branch_length;
-	bt_quat direction;
-	bt_vec3 position;
+	quat direction;
+	vec3 position;
 	int branch_depth;
 	int branch_resolution;
 	int cross_sections;
-	struct node_tag *left;
-	struct node_tag *right;
-	struct node_tag **branches;
+	int branch_count;
+	struct node_tag *branches;
 } node;
 
 #endif /* NODE_H */

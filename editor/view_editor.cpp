@@ -90,8 +90,8 @@ void ViewEditor::initializeGrid()
 
 void ViewEditor::initializeTree()
 {
-	int ebSize = 1200;
-	int vbSize = 1200 * 2;
+	int ebSize = 2200;
+	int vbSize = 2200 * 2;
 	GLsizei stride = sizeof(float) * 3;
 	GLuint buffer;
 	
@@ -174,7 +174,7 @@ void ViewEditor::paintGL()
 	mLocation = glGetUniformLocation(programs[1], "matrix");
 	glUniformMatrix4fv(mLocation, 1, GL_FALSE, &(mvp.m[0][0]));
 
-	glPolygonOffset(-1.0f, -1.0f);
+	glPolygonOffset(-0.1f, -0.1f);
 	glEnable(GL_POLYGON_OFFSET_LINE);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	
