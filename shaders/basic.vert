@@ -11,8 +11,8 @@ out vec3 iColor;
 void main()
 {
 	vec4 lo = vec4(0.0f, 0.0f, 0.0f, 0.0f);
-	vec4 kd = vec4(0.5f, 0.5f, 0.5f, 0.0f);
-	vec4 ks = vec4(0.5f, 0.5f, 0.5f, 0.0f);
+	vec4 kd = vec4(0.6f, 0.6f, 0.6f, 0.0f);
+	vec4 ks = vec4(0.6f, 0.6f, 0.6f, 0.0f);
 	vec4 el = vec4(1.0f, 1.0f, 1.0f, 0.0f);
 	vec4 light = vec4(2.0f, 2.0f, 2.0f, 0.0f);
 
