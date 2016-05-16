@@ -32,6 +32,8 @@ private:
 	bt_vec3 cameraPos;
 
 	bt_vec3 getCameraPosition();
+	bt_mat4 getInversePerspective();
+	bt_mat4 getInverseLookAt(bt_vec3 *eye, bt_vec3 *center, bt_vec3 *up);
 	bt_mat4 getLookAtMatrix(bt_vec3 *eye, bt_vec3 *target, bt_vec3 *up);
 };
 

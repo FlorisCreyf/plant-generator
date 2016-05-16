@@ -46,16 +46,31 @@ void Camera::setPerspective(float fovy, float near, float far, float aspect)
 	};
 }
 
+bt_mat4 Camera::getInversePerspective()
+{
+	float a = perspective.m[0][0];
+	float b = perspective.m[1][1];
+	float c = perspective.m[2][2];
+	float d = perspective.m[2][3];
+	float e = perspective.m[3][2];
+
+	return (bt_mat4){
+		1.0f/a, 0.0f, 0.0f, 0.0f,
+		0.0f, 1.0f/b, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 1.0f/e,
+		0.0f, 0.0f, 1.0f/d, -c/(e*d)
+	};
+}
+
 bt_mat4 Camera::getCrystalBallMatrix()
 {
 	bt_vec3 eye = getCameraPosition();
 	bt_vec3 target = (bt_vec3){0.0f, 0.0f, 0.0f};
 	bt_vec3 up = (bt_vec3){0.0f, 1.0f, 0.0f};
-
-	bt_mat4 l = getLookAtMatrix(&eye, &target, &up);	
 	
-	bt_mat4 t = bt_translate(0.0f, -1.0f, 0.0f);
-	l = bt_mult_mat4(&l, &t);
+	eye.y += 2.0f;
+	target.y += 2.0f;
+	bt_mat4 l = getLookAtMatrix(&eye, &target, &up);
 
 	return bt_mult_mat4(&perspective, &l);
 }
@@ -93,6 +108,29 @@ bt_mat4 Camera::getLookAtMatrix(bt_vec3 *eye, bt_vec3 *center, bt_vec3 *up)
 		b.z, c.z, -a.z, 0.0f,
 		x, y, z, 1.0f
 	};
+}
+
+/** 
+ * View = Rotation * Translation
+ * View_inv = [R_inv * e1 | R_inv * e2 | R_inv * e2 | R_inv * T3_inv]
+ */
+bt_mat4 Camera::getInverseLookAt(bt_vec3 *eye, bt_vec3 *center, bt_vec3 *up)
+{
+	mat4 a = getLookAtMatrix(eye, center, up);
+	mat4 b = (mat4){0.0f};
+	
+	b.m[3][3] = 1.0f;
+	for (int i = 0; i < 3;i++)
+		for (int j = 0; j < 3; j++)
+			b.m[i][j] = a.m[j][i];
+
+	vec3 t = (vec3){a.m[3][0], a.m[3][1], a.m[3][2]};
+	bt_transform(&t, &b, 0.0f);
+	b.m[3][0] = -t.x;
+	b.m[3][1] = -t.y;
+	b.m[3][2] = -t.z;
+
+	return b;
 }
 
 bt_vec3 Camera::getPosition()
