@@ -64,15 +64,33 @@ bt_mat4 Camera::getInversePerspective()
 
 bt_mat4 Camera::getCrystalBallMatrix()
 {
+	bt_mat4 l;
+	bt_vec3 eye = getCameraPosition();
+	bt_vec3 target = (bt_vec3){0.0f, 0.0f, 0.0f};
+	bt_vec3 up = (bt_vec3){0.0f, 1.0f, 0.0f};
+
+	eye.y += 2.0f;
+	target.y += 2.0f;
+
+	l = getLookAtMatrix(&eye, &target, &up);
+
+	return bt_mult_mat4(&perspective, &l);
+}
+
+bt_mat4 Camera::getInverseVP()
+{
+	bt_mat4 invP = getInversePerspective();
+	bt_mat4 invL;
 	bt_vec3 eye = getCameraPosition();
 	bt_vec3 target = (bt_vec3){0.0f, 0.0f, 0.0f};
 	bt_vec3 up = (bt_vec3){0.0f, 1.0f, 0.0f};
 	
 	eye.y += 2.0f;
 	target.y += 2.0f;
-	bt_mat4 l = getLookAtMatrix(&eye, &target, &up);
 
-	return bt_mult_mat4(&perspective, &l);
+	invL = getInverseLookAt(&eye, &target, &up);
+
+	return bt_mult_mat4(&invL, &invP);
 }
 
 bt_vec3 Camera::getCameraPosition()
@@ -137,4 +155,5 @@ bt_vec3 Camera::getPosition()
 {
 	return cameraPos;
 }
+
 
