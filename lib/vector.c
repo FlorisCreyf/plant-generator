@@ -77,6 +77,16 @@ void bt_normalize_vec3(vec3 *a)
 	a->z /= m;
 }
 
+mat4 bt_transpose_mat4(mat4 *m)
+{
+	mat4 t;
+	int i, j;
+	for (i = 0; i < 4; i++)
+		for (j = 0; j < 4; j++)
+			t.m[i][j] = m->m[j][i];
+	return t;
+}
+
 mat4 bt_rotate_into_vec(vec3 *normal, vec3 *direction)
 {
 	vec3 v = bt_cross_vec3(normal, direction);
@@ -100,16 +110,17 @@ mat4 bt_translate(float x, float y, float z)
 	};
 }
 
-void bt_transform(vec3 *v, mat4 *t, float w)
+float bt_transform(vec3 *v, mat4 *t, float w)
 {
-	float x, y, z;
+	float x, y, z, h;
 	x = v->x*t->m[0][0] + v->y*t->m[1][0] + v->z*t->m[2][0] + t->m[3][0]*w;
 	y = v->x*t->m[0][1] + v->y*t->m[1][1] + v->z*t->m[2][1] + t->m[3][1]*w;
 	z = v->x*t->m[0][2] + v->y*t->m[1][2] + v->z*t->m[2][2] + t->m[3][2]*w;
-
+	h = v->x*t->m[0][3] + v->y*t->m[1][3] + v->z*t->m[2][3] + t->m[3][3]*w;
 	v->x = x;
 	v->y = y;
 	v->z = z;
+	return h;
 }
 
 quat bt_from_axis_angle(float x, float y, float z, float theta)
