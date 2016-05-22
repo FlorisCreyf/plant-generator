@@ -10,7 +10,32 @@
 #include "scene.h"
 #include "collision.h"
 
-void findMesh(int w, int h, int x, int y, bt_mat4 inv)
+Scene::Scene()
+{
+	count = 0;
+}
+
+int Scene::newObject()
+{
+	return count++;
+}
+
+void Scene::createVBO(int id, int size)
+{
+
+}
+
+void Scene::createEBO(int id, int size)
+{
+
+}
+
+void Scene::addAttrib(int id, int index, int size, int stride, int start)
+{
+
+}
+
+void Scene::getObject(int w, int h, int x, int y, bt_mat4 inv)
 {
 
 }
@@ -28,3 +53,4 @@ bt_vec3 Scene::getRayDirection(int w, int h, int x, int y, bt_mat4 inv)
 
 	return bt_mult_vec3(1.0f / hm, &p);;
 }
+

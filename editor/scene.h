@@ -11,13 +11,29 @@
 #define SCENE_H
 
 #include "vector.h"
+#include <vector>
 
 class Scene
 {
 public:
-	void findMesh(int w, int h, int x, int y, bt_mat4 inv);	
+	Scene();
+	int newObject();
+	void createVBO(int id, int size);
+	void createEBO(int id, int size);
+	void addAttrib(int id, int index, int size, int stride, int start);
+	void getObject(int w, int h, int x, int y, bt_mat4 inv);
 
 private:
+	int count;
+	struct object {
+		int id;
+		float *vb;
+		float *pb;
+		unsigned short *eb;
+		bool visible;
+	};
+	std::vector<object> objects;
+
 	bt_vec3 getRayDirection(int w, int h, int x, int y, bt_mat4 inv);
 
 };
