@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2016 Floris Creyf
  *
  * This program is free software; you can redistribute it and/or modify
@@ -9,48 +9,24 @@
 
 #include "scene.h"
 #include "collision.h"
+#include <cstdio>
 
-Scene::Scene()
+void Scene::add(Mesh m)
 {
-	count = 0;
+	meshes.push_back(m);
 }
 
-int Scene::newObject()
+void Scene::add(Line l)
 {
-	return count++;
+	lines.push_back(l);
 }
 
-void Scene::createVBO(int id, int size)
+Mesh Scene::getMesh(int i)
 {
-
+	return meshes[i];
 }
 
-void Scene::createEBO(int id, int size)
-{
-
-}
-
-void Scene::addAttrib(int id, int index, int size, int stride, int start)
+void Scene::get(bt_vec3 origin, bt_vec3 direction)
 {
 
 }
-
-void Scene::getObject(int w, int h, int x, int y, bt_mat4 inv)
-{
-
-}
-
-bt_vec3 Scene::getRayDirection(int w, int h, int x, int y, bt_mat4 inv)
-{
-	bt_vec3 p;
-	float hm;
-
-	p.x = (2.0f * x) / w - 1.0f;
-	p.y = (2.0f * y) / h - 1.0f;
-	p.z = 0.0f;
-
-	hm = bt_transform(&p, &inv, 0.0f);
-
-	return bt_mult_vec3(1.0f / hm, &p);;
-}
-

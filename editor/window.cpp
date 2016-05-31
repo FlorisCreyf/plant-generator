@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2016 Floris Creyf
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,7 +13,6 @@
 Window::Window()
 {
 	widget.setupUi(this);
-
 }
 
 Window::~Window()
@@ -43,4 +42,3 @@ void Window::exportDialogBox()
 	QByteArray b = filename.toLatin1();
 	widget.scene->exportObject(b.data());
 }
-

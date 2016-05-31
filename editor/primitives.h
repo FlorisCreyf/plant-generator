@@ -7,21 +7,11 @@
  * (at your option) any later version.
  */
 
-#ifndef GRID_H
-#define GRID_H
+#ifndef PRIMITIVES_H
+#define PRIMITIVES_H
 
-class Grid
-{
-public:
-	Grid(int sections);
-	~Grid();
-		
-	float *getBuffer() const;
-	int getVertexCount() const;
+#include "objects.h"
 
-private:
-	float *grid;
-	int vertexCount;
-};
+Line createGrid(int sections);
 
-#endif /* GRID_H */
+#endif /* PRIMITIVES_H */

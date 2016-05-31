@@ -3,8 +3,8 @@
 layout (location = 0) in vec4 point;
 layout (location = 1) in vec4 normal;
 
-uniform mat4 matrix;
-uniform vec4 cameraPos;
+uniform mat4 vp;
+uniform vec4 cameraPosition;
 
 out vec3 iColor;
 
@@ -16,7 +16,7 @@ void main()
 	vec4 el = vec4(1.0f, 1.0f, 1.0f, 0.0f);
 	vec4 light = vec4(2.0f, 2.0f, 2.0f, 0.0f);
 
-	vec4 v = normalize(cameraPos - point);	
+	vec4 v = normalize(cameraPosition - point);
 	vec4 h = normalize(v + light);
 
 	float costh = clamp(dot(normal, h), 0.0f, 1.0f);
@@ -27,5 +27,5 @@ void main()
 	iColor.r = lo.r;
 	iColor.g = lo.g;
 	iColor.b = lo.b;
-	gl_Position = matrix * point;
+	gl_Position = vp * point;
 }

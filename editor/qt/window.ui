@@ -20,7 +20,7 @@
   <property name="styleSheet">
    <string notr="true">QMenu {
 	background-color:#666;
-	border:1px solid #777;	
+	border:1px solid #777;
 	font-family:&quot;arial&quot; ;
 	font-size:9pt;
 	color:#fff;
@@ -38,12 +38,10 @@
 	background-color:#777;
 	height:1px;
 } QMenuBar {
-	font-family:&quot;arial&quot; ;
 	font-size:9pt;
 	margin:0;
 	spacing:0;
 	background-color:#666;
-	border-bottom:1px solid #444;
 } QMenuBar::item {
 	color:#ddd;
 	margin:3px;
@@ -110,6 +108,9 @@
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
+         <property name="styleSheet">
+          <string notr="true">border:outset #999 2px;</string>
+         </property>
         </widget>
        </item>
       </layout>
@@ -123,7 +124,7 @@
      <x>0</x>
      <y>0</y>
      <width>1200</width>
-     <height>24</height>
+     <height>27</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

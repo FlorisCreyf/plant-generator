@@ -1,9 +1,12 @@
 #version 330 core
 
 layout (location = 0) in vec4 vPosition;
-uniform mat4 matrix;
+layout (location = 1) in vec4 vColor;
+uniform mat4 vp;
+out vec4 iColor;
 
 void main()
 {
-	gl_Position = matrix * vPosition;
+	iColor = vColor;
+	gl_Position = vp * vPosition;
 }

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2016 Floris Creyf
  *
  * This program is free software; you can redistribute it and/or modify
@@ -7,25 +7,21 @@
  * (at your option) any later version.
  */
 
-#ifndef SCENE_H
-#define SCENE_H
+#ifndef FILE_EXPORTER_H
+#define FILE_EXPORTER_H
 
-#include "objects.h"
-#include "render_system.h"
-#include "vector.h"
-#include <vector>
-
-class Scene
+class FileExporter
 {
 public:
-	void add(Mesh m);
-	void add(Line l);
-	void get(bt_vec3 origin, bt_vec3 direction);
-	Mesh getMesh(int i);
+	void setVertices(float *vertices, int size);
+	void setTriangles(unsigned short *triangles, int size);
+	void exportObj(const char *filename);
 
 private:
-	std::vector<Mesh> meshes;
-	std::vector<Line> lines;
+	float* vb;
+	int vbSize;
+	unsigned short* eb;
+	int ebSize;
 };
 
-#endif /* SCENE_H */
+#endif /* FILE_EXPORTER_H */

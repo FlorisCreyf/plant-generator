@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2016 Floris Creyf
  *
  * This program is free software; you can redistribute it and/or modify
@@ -7,41 +7,34 @@
  * (at your option) any later version.
  */
 
-#include "file_export.h"
+#include "file_exporter.h"
 #include <cstdio>
 
-FileExport::FileExport()
-{
-	vbSize = ebSize = 0;
-}
-
 /* Interleaved buffer */
-void FileExport::setVertexBuffer(float *vb, int size)
+void FileExporter::setVertices(float *vertices, int size)
 {
-	this->vb = vb;
+	this->vb = vertices;
 	this->vbSize = size;
 }
 
-void FileExport::setElementBuffer(unsigned short *eb, int size)
+void FileExporter::setTriangles(unsigned short *triangles, int size)
 {
-	this->eb = eb;
+	this->eb = triangles;
 	this->ebSize = size;
 }
 
-void FileExport::exportObj(const char *filename)
+void FileExporter::exportObj(const char *filename)
 {
 	FILE *f = fopen(filename, "w");
-	int i;
 
-	for (i = 0; i < vbSize * 6; i += 6) {
+	for (int i = 0; i < vbSize * 6; i += 6) {
 		fprintf(f, "v %f %f %f\n", vb[i], vb[i+1], vb[i+2]);
 		fprintf(f, "vn %f %f %f\n", vb[i+3], vb[i+4], vb[i+5]);
 	}
 
-	for (i = 0; i < ebSize; i += 3) {
+	for (int i = 0; i < ebSize; i += 3) {
 		fprintf(f, "f %d %d %d\n", eb[i]+1, eb[i+1]+1, eb[i+2]+1);
 	}
 
 	fclose(f);
 }
-

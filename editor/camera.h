@@ -16,15 +16,15 @@ class Camera
 {
 public:
 	Camera();
-
 	void setStartCoordinates(float x, float y);
 	void setCoordinates(float x, float y);
 	void setPerspective(float fovy, float near, float far, float aspect);
 	bt_vec3 getPosition();
-	bt_mat4 getCrystalBallMatrix();
+	bt_mat4 getVP();
+	bt_vec3 getRayDirection(int w, int h, int x, int y);
 
 private:
-	struct point {
+	struct Point {
 		float x;
 		float y;
 	} startPosition, position;
@@ -36,7 +36,6 @@ private:
 	bt_mat4 getInversePerspective();
 	bt_mat4 getInverseLookAt(bt_vec3 *eye, bt_vec3 *center, bt_vec3 *up);
 	bt_mat4 getLookAtMatrix(bt_vec3 *eye, bt_vec3 *target, bt_vec3 *up);
-	bt_vec3 getRayDirection(int width, int height);
 };
 
 #endif /* CAMERA_H */

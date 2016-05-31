@@ -7,25 +7,27 @@
  * (at your option) any later version.
  */
 
-#ifndef SCENE_H
-#define SCENE_H
+#ifndef OBJECTS_H
+#define OBJECTS_H
 
-#include "objects.h"
-#include "render_system.h"
 #include "vector.h"
 #include <vector>
 
-class Scene
-{
-public:
-	void add(Mesh m);
-	void add(Line l);
-	void get(bt_vec3 origin, bt_vec3 direction);
-	Mesh getMesh(int i);
-
-private:
-	std::vector<Mesh> meshes;
-	std::vector<Line> lines;
+struct Mesh {
+	int program;
+	int attribs;
+	int stride;
+	std::vector<float> vertices;
+	std::vector<float *> subMeshes;
+	std::vector<unsigned short> triangles; 
 };
 
-#endif /* SCENE_H */
+struct Line {
+	int program;
+	int attribs;
+	int stride;
+	float width;
+	std::vector<float> vertices;
+};
+
+#endif /* OBJECTS_H */

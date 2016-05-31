@@ -13,7 +13,8 @@
 #define GL_GLEXT_PROTOTYPES
 
 #include "bluetree.h"
-#include "grid.h"
+#include "render_system.h"
+#include "scene.h"
 #include "camera.h"
 #include <GL/gl.h>
 #include <QtOpenGL/QGLWidget>
@@ -38,23 +39,11 @@ protected:
 
 private:
 	bt_tree tree;
+	Scene scene;
 	Camera camera;
-	Grid grid;
-
-	GLint programs[2];
-	struct ShaderInfo {
-		GLenum type;
-		const char *filename;
-	};
+	RenderSystem rs;
 	
-	GLuint VAOs[2];
-	GLfloat *vbo;
-	GLushort *ebo;
-
-	void initializeGrid();
 	void initializeTree();
-	void initializeShader(bt_mat4 *mvp);
-	GLuint loadShaders(ShaderInfo *info, int size);
 };
 
 #endif /* VIEW_EDITOR_H */
