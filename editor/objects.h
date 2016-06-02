@@ -17,6 +17,8 @@ struct Mesh {
 	int program;
 	int attribs;
 	int stride;
+	int tusage;
+	int vusage;
 	std::vector<float> vertices;
 	std::vector<float *> subMeshes;
 	std::vector<unsigned short> triangles; 

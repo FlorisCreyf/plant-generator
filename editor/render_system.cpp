@@ -14,7 +14,7 @@
 RenderSystem::RenderSystem()
 {
 	wireWidth = 1.0f;
-	wireProgram = 0;
+	wireProgram = 2;
 }
 
 void RenderSystem::addVAO(unsigned int &vao, int attribs, int stride,
@@ -35,13 +35,14 @@ void RenderSystem::addVAO(unsigned int &vao, int attribs, int stride,
 	}
 }
 
-void RenderSystem::registerEntity(Mesh &m, int triangles)
+void RenderSystem::registerEntity(Mesh &m)
 {
 	GLuint buffer;
 	int ts = m.triangles.size();
 	unsigned short *t = &m.triangles[0];
 
-	Item item = (Item){0, 0, triangles, m.program, 0};
+	Item item = (Item){0, 0, m.tusage, m.program, 0};
+	item.wireframe = false;
 	addVAO(item.vao, m.attribs, m.stride*2, m.vertices);
 	mItems.push_back(item);
 
@@ -73,6 +74,12 @@ void RenderSystem::switchProgram(int program, GlobalUniforms &gu)
 {
 	glUseProgram(programs[program]);
 	setGlobalUniforms(gu, programs[program]);
+}
+
+void RenderSystem::setWireframe(int id, bool value)
+{
+	if (id >= 0)
+		mItems[id].wireframe = value;
 }
 
 void RenderSystem::renderMesh(Item &item)
@@ -120,6 +127,7 @@ void RenderSystem::render(GlobalUniforms &gu)
 
 	for (int i = 0; i < (int)lItems.size(); i++) {
 		switchProgram(lItems[i].program, gu);
+		glLineWidth(lItems[i].width);
 		renderLine(lItems[i]);
 	}
 

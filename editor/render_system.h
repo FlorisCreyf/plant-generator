@@ -30,13 +30,14 @@ class RenderSystem
 {
 public:
 	RenderSystem();
-	void registerEntity(Mesh &m, int triangles);
+	void registerEntity(Mesh &m);
 	void registerEntity(Line &l);
 	void render(GlobalUniforms &gu);
 	void loadShaders(ShaderInfo *info, int size);
+	void setWireframe(int id, bool value);
 
 private:
-	int wireWidth;
+	float wireWidth;
 	int wireProgram;
 	struct Item {
 		GLuint vao;

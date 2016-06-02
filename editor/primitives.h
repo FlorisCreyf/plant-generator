@@ -11,7 +11,9 @@
 #define PRIMITIVES_H
 
 #include "objects.h"
+#include "collision.h"
 
 Line createGrid(int sections);
+Line createBox(bt_aabb &b);
 
 #endif /* PRIMITIVES_H */

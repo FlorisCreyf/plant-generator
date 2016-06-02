@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2016 Floris Creyf
  *
  * This program is free software; you can redistribute it and/or modify
@@ -27,13 +27,13 @@ quat get_branch_direction()
 {
 	float ax, ay;
 	quat qx, qy;
-	
+
 	ax = (float)rand() / RAND_MAX;
 	ay = (float)rand() / RAND_MAX;
-	
+
 	qx = bt_from_axis_angle(1.0f, 0.0f, 0.0f, M_PI / 2.0f - ax);
 	qy = bt_from_axis_angle(0.0f, 1.0f, 0.0f, ay * M_PI * 2.0f);
-	
+
 	return bt_mult_quat(&qy, &qx);
 }
 
@@ -60,16 +60,16 @@ void add_lateral_branches(node *stem)
 	float diff;
 	const int total = 7;
 	int i;
-	
+
 	stem->branches = malloc(sizeof(node) * total);
 	stem->branch_count += total;
 
 	for (i = 0; i < total; i++) {
 		diff = pow(i + 1.0f, 0.3f);
 		n = &stem->branches[i];
-		n->radius = stem->radius * 0.4f / diff;
+		n->radius = stem->radius * 0.35f / diff;
 		n->cross_sections = 3;
-		n->branch_resolution = stem->branch_resolution / 2;
+		n->branch_resolution = stem->branch_resolution - 4;
 		n->branch_length = stem->branch_length * 0.5f / diff;
 		n->direction = get_branch_direction();;
 		n->position = get_position(n, stem, i);
@@ -83,11 +83,11 @@ void add_dichotomous_branches(node *stem)
 
 	direction.x = -direction.x;
 	direction.z = -direction.z;
-	
+
 }
 
 node *new_tree_structure(tree_data *td)
-{	
+{
 	node *root = (node *)malloc(sizeof(struct node_tag));
 	root->branch_depth = 1;
 	root->direction = (quat){0.0f, 0.0f, 0.0f, 0.0f};
@@ -100,7 +100,7 @@ node *new_tree_structure(tree_data *td)
 
 	max_branch_depth = td->max_branch_depth;
 
-	add_lateral_branches(root);	
+	add_lateral_branches(root);
 
 	return root;
 }
@@ -109,4 +109,3 @@ void free_tree_structure(node *root)
 {
 	remove_nodes(root);
 }
-
