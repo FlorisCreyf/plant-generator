@@ -13,20 +13,47 @@
 
 Camera::Camera()
 {
-	startPosition = (Point){0.0f, 0.0f};
-	position = (Point){0.0f, 0.0f};
+	up = {0.0f, 1.0f, 0.0f};
+	posDiff = {0.0f, 0.0f};
+	pos = {0.0f, 0.0f};
+	ftarget = target = {0.0f, 2.0f, 0.0f};
+	fdistance = distance = 10.0f;
 }
 
 void Camera::setStartCoordinates(float x, float y)
 {
-	startPosition.x = x - (position.x - startPosition.x);
-	startPosition.y = y - (position.y - startPosition.y);
-	position = (Point){x, y};
+	posDiff.x = x - (pos.x - posDiff.x);
+	posDiff.y = y - (pos.y - posDiff.y);
+	start.y = y;
+	start.x = x;
+	pos = {x, y};
+	fdistance = distance;
+	ftarget = target;
 }
 
 void Camera::setCoordinates(float x, float y)
 {
-	position = (Point){x, y};
+	pos = {x, y};
+}
+
+void Camera::setPan(float x, float y)
+{
+	vec3 a, b, f;
+	vec3 eye = getCameraPosition();
+	vec3 dir = bt_sub_vec3(&eye, &target);
+	bt_normalize_vec3(&dir);
+	float panSpeed = distance * 0.002f;
+
+	a = bt_cross_vec3(&dir, &up);
+	b = bt_cross_vec3(&dir, &a);
+
+	bt_normalize_vec3(&a);
+	bt_normalize_vec3(&b);
+
+	a = bt_mult_vec3((x - start.x)*panSpeed, &a);
+	b = bt_mult_vec3((start.y - y)*panSpeed, &b);
+	f = bt_add_vec3(&a, &b);
+	target = bt_add_vec3(&f, &ftarget);
 }
 
 void Camera::setWindowSize(int width, int height)
@@ -35,32 +62,47 @@ void Camera::setWindowSize(int width, int height)
 	winHeight = height;
 }
 
+void Camera::zoom(float x, float y)
+{
+	float b = (y - start.y) / 10.0f;
+	if (fdistance + b > 0)
+		distance = fdistance + b;
+}
+
 bt_vec3 Camera::getCameraPosition()
 {
 	const float toRadian = M_PI / 180.0f;
-	float distance = 10.0f;
-	float x = (position.x - startPosition.x) * toRadian;
-	float y = (position.y - startPosition.y) * toRadian;
-	cameraPos.x = distance * cos(x) * cos(y);
-	cameraPos.y = distance * sin(y) + 2.0f;
-	cameraPos.z = distance * sin(x) * cos(y);
-	return cameraPos;
+	float x = (pos.x - posDiff.x) * toRadian * 0.5f;
+	float y = (pos.y - posDiff.y) * toRadian * 0.5f;
+	eye.x = distance * cos(x) * cos(y) + target.x;
+	eye.y = distance * sin(y) + target.y;
+	eye.z = distance * sin(x) * cos(y) + target.z;
+
+	if (std::abs(x) >= M_PI*2.0f)
+		posDiff.x = pos.x;
+	if (std::abs(y) >= M_PI*2.0f)
+		posDiff.y = pos.y;
+	else if (std::abs(y) < M_PI*0.5f)
+		up = {0.0f, 1.0f, 0.0f};
+	else if (std::abs(y) < M_PI*1.5f)
+		up = {0.0f, -1.0f, 0.0f};
+	else if (std::abs(y) >= M_PI*1.5f)
+		up = {0.0f, 1.0f, 0.0f};
+	else if (std::abs(y) >= M_PI*0.5f)
+		up = {0.0f, -1.0f, 0.0f};
+
+	return eye;
 }
 
 bt_vec3 Camera::getPosition()
 {
-	return cameraPos;
+	return eye;
 }
 
 bt_mat4 Camera::getVP()
 {
-	bt_mat4 l;
 	bt_vec3 eye = getCameraPosition();
-	bt_vec3 target = (bt_vec3){0.0f, 2.0f, 0.0f};
-	bt_vec3 up = (bt_vec3){0.0f, 1.0f, 0.0f};
-
-	l = getLookAtMatrix(&eye, &target, &up);
-
+	bt_mat4 l = getLookAtMatrix(&eye, &target, &up);
 	return bt_mult_mat4(&perspective, &l);
 }
 
@@ -94,25 +136,18 @@ bt_mat4 Camera::getLookAtMatrix(bt_vec3 *eye, bt_vec3 *center, bt_vec3 *up)
 	};
 }
 
-/**
- * View = Rotation * Translation
- * View_inv = [R_inv * e1 | R_inv * e2 | R_inv * e2 | R_inv * T3_inv]
- */
 bt_mat4 Camera::getInverseLookAt()
 {
 	bt_vec3 eye = getCameraPosition();
-	bt_vec3 center = (bt_vec3){0.0f, 2.0f, 0.0f};
-	bt_vec3 up = (bt_vec3){0.0f, 1.0f, 0.0f};
-
-	bt_mat4 a = getLookAtMatrix(&eye, &center, &up);
-	bt_mat4 b = (bt_mat4){0.0f};
+	bt_mat4 a = getLookAtMatrix(&eye, &target, &up);
+	bt_mat4 b = {0.0f};
 
 	b.m[3][3] = 1.0f;
 	for (int i = 0; i < 3;i++)
 		for (int j = 0; j < 3; j++)
 			b.m[i][j] = a.m[j][i];
 
-	bt_vec3 t = (bt_vec3){a.m[3][0], a.m[3][1], a.m[3][2]};
+	bt_vec3 t = {a.m[3][0], a.m[3][1], a.m[3][2]};
 	bt_transform(&t, &b, 0.0f);
 	b.m[3][0] = -t.x;
 	b.m[3][1] = -t.y;

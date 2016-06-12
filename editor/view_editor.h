@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2016 Floris Creyf
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,35 +16,41 @@
 #include "render_system.h"
 #include "scene.h"
 #include "camera.h"
-#include <GL/gl.h>
-#include <QtOpenGL/QGLWidget>
+#include <QtGui/QOpenGLFunctions>
 
-class ViewEditor : public QGLWidget
+#include <QOpenGLWidget>
+
+
+class ViewEditor : public QOpenGLWidget, protected QOpenGLFunctions
 {
-	Q_OBJECT
-
 public:
 	ViewEditor(QWidget *parent = 0);
 	~ViewEditor();
-	
-	void exportObject(const char *filename);	
+
+	void exportObject(const char *filename);
 
 protected:
 	void initializeGL();
 	void paintGL();
 	void resizeGL(int width, int height);
 	void mousePressEvent(QMouseEvent *);
+	void mouseReleaseEvent(QMouseEvent *);
 	void keyPressEvent(QKeyEvent *);
+	void keyReleaseEvent(QKeyEvent *);
 	void mouseMoveEvent(QMouseEvent *);
 
 private:
+	bool ctrl;
+	bool shift;
+	bool midButton;
+
 	bt_tree tree;
 	Scene scene;
 	Camera camera;
+	QOpenGLContext ctx;
 	RenderSystem rs;
-	
+
 	void initializeTree();
 };
 
 #endif /* VIEW_EDITOR_H */
-

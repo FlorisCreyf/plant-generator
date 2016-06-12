@@ -17,22 +17,38 @@ class Camera
 public:
 	Camera();
 	void setStartCoordinates(float x, float y);
+	void setPan(float x, float y);
 	void setCoordinates(float x, float y);
 	void setPerspective(float fovy, float near, float far, float aspect);
 	void setWindowSize(int width, int height);
+	void zoom(float x, float y);
 	bt_vec3 getPosition();
 	bt_mat4 getVP();
 	bt_vec3 getRayDirection(int x, int y);
+
+	enum Action {
+		ZOOM, ROTATE, PAN, NONE
+	} action;
 
 private:
 	struct Point {
 		float x;
 		float y;
-	} startPosition, position;
+	};
+	Point posDiff;
+	Point pos;
+	Point start;
+
 	bt_mat4 perspective;
-	bt_vec3 cameraPos;
+	bt_vec3 up;
+	bt_vec3 eye;
+	bt_vec3 feye;
+	bt_vec3 target;
+	bt_vec3 ftarget;
 	float winWidth;
 	float winHeight;
+	float distance;
+	float fdistance;
 
 	bt_vec3 getCameraPosition();
 	bt_mat4 getInverseVP();

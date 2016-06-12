@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2016 Floris Creyf
  *
  * This program is free software; you can redistribute it and/or modify
@@ -12,6 +12,14 @@
 
 int main(int argc, char *argv[])
 {
+	QSurfaceFormat format;
+	format.setVersion(3, 3);
+	format.setSamples(4);
+	format.setProfile(QSurfaceFormat::CoreProfile);
+	format.setDepthBufferSize(24);
+        format.setStencilBufferSize(8);
+	QSurfaceFormat::setDefaultFormat(format);
+
 	QApplication app(argc, argv);
 
 	Window window;
@@ -19,4 +27,3 @@ int main(int argc, char *argv[])
 
 	return app.exec();
 }
-

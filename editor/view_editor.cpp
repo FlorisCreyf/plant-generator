@@ -15,19 +15,9 @@
 #include <QtGui/QMouseEvent>
 #include <QtOpenGL/QGLFormat>
 
-ViewEditor::ViewEditor(QWidget *parent) : QGLWidget(parent)
+ViewEditor::ViewEditor(QWidget *parent) : QOpenGLWidget(parent)
 {
-	QGLFormat format;
-	format.setVersion(3, 3);
-	format.setProfile(QGLFormat::CoreProfile);
-	format.setSampleBuffers(true);
-	setFormat(format);
-	makeCurrent();
-
-	glEnable(GL_DEPTH_TEST);
-	glDepthMask(GL_TRUE);
-	glDepthFunc(GL_LEQUAL);
-	glDepthRange(0.0f, 1.0f);
+	setFocus();
 }
 
 ViewEditor::~ViewEditor()
@@ -46,6 +36,13 @@ void ViewEditor::exportObject(const char *filename)
 
 void ViewEditor::initializeGL()
 {
+	initializeOpenGLFunctions();
+
+	glEnable(GL_DEPTH_TEST);
+	glDepthMask(GL_TRUE);
+	glDepthFunc(GL_LEQUAL);
+	glDepthRange(0.0f, 1.0f);
+
 	Line l = createGrid(5);
 	rs.registerEntity(l);
 	initializeTree();
@@ -70,7 +67,7 @@ void ViewEditor::resizeGL(int width, int height)
 	camera.setWindowSize(width, height);
 	camera.setPerspective(45.0f, 1.0f, 100.0f, aspectRatio);
 	glViewport(0, 0, width, height);
-	glDraw();
+	paintGL();
 }
 
 void ViewEditor::initializeTree()
@@ -86,7 +83,7 @@ void ViewEditor::initializeTree()
 	m.program = 1;
 
 	tree = bt_new_tree();
-	bt_set_trunk_radius(tree, 0.25f);
+	bt_set_trunk_radius(tree, 0.2f);
 	bt_set_resolution(tree, 12);
 	bt_set_max_branch_depth(tree, 1);
 	bt_generate_structure(tree);
@@ -104,34 +101,82 @@ void ViewEditor::initializeTree()
 
 void ViewEditor::keyPressEvent(QKeyEvent *event)
 {
+	switch (event->key()) {
+	case Qt::Key_Control:
+		ctrl = true;
+		break;
+	case Qt::Key_Shift:
+		shift = true;
+		break;
+	}
+}
 
+void ViewEditor::keyReleaseEvent(QKeyEvent *event)
+{
+
+	switch (event->key()) {
+	case Qt::Key_Control:
+		ctrl = false;
+		break;
+	case Qt::Key_Shift:
+		shift = false;
+		break;
+	}
 }
 
 void ViewEditor::mousePressEvent(QMouseEvent *event)
 {
 	QPoint p = event->pos();
-	camera.setStartCoordinates(p.x(), p.y());
+	midButton = false;
+
+	if (event->button() == Qt::MidButton) {
+		camera.setStartCoordinates(p.x(), p.y());
+		midButton = true;
+
+		if (ctrl && !shift)
+			camera.action = Camera::ZOOM;
+		else if (shift && !ctrl)
+			camera.action = Camera::PAN;
+		else
+			camera.action = Camera::ROTATE;
+	} else if (event->button() == Qt::LeftButton) {
+		int s = scene.getSelected();
+		rs.setWireframe(s, false);
+		s = scene.setSelected(camera, p.x(), p.y());
+		rs.setWireframe(s, true);
+		update();
+	}
+
 	setFocus();
+}
 
-	int s = scene.getSelected();
-	rs.setWireframe(s, false);
-	s = scene.setSelected(camera, p.x(), p.y());
-	rs.setWireframe(s, true);
-
-	glDraw();
+void ViewEditor::mouseReleaseEvent(QMouseEvent *event)
+{
+	camera.action = Camera::NONE;
 }
 
 void ViewEditor::mouseMoveEvent(QMouseEvent *event)
 {
 	QPoint point = event->pos();
-	camera.setCoordinates(point.x(), point.y());
-	glDraw();
+
+	switch (camera.action) {
+	case Camera::ZOOM:
+		camera.zoom(point.x(), point.y());
+		break;
+	case Camera::ROTATE:
+		camera.setCoordinates(point.x(), point.y());
+		break;
+	case Camera::PAN:
+		camera.setPan(point.x(), point.y());
+		break;
+	}
+
+	update();
 }
 
 void ViewEditor::paintGL()
 {
 	GlobalUniforms gu;
-
 	gu.vp = camera.getVP();
 	gu.cameraPosition = camera.getPosition();
 	rs.render(gu);

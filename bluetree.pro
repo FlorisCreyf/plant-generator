@@ -8,6 +8,6 @@ MOC_DIR = editor/qt
 RCC_DIR = editor/qt
 UI_DIR = editor/qt
 OBJECTS_DIR = build
-LIBS += -lGL -L ./lib -lbluetree
+LIBS += -L ./lib -lbluetree
 INCLUDEPATH = ./lib/include
 

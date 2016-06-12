@@ -53,6 +53,7 @@ void RenderSystem::registerEntity(Mesh &m)
 
 void RenderSystem::registerEntity(Line &l)
 {
+	initializeOpenGLFunctions();
 	int vertices = l.vertices.size() / 3;
 	Item item = (Item){0, 0, vertices, l.program, l.width};
 	addVAO(item.vao, l.attribs, l.stride*2, l.vertices);
@@ -127,7 +128,7 @@ void RenderSystem::render(GlobalUniforms &gu)
 
 	for (int i = 0; i < (int)lItems.size(); i++) {
 		switchProgram(lItems[i].program, gu);
-		glLineWidth(lItems[i].width);
+		glLineWidth(10.0f);
 		renderLine(lItems[i]);
 	}
 
@@ -165,7 +166,7 @@ void RenderSystem::loadShaders(ShaderInfo *info, int size)
 
 		fclose(file);
 
-		glShaderSource(shader, 1, &buffer, &size);
+		glShaderSource(shader, 1, (const char**)&buffer, &size);
 		glCompileShader(shader);
 
 		glGetShaderiv(shader, GL_COMPILE_STATUS, &status);

@@ -14,7 +14,7 @@
 
 #include "objects.h"
 #include <vector>
-#include <GL/gl.h>
+#include <QOpenGLFunctions>
 
 struct ShaderInfo {
 	GLenum type;
@@ -26,7 +26,7 @@ struct GlobalUniforms {
 	bt_vec3 cameraPosition;
 };
 
-class RenderSystem
+class RenderSystem : protected QOpenGLFunctions
 {
 public:
 	RenderSystem();
@@ -62,7 +62,5 @@ private:
 			const std::vector<float> &vertices);
 	void switchProgram(int program, GlobalUniforms &gu);
 };
-
-
 
 #endif /* RENDER_SYSTEM_H */
