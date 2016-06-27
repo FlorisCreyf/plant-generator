@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2016 Floris Creyf
  *
  * This program is free software; you can redistribute it and/or modify
@@ -60,14 +60,16 @@ bt_mat4 bt_mult_mat4(bt_mat4 *a, bt_mat4 *b);
 bt_mat4 bt_rotate_into_vec(bt_vec3 *normal, bt_vec3 *direction);
 bt_mat4 bt_translate(float x, float y, float z);
 float bt_transform(bt_vec3 *v, bt_mat4 *t, float w);
+bt_mat4 bt_rotate_xy(float x, float y);
 bt_quat bt_from_axis_angle(float x, float y, float z, float theta);
 bt_mat4 bt_quat_to_mat4(bt_quat *q);
 void bt_normalize_vec4(bt_quat *a);
 bt_quat bt_mult_quat(bt_quat *a, bt_quat *b);
+void bt_normalize_quat(bt_quat *q);
+bt_quat bt_slerp(bt_quat *a, bt_quat *b, float t);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* VECTOR_H */
-

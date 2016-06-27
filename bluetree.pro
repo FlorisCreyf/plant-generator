@@ -1,5 +1,5 @@
 CONFIG += release
-TARGET = bluetree
+TARGET = treemaker
 QT = core gui widgets opengl
 SOURCES += editor/main.cpp editor/window.cpp editor/view_editor.cpp editor/camera.cpp editor/file_exporter.cpp editor/scene.cpp editor/render_system.cpp editor/primitives.cpp
 HEADERS += editor/window.h editor/view_editor.h editor/camera.h editor/file_exporter.h editor/scene.h editor/objects.h editor/render_system.h editor/primitives.h

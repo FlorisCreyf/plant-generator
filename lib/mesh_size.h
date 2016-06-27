@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2016 Floris Creyf
  *
  * This program is free software; you can redistribute it and/or modify
@@ -14,13 +14,12 @@
 
 static inline int get_branch_vcount(node *stem)
 {
-	return stem->branch_resolution * 3 * 2;
+	return stem->resolution * 3 * 2;
 }
 
 static inline int get_branch_ecount(node *stem)
 {
-	return stem->branch_resolution * 6;
+	return stem->resolution * 6;
 }
 
 #endif /* MESH_SIZE_H */
-

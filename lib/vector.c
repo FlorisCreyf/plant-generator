@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2016 Floris Creyf
  *
  * This program is free software; you can redistribute it and/or modify
@@ -36,7 +36,7 @@ vec3 bt_mult_vec3(float a, vec3 *b)
 	return v;
 }
 
-vec3 bt_add_vec3(vec3 *a, vec3 *b) 
+vec3 bt_add_vec3(vec3 *a, vec3 *b)
 {
 	float x = a->x + b->x;
 	float y = a->y + b->y;
@@ -49,7 +49,7 @@ vec3 bt_sub_vec3(vec3 *a, vec3 *b)
 	float x = a->x - b->x;
 	float y = a->y - b->y;
 	float z = a->z - b->z;
-	return (vec3){x, y, z};	
+	return (vec3){x, y, z};
 }
 
 mat4 bt_mult_mat4(mat4 *a, mat4 *b)
@@ -59,13 +59,13 @@ mat4 bt_mult_mat4(mat4 *a, mat4 *b)
 	mat4 m;
 
 	for (row = 0; row < 4; row++)
-		for (col = 0; col < 4; col++)	
+		for (col = 0; col < 4; col++)
 			m.m[row][col] =
 				a->m[0][col]*b->m[row][0] +
 				a->m[1][col]*b->m[row][1] +
 				a->m[2][col]*b->m[row][2] +
 				a->m[3][col]*b->m[row][3];
-	
+
 	return m;
 }
 
@@ -91,7 +91,7 @@ mat4 bt_rotate_into_vec(vec3 *normal, vec3 *direction)
 {
 	vec3 v = bt_cross_vec3(normal, direction);
 	float e = bt_dot_vec3(normal, direction);
-	float h = 1 / (1 + e);	
+	float h = 1 / (1 + e);
 	return (mat4){
 		e + h*v.x*v.x, h*v.x*v.y + v.z, h*v.x*v.z - v.y, 0.0f,
 		h*v.x*v.y - v.z, e + h*v.y*v.y, h*v.y*v.z + v.x, 0.0f,
@@ -107,6 +107,20 @@ mat4 bt_translate(float x, float y, float z)
 		0.0f, 1.0f, 0.0f, 0.0f,
 		0.0f, 0.0f, 1.0f, 0.0f,
 		x, y, z, 1.0f
+	};
+}
+
+mat4 bt_rotate_xy(float x, float y)
+{
+	float sx = sin(x);
+	float cx = cos(x);
+	float sy = sin(y);
+	float cy = cos(y);
+	return (mat4){
+		cy, 0.0f, sy, 0.0f,
+		sx*sy, cx, -sx*cy, 0.0f,
+		-cx*sy, sx, cx*cy, 0.0f,
+		0.0f, 0.0f, 0.0f, 1.0f
 	};
 }
 
@@ -126,7 +140,7 @@ float bt_transform(vec3 *v, mat4 *t, float w)
 quat bt_from_axis_angle(float x, float y, float z, float theta)
 {
 	float a = theta / 2.0f;
-	float b = sin(a);	
+	float b = sin(a);
 	return (quat){x*b, y*b, z*b, cos(a)};
 }
 
@@ -159,3 +173,29 @@ quat bt_mult_quat(quat *a, quat *b)
 	return (quat){f.x, f.y, f.z, s};
 }
 
+void bt_normalize_quat(quat *q)
+{
+	float n = sqrt(q->x*q->x + q->y*q->y + q->z*q->z + q->w*q->w);
+	q->x /= n;
+	q->y /= n;
+	q->z /= n;
+	q->w /= n;
+}
+
+quat bt_slerp(quat *a, quat *b, float t)
+{
+	float i = acos(a->x*b->x + a->y*b->y + a->z*b->z + a->w*b->w);
+	float j = sin(i);
+	float x = sin(i*(1.0f-t))/j;
+	float y = sin(i*t)/j;
+
+	float dot = a->x*b->x + a->y*b->y + a->z*b->z + a->w+b->w;
+
+	quat m;
+	m.x = x*a->x + y*(b->x);
+	m.y = x*a->y + y*(b->y);
+	m.z = x*a->z + y*(b->z);
+	m.w = x*a->w + y*(b->w);
+
+	return m;
+}

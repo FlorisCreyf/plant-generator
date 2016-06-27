@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2016 Floris Creyf
  *
  * This program is free software; you can redistribute it and/or modify
@@ -12,18 +12,35 @@
 
 #include "vector.h"
 
-typedef struct node_tag {
-	float radius;
-	float tapper;
-	float branch_length;
-	quat direction;
-	vec3 position;
-	int branch_depth;
-	int branch_resolution;
-	int cross_sections;
+struct point_t {
+	float x;
+	float y;
+};
+
+typedef struct line_t {
+	vec3 start;
+	vec3 direction;
+	float length;
+} line;
+
+typedef struct node_t {
+	int line_count;
+	struct line_t *lines;
+
 	int branch_count;
-	struct node_tag *branches;
+	int branch_capacity;
+	struct node_t *branches;
+
+	float radius;
+	float min_radius;
+	int depth;
+	int resolution;
+	int cross_sections;
 } node;
 
-#endif /* NODE_H */
+vec3 get_line_point(struct line_t *l, float t);
+vec3 get_line_end_point(struct line_t *l);
+int get_line(node *n, float percent, float *offset);
+float get_line_length(node *stem);
 
+#endif /* NODE_H */
