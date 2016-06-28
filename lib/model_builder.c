@@ -258,6 +258,20 @@ int add_subbranches(node *stem, int prev_index)
 	return dichotomous == 0 ? 0 : 1;
 }
 
+void cap_branch(int vertex, int t)
+{
+	int i;
+	for (i = 0; i < t/2-1; i++) {
+		ebo[ebo_index++] = vertex + i;
+		ebo[ebo_index++] = vertex + i + 1;
+		ebo[ebo_index++] = vertex + t - i - 1;
+
+		ebo[ebo_index++] = vertex + i + 1;
+		ebo[ebo_index++] = vertex + t - i - 2;
+		ebo[ebo_index++] = vertex + t - i - 1;
+	}
+}
+
 float offset_to_percent(node *stem, float offset, int i)
 {
 	float len = get_line_length(stem);
@@ -288,8 +302,10 @@ void add_branch(node *stem, node *parent, float offset)
 
 	prev_index = vbo_index;
 	vbo_index += get_branch_vcount(stem);
-	if (!add_subbranches(stem, prev_index))
+	if (add_subbranches(stem, prev_index) == 0) {
 		add_cross_section(&vbo[prev_index], stem, 1.0f);
+		cap_branch(prev_index/6, stem->resolution);
+	}
 }
 
 void build_model(float *vb, int vb_size, unsigned short *eb, int eb_size,
