@@ -65,15 +65,15 @@ void Camera::setWindowSize(int width, int height)
 void Camera::zoom(float x, float y)
 {
 	float b = (y - start.y) / 10.0f;
-	if (fdistance + b > 0)
+	if (fdistance + b > 0.1f)
 		distance = fdistance + b;
 }
 
 bt_vec3 Camera::getCameraPosition()
 {
 	const float toRadian = M_PI / 180.0f;
-	float x = (pos.x - posDiff.x) * toRadian * 0.5f;
-	float y = (pos.y - posDiff.y) * toRadian * 0.5f;
+	float x = (pos.x - posDiff.x + 0.1f) * toRadian * 0.5f;
+	float y = (pos.y - posDiff.y + 0.1f) * toRadian * 0.5f;
 	eye.x = distance * cos(x) * cos(y) + target.x;
 	eye.y = distance * sin(y) + target.y;
 	eye.z = distance * sin(x) * cos(y) + target.z;
