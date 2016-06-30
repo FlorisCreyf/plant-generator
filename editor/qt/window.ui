@@ -53,8 +53,64 @@
 	border-top:3px solid #444;
 	margin-top:0;
 } QWidget {
-	color:#fff;
-}</string>
+	color:#ddd;
+	background:#666;
+} QDockWidget {
+	background:#666;
+} QDockWidget::title {
+	background:#444;
+	padding:4px 5px 0 5px;
+} QDockWidget::close-button, QDockWidget::float-button {
+	background:transparent;
+	border:solid 1px transparent;
+} QDockWidget::close-button:hover, QDockWidget::float-button:hover {
+    background:#333;
+} QDockWidget::close-button:pressed, QDockWidget::float-button:pressed {
+    background-color:#333;
+} QMainWindow::separator {
+	background-color:#666;
+} QDockWidget::close-button {
+	subcontrol-position: top right;
+    subcontrol-origin: margin;
+    position: absolute;
+    top: 0px; right: 4px; bottom: 0px;
+    width: 15px;
+} QDockWidget::float-button {
+    subcontrol-position: top right;
+    subcontrol-origin: margin;
+    position: absolute;
+    top: 0px; right: 24px; bottom: 0px;
+    width: 15px;
+} QLabel {
+	height:30px;
+} QSpinBox, QDoubleSpinBox {
+	padding-right: 15px;
+	background: #555;
+	border: 1px solid transparent;
+} QSpinBox::up-button, QDoubleSpinBox::up-button {
+    subcontrol-position: top right;
+	background-color:#444;
+} QSpinBox::down-button, QDoubleSpinBox::down-button {
+	subcontrol-position: bottom right;
+	background-color:#444;
+} QSpinBox::up-arrow, QDoubleSpinBox::up-arrow {
+    image: url(&quot;resources/uparrow.png&quot;);
+    width: 7px;
+    height: 6px;
+} QSpinBox::down-arrow, QDoubleSpinBox::down-arrow {
+    image: url(&quot;resources/downarrow.png&quot;);
+    width: 7px;
+    height: 6px;
+} QGroupBox {
+    border: 1px solid #555;
+    margin-top: 0.5em;
+	padding-top:3px;
+} QGroupBox::title {
+    subcontrol-origin: margin;
+    left: 4px;
+    padding: 0 4px 0 4px;
+}
+</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <property name="styleSheet">
@@ -124,7 +180,7 @@
      <x>0</x>
      <y>0</y>
      <width>1200</width>
-     <height>27</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -159,9 +215,47 @@
     <addaction name="actionAbout"/>
     <addaction name="actionReportIssue"/>
    </widget>
+   <widget class="QMenu" name="menuWindows">
+    <property name="title">
+     <string>Window</string>
+    </property>
+    <addaction name="action_Properties"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
+   <addaction name="menuWindows"/>
    <addaction name="menuHelp"/>
+  </widget>
+  <widget class="QDockWidget" name="dockWidget">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="allowedAreas">
+    <set>Qt::LeftDockWidgetArea|Qt::RightDockWidgetArea</set>
+   </property>
+   <property name="windowTitle">
+    <string>Properties</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="PropertyBox" name="Properties">
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
+    </property>
+    <property name="minimumSize">
+     <size>
+      <width>0</width>
+      <height>0</height>
+     </size>
+    </property>
+   </widget>
   </widget>
   <action name="actionOpen">
    <property name="text">
@@ -246,12 +340,23 @@
     <string>Ctrl+N</string>
    </property>
   </action>
+  <action name="action_Properties">
+   <property name="text">
+    <string>&amp;Properties</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>
    <class>ViewEditor</class>
    <extends>QWidget</extends>
    <header>../view_editor.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>PropertyBox</class>
+   <extends>QWidget</extends>
+   <header>../property_box.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
