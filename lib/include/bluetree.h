@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2016 Floris Creyf
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,8 +20,13 @@ bt_tree bt_new_tree();
 void bt_delete_tree(bt_tree tree);
 
 void bt_set_trunk_radius(bt_tree tree, float radius);
+void bt_set_cross_sections(bt_tree tree, int sections);
 void bt_set_resolution(bt_tree tree, int resolution);
 void bt_set_max_branch_depth(bt_tree tree, int depth);
+
+int bt_get_cross_sections(bt_tree tree);
+int bt_get_resolution(bt_tree tree);
+float bt_get_radius(bt_tree tree);
 
 void bt_generate_structure(bt_tree tree);
 
@@ -36,4 +41,3 @@ void bt_generate_mesh(bt_tree tree, float *vertex_buffer, int vb_size,
 #endif
 
 #endif /* BLUETREE_H  */
-

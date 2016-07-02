@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2016 Floris Creyf
  *
  * This program is free software; you can redistribute it and/or modify
@@ -14,9 +14,9 @@ typedef struct tree_data_tag {
 	int vbo_size;
 	int ebo_size;
 	int resolution;
+	int cross_sections;
 	int max_branch_depth;
 	float trunk_radius;
 } tree_data;
 
 #endif /* TREE_DATA_H */
-

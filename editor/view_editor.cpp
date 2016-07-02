@@ -17,6 +17,7 @@
 
 ViewEditor::ViewEditor(QWidget *parent) : QOpenGLWidget(parent)
 {
+	ctrl = shift = midButton = false;
 	setFocus();
 }
 
@@ -34,14 +35,15 @@ void ViewEditor::exportObject(const char *filename)
 	e.exportObj(filename);
 }
 
+const bt_tree ViewEditor::getTree()
+{
+	return tree;
+}
+
 void ViewEditor::initializeGL()
 {
 	initializeOpenGLFunctions();
-
-	glEnable(GL_DEPTH_TEST);
-	glDepthMask(GL_TRUE);
-	glDepthFunc(GL_LEQUAL);
-	glDepthRange(0.0f, 1.0f);
+	rs.init();
 
 	Line l = createGrid(5);
 	rs.registerEntity(l);
@@ -65,7 +67,7 @@ void ViewEditor::resizeGL(int width, int height)
 {
 	float aspectRatio = (float)width / (float)height;
 	camera.setWindowSize(width, height);
-	camera.setPerspective(45.0f, 1.0f, 100.0f, aspectRatio);
+	camera.setPerspective(45.0f, 0.1f, 100.0f, aspectRatio);
 	glViewport(0, 0, width, height);
 	paintGL();
 }
@@ -94,9 +96,7 @@ void ViewEditor::initializeTree()
 	scene.add(m);
 	rs.registerEntity(m);
 
-	bt_aabb b = bt_create_aabb(&m.vertices[0], m.vusage*12);
-	Line box = createBox(b);
-	rs.registerEntity(box);
+	emit selectionChanged(tree, 0);
 }
 
 void ViewEditor::keyPressEvent(QKeyEvent *event)
@@ -139,7 +139,7 @@ void ViewEditor::mousePressEvent(QMouseEvent *event)
 			camera.action = Camera::PAN;
 		else
 			camera.action = Camera::ROTATE;
-	} else if (event->button() == Qt::LeftButton) {
+	} else if (event->button() == Qt::RightButton) {
 		int s = scene.getSelected();
 		rs.setWireframe(s, false);
 		s = scene.setSelected(camera, p.x(), p.y());
@@ -180,4 +180,34 @@ void ViewEditor::paintGL()
 	gu.vp = camera.getVP();
 	gu.cameraPosition = camera.getPosition();
 	rs.render(gu);
+}
+
+void ViewEditor::change(bool triangles)
+{
+	Mesh m = scene.getMesh(0);
+	int vs = m.vertices.size();
+	int es = m.triangles.size();
+	bt_generate_mesh(tree, &m.vertices[0], vs, &m.triangles[0], es);
+	rs.updateVertices(0, &m.vertices[0], bt_get_vbo_size(tree)*6);
+	if (triangles)
+		rs.updateTriangles(0, &m.triangles[0], bt_get_ebo_size(tree));
+	update();
+}
+
+void ViewEditor::changeResolution(int i)
+{
+	bt_set_resolution(tree, i);
+	change(true);
+}
+
+void ViewEditor::changeSections(int i)
+{
+	bt_set_cross_sections(tree, i);
+	change(true);
+}
+
+void ViewEditor::changeRadius(double d)
+{
+	bt_set_trunk_radius(tree, d);
+	change(false);
 }

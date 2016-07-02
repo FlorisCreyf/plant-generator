@@ -17,17 +17,26 @@
 #include "scene.h"
 #include "camera.h"
 #include <QtGui/QOpenGLFunctions>
-
 #include <QOpenGLWidget>
-
 
 class ViewEditor : public QOpenGLWidget, protected QOpenGLFunctions
 {
+	Q_OBJECT;
+
 public:
 	ViewEditor(QWidget *parent = 0);
 	~ViewEditor();
 
 	void exportObject(const char *filename);
+	const bt_tree getTree();
+
+public slots:
+	void changeResolution(int i);
+	void changeSections(int i);
+	void changeRadius(double d);
+
+signals:
+	void selectionChanged(bt_tree tree, int s);
 
 protected:
 	void initializeGL();
@@ -47,10 +56,10 @@ private:
 	bt_tree tree;
 	Scene scene;
 	Camera camera;
-	QOpenGLContext ctx;
 	RenderSystem rs;
 
 	void initializeTree();
+	void change(bool triangles);
 };
 
 #endif /* VIEW_EDITOR_H */

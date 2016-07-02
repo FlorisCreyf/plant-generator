@@ -30,11 +30,14 @@ class RenderSystem : protected QOpenGLFunctions
 {
 public:
 	RenderSystem();
+	void init();
 	void registerEntity(Mesh &m);
 	void registerEntity(Line &l);
 	void render(GlobalUniforms &gu);
 	void loadShaders(ShaderInfo *info, int size);
 	void setWireframe(int id, bool value);
+	void updateVertices(int id, float *buffer, int size);
+	void updateTriangles(int id, unsigned short *buffer, int size);
 
 private:
 	float wireWidth;
@@ -49,6 +52,8 @@ private:
 			float width;
 			bool wireframe;
 		};
+		GLuint vb;
+		GLuint eb;
 	};
 	std::vector<Item> mItems;
 	std::vector<Item> lItems;
@@ -58,7 +63,7 @@ private:
 	void renderMesh(Item &item);
 	void renderWire(Item &item);
 	void renderLine(Item &item);
-	void addVAO(unsigned int &vao, int attribs, int stride,
+	void addVAO(Item &item, int attribs, int stride,
 			const std::vector<float> &vertices);
 	void switchProgram(int program, GlobalUniforms &gu);
 };

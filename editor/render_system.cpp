@@ -17,15 +17,24 @@ RenderSystem::RenderSystem()
 	wireProgram = 2;
 }
 
-void RenderSystem::addVAO(unsigned int &vao, int attribs, int stride,
+void RenderSystem::init()
+{
+	initializeOpenGLFunctions();
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_LINE_SMOOTH);
+	glDepthMask(GL_TRUE);
+	glDepthFunc(GL_LEQUAL);
+	glDepthRange(0.0f, 1.0f);
+}
+
+void RenderSystem::addVAO(Item &item, int attribs, int stride,
 		const std::vector<float> &vertices)
 {
-	GLuint buffer;
 	int vsize = vertices.size() * sizeof(float);
-	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
-	glGenBuffers(1, &buffer);
-	glBindBuffer(GL_ARRAY_BUFFER, buffer);
+	glGenVertexArrays(1, &item.vao);
+	glBindVertexArray(item.vao);
+	glGenBuffers(1, &item.vb);
+	glBindBuffer(GL_ARRAY_BUFFER, item.vb);
 	glBufferData(GL_ARRAY_BUFFER, vsize, &vertices[0], GL_STATIC_DRAW);
 
 	for (int i = 0; i < attribs; i++) {
@@ -37,26 +46,25 @@ void RenderSystem::addVAO(unsigned int &vao, int attribs, int stride,
 
 void RenderSystem::registerEntity(Mesh &m)
 {
-	GLuint buffer;
 	int ts = m.triangles.size();
 	unsigned short *t = &m.triangles[0];
 
 	Item item = (Item){0, 0, m.tusage, m.program, 0};
 	item.wireframe = false;
-	addVAO(item.vao, m.attribs, m.stride*2, m.vertices);
-	mItems.push_back(item);
+	addVAO(item, m.attribs, m.stride*2, m.vertices);
 
-	glGenBuffers(1, &buffer);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, ts, t, GL_STATIC_DRAW);
+	glGenBuffers(1, &item.eb);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, item.eb);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, ts, t, GL_DYNAMIC_DRAW);
+
+	mItems.push_back(item);
 }
 
 void RenderSystem::registerEntity(Line &l)
 {
-	initializeOpenGLFunctions();
 	int vertices = l.vertices.size() / 3;
 	Item item = (Item){0, 0, vertices, l.program, l.width};
-	addVAO(item.vao, l.attribs, l.stride*2, l.vertices);
+	addVAO(item, l.attribs, l.stride*2, l.vertices);
 	lItems.push_back(item);
 }
 
@@ -133,6 +141,22 @@ void RenderSystem::render(GlobalUniforms &gu)
 	}
 
 	glFlush();
+}
+
+void RenderSystem::updateVertices(int id, float *buffer, int size)
+{
+	Item item = mItems[id];
+	glBindBuffer(GL_ARRAY_BUFFER, item.vb);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, size*sizeof(float), buffer);
+}
+
+void RenderSystem::updateTriangles(int id, unsigned short *buffer, int size)
+{
+	int s = size * sizeof(unsigned short);
+	Item *item = &mItems[id];
+	item->length = size;
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, item->eb);
+	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, s, buffer);
 }
 
 void RenderSystem::loadShaders(ShaderInfo *info, int size)
