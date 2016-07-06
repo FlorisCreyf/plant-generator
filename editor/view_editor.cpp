@@ -29,9 +29,9 @@ ViewEditor::~ViewEditor()
 void ViewEditor::exportObject(const char *filename)
 {
 	FileExporter e;
-	Mesh m = scene.getMesh(0);
-	e.setVertices(&m.vertices[0], bt_get_vbo_size(tree));
-	e.setTriangles(&m.triangles[0], bt_get_ebo_size(tree));
+	Mesh *m = scene.getMesh(0);
+	e.setVertices(&m->vertices[0], bt_get_vbo_size(tree));
+	e.setTriangles(&m->triangles[0], bt_get_ebo_size(tree));
 	e.exportObj(filename);
 }
 
@@ -184,13 +184,13 @@ void ViewEditor::paintGL()
 
 void ViewEditor::change(bool triangles)
 {
-	Mesh m = scene.getMesh(0);
-	int vs = m.vertices.size();
-	int es = m.triangles.size();
-	bt_generate_mesh(tree, &m.vertices[0], vs, &m.triangles[0], es);
-	rs.updateVertices(0, &m.vertices[0], bt_get_vbo_size(tree)*6);
+	Mesh *m = scene.getMesh(0);
+	int vs = m->vertices.size();
+	int es = m->triangles.size();
+	bt_generate_mesh(tree, &m->vertices[0], vs, &m->triangles[0], es);
+	rs.updateVertices(0, &m->vertices[0], bt_get_vbo_size(tree)*6);
 	if (triangles)
-		rs.updateTriangles(0, &m.triangles[0], bt_get_ebo_size(tree));
+		rs.updateTriangles(0, &m->triangles[0], bt_get_ebo_size(tree));
 	update();
 }
 

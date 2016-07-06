@@ -14,6 +14,11 @@ typedef bt_vec3 vec3;
 typedef bt_mat4 mat4;
 typedef bt_quat quat;
 
+float absf(float f)
+{
+	return f < 0 ? -f : f;
+}
+
 float bt_dot_vec3(vec3 *a, vec3 *b)
 {
 	return a->x*b->x + a->y*b->y + a->z*b->z;
@@ -85,6 +90,11 @@ mat4 bt_transpose_mat4(mat4 *m)
 		for (j = 0; j < 4; j++)
 			t.m[i][j] = m->m[j][i];
 	return t;
+}
+
+float bt_mag_vec3(bt_vec3 *a)
+{
+	return sqrt(a->x*a->x + a->y*a->y + a->z*a->z);
 }
 
 mat4 bt_rotate_into_vec(vec3 *normal, vec3 *direction)

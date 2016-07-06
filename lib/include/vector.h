@@ -49,11 +49,13 @@ typedef bt_mat4 mat4;
 typedef bt_quat quat;
 typedef bt_vec3 vec3;
 
+float absf(float f);
 float bt_dot_vec3(bt_vec3 *a, bt_vec3 *b);
 bt_vec3 bt_cross_vec3(bt_vec3 *a, bt_vec3 *b);
 bt_vec3 bt_add_vec3(bt_vec3 *a, bt_vec3 *b);
 bt_vec3 bt_sub_vec3(bt_vec3 *a, bt_vec3 *b);
 bt_vec3 bt_mult_vec3(float a, bt_vec3 *b);
+float bt_mag_vec3(bt_vec3 *a);
 void bt_normalize_vec3(bt_vec3 *a);
 bt_mat4 bt_transpose_mat4(bt_mat4 *m);
 bt_mat4 bt_mult_mat4(bt_mat4 *a, bt_mat4 *b);

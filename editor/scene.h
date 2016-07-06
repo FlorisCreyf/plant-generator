@@ -23,7 +23,7 @@ public:
 	void add(Line l);
 	int getSelected();
 	int setSelected(Camera &camera, int x, int y);
-	Mesh getMesh(int i);
+	Mesh *getMesh(int i);
 
 private:
 	std::vector<Mesh> meshes;

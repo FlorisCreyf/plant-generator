@@ -21,9 +21,9 @@ void Scene::add(Line l)
 	lines.push_back(l);
 }
 
-Mesh Scene::getMesh(int i)
+Mesh *Scene::getMesh(int i)
 {
-	return meshes[i];
+	return &meshes[i];
 }
 
 int Scene::getSelected()

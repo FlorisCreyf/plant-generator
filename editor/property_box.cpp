@@ -22,7 +22,7 @@ PropertyBox::PropertyBox(QWidget *parent) : QWidget(parent)
 
 	radius->setSingleStep(0.01);
 	sections->setMinimum(2);
-	resolution->setMinimum(4);
+	resolution->setMinimum(5);
 
 	layout->setVerticalSpacing(2);
 	layout->addRow(new QLabel(tr("Radius")), radius);

@@ -13,6 +13,7 @@
 Window::Window()
 {
 	widget.setupUi(this);
+	widget.Properties->createSignals(widget.scene);
 }
 
 Window::~Window()

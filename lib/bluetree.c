@@ -49,7 +49,7 @@ void change_dichotomous_resolution(node *stem, int r)
 	vec3 n;
 	vec3 p = get_line_end_point(&(stem->lines[stem->line_count-1]));
 
-	for (; i < stem->branch_count; i++) {
+	for (i = 0; i < stem->branch_count; i++) {
 		n = stem->branches[i].lines[0].start;
 		if (p.x == n.x && p.y == n.y && p.z == n.z) {
 			stem->branches[i].resolution = r;

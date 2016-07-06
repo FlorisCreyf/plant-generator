@@ -148,83 +148,134 @@ void add_cross_section_o(float *buffer, node *stem, line *l, float offset)
 	make_cross_section(buffer, &t, r, stem->resolution);
 }
 
-int get_max_side(float *l, float *u, int size)
+vec3 get_cs_normal(int i)
 {
-	const int ATTRIBS = 2;
-	int i = 0, j = 0;
-	float max_len = 0.0f;
-	int max;
-
-	for (; i < size*3*ATTRIBS; i += 3*ATTRIBS, j++) {
-		float a = pow(l[i+0] - u[i+0], 2);
-		float b = pow(l[i+1] - u[i+1], 2);
-		float c = pow(l[i+2] - u[i+2], 2);
-		float len = sqrt(a + b + c);
-
-		if (len > max_len) {
-			max_len = len;
-			max = j;
-		}
-	}
-
-	return max;
+	vec3 a = {vbo[i+3], vbo[i+4], vbo[i+5]};
+	vec3 b = {vbo[i+9], vbo[i+10], vbo[i+11]};
+	vec3 c = bt_cross_vec3(&b, &a);
+	bt_normalize_vec3(&c);
+	return c;
 }
 
-void add_branch(node *stem, node *parent, float offset);
-
-void connect_dichotomous(int a, int b, int c, int t)
+float get_branch_angle(int a, vec3 dir)
 {
-	int max = get_max_side(&vbo[a], &vbo[b], t);
-	int ub = max+2;
-	int lb = max-3;
-	int start = ub+1 > t ? ub+1-t : 0;
-	int end = lb-1 < 0 ? t+lb-1 : t;
-	int x, y, z, i;
+	vec3 norm_a = get_cs_normal(a);
+	vec3 y = {0.f, 1.f, 0.f};
+	mat4 rot = bt_rotate_into_vec(&norm_a, &y);
+	bt_transform(&dir, &rot, 0.0f);
+	float angle = atan(dir.z/dir.x);
+	if (dir.z < 0 && dir.x >= 0)
+		angle += 2.f*M_PI;
+	else if (dir.z < 0 && dir.x < 0)
+		angle += M_PI;
+	else if (dir.z >= 0 && dir.x < 0)
+		angle += M_PI;
+	return angle;
+}
+
+void get_bounds(vec3 dir, int t, int a, int *lb, int *ub, float *angle)
+{
+	*angle = get_branch_angle(a, dir);
+	float inc = 2.f*M_PI/t;
+	int min = *lb = *ub = (int)round(*angle/inc);
+	int i;
+
+	for (i = 1; i < (t)/2; i++) {
+		float a = absf(*angle - (*lb - 1.f)*inc - inc/2.f);
+		float b = absf(*angle - (*ub + 1.f)*inc - inc/2.f);
+		if (a < b)
+			(*lb)--;
+		else
+			(*ub)++;
+	}
+
+	*lb = *lb < 0 ? *lb+t : *lb;
+	*ub = *ub < t ? *ub : *ub-t;
+}
+
+/** This limits the max number of vertices per cross section to 180. */
+int is_dichotomous_twisted(float angle, int t)
+{
+	int m = angle*180.f/M_PI - 90;
+	int l = 360.f/t;
+	return m%l >= l/2;
+}
+
+void connect_dichotomous(int a, int b, int c, int t, node *n)
+{
+	int ub, lb;
+	float angle;
+	int twisted;
+	int x, y;
+	int i;
+	get_bounds(n[1].lines[0].direction, t, a, &lb, &ub, &angle);
+	twisted = is_dichotomous_twisted(angle, t);
 
 	a /= 6;
 	b /= 6;
 	c /= 6;
 
-	/* connect trunk to stem leaving an opening */
-	ebo_index += add_rect_seg(&ebo[ebo_index], a, b, start, lb-1, t);
-	ebo_index += add_rect_seg(&ebo[ebo_index], a, b, ub+1, end, t);
-
-	/* connect trunk to second stem within opening */
-	ebo_index += add_rect_seg(&ebo[ebo_index], a, c, lb, ub, t);
-	if (ub >= t)
-		ebo_index += add_rect_seg(&ebo[ebo_index], a, c, 0, ub-t, t);
-	else if (lb < 0)
-		ebo_index += add_rect_seg(&ebo[ebo_index], a, c, t+lb, t, t);
-
-	/* connect remainder */
-	z = ub+1 >= t ? ub+1-t : ub+1;
-	ebo[ebo_index++] = a + z;
-	ebo[ebo_index++] = b + z;
-	ebo[ebo_index++] = c + z;
-
-	for (i = 1; i < 7; i++) {
-		z = ub+i >= t ? ub+i-t : ub+i;
-		x = (i-1)*2;
-		y = z-x >= 0 ? z-x : t+(z-x);
-		ebo[ebo_index++] = b + y;
-		ebo[ebo_index++] = c + z;
-		ebo[ebo_index++] = c + (z+1 >= t ? 0 : z+1);
+	if (lb > ub)
+		ebo_index += add_rect_seg(&ebo[ebo_index], a, b, ub+1, lb-1, t);
+	else {
+		ebo_index += add_rect_seg(&ebo[ebo_index], a, b, 0, lb-1, t);
+		ebo_index += add_rect_seg(&ebo[ebo_index], a, b, ub+1, t, t);
 	}
 
-	z = lb < 0 ? t+lb : lb;
-	ebo[ebo_index++] = a + z;
-	ebo[ebo_index++] = b + z;
-	ebo[ebo_index++] = c + z;
+	if (lb < ub)
+		ebo_index += add_rect_seg(&ebo[ebo_index], a, c, lb, ub, t);
+	else {
+		ebo_index += add_rect_seg(&ebo[ebo_index], a, c, 0, ub, t);
+		ebo_index += add_rect_seg(&ebo[ebo_index], a, c, lb, t, t);
+	}
 
-	for (i = 1; i < 7; i++) {
-		z = lb-i+1 < 0 ? t+lb-i+1 : lb-i+1;
-		x = (i-1)*2;
-		y = z+x < t ? z+x : z+x-t;
-		ebo[ebo_index++] = b + y;
-		ebo[ebo_index++] = b + (y+1 >= t ? 0 : y+1);
-		ebo[ebo_index++] = c + z;
+	x = ub+1 >= t ? ub+1-t : ub+1;
+	ebo[ebo_index++] = b + x;
+	ebo[ebo_index++] = a + x;
+	ebo[ebo_index++] = c + x;
+	y = x;
+	if (twisted && t%2 != 0)
+		y = y+1 < t ? y+1 : 0;
+	for (i = 0; i < t/2 + (twisted || t%2 == 0 ? 0 : 1); i++) {
+		if (twisted) {
+			ebo[ebo_index++] = b + (x-1 < 0 ? t-1 : x-1);
+			ebo[ebo_index++] = b + x;
+			ebo[ebo_index++] = c + y;
+			y = y+1 < t ? y+1 : 0;
+			x = x-1 < 0 ? t-1 : x-1;
+		} else {
+			ebo[ebo_index++] = c + x;
+			ebo[ebo_index++] = c + (x+1 < t ? x+1 : 0);
+			ebo[ebo_index++] = b + y;
+			y = y-1 < 0 ? t-1 : y-1;
+			x = x+1 < t ? x+1 : 0;
+		}
+	}
+
+	ebo[ebo_index++] = a + lb;
+	ebo[ebo_index++] = b + lb;
+	ebo[ebo_index++] = c + lb;
+	x = y = lb;
+	if (!twisted && t%2 != 0)
+		y = y-1 < 0 ? t-1 : y-1;
+	for (i = 0; i < t/2 + (!twisted || t%2 == 0 ? 0 : 1); i++) {
+		if (twisted) {
+			ebo[ebo_index++] = c + (x-1 < 0 ? t-1 : x-1);
+			ebo[ebo_index++] = c + x;
+			ebo[ebo_index++] = b + y;
+			y = y+1 < t ? y+1 : 0;
+			x = x-1 < 0 ? t-1 : x-1;
+		} else {
+			ebo[ebo_index++] = b + x;
+			ebo[ebo_index++] = b + (x+1 < t ? x+1 : 0);
+			ebo[ebo_index++] = c + y;
+			y = y-1 < 0 ? t-1 : y-1;
+			x = x+1 < t ? x+1 : 0;
+		}
 	}
 }
+
+void add_branch(node *stem, node *parent, float offset);
 
 void add_dichotomous(node *n, node *p, int prev_index)
 {
@@ -234,7 +285,7 @@ void add_dichotomous(node *n, node *p, int prev_index)
 
 	add_cross_section_o(&vbo[prev_index], p, l, offset);
 	add_branch(&n[0], p, 0.05);
-	connect_dichotomous(prev_index, init_index, vbo_index, p->resolution);
+	connect_dichotomous(prev_index, init_index, vbo_index, p->resolution, n);
 	add_branch(&n[1], p, 0.05);
 }
 
