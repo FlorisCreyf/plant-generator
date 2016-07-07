@@ -36,8 +36,8 @@ public:
 	void render(GlobalUniforms &gu);
 	void loadShaders(ShaderInfo *info, int size);
 	void setWireframe(int id, bool value);
-	void updateVertices(int id, float *buffer, int size);
-	void updateTriangles(int id, unsigned short *buffer, int size);
+	void updateVertices(int id, Mesh *m, int size, bool resize);
+	void updateTriangles(int id, Mesh *m, int size, bool resize);
 
 private:
 	float wireWidth;

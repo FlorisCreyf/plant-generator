@@ -111,10 +111,11 @@ int bt_get_ebo_size(bt_tree tree)
 	return tree->td.ebo_size;
 }
 
-void bt_generate_mesh(bt_tree tree, float *vb, int vb_size,
+int bt_generate_mesh(bt_tree tree, float *vb, int vb_size,
 		unsigned short *eb, int eb_size)
 {
-	build_model(vb, vb_size, eb, eb_size, tree->root);
+	int status = build_model(vb, vb_size, eb, eb_size, tree->root);
 	tree->td.ebo_size = get_ebo_size();
 	tree->td.vbo_size = get_vbo_size();
+	return status;
 }

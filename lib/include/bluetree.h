@@ -33,7 +33,7 @@ void bt_generate_structure(bt_tree tree);
 int bt_get_vbo_size(bt_tree tree);
 int bt_get_ebo_size(bt_tree tree);
 
-void bt_generate_mesh(bt_tree tree, float *vertex_buffer, int vb_size,
+int bt_generate_mesh(bt_tree tree, float *vertex_buffer, int vb_size,
 		unsigned short *element_buffer, int eb_size);
 
 #ifdef __cplusplus

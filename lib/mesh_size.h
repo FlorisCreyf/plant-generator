@@ -12,14 +12,24 @@
 
 #include "node.h"
 
-static inline int get_branch_vcount(node *stem)
+int get_branch_vcount(node *stem)
 {
 	return stem->resolution * 3 * 2;
 }
 
-static inline int get_branch_ecount(node *stem)
+int get_branch_ecount(node *stem)
 {
 	return stem->resolution * 6;
+}
+
+int get_cap_ecount(node *stem)
+{
+	return stem->resolution/2 * 5;
+}
+
+int get_dichotomous_ecount(node *stem)
+{
+	return (int)((stem->resolution+1.f + (stem->resolution/2.f)) * 6.f);
 }
 
 #endif /* MESH_SIZE_H */

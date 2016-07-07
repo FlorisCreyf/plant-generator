@@ -75,7 +75,7 @@ void ViewEditor::resizeGL(int width, int height)
 void ViewEditor::initializeTree()
 {
 	const int eSize = 4000;
-	const int vSize = 4000 * 2;
+	const int vSize = 4000;
 
 	Mesh m;
 	m.attribs = 2;
@@ -113,7 +113,6 @@ void ViewEditor::keyPressEvent(QKeyEvent *event)
 
 void ViewEditor::keyReleaseEvent(QKeyEvent *event)
 {
-
 	switch (event->key()) {
 	case Qt::Key_Control:
 		ctrl = false;
@@ -185,12 +184,33 @@ void ViewEditor::paintGL()
 void ViewEditor::change(bool triangles)
 {
 	Mesh *m = scene.getMesh(0);
-	int vs = m->vertices.size();
-	int es = m->triangles.size();
-	bt_generate_mesh(tree, &m->vertices[0], vs, &m->triangles[0], es);
-	rs.updateVertices(0, &m->vertices[0], bt_get_vbo_size(tree)*6);
-	if (triangles)
-		rs.updateTriangles(0, &m->triangles[0], bt_get_ebo_size(tree));
+	int v = m->vertices.size();
+	int e = m->triangles.size();
+	int s = bt_generate_mesh(tree, &m->vertices[0], v, &m->triangles[0], e);
+
+	if (s == 0) {
+		m->vertices.resize(v + 1000);
+		m->triangles.resize(e + 1000);
+		rs.updateVertices(0, m, m->vertices.size(), true);
+		rs.updateTriangles(0, m, m->triangles.size(), true);
+		change(true);
+		return;
+	} else {
+		int vs = bt_get_vbo_size(tree)*6;
+		int es = bt_get_ebo_size(tree);
+
+		if (v > 4000 && e > 4000 && v - 2000 > vs && e - 2000 > es) {
+			m->vertices.resize(vs + 1000);
+			m->triangles.resize(es + 1000);
+			rs.updateVertices(0, m, m->vertices.size(), true);
+			rs.updateTriangles(0, m, m->triangles.size(), true);
+		} else {
+			rs.updateVertices(0, m, vs, false);
+			if (triangles)
+				rs.updateTriangles(0, m, es, false);
+		}
+	}
+
 	update();
 }
 

@@ -21,6 +21,7 @@ static int vbo_size;
 static int ebo_size;
 static unsigned int vbo_index;
 static unsigned short ebo_index;
+static int overflow;
 
 void add_cs_point(float *buffer, float radius, float angle, bt_mat4 *t, int *i)
 {
@@ -201,6 +202,7 @@ int is_dichotomous_twisted(float angle, int t)
 	return m%l >= l/2;
 }
 
+/** Connects three cross sections labeled a, b, and c. */
 void connect_dichotomous(int a, int b, int c, int t, node *n)
 {
 	int ub, lb;
@@ -275,18 +277,30 @@ void connect_dichotomous(int a, int b, int c, int t, node *n)
 	}
 }
 
-void add_branch(node *stem, node *parent, float offset);
+int add_branch(node *stem, node *parent, float offset);
 
-void add_dichotomous(node *n, node *p, int prev_index)
+void add_dichotomous(node *n, node *p, int a_index)
 {
 	struct line_t *l = &p->lines[p->line_count-1];
 	float offset = l->length - n->radius;
-	int init_index = vbo_index;
+	int b_index = vbo_index;
 
-	add_cross_section_o(&vbo[prev_index], p, l, offset);
-	add_branch(&n[0], p, 0.05);
-	connect_dichotomous(prev_index, init_index, vbo_index, p->resolution, n);
-	add_branch(&n[1], p, 0.05);
+	add_cross_section_o(&vbo[a_index], p, l, offset);
+	if (!add_branch(&n[0], p, 0.05)) {
+		overflow = 1;
+		return;
+	}
+
+	if (get_dichotomous_ecount(&n[0]) + ebo_index > ebo_size) {
+		overflow = 1;
+		return;
+	}
+	connect_dichotomous(a_index, b_index, vbo_index, p->resolution, n);
+
+	if(!add_branch(&n[1], p, 0.05)) {
+		overflow = 1;
+		return;
+	}
 }
 
 int add_subbranches(node *stem, int prev_index)
@@ -300,10 +314,15 @@ int add_subbranches(node *stem, int prev_index)
 		n = stem->branches[i].lines[0].start;
 		if (p.x == n.x && p.y == n.y && p.z == n.z) {
 			add_dichotomous(&stem->branches[i], stem, prev_index);
+			if (overflow)
+				return 0;
 			dichotomous++;
 			i++;
 		} else
-			add_branch(&stem->branches[i], stem, 0.0f);
+			if (!add_branch(&stem->branches[i], stem, 0.0f)) {
+				overflow = 1;
+				return 0;
+			}
 	}
 
 	return dichotomous == 0 ? 0 : 1;
@@ -330,7 +349,7 @@ float offset_to_percent(node *stem, float offset, int i)
 	return (offset + i*a) / len;
 }
 
-void add_branch(node *stem, node *parent, float offset)
+int add_branch(node *stem, node *parent, float offset)
 {
 	unsigned short l_index;
 	unsigned short r_index;
@@ -342,6 +361,11 @@ void add_branch(node *stem, node *parent, float offset)
 		return;
 
 	for (i = 0; i < stem->cross_sections - 1; i++) {
+		if (get_branch_vcount(stem) + vbo_index > vbo_size)
+			return 0;
+		else if (get_branch_ecount(stem) + ebo_index > ebo_size)
+			return 0;
+
 		p = offset_to_percent(stem, offset, i);
 		add_cross_section(&vbo[vbo_index], stem, p);
 		prev_index = vbo_index;
@@ -351,15 +375,25 @@ void add_branch(node *stem, node *parent, float offset)
 		ebo_index += get_branch_ecount(stem);
 	}
 
+	if (get_branch_vcount(stem) + vbo_index > vbo_size)
+		return 0;
+
 	prev_index = vbo_index;
 	vbo_index += get_branch_vcount(stem);
 	if (add_subbranches(stem, prev_index) == 0) {
+		if (overflow)
+			return 0;
+		if (get_cap_ecount(stem) + ebo_index > ebo_size)
+			return 0;
+
 		add_cross_section(&vbo[prev_index], stem, 1.0f);
 		cap_branch(prev_index/6, stem->resolution);
 	}
+
+	return 1;
 }
 
-void build_model(float *vb, int vb_size, unsigned short *eb, int eb_size,
+int build_model(float *vb, int vb_size, unsigned short *eb, int eb_size,
 		node *root)
 {
 	int i;
@@ -369,8 +403,12 @@ void build_model(float *vb, int vb_size, unsigned short *eb, int eb_size,
 	ebo_size = eb_size;
 	vbo_index = 0;
 	ebo_index = 0;
+	overflow = 0;
 
-	add_branch(root, NULL, 0.0f);
+	if(!add_branch(root, NULL, 0.0f))
+		return 0;
+	else
+		return 1;
 }
 
 int get_vbo_size()
