@@ -32,13 +32,13 @@ Line createGrid(int sections)
 	v = &grid.vertices[0];
 
 	addVec3(i, v, 0.0f, 0.0f, sections);
-	addVec3(i, v, 0.5f, 0.5f, 0.0f);
+	addVec3(i, v, 0.41f, 0.41f, 0.41f);
 	addVec3(i, v, 0.0f, 0.0f, -sections);
-	addVec3(i, v, 0.0f, 0.5f, 0.5f);
+	addVec3(i, v, 0.41f, 0.41f, 0.41f);
 	addVec3(i, v, sections, 0.0f, 0.0f);
-	addVec3(i, v, 0.5f, 0.5f, 0.0f);
+	addVec3(i, v, 0.41f, 0.41f, 0.41f);
 	addVec3(i, v, -sections, 0.0f, 0.0f);
-	addVec3(i, v, 0.0f, 0.5f, 0.5f);
+	addVec3(i, v, 0.41f, 0.41f, 0.41f);
 
 	for (int j = 1; j <= sections; j++) {
 		addVec3(i, v, j, 0.0f, sections);

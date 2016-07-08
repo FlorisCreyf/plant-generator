@@ -10,12 +10,20 @@ out vec3 iColor;
 
 void main()
 {
-	vec4 v = normalize(cameraPosition - point);
-	float d = clamp(dot(normal, v), 0.0f, 1.0f);
+	float angle = 3.141f/5.0f;
+	mat4 r = mat4(
+			cos(angle), 0.0f, sin(angle), 0.0f,
+			0.0f, 1.0f, 0.0f, 0.0f,
+			-sin(angle), 0.0f, cos(angle), 0.0f,
+			0.0f, 0.0f, 0.0f, 1.0f);
+
+	vec4 c = r * cameraPosition * 100;
+	vec4 v = normalize(c - point);
+	float d = dot(normal, v);
 	d = d/3.5f + 0.55f;
 
 	iColor.r = d;
-	iColor.g = d;
-	iColor.b = d;
+	iColor.g = d + 0.02;
+	iColor.b = d + 0.08;
 	gl_Position = vp * point;
 }

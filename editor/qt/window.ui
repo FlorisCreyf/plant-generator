@@ -57,6 +57,8 @@
 	background:#666;
 } QDockWidget {
 	background:#666;
+    titlebar-normal-icon: url(&quot;resources/popup.png&quot;);
+	titlebar-close-icon: url(&quot;resources/close.png&quot;);
 } QDockWidget::title {
 	background:#444;
 	padding:4px 5px 0 5px;
@@ -79,7 +81,7 @@
     subcontrol-position: top right;
     subcontrol-origin: margin;
     position: absolute;
-    top: 0px; right: 24px; bottom: 0px;
+    top: 0px; right: 22px; bottom: 0px;
     width: 15px;
 } QLabel {
 	height:30px;
