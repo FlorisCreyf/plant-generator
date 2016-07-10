@@ -11,6 +11,7 @@
 #define NODE_H
 
 #include "vector.h"
+#include "collision.h"
 
 struct point_t {
 	float x;
@@ -30,12 +31,20 @@ typedef struct node_t {
 	int branch_count;
 	int branch_capacity;
 	struct node_t *branches;
+	int dichotomous_start;
+	int terminal;
 
 	float radius;
 	float min_radius;
 	int depth;
 	int resolution;
 	int cross_sections;
+
+	int vbo_start;
+	int vbo_end;
+	int ebo_start;
+	int ebo_end;
+	bt_aabb bounds;
 } node;
 
 vec3 get_line_point(struct line_t *l, float t);

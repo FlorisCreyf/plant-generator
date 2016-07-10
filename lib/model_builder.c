@@ -303,20 +303,14 @@ void add_dichotomous(node *n, node *p, int a_index)
 	}
 }
 
-int add_subbranches(node *stem, int prev_index)
+void add_subbranches(node *stem, int prev_index)
 {
 	int i = 0;
-	int dichotomous = 0;
-	vec3 n;
-	vec3 p = get_line_end_point(&(stem->lines[stem->line_count-1]));
-
 	for (; i < stem->branch_count; i++) {
-		n = stem->branches[i].lines[0].start;
-		if (p.x == n.x && p.y == n.y && p.z == n.z) {
+		if (i >= stem->dichotomous_start) {
 			add_dichotomous(&stem->branches[i], stem, prev_index);
 			if (overflow)
 				return 0;
-			dichotomous++;
 			i++;
 		} else
 			if (!add_branch(&stem->branches[i], stem, 0.0f)) {
@@ -324,8 +318,6 @@ int add_subbranches(node *stem, int prev_index)
 				return 0;
 			}
 	}
-
-	return dichotomous == 0 ? 0 : 1;
 }
 
 void cap_branch(int vertex, int t)
@@ -349,6 +341,12 @@ float offset_to_percent(node *stem, float offset, int i)
 	return (offset + i*a) / len;
 }
 
+void set_branch_bounds(node *stem)
+{
+	int len = stem->vbo_end - stem->vbo_start;
+	stem->bounds = bt_create_aabb(&vbo[stem->vbo_start], len);
+}
+
 int add_branch(node *stem, node *parent, float offset)
 {
 	unsigned short l_index;
@@ -360,6 +358,9 @@ int add_branch(node *stem, node *parent, float offset)
 	if (stem == NULL)
 		return;
 
+	stem->vbo_start = vbo_index;
+	stem->ebo_start = ebo_index;
+
 	for (i = 0; i < stem->cross_sections - 1; i++) {
 		if (get_branch_vcount(stem) + vbo_index > vbo_size)
 			return 0;
@@ -370,8 +371,8 @@ int add_branch(node *stem, node *parent, float offset)
 		add_cross_section(&vbo[vbo_index], stem, p);
 		prev_index = vbo_index;
 		vbo_index += get_branch_vcount(stem);
-		add_triangle_ring(&ebo[ebo_index], prev_index/6,
-				vbo_index/6, stem->resolution);
+		add_triangle_ring(&ebo[ebo_index], prev_index/6, vbo_index/6,
+				stem->resolution);
 		ebo_index += get_branch_ecount(stem);
 	}
 
@@ -380,7 +381,11 @@ int add_branch(node *stem, node *parent, float offset)
 
 	prev_index = vbo_index;
 	vbo_index += get_branch_vcount(stem);
-	if (add_subbranches(stem, prev_index) == 0) {
+	stem->vbo_end = vbo_index;
+	stem->ebo_end = ebo_index;
+
+	add_subbranches(stem, prev_index);
+	if (stem->dichotomous_start == -1) {
 		if (overflow)
 			return 0;
 		if (get_cap_ecount(stem) + ebo_index > ebo_size)
@@ -389,6 +394,8 @@ int add_branch(node *stem, node *parent, float offset)
 		add_cross_section(&vbo[prev_index], stem, 1.0f);
 		cap_branch(prev_index/6, stem->resolution);
 	}
+
+	set_branch_bounds(stem);
 
 	return 1;
 }

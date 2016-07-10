@@ -14,19 +14,25 @@
 extern "C" {
 #endif
 
+#include "collision.h"
+
 typedef struct bt_tree_tag *bt_tree;
 
 bt_tree bt_new_tree();
 void bt_delete_tree(bt_tree tree);
 
-void bt_set_trunk_radius(bt_tree tree, float radius);
-void bt_set_cross_sections(bt_tree tree, int sections);
-void bt_set_resolution(bt_tree tree, int resolution);
+void bt_set_trunk_radius(bt_tree tree, int id, float radius);
+void bt_set_cross_sections(bt_tree tree, int id, int sections);
+void bt_set_resolution(bt_tree tree, int id, int resolution);
 void bt_set_max_branch_depth(bt_tree tree, int depth);
 
-int bt_get_cross_sections(bt_tree tree);
-int bt_get_resolution(bt_tree tree);
-float bt_get_radius(bt_tree tree);
+int bt_get_cross_sections(bt_tree tree, int id);
+int bt_get_resolution(bt_tree tree, int id);
+float bt_get_radius(bt_tree tree, int id);
+bt_aabb bt_get_bounding_box(bt_tree tree, int id);
+int bt_get_ebo_start(bt_tree tree, int id);
+int bt_get_ebo_end(bt_tree tree, int id);
+int bt_is_terminal_branch(bt_tree tree, int id);
 
 void bt_generate_structure(bt_tree tree);
 

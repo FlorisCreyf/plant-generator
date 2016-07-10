@@ -18,6 +18,7 @@
 ViewEditor::ViewEditor(QWidget *parent) : QOpenGLWidget(parent)
 {
 	ctrl = shift = midButton = false;
+	camera.action = Camera::NONE;
 	setFocus();
 }
 
@@ -33,11 +34,6 @@ void ViewEditor::exportObject(const char *filename)
 	e.setVertices(&m->vertices[0], bt_get_vbo_size(tree));
 	e.setTriangles(&m->triangles[0], bt_get_ebo_size(tree));
 	e.exportObj(filename);
-}
-
-const bt_tree ViewEditor::getTree()
-{
-	return tree;
 }
 
 void ViewEditor::initializeGL()
@@ -85,8 +81,8 @@ void ViewEditor::initializeTree()
 	m.program = 1;
 
 	tree = bt_new_tree();
-	bt_set_trunk_radius(tree, 0.2f);
-	bt_set_resolution(tree, 12);
+	bt_set_trunk_radius(tree, 0, 0.2f);
+	bt_set_resolution(tree, 0, 12);
 	bt_set_max_branch_depth(tree, 1);
 	bt_generate_structure(tree);
 	bt_generate_mesh(tree, &m.vertices[0], vSize, &m.triangles[0], eSize);
@@ -123,6 +119,26 @@ void ViewEditor::keyReleaseEvent(QKeyEvent *event)
 	}
 }
 
+void ViewEditor::selectBranch(int x, int y)
+{
+	int sel;
+	int branch;
+	int s;
+	int e;
+
+	sel = scene.getSelected();
+	rs.setWireframe(sel, false);
+	sel = scene.setSelected(camera, x, y);
+	branch = scene.setSelectedBranch(camera, x, y, tree);
+	if (sel >= 0 && branch >= 0) {
+		s = bt_get_ebo_start(tree, branch);
+		e = bt_get_ebo_end(tree, branch);
+		rs.setWireframe(sel, true, s, e);
+
+		emit selectionChanged(tree, branch);
+	}
+}
+
 void ViewEditor::mousePressEvent(QMouseEvent *event)
 {
 	QPoint p = event->pos();
@@ -139,10 +155,7 @@ void ViewEditor::mousePressEvent(QMouseEvent *event)
 		else
 			camera.action = Camera::ROTATE;
 	} else if (event->button() == Qt::RightButton) {
-		int s = scene.getSelected();
-		rs.setWireframe(s, false);
-		s = scene.setSelected(camera, p.x(), p.y());
-		rs.setWireframe(s, true);
+		selectBranch(p.x(), p.y());
 		update();
 	}
 
@@ -181,6 +194,17 @@ void ViewEditor::paintGL()
 	rs.render(gu);
 }
 
+void ViewEditor::updateWireframe()
+{
+	int sel = scene.getSelected();
+	if (sel >= 0) {
+		int branch = scene.getSelectedBranch();
+		int s1 = bt_get_ebo_start(tree, branch);
+		int e1 = bt_get_ebo_end(tree, branch);
+		rs.setWireframe(sel, true, s1, e1);
+	}
+}
+
 void ViewEditor::change(bool triangles)
 {
 	Mesh *m = scene.getMesh(0);
@@ -191,43 +215,49 @@ void ViewEditor::change(bool triangles)
 	if (s == 0) {
 		m->vertices.resize(v + 1000);
 		m->triangles.resize(e + 1000);
-		rs.updateVertices(0, m, m->vertices.size(), true);
-		rs.updateTriangles(0, m, m->triangles.size(), true);
+		v = m->vertices.size();
+		e = m->triangles.size();
+		rs.updateVertices(0, rs.MESH, &m->vertices[0], v, true);
+		rs.updateTriangles(0, m, e, true);
 		change(true);
 		return;
 	} else {
-		int vs = bt_get_vbo_size(tree)*6;
+		int vs = bt_get_vbo_size(tree) * 6;
 		int es = bt_get_ebo_size(tree);
 
 		if (v > 4000 && e > 4000 && v - 2000 > vs && e - 2000 > es) {
 			m->vertices.resize(vs + 1000);
 			m->triangles.resize(es + 1000);
-			rs.updateVertices(0, m, m->vertices.size(), true);
-			rs.updateTriangles(0, m, m->triangles.size(), true);
+			v = m->vertices.size();
+			e = m->triangles.size();
+			rs.updateVertices(0, rs.MESH, &m->vertices[0], v, true);
+			rs.updateTriangles(0, m, e, true);
 		} else {
-			rs.updateVertices(0, m, vs, false);
+			float *vb = &m->vertices[0];
+			rs.updateVertices(0, rs.MESH, vb, vs, false);
 			if (triangles)
 				rs.updateTriangles(0, m, es, false);
 		}
 	}
 
+	updateWireframe();
 	update();
 }
 
 void ViewEditor::changeResolution(int i)
 {
-	bt_set_resolution(tree, i);
+	bt_set_resolution(tree, scene.getSelectedBranch(), i);
 	change(true);
 }
 
 void ViewEditor::changeSections(int i)
 {
-	bt_set_cross_sections(tree, i);
+	bt_set_cross_sections(tree, scene.getSelectedBranch(), i);
 	change(true);
 }
 
 void ViewEditor::changeRadius(double d)
 {
-	bt_set_trunk_radius(tree, d);
+	bt_set_trunk_radius(tree, scene.getSelectedBranch(), d);
 	change(false);
 }

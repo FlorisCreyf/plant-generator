@@ -49,7 +49,7 @@ void RenderSystem::registerEntity(Mesh &m)
 	int ts = m.triangles.size() * sizeof(unsigned short);
 	unsigned short *t = &m.triangles[0];
 
-	Item item = (Item){0, 0, m.tusage, m.program, 0};
+	Item item = (Item){0, 0, m.tusage, m.program, 0, 0, 0, 0, 0};
 	item.wireframe = false;
 	addVAO(item, m.attribs, m.stride*2, m.vertices);
 
@@ -62,8 +62,8 @@ void RenderSystem::registerEntity(Mesh &m)
 
 void RenderSystem::registerEntity(Line &l)
 {
-	int vertices = l.vertices.size() / 3;
-	Item item = (Item){0, 0, vertices, l.program, l.width};
+	int vertices = l.vertices.size() / 6;
+	Item item = (Item){0, 0, vertices, l.program, l.width, 0, 0, 0, 0};
 	addVAO(item, l.attribs, l.stride*2, l.vertices);
 	lItems.push_back(item);
 }
@@ -85,10 +85,13 @@ void RenderSystem::switchProgram(int program, GlobalUniforms &gu)
 	setGlobalUniforms(gu, programs[program]);
 }
 
-void RenderSystem::setWireframe(int id, bool value)
+void RenderSystem::setWireframe(int id, bool value, int s, int e)
 {
-	if (id >= 0)
+	if (id >= 0) {
 		mItems[id].wireframe = value;
+		mItems[id].wireframeStart = s;
+		mItems[id].wireframeEnd = e;
+	}
 }
 
 void RenderSystem::renderMesh(Item &item)
@@ -99,12 +102,14 @@ void RenderSystem::renderMesh(Item &item)
 
 void RenderSystem::renderWire(Item &item)
 {
+	int len = item.wireframeEnd-item.wireframeStart;
+	void *offset = (void*)(item.wireframeStart*sizeof(unsigned short));
 	glPolygonOffset(-0.1f, -0.1f);
 	glEnable(GL_POLYGON_OFFSET_LINE);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	glLineWidth(wireWidth);
-	renderMesh(item);
+	glDrawElements(GL_TRIANGLES, len, GL_UNSIGNED_SHORT, offset);
 
 	glPolygonOffset(0.0f, 0.0f);
 	glDisable(GL_POLYGON_OFFSET_LINE);
@@ -143,15 +148,19 @@ void RenderSystem::render(GlobalUniforms &gu)
 	glFlush();
 }
 
-void RenderSystem::updateVertices(int id, Mesh *m, int size, bool resize)
+void RenderSystem::updateVertices(int id, Type type, float *buffer, int size,
+		bool resize)
 {
 	int s = size * sizeof(float);
-	glBindBuffer(GL_ARRAY_BUFFER, mItems[id].vb);
-	if (resize)
-		glBufferData(GL_ARRAY_BUFFER, s, &m->vertices[0],
-				GL_DYNAMIC_DRAW);
+	if (type == LINE)
+		glBindBuffer(GL_ARRAY_BUFFER, lItems[id].vb);
 	else
-		glBufferSubData(GL_ARRAY_BUFFER, 0, s, &m->vertices[0]);
+		glBindBuffer(GL_ARRAY_BUFFER, mItems[id].vb);
+
+	if (resize)
+		glBufferData(GL_ARRAY_BUFFER, s, buffer, GL_DYNAMIC_DRAW);
+	else
+		glBufferSubData(GL_ARRAY_BUFFER, 0, s,  buffer);
 }
 
 void RenderSystem::updateTriangles(int id, Mesh *m, int size, bool resize)

@@ -24,7 +24,9 @@ struct bt_tree_tag {
 bt_tree bt_new_tree()
 {
 	bt_tree tree = (bt_tree)malloc(sizeof(struct bt_tree_tag));
-	tree->root = NULL;
+	tree->root = (node *)malloc(sizeof(struct node_t));
+	tree->root->branch_count = 0;
+	tree->root->line_count = 0;
 	tree->td.vbo_size = 0;
 	tree->td.ebo_size = 0;
 	return tree;
@@ -36,43 +38,61 @@ void bt_delete_tree(bt_tree tree)
 	free(tree);
 }
 
-void bt_set_trunk_radius(bt_tree tree, float radius)
+node *find_node(node *n, int *i, int id)
 {
-	tree->td.trunk_radius = radius;
-	if (tree->root)
-		tree->root->radius = radius;
+	node *m;
+	int j = 0;
+
+	if ((*i)++ == id)
+		return n;
+
+	for (; j < n->branch_count; j++) {
+		m = find_node(&(n->branches[j]), i, id);
+		if (m != NULL)
+			return m;
+	}
+
+	return NULL;
+}
+
+node *get_node(node *n, int id)
+{
+	int i = 0;
+	return find_node(n, &i, id);
+}
+
+void bt_set_trunk_radius(bt_tree tree, int id, float radius)
+{
+	node *n = get_node(tree->root, id);
+	if (n)
+		n->radius = radius;
 }
 
 void change_dichotomous_resolution(node *stem, int r)
 {
 	int i;
-	vec3 n;
-	vec3 p = get_line_end_point(&(stem->lines[stem->line_count-1]));
-
-	for (i = 0; i < stem->branch_count; i++) {
-		n = stem->branches[i].lines[0].start;
-		if (p.x == n.x && p.y == n.y && p.z == n.z) {
-			stem->branches[i].resolution = r;
-			change_dichotomous_resolution(&stem->branches[i], r);
-		}
+	if (stem->branch_count == 0 && stem->dichotomous_start < 0)
+		return;
+	for (i = stem->dichotomous_start; i < stem->branch_count; i++) {
+		stem->branches[i].resolution = r;
+		change_dichotomous_resolution(&stem->branches[i], r);
 	}
 }
 
-void bt_set_resolution(bt_tree tree, int resolution)
+void bt_set_resolution(bt_tree tree, int id, int resolution)
 {
-	tree->td.resolution = resolution;
-	if (tree->root) {
-		tree->root->resolution = resolution;
-		change_dichotomous_resolution(tree->root, resolution);
+	node *n = get_node(tree->root, id);
+	if (n) {
+		n->resolution = resolution;
+		change_dichotomous_resolution(n, resolution);
 	}
 }
 
-void bt_set_cross_sections(bt_tree tree, int sections)
+void bt_set_cross_sections(bt_tree tree, int id, int sections)
 {
-	tree->td.cross_sections = sections;
-	if (tree->root) {
-		tree->root->cross_sections = sections;
-	}
+	node *n = get_node(tree->root, id);
+	if (n)
+		n->cross_sections = sections;
 }
 
 void bt_set_max_branch_depth(bt_tree tree, int depth)
@@ -80,25 +100,52 @@ void bt_set_max_branch_depth(bt_tree tree, int depth)
 	tree->td.max_branch_depth = depth;
 }
 
-int bt_get_cross_sections(bt_tree tree)
+int bt_get_cross_sections(bt_tree tree, int id)
 {
-	return tree->root ? tree->root->cross_sections : -1;
+	node *n = get_node(tree->root, id);
+	return n ? n->cross_sections : -1;
 }
 
-int bt_get_resolution(bt_tree tree)
+int bt_get_resolution(bt_tree tree, int id)
 {
-	return tree->root ? tree->root->resolution : -1;
+	node *n = get_node(tree->root, id);
+	return n ? n->resolution : -1;
 }
 
-float bt_get_radius(bt_tree tree)
+float bt_get_radius(bt_tree tree, int id)
 {
-	return tree->root ? tree->root->radius : -1.0f;
+	node *n = get_node(tree->root, id);
+	return n ? n->radius : -1.0f;
+}
+
+bt_aabb bt_get_bounding_box(bt_tree tree, int id)
+{
+	node *n = get_node(tree->root, id);
+	return n ? n->bounds : (bt_aabb){0, 0, 0, 0, 0, 0};
+}
+
+int bt_get_ebo_start(bt_tree tree, int id)
+{
+	node *n = get_node(tree->root, id);
+	return n->ebo_start;
+}
+
+int bt_get_ebo_end(bt_tree tree, int id)
+{
+	node *n = get_node(tree->root, id);
+	return n->ebo_end;
+}
+
+int bt_is_terminal_branch(bt_tree tree, int id)
+{
+	node *n = get_node(tree->root, id);
+	return n->terminal;
 }
 
 void bt_generate_structure(bt_tree tree)
 {
-	free_tree_structure(tree->root);
-	tree->root = new_tree_structure(&(tree->td));
+	reset_tree_structure(tree->root);
+	new_tree_structure(tree->root);
 }
 
 int bt_get_vbo_size(bt_tree tree)

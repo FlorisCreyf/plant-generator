@@ -28,7 +28,6 @@ public:
 	~ViewEditor();
 
 	void exportObject(const char *filename);
-	const bt_tree getTree();
 
 public slots:
 	void changeResolution(int i);
@@ -59,6 +58,8 @@ private:
 	RenderSystem rs;
 
 	void initializeTree();
+	void selectBranch(int x, int y);
+	void updateWireframe();
 	void change(bool triangles);
 };
 

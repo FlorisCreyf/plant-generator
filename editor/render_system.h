@@ -29,14 +29,19 @@ struct GlobalUniforms {
 class RenderSystem : protected QOpenGLFunctions
 {
 public:
+	enum Type {
+		MESH, LINE
+	};
+
 	RenderSystem();
 	void init();
 	void registerEntity(Mesh &m);
 	void registerEntity(Line &l);
 	void render(GlobalUniforms &gu);
 	void loadShaders(ShaderInfo *info, int size);
-	void setWireframe(int id, bool value);
-	void updateVertices(int id, Mesh *m, int size, bool resize);
+	void setWireframe(int id, bool value, int s = 0, int e = 0);
+	void updateVertices(int id, Type type, float *buffer, int size,
+			bool resize);
 	void updateTriangles(int id, Mesh *m, int size, bool resize);
 
 private:
@@ -52,6 +57,8 @@ private:
 			float width;
 			bool wireframe;
 		};
+		int wireframeStart;
+		int wireframeEnd;
 		GLuint vb;
 		GLuint eb;
 	};

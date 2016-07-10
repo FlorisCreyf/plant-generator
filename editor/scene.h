@@ -14,24 +14,27 @@
 #include "render_system.h"
 #include "camera.h"
 #include "vector.h"
+#include "bluetree.h"
 #include <vector>
 
 class Scene
 {
 public:
+	Scene();
 	void add(Mesh m);
 	void add(Line l);
 	int getSelected();
+	int getSelectedBranch();
 	int setSelected(Camera &camera, int x, int y);
+	int setSelectedBranch(Camera &camera, int x, int y, bt_tree tree);
 	Mesh *getMesh(int i);
 
 private:
 	std::vector<Mesh> meshes;
 	std::vector<Line> lines;
 	int selected;
+	int selectedBranch;
 	int selectionProgram;
-
-	int getId(bt_vec3 origin, bt_vec3 direction);
 };
 
 #endif /* SCENE_H */

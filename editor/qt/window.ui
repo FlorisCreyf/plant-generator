@@ -103,6 +103,13 @@
     image: url(&quot;resources/downarrow.png&quot;);
     width: 7px;
     height: 6px;
+} QSpinBox:disabled {
+	background:#5a5a5a;
+} QSpinBox::up-button:disabled, QSpinBox::down-button:disabled {
+	background:transparent;
+} QSpinBox::up-arrow:disabled, QSpinBox::down-arrow:disabled {
+	width:0;
+	height:0;
 } QGroupBox {
     border: 1px solid #555;
     margin-top: 0.5em;

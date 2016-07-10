@@ -87,9 +87,11 @@ void add_lateral_branches(node *stem)
 		n->min_radius = 0.01f;
 		n->radius = stem->radius * 0.35f / diff;
 		n->cross_sections = 3;
-		n->resolution = stem->resolution - 4;
+		n->resolution = stem->resolution-4 < 3 ? 3 : stem->resolution-4;
 		n->branch_count = 0;
 		n->branch_capacity = 0;
+		n->dichotomous_start = -1;
+		n->terminal = 0;
 
 		vec3 start = get_start_position(stem, i);
 		vec3 direction = get_branch_direction();
@@ -108,6 +110,8 @@ void set_dichotomous_branch(node *n, node *p, vec3 direction)
 	n->resolution = p->resolution;
 	n->branch_count = 0;
 	n->branch_capacity = 0;
+	n->dichotomous_start = -1;
+	n->terminal = 1;
 	set_path(n, &start, &direction);
 }
 
@@ -115,7 +119,7 @@ vec3 add_dichotomous_branches(node *stem)
 {
 	node *n;
 	vec3 direction = get_branch_direction();
-
+	stem->dichotomous_start = stem->branch_count;
 	n = &stem->branches[stem->branch_count++];
 	set_dichotomous_branch(n, stem, direction);
 
@@ -125,32 +129,33 @@ vec3 add_dichotomous_branches(node *stem)
 	set_dichotomous_branch(n, stem, direction);
 }
 
-node *new_tree_structure(tree_data *td)
+node *new_tree_structure(node *root)
 {
-	node *root = (node *)malloc(sizeof(struct node_t));
 	root->branch_count = 0;
 	root->branch_capacity = 10;
 	root->branches = malloc(sizeof(node) * root->branch_capacity);
-
 	root->depth = 1;
 	root->min_radius = 0.0f;
-	root->radius = td->trunk_radius;
-	root->resolution = td->resolution;
 	root->cross_sections = 6;
-
+	root->terminal = 0;
 	vec3 origin = {0.0f, 0.0f, 0.0f};
 	vec3 direction = {0.0f, 1.0f, 0.0f};
 	set_path(root, &origin, &direction);
 
-	max_branch_depth = td->max_branch_depth;
-
 	add_lateral_branches(root);
 	add_dichotomous_branches(root);
-
-	return root;
 }
 
 void free_tree_structure(node *root)
 {
 	remove_nodes(root);
+}
+
+void reset_tree_structure(node *root)
+{
+	int i = 0;
+	for (; i < root->branch_count; i++)
+		free_tree_structure(&root->branches[i]);
+	if (root->line_count > 0)
+		free(root->lines);
 }

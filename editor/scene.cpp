@@ -11,6 +11,11 @@
 #include "collision.h"
 #include <cstdio>
 
+Scene::Scene()
+{
+	selected = selectedBranch = -1;
+}
+
 void Scene::add(Mesh m)
 {
 	meshes.push_back(m);
@@ -31,16 +36,15 @@ int Scene::getSelected()
 	return selected;
 }
 
-int Scene::setSelected(Camera &camera, int x, int y)
+int Scene::getSelectedBranch()
 {
-	bt_vec3 dir = camera.getRayDirection(x, y);
-	bt_vec3 orig = camera.getPosition();
-	selected = getId(orig, dir);
-	return selected;
+	return selectedBranch;
 }
 
-int Scene::getId(bt_vec3 origin, bt_vec3 direction)
+int Scene::setSelected(Camera &camera, int x, int y)
 {
+	bt_vec3 direction = camera.getRayDirection(x, y);
+	bt_vec3 origin = camera.getPosition();
 	bt_aabb box;
 	float t;
 	int len;
@@ -49,9 +53,32 @@ int Scene::getId(bt_vec3 origin, bt_vec3 direction)
 		len = meshes[i].vusage * 12;
 		box = bt_create_aabb(&meshes[i].vertices[0], len);
 		t = bt_intersects_aabb(origin, direction, box);
-		if (t != 0.0f)
-			return i;
+		if (t != 0.0f) {
+			selected = i;
+			return selected;
+		}
 	}
 
-	return -1;
+	selected = -1;
+	return selected;
+}
+
+int Scene::setSelectedBranch(Camera &camera, int x, int y, bt_tree tree)
+{
+	bt_vec3 dir = camera.getRayDirection(x, y);
+	bt_vec3 orig = camera.getPosition();
+	bt_aabb box = bt_get_bounding_box(tree, 0);
+	float t;
+
+	for (int i = 0; box.x1 != box.x2;) {
+		t = bt_intersects_aabb(orig, dir, box);
+		if (t != 0.0f) {
+			selectedBranch = i;
+			return i;
+		}
+		box = bt_get_bounding_box(tree, ++i);
+	}
+
+	selectedBranch = -1;
+	return selectedBranch;
 }

@@ -45,8 +45,8 @@ private:
 	bt_vec3 feye;
 	bt_vec3 target;
 	bt_vec3 ftarget;
-	float winWidth;
-	float winHeight;
+	int winWidth;
+	int winHeight;
 	float distance;
 	float fdistance;
 

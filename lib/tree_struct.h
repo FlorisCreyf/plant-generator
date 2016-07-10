@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2016 Floris Creyf
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
 #include "node.h"
 #include "tree_data.h"
 
-node *new_tree_structure(tree_data *td);
+node *new_tree_structure(node *root);
 void free_tree_structure(node *root);
+void reset_tree_structure(node *root);
 
 #endif /* TREE_STRUCT_H */
-

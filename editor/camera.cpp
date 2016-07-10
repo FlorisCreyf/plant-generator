@@ -192,13 +192,15 @@ bt_mat4 Camera::getInversePerspective()
 bt_vec3 Camera::getRayDirection(int x, int y)
 {
 	bt_vec3 p;
-	bt_mat4 inv = getInverseVP();
+	bt_mat4 invP = getInversePerspective();
+	bt_mat4 invL = getInverseLookAt();
 
-	p.x = 2.0f*x/winWidth - 1.0f;
-	p.y = 1.0f - 2.0f*y/winHeight;
-	p.z = 1.0f;
-
-	bt_transform(&p, &inv, 1.0f);
+	p.x = 2.0f*x/(winWidth-1) - 1.0f;
+	p.y = 1.0f - 2.0f*y/(winHeight-1);
+	p.z = -1.0f;
+	bt_transform(&p, &invP, 1.0f);
+	p.z = -1.f;
+	bt_transform(&p, &invL, 0.0f);
 	bt_normalize_vec3(&p);
 
 	return p;

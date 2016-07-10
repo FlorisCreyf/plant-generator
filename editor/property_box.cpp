@@ -13,7 +13,7 @@
 PropertyBox::PropertyBox(QWidget *parent) : QWidget(parent)
 {
 	QVBoxLayout *l = new QVBoxLayout();
-	QGroupBox *form = new QGroupBox(tr("Trunk"));
+	QGroupBox *form = new QGroupBox(tr("Branch"));
 	QFormLayout *layout =  new QFormLayout;
 
 	resolution = new QSpinBox;
@@ -52,7 +52,13 @@ void PropertyBox::createSignals(ViewEditor *e)
 
 void PropertyBox::fill(bt_tree tree, int s)
 {
-	resolution->setValue(bt_get_resolution(tree));
-	sections->setValue(bt_get_cross_sections(tree));
-	radius->setValue(bt_get_radius(tree));
+	int terminal = bt_is_terminal_branch(tree, s);
+	resolution->setValue(bt_get_resolution(tree, s));
+	sections->setValue(bt_get_cross_sections(tree, s));
+	radius->setValue(bt_get_radius(tree, s));
+
+	if (terminal)
+		resolution->setEnabled(false);
+	else
+		resolution->setEnabled(true);
 }
