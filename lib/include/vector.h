@@ -60,6 +60,7 @@ void bt_normalize_vec3(bt_vec3 *a);
 bt_mat4 bt_transpose_mat4(bt_mat4 *m);
 bt_mat4 bt_mult_mat4(bt_mat4 *a, bt_mat4 *b);
 bt_mat4 bt_rotate_into_vec(bt_vec3 *normal, bt_vec3 *direction);
+bt_vec3 bt_rotate_around_axis(vec3 *v, vec3 *axis, float n);
 bt_mat4 bt_translate(float x, float y, float z);
 float bt_transform(bt_vec3 *v, bt_mat4 *t, float w);
 bt_mat4 bt_rotate_xy(float x, float y);

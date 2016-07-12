@@ -110,6 +110,19 @@ mat4 bt_rotate_into_vec(vec3 *normal, vec3 *direction)
 	};
 }
 
+vec3 bt_rotate_around_axis(vec3 *v, vec3 *axis, float n)
+{
+	vec3 a, b, c, d;
+	a = bt_mult_vec3(cos(n), v);
+	b = bt_cross_vec3(axis, v);
+	b = bt_mult_vec3(sin(n), &b);
+	c = bt_mult_vec3((1.f - cos(n)) * bt_dot_vec3(axis, v), axis);
+	d = bt_add_vec3(&b, &c);
+	d = bt_add_vec3(&a, &d);
+	bt_normalize_vec3(&d);
+	return d;
+}
+
 mat4 bt_translate(float x, float y, float z)
 {
 	return (mat4){

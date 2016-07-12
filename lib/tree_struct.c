@@ -36,6 +36,18 @@ vec3 get_branch_direction()
 	return v;
 }
 
+void get_dichotomous_directions(node *n, vec3 *d)
+{
+	float ax = (float)rand() / RAND_MAX + 0.1;
+	float ay = (float)rand() / (RAND_MAX) + M_PI*.25f;
+	vec3 a1 = n->lines[n->line_count-1].direction;
+	vec3 a2 = {a1.x, 0, a1.z};
+	vec3 b = bt_cross_vec3(&a1, &a2);
+	b = bt_rotate_around_axis(&b, &a1, ay);
+	d[0] = bt_rotate_around_axis(&a1, &b, ax);
+	d[1] = bt_rotate_around_axis(&a1, &b, -ax);
+}
+
 void remove_nodes(node *stem)
 {
 	int i;
@@ -71,11 +83,13 @@ void set_path(node *n, vec3 *start, vec3 *direction)
 	}
 }
 
+vec3 add_dichotomous_branches(node *stem);
+
 void add_lateral_branches(node *stem)
 {
 	node *n;
 	float diff;
-	const int total = 7;
+	const int total = 17;
 	int count = stem->branch_count;
 	int i;
 
@@ -84,18 +98,22 @@ void add_lateral_branches(node *stem)
 	for (i = count; i < total + count; i++) {
 		diff = pow(i + 1.0f, 0.3f);
 		n = &stem->branches[i];
-		n->min_radius = 0.01f;
 		n->radius = stem->radius * 0.35f / diff;
 		n->cross_sections = 3;
-		n->resolution = stem->resolution-4 < 3 ? 3 : stem->resolution-4;
-		n->branch_count = 0;
-		n->branch_capacity = 0;
+		n->resolution = stem->resolution-4 < 5 ? 5 : stem->resolution-4;
 		n->dichotomous_start = -1;
 		n->terminal = 0;
-
 		vec3 start = get_start_position(stem, i);
 		vec3 direction = get_branch_direction();
 		set_path(n, &start, &direction);
+		n->branch_count = 0;
+		n->branch_capacity = 10;
+		n->branches = malloc(sizeof(node) * n->branch_capacity);
+		if ((float)rand() / RAND_MAX > 0.8) {
+			n->min_radius = 0.02f;
+			add_dichotomous_branches(n);
+		} else
+			n->min_radius = 0.01f;
 	}
 }
 
@@ -103,9 +121,8 @@ void set_dichotomous_branch(node *n, node *p, vec3 direction)
 {
 	vec3 start = get_line_end_point(&p->lines[p->line_count-1]);
 
-	n->radius = p->radius * 0.2f;
+	n->radius = p->min_radius;
 	n->min_radius = 0.01f;
-	p->min_radius = p->min_radius > n->radius ? p->min_radius : n->radius;
 	n->cross_sections = 3;
 	n->resolution = p->resolution;
 	n->branch_count = 0;
@@ -118,24 +135,22 @@ void set_dichotomous_branch(node *n, node *p, vec3 direction)
 vec3 add_dichotomous_branches(node *stem)
 {
 	node *n;
-	vec3 direction = get_branch_direction();
+	vec3 d[2];
+	get_dichotomous_directions(stem, d);
 	stem->dichotomous_start = stem->branch_count;
 	n = &stem->branches[stem->branch_count++];
-	set_dichotomous_branch(n, stem, direction);
-
-	direction.x = -direction.x;
-	direction.z = -direction.z;
+	set_dichotomous_branch(n, stem, d[0]);
 	n = &stem->branches[stem->branch_count++];
-	set_dichotomous_branch(n, stem, direction);
+	set_dichotomous_branch(n, stem, d[1]);
 }
 
 node *new_tree_structure(node *root)
 {
 	root->branch_count = 0;
-	root->branch_capacity = 10;
+	root->branch_capacity = 20;
 	root->branches = malloc(sizeof(node) * root->branch_capacity);
 	root->depth = 1;
-	root->min_radius = 0.0f;
+	root->min_radius = 0.04f;
 	root->cross_sections = 6;
 	root->terminal = 0;
 	vec3 origin = {0.0f, 0.0f, 0.0f};

@@ -385,9 +385,10 @@ int add_branch(node *stem, node *parent, float offset)
 	stem->ebo_end = ebo_index;
 
 	add_subbranches(stem, prev_index);
+	if (overflow)
+		return 0;
+		
 	if (stem->dichotomous_start == -1) {
-		if (overflow)
-			return 0;
 		if (get_cap_ecount(stem) + ebo_index > ebo_size)
 			return 0;
 
