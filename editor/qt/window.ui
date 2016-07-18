@@ -29,6 +29,8 @@
 	color:#eee;
 	padding:5px 20px 5px 30px;
 	background-color:transparent;
+} QMenu::item:disabled {
+	color:#aaa;
 } QMenu::item:selected {
 	background:#5a5a5a;
 } QMenu::shortcut {
@@ -55,6 +57,10 @@
 } QWidget {
 	color:#ddd;
 	background:#666;
+
+ 	border-image: none;
+    border: 0px transparent black;
+    outline: 0;
 } QDockWidget {
 	background:#666;
     titlebar-normal-icon: url(&quot;resources/popup.png&quot;);
@@ -118,8 +124,22 @@
     subcontrol-origin: margin;
     left: 4px;
     padding: 0 4px 0 4px;
+} QTabBar {
+	background:#333;
+	qproperty-drawBase: 0;
+} QTabBar::tab {
+	background:#333;
+	color:#ccc;
+	top:0;
+	padding:4px 10px;
+	margin:0;
+} QTabBar::tab:selected {
+	background:#222;
 }
 </string>
+  </property>
+  <property name="documentMode">
+   <bool>false</bool>
   </property>
   <widget class="QWidget" name="centralwidget">
    <property name="styleSheet">
@@ -228,7 +248,7 @@
     <property name="title">
      <string>Window</string>
     </property>
-    <addaction name="action_Properties"/>
+    <addaction name="actionProperties"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
@@ -266,7 +286,22 @@
     </property>
    </widget>
   </widget>
+  <widget class="QDockWidget" name="dockWidget_2">
+   <property name="allowedAreas">
+    <set>Qt::LeftDockWidgetArea|Qt::RightDockWidgetArea</set>
+   </property>
+   <property name="windowTitle">
+    <string>Curve</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="CurveEditor" name="curve"/>
+  </widget>
   <action name="actionOpen">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>&amp;Open...</string>
    </property>
@@ -275,6 +310,9 @@
    </property>
   </action>
   <action name="actionSave">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>&amp;Save</string>
    </property>
@@ -283,6 +321,9 @@
    </property>
   </action>
   <action name="actionSaveAs">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Save &amp;As...</string>
    </property>
@@ -301,6 +342,9 @@
    </property>
   </action>
   <action name="actionUndo">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>&amp;Undo</string>
    </property>
@@ -309,6 +353,9 @@
    </property>
   </action>
   <action name="actionRedo">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>&amp;Redo</string>
    </property>
@@ -317,31 +364,49 @@
    </property>
   </action>
   <action name="actionTranslate">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>&amp;Translate</string>
    </property>
   </action>
   <action name="actionRotate">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>R&amp;otate</string>
    </property>
   </action>
   <action name="actionScale">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>&amp;Scale</string>
    </property>
   </action>
   <action name="actionAbout">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>&amp;About</string>
    </property>
   </action>
   <action name="actionReportIssue">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>&amp;Report Issue...</string>
    </property>
   </action>
   <action name="actionNew">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>&amp;New</string>
    </property>
@@ -349,7 +414,13 @@
     <string>Ctrl+N</string>
    </property>
   </action>
-  <action name="action_Properties">
+  <action name="actionProperties">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>&amp;Properties</string>
    </property>
@@ -366,6 +437,12 @@
    <class>PropertyBox</class>
    <extends>QWidget</extends>
    <header>../property_box.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>CurveEditor</class>
+   <extends>QWidget</extends>
+   <header>../curve_editor.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
@@ -432,6 +509,38 @@
     <hint type="destinationlabel">
      <x>20</x>
      <y>20</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionProperties</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>dockWidget</receiver>
+   <slot>show()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>29</x>
+     <y>312</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionProperties</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>dockWidget</receiver>
+   <slot>close()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>29</x>
+     <y>167</y>
     </hint>
    </hints>
   </connection>
