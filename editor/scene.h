@@ -11,7 +11,6 @@
 #define SCENE_H
 
 #include "objects.h"
-#include "render_system.h"
 #include "camera.h"
 #include "vector.h"
 #include "bluetree.h"
@@ -21,17 +20,15 @@ class Scene
 {
 public:
 	Scene();
-	void add(Mesh m);
-	void add(Line l);
+	void add(Entity e);
 	int getSelected();
 	int getSelectedBranch();
 	int setSelected(Camera &camera, int x, int y);
 	int setSelectedBranch(Camera &camera, int x, int y, bt_tree tree);
-	Mesh *getMesh(int i);
+	Entity *getEntity(int i);
 
 private:
-	std::vector<Mesh> meshes;
-	std::vector<Line> lines;
+	std::vector<Entity> entities;
 	int selected;
 	int selectedBranch;
 	int selectionProgram;

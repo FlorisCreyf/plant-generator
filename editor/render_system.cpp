@@ -13,8 +13,7 @@
 
 RenderSystem::RenderSystem()
 {
-	wireWidth = 1.0f;
-	wireProgram = 2;
+	wireframeProgram = 2;
 }
 
 void RenderSystem::init()
@@ -27,56 +26,68 @@ void RenderSystem::init()
 	glDepthRange(0.0f, 1.0f);
 }
 
-void RenderSystem::addVAO(Item &item, int attribs, int stride,
-		const std::vector<float> &vertices)
+void RenderSystem::loadTriangles(GeometryComponent &g, BufferObject &b)
 {
-	int vsize = vertices.size() * sizeof(float);
-	glGenVertexArrays(1, &item.vao);
-	glBindVertexArray(item.vao);
-	glGenBuffers(1, &item.vb);
-	glBindBuffer(GL_ARRAY_BUFFER, item.vb);
-	glBufferData(GL_ARRAY_BUFFER, vsize, &vertices[0], GL_STATIC_DRAW);
+	int size = g.triangles.size() * sizeof(unsigned short);
+	GLenum usage = g.dynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW;
 
-	for (int i = 0; i < attribs; i++) {
-		GLvoid *start = (void *)(sizeof(float) * 3 * i);
-		glVertexAttribPointer(i, 3, GL_FLOAT, GL_FALSE, stride, start);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, b.ibo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, &g.triangles[0], usage);
+}
+
+void RenderSystem::loadVertices(GeometryComponent &g, BufferObject &b)
+{
+	int size = g.vertices.size() * sizeof(float);
+	GLenum usage = g.dynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW;
+
+	glBindBuffer(GL_ARRAY_BUFFER, b.vbo);
+	glBufferData(GL_ARRAY_BUFFER, size, &g.vertices[0], usage);
+
+	for (int i = 0; i < g.attribs; i++) {
+		GLvoid *s = (void *)(sizeof(float)*3*i);
+		glVertexAttribPointer(i, 3, GL_FLOAT, GL_FALSE, g.stride, s);
 		glEnableVertexAttribArray(i);
 	}
 }
 
-void RenderSystem::registerEntity(Mesh &m)
+int RenderSystem::load(GeometryComponent &g, int buffer)
 {
-	int ts = m.triangles.size() * sizeof(unsigned short);
-	unsigned short *t = &m.triangles[0];
+	if (buffer < 0) {
+		BufferObject b;
+		glGenVertexArrays(1, &b.vao);
+		glGenBuffers(1, &b.vbo);
+		if (g.triangles.size() > 0)
+			glGenBuffers(1, &b.ibo);
+		buffers.push_back(b);
+		buffer = buffers.size() - 1;
+	} else if (buffer < buffers.size()) {
+		buffers[buffer].r.clear();
+	} else
+		return -1;
 
-	Item item = (Item){0, 0, m.tusage, m.program, 0, 0, 0, 0, 0};
-	item.wireframe = false;
-	addVAO(item, m.attribs, m.stride*2, m.vertices);
+	glBindVertexArray(buffers[buffer].vao);
+	loadVertices(g, buffers[buffer]);
+	if (g.triangles.size() > 0)
+		loadTriangles(g, buffers[buffer]);
 
-	glGenBuffers(1, &item.eb);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, item.eb);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, ts, t, GL_DYNAMIC_DRAW);
-
-	mItems.push_back(item);
+	return buffer;
 }
 
-void RenderSystem::registerEntity(Line &l)
+void RenderSystem::registerComponent(int buffer, RenderComponent r)
 {
-	int vertices = l.vertices.size() / 6;
-	Item item = (Item){0, 0, vertices, l.program, l.width, 0, 0, 0, 0};
-	addVAO(item, l.attribs, l.stride*2, l.vertices);
-	lItems.push_back(item);
+	if (buffer < buffers.size() && buffer >= 0)
+		buffers[buffer].r.push_back(r);
 }
 
 void RenderSystem::setGlobalUniforms(GlobalUniforms &gu, GLuint program)
 {
 	GLint loc;
-	bt_vec3 *v = &gu.cameraPosition;
+	bt_vec3 *pos = &gu.cameraPosition;
 
 	loc = glGetUniformLocation(program, "vp");
 	glUniformMatrix4fv(loc, 1, GL_FALSE, &gu.vp.m[0][0]);
 	loc = glGetUniformLocation(program, "cameraPosition");
-	glUniform4f(loc, v->x, v->y, v->z, 0.0f);
+	glUniform4f(loc, pos->x, pos->y, pos->z, 0.0f);
 }
 
 void RenderSystem::switchProgram(int program, GlobalUniforms &gu)
@@ -85,111 +96,137 @@ void RenderSystem::switchProgram(int program, GlobalUniforms &gu)
 	setGlobalUniforms(gu, programs[program]);
 }
 
-void RenderSystem::setWireframe(int id, bool value, int s, int e)
+void RenderSystem::setVertexRange(int buffer, int index, int start, int end)
 {
-	if (id >= 0) {
-		mItems[id].wireframe = value;
-		mItems[id].wireframeStart = s;
-		mItems[id].wireframeEnd = e;
+	if (index >= 0 && buffer >= 0) {
+		buffers[buffer].r[index].vertexRange[0] = start;
+		buffers[buffer].r[index].vertexRange[1] = end;
 	}
 }
 
-void RenderSystem::renderMesh(Item &item)
+void RenderSystem::setTriangleRange(int buffer, int index, int start, int end)
 {
-	glBindVertexArray(item.vao);
-	glDrawElements(GL_TRIANGLES, item.length, GL_UNSIGNED_SHORT, NULL);
+	if (index >= 0 && buffer >= 0) {
+		buffers[buffer].r[index].triangleRange[0] = start;
+		buffers[buffer].r[index].triangleRange[1] = end;
+	}
 }
 
-void RenderSystem::renderWire(Item &item)
+void RenderSystem::setWireframe(int buffer, int index, int start, int end)
 {
-	int len = item.wireframeEnd-item.wireframeStart;
-	void *offset = (void*)(item.wireframeStart*sizeof(unsigned short));
+	if (index >= 0 && buffer >= 0) {
+		buffers[buffer].r[index].wireframeRange[0] = start;
+		buffers[buffer].r[index].wireframeRange[1] = end;
+	}
+}
+
+void RenderSystem::setPoints(int buffer, int index, int start, int end)
+{
+	if (index >= 0 && buffer >= 0) {
+		buffers[buffer].r[index].pointRange[0] = start;
+		buffers[buffer].r[index].pointRange[1] = end;
+	}
+}
+
+void RenderSystem::renderWireframe(RenderComponent &r)
+{
+	int len = r.wireframeRange[1] - r.wireframeRange[0];
+	void *offset = (void *)(r.wireframeRange[0] * sizeof(unsigned short));
+
 	glPolygonOffset(-0.1f, -0.1f);
 	glEnable(GL_POLYGON_OFFSET_LINE);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-	glLineWidth(wireWidth);
 	glDrawElements(GL_TRIANGLES, len, GL_UNSIGNED_SHORT, offset);
-
 	glPolygonOffset(0.0f, 0.0f);
 	glDisable(GL_POLYGON_OFFSET_LINE);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
-void RenderSystem::renderLine(Item &item)
+void RenderSystem::renderPoints(RenderComponent &r)
 {
-	glBindVertexArray(item.vao);
-	glLineWidth(item.width);
-	glDrawArrays(GL_LINES, item.offset, item.length);
+	int len = r.pointRange[1] - r.pointRange[0];
+	glPointSize(8);
+	glDrawArrays(GL_POINTS, r.pointRange[0], len);
 }
 
-void RenderSystem::render(GlobalUniforms &gu)
+void RenderSystem::renderMesh(RenderComponent &r, GlobalUniforms &gu)
 {
-	glClearColor(0.5, 0.5, 0.5, 1.0);
+	int len = r.triangleRange[1] - r.triangleRange[0];
+	void *offset = (void *)(r.triangleRange[0] * sizeof(unsigned short));
+	switchProgram(r.program, gu);
+	glDrawElements(GL_TRIANGLES, len, GL_UNSIGNED_SHORT, offset);
+
+	if (r.wireframeRange[1] > 0) {
+		switchProgram(wireframeProgram, gu);
+		renderWireframe(r);
+	}
+}
+
+void RenderSystem::renderLines(RenderComponent &r, GlobalUniforms &gu)
+{
+	int len = r.vertexRange[1] - r.vertexRange[0];
+
+	switchProgram(r.program, gu);
+	if (r.type == RenderComponent::LINES)
+		glDrawArrays(GL_LINES, r.vertexRange[0], len);
+	else
+		glDrawArrays(GL_LINE_STRIP, r.vertexRange[0], len);
+
+	if (r.pointRange[1] > 0) {
+		switchProgram(wireframeProgram, gu);
+		renderPoints(r);
+	}
+}
+
+void RenderSystem::render(GlobalUniforms &gu, float color)
+{
+	glClearColor(color, color, color, 1.0);
 	glClearDepth(1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	for (int i = 0; i < (int)mItems.size(); i++) {
-		switchProgram(mItems[i].program, gu);
-		renderMesh(mItems[i]);
-
-		if (mItems[i].wireframe) {
-			switchProgram(wireProgram, gu);
-			renderWire(mItems[i]);
-		}
-	}
-
-	for (int i = 0; i < (int)lItems.size(); i++) {
-		switchProgram(lItems[i].program, gu);
-		glLineWidth(10.0f);
-		renderLine(lItems[i]);
+	for (int i = 0; i < buffers.size(); i++) {
+		glBindVertexArray(buffers[i].vao);
+		for (int j = 0; j < buffers[i].r.size(); j++)
+			if (buffers[i].r[j].type == RenderComponent::TRIANGLES)
+				renderMesh(buffers[i].r[j], gu);
+			else
+				renderLines(buffers[i].r[j], gu);
 	}
 
 	glFlush();
 }
 
-void RenderSystem::updateVertices(int id, Type type, float *buffer, int size,
-		bool resize)
+void RenderSystem::updateVertices(int buffer, float *v, int offset, int size)
 {
-	int s = size * sizeof(float);
-	if (type == LINE)
-		glBindBuffer(GL_ARRAY_BUFFER, lItems[id].vb);
-	else
-		glBindBuffer(GL_ARRAY_BUFFER, mItems[id].vb);
-
-	if (resize)
-		glBufferData(GL_ARRAY_BUFFER, s, buffer, GL_DYNAMIC_DRAW);
-	else
-		glBufferSubData(GL_ARRAY_BUFFER, 0, s,  buffer);
+	offset *= sizeof(float);
+	size *= sizeof(float);
+	glBindBuffer(GL_ARRAY_BUFFER, buffers[buffer].vbo);
+	glBufferSubData(GL_ARRAY_BUFFER, offset, size, v);
 }
 
-void RenderSystem::updateTriangles(int id, Mesh *m, int size, bool resize)
+void RenderSystem::updateTriangles(int buffer, unsigned short *v, int offset,
+		int size)
 {
-	int s = size * sizeof(unsigned short);
-	mItems[id].length = size;
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mItems[id].eb);
-	if (resize)
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, s, &m->triangles[0],
-				GL_DYNAMIC_DRAW);
-	else
-		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, s,
-				&m->triangles[0]);
+	offset *= sizeof(unsigned short);
+	size *= sizeof(unsigned short);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffers[buffer].ibo);
+	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, offset, size, v);
 }
 
-void RenderSystem::loadShaders(ShaderInfo *info, int size)
+void RenderSystem::loadShaders(ShaderInfo *r, int size)
 {
 	GLuint program = glCreateProgram();
 
 	for (int i = 0; i < size; i++) {
-		GLuint shader = glCreateShader(info[i].type);
-		FILE *file = fopen(info[i].filename, "r");
+		GLuint shader = glCreateShader(r[i].type);
+		FILE *file = fopen(r[i].filename, "r");
 		GLchar *buffer;
 		int size;
 		GLint status;
 
 		if (file == NULL) {
 			fclose(file);
-			fprintf(stderr, "%s not found.\n", info[i].filename);
+			fprintf(stderr, "%s not found.\n", r[i].filename);
 			continue;
 		}
 
@@ -199,7 +236,7 @@ void RenderSystem::loadShaders(ShaderInfo *info, int size)
 
 		buffer = new GLchar[size];
 		if (!fread(buffer, 1, size, file)) {
-			const char *f = info[i].filename;
+			const char *f = r[i].filename;
 			fprintf(stderr, "Failed to read %s.\n", f);
 			delete[] buffer;
 			continue;
@@ -221,7 +258,7 @@ void RenderSystem::loadShaders(ShaderInfo *info, int size)
 			glGetShaderInfoLog(shader, lsize, &lsize, log);
 			fprintf(stderr, BOLDWHITE "%s: "
 					BOLDRED "error:"
-					RESET "\n%s", info[i].filename, log);
+					RESET "\n%s", r[i].filename, log);
 
 			delete[] log;
 		}

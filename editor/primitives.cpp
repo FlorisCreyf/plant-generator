@@ -8,94 +8,143 @@
  */
 
 #include "primitives.h"
+#include "curve.h"
 
-void addVec3(int &i, float *v, float x, float y, float z)
+void addVec3(float *&v, float x, float y, float z)
 {
-	v[i++] = x;
-	v[i++] = y;
-	v[i++] = z;
+	*(v++) = x;
+	*(v++) = y;
+	*(v++) = z;
 }
 
-Line createGrid(int sections)
+void addLine(float *&v, bt_vec3 a, bt_vec3 b, bt_vec3 color)
 {
-	Line grid;
+	addVec3(v, a.x, a.y, a.z);
+	addVec3(v, color.r, color.g, color.b);
+	addVec3(v, b.x, b.y, b.z);
+	addVec3(v, color.r, color.g, color.b);
+}
+
+void createGrid(GeometryComponent &g, int sections, float scale)
+{
 	float *v;
-	const int vertices = 8 * sections + 4;
-	const int size = vertices * 3 * 2;
-	int i = 0;
+	const int size = (8*sections + 4) * 3*2;
+	g.attribs = 2;
+	g.stride = sizeof(float) * 6;
+	g.vertices.resize(g.vertices.size() + size);
+	v = &g.vertices[g.vertices.size() - size];
 
-	grid.vertices.resize(size);
-	grid.attribs = 2;
-	grid.stride = sizeof(float) * 3;
-	grid.width = 1.5f;
-	grid.program = 0;
-	v = &grid.vertices[0];
-
-	addVec3(i, v, 0.0f, 0.0f, sections);
-	addVec3(i, v, 0.41f, 0.41f, 0.41f);
-	addVec3(i, v, 0.0f, 0.0f, -sections);
-	addVec3(i, v, 0.41f, 0.41f, 0.41f);
-	addVec3(i, v, sections, 0.0f, 0.0f);
-	addVec3(i, v, 0.41f, 0.41f, 0.41f);
-	addVec3(i, v, -sections, 0.0f, 0.0f);
-	addVec3(i, v, 0.41f, 0.41f, 0.41f);
+	addVec3(v, 0.0f, 0.0f, sections*scale);
+	addVec3(v, 0.41f, 0.41f, 0.41f);
+	addVec3(v, 0.0f, 0.0f, -sections*scale);
+	addVec3(v, 0.41f, 0.41f, 0.41f);
+	addVec3(v, sections*scale, 0.0f, 0.0f);
+	addVec3(v, 0.41f, 0.41f, 0.41f);
+	addVec3(v, -sections*scale, 0.0f, 0.0f);
+	addVec3(v, 0.41f, 0.41f, 0.41f);
 
 	for (int j = 1; j <= sections; j++) {
-		addVec3(i, v, j, 0.0f, sections);
-		addVec3(i, v, 0.46f, 0.46f, 0.46f);
-		addVec3(i, v, j, 0.0f, -sections);
-		addVec3(i, v, 0.46f, 0.46f, 0.46f);
-		addVec3(i, v, -j, 0.0f, sections);
-		addVec3(i, v, 0.46f, 0.46f, 0.46f);
-		addVec3(i, v, -j, 0.0f, -sections);
-		addVec3(i, v, 0.46f, 0.46f, 0.46f);
+		addVec3(v, j*scale, 0.0f, sections*scale);
+		addVec3(v, 0.46f, 0.46f, 0.46f);
+		addVec3(v, j*scale, 0.0f, -sections*scale);
+		addVec3(v, 0.46f, 0.46f, 0.46f);
+		addVec3(v, -j*scale, 0.0f, sections*scale);
+		addVec3(v, 0.46f, 0.46f, 0.46f);
+		addVec3(v, -j*scale, 0.0f, -sections*scale);
+		addVec3(v, 0.46f, 0.46f, 0.46f);
 
-		addVec3(i, v, sections, 0.0f, j);
-		addVec3(i, v, 0.46f, 0.46f, 0.46f);
-		addVec3(i, v, -sections, 0.0f, j);
-		addVec3(i, v, 0.46f, 0.46f, 0.46f);
-		addVec3(i, v, sections, 0.0f, -j);
-		addVec3(i, v, 0.46f, 0.46f, 0.46f);
-		addVec3(i, v, -sections, 0.0f, -j);
-		addVec3(i, v, 0.46f, 0.46f, 0.46f);
+		addVec3(v, sections*scale, 0.0f, j*scale);
+		addVec3(v, 0.46f, 0.46f, 0.46f);
+		addVec3(v, -sections*scale, 0.0f, j*scale);
+		addVec3(v, 0.46f, 0.46f, 0.46f);
+		addVec3(v, sections*scale, 0.0f, -j*scale);
+		addVec3(v, 0.46f, 0.46f, 0.46f);
+		addVec3(v, -sections*scale, 0.0f, -j*scale);
+		addVec3(v, 0.46f, 0.46f, 0.46f);
 	}
-
-	return grid;
 }
 
-void addVec3c(int &i, float *v, float x, float y, float z)
+void createBox(GeometryComponent &g, bt_aabb &b)
 {
-	addVec3(i, v, x, y, z);
-	addVec3(i, v, 0.4f, 0.4f, 0.4f);
-}
-
-Line createBox(bt_aabb &b)
-{
-	Line l;
 	float *v;
-	const int vertices = 24;
-	const int size = vertices * 3 * 2;
-	int i = 0;
+	const int size = 144;
+	bt_vec3 c = {0.4f, 0.4f, 0.4f};
+	g.attribs = 2;
+	g.stride = sizeof(float) * 6;
+	g.vertices.resize(g.vertices.size() + size);
+	v = &g.vertices[g.vertices.size() - size];
 
-	l.vertices.resize(size);
-	l.attribs = 2;
-	l.stride = sizeof(float) * 3;
-	l.width = 2.0f;
-	l.program = 0;
-	v = &l.vertices[0];
+	addLine(v, (bt_vec3){b.x1, b.y1, b.z1}, (bt_vec3){b.x2, b.y1, b.z1}, c);
+	addLine(v, (bt_vec3){b.x1, b.y1, b.z1}, (bt_vec3){b.x1, b.y2, b.z1}, c);
+	addLine(v, (bt_vec3){b.x1, b.y1, b.z1}, (bt_vec3){b.x1, b.y1, b.z2}, c);
+	addLine(v, (bt_vec3){b.x2, b.y2, b.z2}, (bt_vec3){b.x1, b.y2, b.z2}, c);
+	addLine(v, (bt_vec3){b.x2, b.y2, b.z2}, (bt_vec3){b.x2, b.y1, b.z2}, c);
+	addLine(v, (bt_vec3){b.x2, b.y2, b.z2}, (bt_vec3){b.x2, b.y2, b.z1}, c);
+	addLine(v, (bt_vec3){b.x2, b.y1, b.z1}, (bt_vec3){b.x2, b.y2, b.z1}, c);
+	addLine(v, (bt_vec3){b.x2, b.y1, b.z1}, (bt_vec3){b.x2, b.y1, b.z2}, c);
+	addLine(v, (bt_vec3){b.x1, b.y2, b.z1}, (bt_vec3){b.x2, b.y2, b.z1}, c);
+	addLine(v, (bt_vec3){b.x1, b.y2, b.z1}, (bt_vec3){b.x1, b.y2, b.z2}, c);
+	addLine(v, (bt_vec3){b.x1, b.y1, b.z2}, (bt_vec3){b.x2, b.y1, b.z2}, c);
+	addLine(v, (bt_vec3){b.x1, b.y1, b.z2}, (bt_vec3){b.x1, b.y2, b.z2}, c);
+}
 
-	addVec3c(i, v, b.x1, b.y1, b.z1); addVec3c(i, v, b.x1, b.y2, b.z1);
-	addVec3c(i, v, b.x1, b.y1, b.z1); addVec3c(i, v, b.x1, b.y1, b.z2);
-	addVec3c(i, v, b.x1, b.y1, b.z1); addVec3c(i, v, b.x2, b.y1, b.z1);
-	addVec3c(i, v, b.x2, b.y2, b.z2); addVec3c(i, v, b.x1, b.y2, b.z2);
-	addVec3c(i, v, b.x2, b.y2, b.z2); addVec3c(i, v, b.x2, b.y2, b.z1);
-	addVec3c(i, v, b.x2, b.y2, b.z2); addVec3c(i, v, b.x2, b.y1, b.z2);
-	addVec3c(i, v, b.x1, b.y2, b.z1); addVec3c(i, v, b.x1, b.y2, b.z2);
-	addVec3c(i, v, b.x2, b.y1, b.z1); addVec3c(i, v, b.x2, b.y1, b.z2);
-	addVec3c(i, v, b.x1, b.y1, b.z2); addVec3c(i, v, b.x2, b.y1, b.z2);
-	addVec3c(i, v, b.x2, b.y1, b.z1); addVec3c(i, v, b.x2, b.y2, b.z1);
-	addVec3c(i, v, b.x1, b.y1, b.z2); addVec3c(i, v, b.x1, b.y2, b.z2);
-	addVec3c(i, v, b.x1, b.y2, b.z1); addVec3c(i, v, b.x2, b.y2, b.z1);
+void createLine(GeometryComponent &g, std::vector<bt_vec3> p)
+{
+	float *v;
+	const int size = 6 * p.size();
+	g.attribs = 2;
+	g.stride = sizeof(float) * 6;
+	g.vertices.resize(g.vertices.size() + size);
+	v = &g.vertices[g.vertices.size() - size];
 
-	return l;
+	for (int i = p.size() - 1; i >= 0; --i) {
+		addVec3(v, p[i].x, p[i].y, p[i].z);
+		addVec3(v, .2f, 0.46f, 0.6f);
+	}
+}
+
+void createBezier(GeometryComponent &g, std::vector<bt_vec3> p, int resolution)
+{
+	float *v;
+	const int size = 100 * 6;
+	g.vertices.resize(g.vertices.size() + size);
+	g.attribs = 2;
+	g.stride = sizeof(float) * 6;
+	v = &g.vertices[g.vertices.size() - size];
+
+	for (int i = 0; i < 100; i += 2) {
+		bt_vec3 color = {0.5f, 0.5f, 0.5f};
+		bt_vec3 a = bt_get_bezier(i/99.f, &p[0], p.size());
+		bt_vec3 b = bt_get_bezier((i+1)/99.f, &p[0], p.size());
+		addLine(v, a, b, color);
+	}
+}
+
+void createPlane(GeometryComponent &g, bt_vec3 a, bt_vec3 b)
+{
+	float *v;
+	const int size = 36;
+
+	g.vertices.resize(g.vertices.size() + size);
+	g.attribs = 2;
+	g.stride = sizeof(float) * 6;
+	v = &g.vertices[g.vertices.size() - size];
+
+	addVec3(v, a.x + b.x, a.y + b.y, a.z + b.z);
+	addVec3(v, .32f, 0.32f, 0.32f);
+	addVec3(v, a.x - b.x, a.y - b.y, a.z - b.z);
+	addVec3(v, .32f, 0.32f, 0.32f);
+
+	addVec3(v, -a.x + b.x, -a.y + b.y, -a.z + b.z);
+	addVec3(v, .32f, 0.32f, 0.32f);
+	addVec3(v, -a.x - b.x, -a.y - b.y, -a.z - b.z);
+	addVec3(v, .32f, 0.32f, 0.32f);
+
+	int start = (g.vertices.size() - size)/6;
+	g.triangles.push_back(start);
+	g.triangles.push_back(start + 1);
+	g.triangles.push_back(start + 2);
+	g.triangles.push_back(start + 2);
+	g.triangles.push_back(start + 1);
+	g.triangles.push_back(start + 3);
 }

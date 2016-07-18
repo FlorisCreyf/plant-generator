@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2016 Floris Creyf
  *
  * This program is free software; you can redistribute it and/or modify
@@ -12,8 +12,12 @@
 
 #include "objects.h"
 #include "collision.h"
+#include <vector>
 
-Line createGrid(int sections);
-Line createBox(bt_aabb &b);
+void createGrid(GeometryComponent &g, int sections, float scale);
+void createBox(GeometryComponent &g, bt_aabb &b);
+void createLine(GeometryComponent &g, std::vector<vec3> p);
+void createBezier(GeometryComponent &g, std::vector<vec3> p, int resolution);
+void createPlane(GeometryComponent &g, bt_vec3 a, bt_vec3 b);
 
 #endif /* PRIMITIVES_H */

@@ -29,50 +29,39 @@ struct GlobalUniforms {
 class RenderSystem : protected QOpenGLFunctions
 {
 public:
-	enum Type {
-		MESH, LINE
-	};
-
 	RenderSystem();
 	void init();
-	void registerEntity(Mesh &m);
-	void registerEntity(Line &l);
-	void render(GlobalUniforms &gu);
+	int load(GeometryComponent &g, int buffer = -1);
+	void registerComponent(int buffer, RenderComponent r);
+	void render(GlobalUniforms &gu, float color = 0.5f);
+	void setVertexRange(int buffer, int index, int start, int end);
+	void setTriangleRange(int buffer, int index, int start, int end);
+	void setWireframe(int buffer, int index, int start, int end);
+	void setPoints(int buffer, int index, int start, int end);
+	void updateVertices(int buffer, float *v, int offset, int size);
+	void updateTriangles(int buffer, unsigned short *v, int offset,
+			int size);
 	void loadShaders(ShaderInfo *info, int size);
-	void setWireframe(int id, bool value, int s = 0, int e = 0);
-	void updateVertices(int id, Type type, float *buffer, int size,
-			bool resize);
-	void updateTriangles(int id, Mesh *m, int size, bool resize);
 
 private:
-	float wireWidth;
-	int wireProgram;
-	struct Item {
+	int wireframeProgram;
+	struct BufferObject {
 		GLuint vao;
-		int offset;
-		int length;
-		int program;
-		union {
-			float size;
-			float width;
-			bool wireframe;
-		};
-		int wireframeStart;
-		int wireframeEnd;
-		GLuint vb;
-		GLuint eb;
+		GLuint vbo;
+		GLuint ibo;
+		std::vector<RenderComponent> r;
 	};
-	std::vector<Item> mItems;
-	std::vector<Item> lItems;
+	std::vector<BufferObject> buffers;
 	std::vector<GLuint> programs;
 
+	void loadTriangles(GeometryComponent &g, BufferObject &b);
+	void loadVertices(GeometryComponent &g, BufferObject &b);
 	void setGlobalUniforms(GlobalUniforms &gu, GLuint program);
-	void renderMesh(Item &item);
-	void renderWire(Item &item);
-	void renderLine(Item &item);
-	void addVAO(Item &item, int attribs, int stride,
-			const std::vector<float> &vertices);
 	void switchProgram(int program, GlobalUniforms &gu);
+	void renderWireframe(RenderComponent &r);
+	void renderPoints(RenderComponent &r);
+	void renderMesh(RenderComponent &r, GlobalUniforms &gu);
+	void renderLines(RenderComponent &r, GlobalUniforms &gu);
 };
 
 #endif /* RENDER_SYSTEM_H */

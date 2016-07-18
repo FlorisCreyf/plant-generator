@@ -58,9 +58,11 @@ private:
 	RenderSystem rs;
 
 	void initializeTree();
+	void initializeGrid();
 	void selectBranch(int x, int y);
 	void updateWireframe();
-	void change(bool triangles);
+	void expandBuffer(GeometryComponent &g, RenderComponent &r);
+	void change();
 };
 
 #endif /* VIEW_EDITOR_H */
