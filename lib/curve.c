@@ -26,10 +26,10 @@ float get_bernstein_term(float t, int i, int n)
 	return a * b;
 }
 
-vec3 bt_get_bezier(float t, vec3 *p, int degree)
+bt_vec3 bt_get_bezier(float t, bt_vec3 *p, int degree)
 {
-	vec3 a;
-	vec3 b = {0.f, 0.f, 0.f};
+	bt_vec3 a;
+	bt_vec3 b = {0.f, 0.f, 0.f};
 	float basis;
 	int i = 0;
 
@@ -40,4 +40,11 @@ vec3 bt_get_bezier(float t, vec3 *p, int degree)
 	}
 
 	return b;
+}
+
+bt_vec3 bt_get_path(float t, bt_vec3 *p, int curve_count)
+{
+	t *= curve_count;
+	int curve = floor(t);
+	return bt_get_bezier(t-curve, &p[curve*4], 4);
 }

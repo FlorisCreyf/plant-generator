@@ -22,6 +22,13 @@ class CurveEditor : public QOpenGLWidget, protected QOpenGLFunctions
 public:
 	CurveEditor(QWidget *parent = 0);
 
+public slots:
+	void setControls(std::vector<bt_vec3> controls);
+	void setEnabled(bool enabled);
+
+signals:
+	void controlsChanged(std::vector<bt_vec3> controls);
+
 protected slots:
 	void onFloat(bool);
 
@@ -30,6 +37,7 @@ protected:
 	void paintGL();
 	void resizeGL(int width, int height);
 	void mousePressEvent(QMouseEvent *);
+	void mouseDoubleClickEvent(QMouseEvent *);
 	void mouseReleaseEvent(QMouseEvent *);
 	void keyPressEvent(QKeyEvent *);
 	void keyReleaseEvent(QKeyEvent *);
@@ -37,13 +45,27 @@ protected:
 
 private:
 	RenderSystem rs;
-	bool init;
+	Entity ui;
+	bool enabled;
 	int height;
 	int width;
 	std::vector<bt_vec3> controls;
+	bt_vec3 curve[4];
+	int curveIndex;
 	int selected;
 
 	void createInterface();
+	int createBackground(int);
+	int createControlLines(int);
+	int createCurve(int);
+	void updateCurve();
+	void drawCurve();
+	void insertCurve(int, float, float);
+	bool reinsertCurve(float);
+	bool omitCurve(float);
+	void placeOuterControl(float, float);
+	void placeInnerControl(float, float);
+	void placeTerminalControl(bool, float);
 };
 
 #endif /* CURVE_EDITOR_H */

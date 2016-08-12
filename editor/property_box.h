@@ -11,9 +11,9 @@
 #define PROPERTY_BOX
 
 #include "view_editor.h"
+#include "curve_button.h"
+#include "curve_editor.h"
 #include <QtWidgets>
-
-class ViewEditor;
 
 class PropertyBox : public QWidget
 {
@@ -26,11 +26,17 @@ public:
 
 public slots:
 	void fill(bt_tree tree, int s);
+	void updateCurveButton(std::vector<bt_vec3> controls);
+
+signals:
+	void isEnabled(bool enabled);
 
 private:
+	QTableWidget *t;
 	QDoubleSpinBox *radius;
 	QSpinBox *resolution;
 	QSpinBox *sections;
+	CurveButtonWidget *radiusCurve;
 };
 
 #endif /* PROPERTY_BOX */

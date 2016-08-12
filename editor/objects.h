@@ -20,10 +20,12 @@ struct GeometryComponent
 	std::vector<float> vertices;
 	std::vector<unsigned short> triangles;
 	bool dynamic;
+	int buffer;
 };
 
 struct RenderComponent
 {
+	bool hidden;
 	int program;
 	int wireframeRange[2];
 	int pointRange[2];
@@ -35,7 +37,7 @@ struct RenderComponent
 };
 
 struct Entity {
-	RenderComponent renderComponent;
+	std::vector<RenderComponent> renderComponent;
 	GeometryComponent geometry;
 };
 

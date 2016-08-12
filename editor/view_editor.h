@@ -28,11 +28,13 @@ public:
 	~ViewEditor();
 
 	void exportObject(const char *filename);
+	void setRenderSystem(RenderSystem *rs);
 
 public slots:
 	void changeResolution(int i);
 	void changeSections(int i);
 	void changeRadius(double d);
+	void changeRadiusCurve(std::vector<bt_vec3> c);
 
 signals:
 	void selectionChanged(bt_tree tree, int s);
@@ -51,11 +53,12 @@ private:
 	bool ctrl;
 	bool shift;
 	bool midButton;
+	int buffer;
 
 	bt_tree tree;
 	Scene scene;
 	Camera camera;
-	RenderSystem rs;
+	RenderSystem *rs;
 
 	void initializeTree();
 	void initializeGrid();

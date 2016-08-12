@@ -22,16 +22,17 @@ vec3 get_start_position(node *n, int i)
 	return get_line_point(&n->lines[line], offset);
 }
 
-vec3 get_branch_direction()
+vec3 get_branch_direction(node *n, node *p)
 {
 	float ax;
 	float ay;
 	vec3 v = {0.0f, 1.0f, 0.0f};
 	mat4 r;
 
-	ax = (float)rand() / RAND_MAX;
+	float ratio = n->radius/p->radius;
+	ax = (float)rand() / RAND_MAX * ratio * 4.f;
 	ay = (float)rand() / RAND_MAX;
-	r = bt_rotate_xy(M_PI*0.5f - ax, ay*M_PI*2.0f);
+	r = bt_rotate_xy(M_PI*0.1f + ax, ay*M_PI*2.0f);
 	bt_transform(&v, &r, 0.0f);
 	return v;
 }
@@ -89,7 +90,7 @@ void add_lateral_branches(node *stem)
 {
 	node *n;
 	float diff;
-	const int total = 17;
+	const int total = 13;
 	int count = stem->branch_count;
 	int i;
 
@@ -100,11 +101,12 @@ void add_lateral_branches(node *stem)
 		n = &stem->branches[i];
 		n->radius = stem->radius * 0.35f / diff;
 		n->cross_sections = 3;
+		n->radius_curve_size = 0;
 		n->resolution = stem->resolution-4 < 5 ? 5 : stem->resolution-4;
 		n->dichotomous_start = -1;
 		n->terminal = 0;
 		vec3 start = get_start_position(stem, i);
-		vec3 direction = get_branch_direction();
+		vec3 direction = get_branch_direction(n, stem);
 		set_path(n, &start, &direction);
 		n->branch_count = 0;
 		n->branch_capacity = 10;
@@ -129,6 +131,7 @@ void set_dichotomous_branch(node *n, node *p, vec3 direction)
 	n->branch_capacity = 0;
 	n->dichotomous_start = -1;
 	n->terminal = 1;
+	n->radius_curve_size = 0;
 	set_path(n, &start, &direction);
 }
 

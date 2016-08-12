@@ -36,6 +36,9 @@ typedef struct node_t {
 
 	float radius;
 	float min_radius;
+	bt_vec3 *radius_curve;
+	int radius_curve_size;
+
 	int depth;
 	int resolution;
 	int cross_sections;

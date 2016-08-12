@@ -20,6 +20,7 @@ int main(int argc, char *argv[])
 	format.setRenderableType(QSurfaceFormat::OpenGL);
 	format.setDepthBufferSize(24);
         format.setStencilBufferSize(8);
+	format.setAlphaBufferSize(8);
 	QSurfaceFormat::setDefaultFormat(format);
 
 	QApplication::setAttribute(Qt::AA_ShareOpenGLContexts);

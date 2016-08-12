@@ -41,6 +41,7 @@ public:
 	void updateVertices(int buffer, float *v, int offset, int size);
 	void updateTriangles(int buffer, unsigned short *v, int offset,
 			int size);
+	void setHidden(int buffer, int index, bool value);
 	void loadShaders(ShaderInfo *info, int size);
 
 private:

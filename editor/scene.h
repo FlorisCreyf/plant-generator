@@ -21,15 +21,15 @@ class Scene
 public:
 	Scene();
 	void add(Entity e);
-	int getSelected();
+	Entity *getSelected();
 	int getSelectedBranch();
-	int setSelected(Camera &camera, int x, int y);
+	Entity *setSelected(Camera &camera, int x, int y);
 	int setSelectedBranch(Camera &camera, int x, int y, bt_tree tree);
 	Entity *getEntity(int i);
 
 private:
 	std::vector<Entity> entities;
-	int selected;
+	Entity *selected;
 	int selectedBranch;
 	int selectionProgram;
 };

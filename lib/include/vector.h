@@ -70,6 +70,7 @@ void bt_normalize_vec4(bt_quat *a);
 bt_quat bt_mult_quat(bt_quat *a, bt_quat *b);
 void bt_normalize_quat(bt_quat *q);
 bt_quat bt_slerp(bt_quat *a, bt_quat *b, float t);
+bt_mat4 bt_mat4_identity();
 
 #ifdef __cplusplus
 }

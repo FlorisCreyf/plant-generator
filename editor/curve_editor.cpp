@@ -12,12 +12,39 @@
 #include "curve.h"
 #include <QtGui/QMouseEvent>
 #include <QtGui/QTabBar>
-#include <math.h>
+#include <cmath>
 
 CurveEditor::CurveEditor(QWidget *parent) : QOpenGLWidget(parent)
 {
-	init = true;
+	enabled = false;
 	selected = -1;
+}
+
+void CurveEditor::initializeGL()
+{
+	initializeOpenGLFunctions();
+	rs.init();
+	onFloat(false);
+	connect(parent(), SIGNAL(topLevelChanged(bool)), this,
+			SLOT(onFloat(bool)));
+
+	controls.push_back((bt_vec3){0.0f, -0.3f, 1.0f});
+	controls.push_back((bt_vec3){0.2f, -0.3f, 1.0f});
+	controls.push_back((bt_vec3){0.4f, -0.3f, 0.6f});
+	controls.push_back((bt_vec3){0.5f, -0.3f, 0.5f});
+
+	controls.push_back((bt_vec3){0.5f, -0.3f, 0.5f});
+	controls.push_back((bt_vec3){0.6f, -0.3f, 0.4f});
+	controls.push_back((bt_vec3){0.8f, -0.3f, 0.0f});
+	controls.push_back((bt_vec3){1.0f, -0.3f, 0.0f});
+
+	ShaderInfo shaders[] = {
+		{GL_VERTEX_SHADER, "shaders/flat.vert"},
+		{GL_FRAGMENT_SHADER, "shaders/flat.frag"},
+	};
+	rs.loadShaders(&shaders[0], 2);
+
+	createInterface();
 }
 
 void CurveEditor::onFloat(bool topLevel)
@@ -29,58 +56,73 @@ void CurveEditor::onFloat(bool topLevel)
 
 void CurveEditor::createInterface()
 {
-	GeometryComponent g;
-	RenderComponent plane = {};
-	RenderComponent grid = {};
-	RenderComponent curve = {};
-	int size;
-	int lineStart;
+	RenderComponent *r;
+	int offset = 0;
+	int buffer;
 
-	createBezier(g, controls, 100);
-	lineStart = g.vertices.size() / 6;
-	createLine(g, controls);
-	curve.type = RenderComponent::LINE_STRIP;
-	curve.vertexRange[1] = size = g.vertices.size() / 6;
-	curve.pointRange[0] = lineStart;
-	curve.pointRange[1] = g.vertices.size() / 6;
+	ui.renderComponent.resize(4);
+	offset = createBackground(offset);
+	offset = createControlLines(offset);
+	offset = createCurve(offset);
+	ui.renderComponent[2].hidden = true;
+	ui.renderComponent[3].hidden = true;
 
-	createGrid(g, 3, 1.0f/3.0f);
-	grid.type = RenderComponent::LINES;
-	grid.vertexRange[0] = size;
-	grid.vertexRange[1] = size = g.vertices.size() / 6;
-
-	createPlane(g, (bt_vec3){1, 0, 0}, (bt_vec3){0, 0, 1});
-	plane.type = RenderComponent::TRIANGLES;
-	plane.vertexRange[0] = size;
-	plane.vertexRange[1] = size = g.vertices.size() / 6;
-	plane.triangleRange[1] = g.triangles.size();
-
-	int buffer = rs.load(g);
-	rs.registerComponent(buffer, plane);
-	rs.registerComponent(buffer, curve);
-	rs.registerComponent(buffer, grid);
+	buffer = rs.load(ui.geometry);
+	for (int i = 3; i >= 0; i--)
+		rs.registerComponent(buffer, ui.renderComponent[i]);
 }
 
-void CurveEditor::initializeGL()
+int CurveEditor::createBackground(int offset)
 {
-	initializeOpenGLFunctions();
-	rs.init();
-	onFloat(false);
-	connect(parent(), SIGNAL(topLevelChanged(bool)), this,
-			SLOT(onFloat(bool)));
+	{
+		bt_vec3 color = {0.3f, 0.3f, 0.3f};
+		bt_vec3 sectionColor = {0.3f, 0.3f, 0.3f};
+		RenderComponent *r = &ui.renderComponent[1];
+		createGrid(ui.geometry, 3, color, sectionColor, (bt_mat4){
+				1.0f/6.0f, 0.0f, 0.0f, 0.0f,
+				0.0f, 1.0f/6.0f, 0.0f, 0.0f,
+				0.0f, 0.0f, 1.0f/6.0f, 0.0f,
+				0.5f, 0.0f, 0.5f, 1.0f});
+		r->type = RenderComponent::LINES;
+		r->vertexRange[0] = offset;
+		r->vertexRange[1] = ui.geometry.vertices.size() / 6;
+		offset = r->vertexRange[1];
+	}
 
-	controls.push_back((bt_vec3){-1, -.1, 1});
-	controls.push_back((bt_vec3){0, -.1, -0.5f});
-	controls.push_back((bt_vec3){0, -.1, 0.5f});
-	controls.push_back((bt_vec3){1, -.1, -1});
+	{
+		bt_vec3 a = {1.0f, 0.0f, 0.0f};
+		bt_vec3 b = {0.0f, 0.0f, 1.0f};
+		bt_vec3 center = {0.0f, 0.2f, 0.0f};
+		RenderComponent *r = &ui.renderComponent[0];
+		createPlane(ui.geometry, a, b, center);
+		r->type = RenderComponent::TRIANGLES;
+		r->vertexRange[0] = offset;
+		r->vertexRange[1] = ui.geometry.vertices.size() / 6;
+		r->triangleRange[1] = ui.geometry.triangles.size();
+		return r->vertexRange[1];
+	}
+}
 
-	ShaderInfo shaders[] = {
-		{GL_VERTEX_SHADER, "shaders/flat.vert"},
-		{GL_FRAGMENT_SHADER, "shaders/flat.frag"},
-	};
-	rs.loadShaders(&shaders[0], 2);
+int CurveEditor::createControlLines(int offset)
+{
+	RenderComponent *r = &ui.renderComponent[2];
+	createLine(ui.geometry, controls, (bt_vec3){0.6f, 0.6f, 0.6f});
+	r->type = RenderComponent::LINES;
+	r->vertexRange[0] = offset;
+	r->vertexRange[1] = ui.geometry.vertices.size() / 6;
+	r->pointRange[0] = offset;
+	r->pointRange[1] = ui.geometry.vertices.size() / 6;
+	return r->vertexRange[1];
+}
 
-	createInterface();
+int CurveEditor::createCurve(int offset)
+{
+	RenderComponent *r = &ui.renderComponent[3];
+	createPath(ui.geometry, controls, 100, (bt_vec3){0.2f, 0.46f, 0.6f});
+	r->type = RenderComponent::LINE_STRIP;
+	r->vertexRange[0] = offset;
+	r->vertexRange[1] = ui.geometry.vertices.size() / 6;
+	return r->vertexRange[1];
 }
 
 void CurveEditor::resizeGL(int width, int height)
@@ -102,13 +144,64 @@ void CurveEditor::keyReleaseEvent(QKeyEvent *event)
 
 void CurveEditor::mousePressEvent(QMouseEvent *event)
 {
+	if (!enabled)
+		return;
+
 	QPoint p = event->pos();
 	for (int i = 0; i < controls.size(); i++) {
-		int cx = (controls[i].x*0.9f + 1.0f) * width*0.5f;
-		int cy = height - (controls[i].z*0.9f + 1.0f) * height*0.5f;
-		if (sqrt(pow(p.x() - cx, 2) + pow(p.y() - cy, 2)) < 8)
+		int x = (controls[i].x * 0.9f + 0.05f) * width;
+		int y = (height - (controls[i].z * 0.9f + 0.05f) * height);
+		if (sqrt(pow(p.x() - x, 2) + pow(p.y() - y, 2)) < 8) {
 			selected = i;
+			curveIndex = -1;
+			x = p.x();
+			y = p.y();
+		}
 	}
+}
+
+void toDeviceCoordinates(float &x, float &y, int width, int height)
+{
+	x = x/(width - 1.0f)*10.0f/9.0f - 1.0f/18.0f;
+	y = (1.0f - y/(height - 1.0f))*10.0f/9.0f - 1.0f/18.0f;
+}
+
+void CurveEditor::insertCurve(int i, float x, float y)
+{
+	float minX = x-0.1f > controls[i-3].x ? x-0.1f : controls[i-3].x;
+	float maxX = x+0.1f < controls[i].x ? x+0.1f : controls[i].x;
+
+	if (x <= controls[i].x && x >= controls[i-1].x)
+		return;
+	if (x >= controls[i-3].x && x <= controls[i-2].x)
+		return;
+
+	curve[0] = (bt_vec3){minX, 0.0f, y};
+	curve[1] = (bt_vec3){x, 0.0f, y};
+	curve[2] = (bt_vec3){x, 0.0f, y};
+	curve[3] = (bt_vec3){maxX, 0.0f, y};
+	controls.insert(controls.begin()+i-1, curve, &curve[4]);
+	updateCurve();
+
+	emit controlsChanged(controls);
+	update();
+}
+
+void CurveEditor::mouseDoubleClickEvent(QMouseEvent *event)
+{
+	if (!enabled)
+		return;
+
+	QPoint p = event->pos();
+	float x = p.x();
+	float y = p.y();
+	toDeviceCoordinates(x, y, width, height);
+
+	for (int i = 3; i < controls.size(); i += 4)
+		if (controls[i].x > x) {
+			insertCurve(i, x, y);
+			break;
+		}
 }
 
 void CurveEditor::mouseReleaseEvent(QMouseEvent *event)
@@ -118,30 +211,175 @@ void CurveEditor::mouseReleaseEvent(QMouseEvent *event)
 
 void CurveEditor::mouseMoveEvent(QMouseEvent *event)
 {
+	QPoint p = event->pos();
+	float x = p.x();
+	float y = p.y();
+	toDeviceCoordinates(x, y, width, height);
+
 	if (selected < 0)
 		return;
+	if (curveIndex > 0 && !reinsertCurve(x))
+		return;
 
-	QPoint p = event->pos();
-	float x = (2.0f*p.x()/(width - 1) - 1.0f) * (10.f/9.0f);
-	float y = (1.0f - 2.0f*p.y()/(height - 1)) * (10.f/9.0f);
+	if (selected == 0)
+		placeTerminalControl(true, y);
+	else if (selected == controls.size() - 1)
+		placeTerminalControl(false, y);
+	else if (selected % 4 == 0) {
+		if (!omitCurve(x))
+			placeOuterControl(x, y);
+	} else
+		placeInnerControl(x, y);
+
+	if (curveIndex < 0)
+		drawCurve();
+	else
+		updateCurve();
+
+	emit controlsChanged(controls);
+	update();
+}
+
+void CurveEditor::updateCurve()
+{
+	int start = ui.renderComponent[2].vertexRange[0];
+	ui.geometry.vertices.resize(start * 6);
+	start = createControlLines(start);
+	start = createCurve(start);
+	ui.renderComponent[2].hidden = false;
+	ui.renderComponent[3].hidden = false;
+	rs.load(ui.geometry, 0);
+	for (int i = 3; i >= 0; i--)
+		rs.registerComponent(0, ui.renderComponent[i]);
+}
+
+void CurveEditor::drawCurve()
+{
+	int start = ui.renderComponent[2].vertexRange[0] * 6;
+	GeometryComponent g;
+	createLine(g, controls, (bt_vec3){0.6, 0.6, 0.6});
+	createPath(g, controls, 100, (bt_vec3){.2f, 0.46f, 0.6f});
+	rs.updateVertices(0, &g.vertices[0], start, g.vertices.size());
+}
+
+bool CurveEditor::reinsertCurve(float x)
+{
+	if (x > controls[curveIndex-2].x) {
+		auto index = controls.begin()+curveIndex;
+		controls.insert(index, &curve[0], &curve[4]);
+		updateCurve();
+		curveIndex = -1;
+		return true;
+	} else
+		return false;
+}
+
+bool CurveEditor::omitCurve(float x)
+{
+	if (x < controls[selected-4].x || x > controls[selected+3].x) {
+		curveIndex = selected - 2;
+		auto start = controls.begin() + curveIndex;
+		auto end = controls.begin() + curveIndex + 4;
+		memcpy(curve, &controls[curveIndex], sizeof(bt_vec3)*4);
+		controls.erase(start, end);
+		return true;
+	} else
+		return false;
+}
+
+void CurveEditor::placeOuterControl(float x, float y)
+{
+	float dx1 = controls[selected-2].x-controls[selected].x;
+	float dy1 = controls[selected-2].z-controls[selected].z;
+	float dx2 = controls[selected+1].x-controls[selected].x;
+	float dy2 = controls[selected+1].z-controls[selected].z;
+
+	if (x < controls[selected-3].x)
+		x = controls[selected-3].x;
+	if (x > controls[selected+2].x)
+		x = controls[selected+2].x;
+	if (x + dx1 < controls[selected-4].x)
+		x = controls[selected-4].x - dx1;
+	if (x + dx2 > controls[selected+3].x)
+		x = controls[selected+3].x - dx2;
+	if (y + dy1 > 1.0f)
+		y = 1.0f - dy1;
+	if (y + dy1 < 0.0f)
+		y = -dy1;
+	if (y + dy2 < 0.0f)
+		y = -dy2;
+	if (y + dy2 > 1.0f)
+		y = 1.0f - dy2;
+	if (y > 1.0f)
+		y = 1.0f;
+	if (y < 0.0f)
+		y = 0.0f;
+
+	controls[selected+1].x = x + dx2;
+	controls[selected+1].z = y + dy2;
+	controls[selected+0].x = x;
+	controls[selected+0].z = y;
+	controls[selected-1].x = x;
+	controls[selected-1].z = y;
+	controls[selected-2].x = x + dx1;
+	controls[selected-2].z = y + dy1;
+}
+
+void CurveEditor::placeInnerControl(float x, float y)
+{
+	int l = (selected-1)%4 == 0 ? 0 : -1;
+
+	if (x < controls[selected-1+l].x)
+		x = controls[selected-1+l].x;
+	else if (x > controls[selected+2+l].x)
+		x = controls[selected+2+l].x;
+	if (y > 1.0f)
+		y = 1.0f;
+	else if (y < 0.0f)
+		y = 0.0f;
+
 	controls[selected].x = x;
 	controls[selected].z = y;
+}
 
-	GeometryComponent g;
-	createBezier(g, controls, 100);
-	createLine(g, controls);
-	rs.updateVertices(0, &g.vertices[0], 0, g.vertices.size());
+void CurveEditor::placeTerminalControl(bool first, float y)
+{
+	int adjacent = first ? 1 : -1;
+	float dy = controls[selected + adjacent].z - controls[selected].z;
 
-	update();
+	if (y + dy > 1.0f)
+		y = 1.0f - dy;
+	else if (y + dy < 0.0f)
+		y = -dy;
+	if (y > 1.0f)
+		y = 1.0f;
+	else if (y < 0.0f)
+		y = 0.0f;
+
+	controls[selected + adjacent].z = y + dy;
+	controls[selected].z = y;
 }
 
 void CurveEditor::paintGL()
 {
 	GlobalUniforms gu;
-	gu.vp = (mat4){
-			0.9f, 0.0f, 0.0f, 0.0f,
+	gu.vp = (bt_mat4){
+			1.8f, 0.0f, 0.0f, 0.0f,
 			0.0f, 0.0f, 0.9f, 0.0f,
-			0.0f, 0.9f, 0.0f, 0.0f,
-			0.0f, 0.0f, 0.0f, 1.0f};
+			0.0f, 1.8f, 0.0f, 0.0f,
+			-0.9f, -0.9f, 0.0f, 1.0f};
 	rs.render(gu, 0.3f);
+}
+
+void CurveEditor::setControls(std::vector<bt_vec3> controls)
+{
+	this->controls = controls;
+}
+
+void CurveEditor::setEnabled(bool enabled)
+{
+	this->enabled = enabled;
+	rs.setHidden(0, 0, !enabled);
+	rs.setHidden(0, 1, !enabled);
+	update();
 }

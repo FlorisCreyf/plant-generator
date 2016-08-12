@@ -10,6 +10,7 @@
 #include "model_builder.h"
 #include "mesh_size.h"
 #include "vector.h"
+#include "curve.h"
 #include <math.h>
 #include <time.h>
 #include <stdio.h>
@@ -127,7 +128,12 @@ mat4 get_branch_transform(struct line_t *l, float offset)
 
 float get_radius(node *stem, float c)
 {
-	c = stem->radius * pow(1.0f - c, 0.75f);
+	if (stem->radius_curve_size < 2)
+		c = stem->radius * pow(1.0f - c, 0.75f);
+	else {
+		float t = stem->radius_curve_size / 4.0f;
+		c = stem->radius * bt_get_path(c, stem->radius_curve, t).z;
+	}
 	return c > stem->min_radius ? c : stem->min_radius;
 }
 
@@ -387,7 +393,7 @@ int add_branch(node *stem, node *parent, float offset)
 	add_subbranches(stem, prev_index);
 	if (overflow)
 		return 0;
-		
+
 	if (stem->dichotomous_start == -1) {
 		if (get_cap_ecount(stem) + ebo_index > ebo_size)
 			return 0;

@@ -13,7 +13,8 @@
 
 Scene::Scene()
 {
-	selected = selectedBranch = -1;
+	selected = NULL;
+	selectedBranch = -1;
 }
 
 void Scene::add(Entity e)
@@ -26,7 +27,7 @@ Entity *Scene::getEntity(int i)
 	return &entities[i];
 }
 
-int Scene::getSelected()
+Entity *Scene::getSelected()
 {
 	return selected;
 }
@@ -36,25 +37,27 @@ int Scene::getSelectedBranch()
 	return selectedBranch;
 }
 
-int Scene::setSelected(Camera &camera, int x, int y)
+Entity *Scene::setSelected(Camera &camera, int x, int y)
 {
 	bt_vec3 direction = camera.getRayDirection(x, y);
 	bt_vec3 origin = camera.getPosition();
 
 	for (int i = 0; i < (int)entities.size(); i++) {
 		GeometryComponent *g = &entities[i].geometry;
-		RenderComponent *r = &entities[i].renderComponent;
-		int len = (r->vertexRange[1] - r->vertexRange[0]) * 12;
-		bt_aabb box = bt_create_aabb(&g->vertices[0], len);
-		float t = bt_intersects_aabb(origin, direction, box);
+		for (int j = 0; j < entities[i].renderComponent.size(); j++) {
+			RenderComponent *r = &entities[i].renderComponent[j];
+			int len = (r->vertexRange[1] - r->vertexRange[0]) * 12;
+			bt_aabb box = bt_create_aabb(&g->vertices[0], len);
+			float t = bt_intersects_aabb(origin, direction, box);
 
-		if (t != 0.0f) {
-			selected = i;
-			return selected;
+			if (t != 0.0f) {
+				selected = &entities[i];
+				return selected;
+			}
 		}
 	}
 
-	selected = -1;
+	selected = NULL;
 	return selected;
 }
 

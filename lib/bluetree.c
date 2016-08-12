@@ -27,6 +27,7 @@ bt_tree bt_new_tree()
 	tree->root = (node *)malloc(sizeof(struct node_t));
 	tree->root->branch_count = 0;
 	tree->root->line_count = 0;
+	tree->root->radius_curve_size = 0;
 	tree->td.vbo_size = 0;
 	tree->td.ebo_size = 0;
 	return tree;
@@ -34,8 +35,10 @@ bt_tree bt_new_tree()
 
 void bt_delete_tree(bt_tree tree)
 {
-	free_tree_structure(tree->root);
-	free(tree);
+	if (tree != NULL) {
+		free_tree_structure(tree->root);
+		free(tree);
+	}
 }
 
 node *find_node(node *n, int *i, int id)
@@ -61,11 +64,21 @@ node *get_node(node *n, int id)
 	return find_node(n, &i, id);
 }
 
-void bt_set_trunk_radius(bt_tree tree, int id, float radius)
+void bt_set_radius(bt_tree tree, int id, float radius)
 {
 	node *n = get_node(tree->root, id);
 	if (n)
 		n->radius = radius;
+}
+
+void bt_set_radius_curve(bt_tree tree, int id, bt_vec3 *controls, int size)
+{
+	node *n = get_node(tree->root, id);
+	if (n->radius_curve_size != 0)
+		free(n->radius_curve);
+	n->radius_curve = malloc(sizeof(bt_vec3)*size);
+	memcpy(n->radius_curve, controls, sizeof(bt_vec3)*size);
+	n->radius_curve_size = size;
 }
 
 void change_dichotomous_resolution(node *stem, int r)

@@ -70,6 +70,7 @@ int RenderSystem::load(GeometryComponent &g, int buffer)
 	if (g.triangles.size() > 0)
 		loadTriangles(g, buffers[buffer]);
 
+	g.buffer = buffer;
 	return buffer;
 }
 
@@ -145,7 +146,7 @@ void RenderSystem::renderWireframe(RenderComponent &r)
 void RenderSystem::renderPoints(RenderComponent &r)
 {
 	int len = r.pointRange[1] - r.pointRange[0];
-	glPointSize(8);
+	glPointSize(7);
 	glDrawArrays(GL_POINTS, r.pointRange[0], len);
 }
 
@@ -186,11 +187,14 @@ void RenderSystem::render(GlobalUniforms &gu, float color)
 
 	for (int i = 0; i < buffers.size(); i++) {
 		glBindVertexArray(buffers[i].vao);
-		for (int j = 0; j < buffers[i].r.size(); j++)
+		for (int j = 0; j < buffers[i].r.size(); j++) {
+			if (buffers[i].r[j].hidden)
+				continue;
 			if (buffers[i].r[j].type == RenderComponent::TRIANGLES)
 				renderMesh(buffers[i].r[j], gu);
 			else
 				renderLines(buffers[i].r[j], gu);
+		}
 	}
 
 	glFlush();
@@ -211,6 +215,11 @@ void RenderSystem::updateTriangles(int buffer, unsigned short *v, int offset,
 	size *= sizeof(unsigned short);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffers[buffer].ibo);
 	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, offset, size, v);
+}
+
+void RenderSystem::setHidden(int buffer, int index, bool value)
+{
+	buffers[buffer].r[index].hidden = value;
 }
 
 void RenderSystem::loadShaders(ShaderInfo *r, int size)

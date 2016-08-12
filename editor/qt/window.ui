@@ -116,6 +116,11 @@
 } QSpinBox::up-arrow:disabled, QSpinBox::down-arrow:disabled {
 	width:0;
 	height:0;
+} QLabel {
+	padding:0 2px 0 0;
+	qproperty-alignment:&quot;AlignRight|AlignVCenter&quot;;
+} QTableView::item {
+	margin:1px 0;
 } QGroupBox {
     border: 1px solid #555;
     margin-top: 0.5em;
@@ -135,6 +140,8 @@
 	margin:0;
 } QTabBar::tab:selected {
 	background:#222;
+} QWidget#CurveButtonWidget	 {
+	border:solid 1px #fff;
 }
 </string>
   </property>
@@ -196,6 +203,7 @@
          <property name="styleSheet">
           <string notr="true">border:outset #999 2px;</string>
          </property>
+         <zorder>widget_2</zorder>
         </widget>
        </item>
       </layout>
@@ -244,15 +252,8 @@
     <addaction name="actionAbout"/>
     <addaction name="actionReportIssue"/>
    </widget>
-   <widget class="QMenu" name="menuWindows">
-    <property name="title">
-     <string>Window</string>
-    </property>
-    <addaction name="actionProperties"/>
-   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
-   <addaction name="menuWindows"/>
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QDockWidget" name="dockWidget">
@@ -271,7 +272,7 @@
    <attribute name="dockWidgetArea">
     <number>1</number>
    </attribute>
-   <widget class="PropertyBox" name="Properties">
+   <widget class="PropertyBox" name="properties">
     <property name="sizePolicy">
      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
       <horstretch>0</horstretch>
@@ -397,7 +398,7 @@
   </action>
   <action name="actionReportIssue">
    <property name="enabled">
-    <bool>false</bool>
+    <bool>true</bool>
    </property>
    <property name="text">
     <string>&amp;Report Issue...</string>

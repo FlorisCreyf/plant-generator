@@ -222,3 +222,13 @@ quat bt_slerp(quat *a, quat *b, float t)
 
 	return m;
 }
+
+mat4 bt_mat4_identity()
+{
+	return (mat4){
+		1.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 1.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 1.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 1.0f
+	};
+}

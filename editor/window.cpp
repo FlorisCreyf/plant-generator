@@ -13,7 +13,24 @@
 Window::Window()
 {
 	widget.setupUi(this);
-	widget.Properties->createSignals(widget.scene);
+	widget.properties->createSignals(widget.scene);
+
+	QMenu *m = createPopupMenu();
+	m->setTitle("Window");
+	menuBar()->insertMenu(widget.menuHelp->menuAction(), m);
+
+	widget.scene->setRenderSystem(&r);
+
+	connect(widget.properties, SIGNAL(isEnabled(bool)), widget.curve,
+			SLOT(setEnabled(bool)));
+	connect(widget.curve, SIGNAL(controlsChanged(std::vector<bt_vec3>)),
+			widget.scene,
+			SLOT(changeRadiusCurve(std::vector<bt_vec3>)));
+	connect(widget.curve, SIGNAL(controlsChanged(std::vector<bt_vec3>)),
+			widget.properties,
+			SLOT(updateCurveButton(std::vector<bt_vec3>)));
+	connect(widget.actionReportIssue, SIGNAL(triggered()), this,
+			SLOT(reportIssue()));
 }
 
 Window::~Window()
@@ -42,4 +59,10 @@ void Window::exportDialogBox()
 		"untitled.obj", tr("Wavefront (*.obj)"));
 	QByteArray b = filename.toLatin1();
 	widget.scene->exportObject(b.data());
+}
+
+void Window::reportIssue()
+{
+	QString link = "https://github.com/FlorisCreyf/bluetree/issues";
+	QDesktopServices::openUrl(QUrl(link));
 }
