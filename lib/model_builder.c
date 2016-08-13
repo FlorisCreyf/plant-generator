@@ -131,8 +131,8 @@ float get_radius(node *stem, float c)
 	if (stem->radius_curve_size < 2)
 		c = stem->radius * pow(1.0f - c, 0.75f);
 	else {
-		float t = stem->radius_curve_size / 4.0f;
-		c = stem->radius * bt_get_path(c, stem->radius_curve, t).z;
+		int n = stem->radius_curve_size / 4;
+		c = stem->radius * bt_get_path(c, stem->radius_curve, n).z;
 	}
 	return c > stem->min_radius ? c : stem->min_radius;
 }

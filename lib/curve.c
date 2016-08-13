@@ -44,7 +44,20 @@ bt_vec3 bt_get_bezier(float t, bt_vec3 *p, int degree)
 
 bt_vec3 bt_get_path(float t, bt_vec3 *p, int curve_count)
 {
-	t *= curve_count;
-	int curve = floor(t);
-	return bt_get_bezier(t-curve, &p[curve*4], 4);
+	int i;
+	int curve;
+
+	for (i = 3, curve = 0; curve < curve_count; i += 4, curve++)
+		if (p[i].x > t) {
+			t -= p[i-3].x;
+			t *= 1.0f/(p[i].x - p[i-3].x);
+			break;
+		}
+		
+	if (curve == curve_count)
+		curve = curve_count - 1;
+	if (t > 1.0f)
+		t = 1.0f;
+
+	return bt_get_bezier(t, &p[curve*4], 4);
 }
