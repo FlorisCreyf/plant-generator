@@ -12,22 +12,25 @@
 
 CurveButton::CurveButton(QWidget *parent)
 {
-
+	curve.renderComponent.resize(1);
+	curve.renderComponent[0].type = RenderComponent::LINE_STRIP;
 }
 
 void CurveButton::setControls(std::vector<bt_vec3> controls)
 {
-	GeometryComponent g = {};
-	RenderComponent curve = {};
-
 	this->controls = controls;
-	createGeometry(g);
-	curve.type = RenderComponent::LINE_STRIP;
-	curve.vertexRange[1] = g.vertices.size() / 6;
+	createGeometry();
 
-	rs.load(g, 0);
-	rs.registerComponent(0, curve);
-	update();
+	if (buffer >= 0) {
+		rs.load(curve.geometry, buffer);
+		rs.registerComponent(buffer, curve.renderComponent[0]);
+		update();
+	}
+}
+
+std::vector<bt_vec3> CurveButton::getControls()
+{
+	return controls;
 }
 
 void CurveButton::initializeGL()
@@ -42,14 +45,22 @@ void CurveButton::initializeGL()
 
 	rs.loadShaders(&shaders[0], 2);
 
-	GeometryComponent g;
-	createGeometry(g);
-	rs.load(g);
+	if (curve.geometry.vertices.size() == 0) {
+		createGeometry();
+		buffer = rs.load(curve.geometry);
+	} else {
+		buffer = rs.load(curve.geometry);
+		rs.registerComponent(buffer, curve.renderComponent[0]);
+		update();
+	}
 }
 
-void CurveButton::createGeometry(GeometryComponent &g)
+void CurveButton::createGeometry()
 {
+	GeometryComponent g;
 	createPath(g, controls, 10, (bt_vec3){.2f, 0.46f, 0.6f});
+	curve.geometry = g;
+	curve.renderComponent[0].vertexRange[1] = g.vertices.size() / 6;
 }
 
 void CurveButton::paintGL()
@@ -63,24 +74,17 @@ void CurveButton::paintGL()
 	rs.render(gu, 0.3f);
 }
 
-void CurveButton::resizeGL(int width, int height)
-{
-
-}
-
-void CurveButton::mousePressEvent(QMouseEvent *)
-{
-
-}
-
-CurveButtonWidget::CurveButtonWidget(QWidget *parent)
+CurveButtonWidget::CurveButtonWidget(QString name, QWidget *parent)
 {
 	QHBoxLayout *b = new QHBoxLayout(this);
 	cb = new CurveButton(this);
 	b->addWidget(cb);
 	b->setMargin(1.5);
+	setCursor(Qt::PointingHandCursor);
 	setStyleSheet("border:2px solid #999;");
 	setLayout(b);
+
+	this->name = name;
 }
 
 void CurveButtonWidget::paintEvent(QPaintEvent *e)
@@ -99,4 +103,14 @@ QSize CurveButtonWidget::sizeHint() const
 void CurveButtonWidget::setControls(std::vector<bt_vec3> controls)
 {
 	cb->setControls(controls);
+}
+
+void CurveButtonWidget::select()
+{
+	emit selected(cb->getControls(), name);
+}
+
+void CurveButtonWidget::mousePressEvent(QMouseEvent *)
+{
+	emit selected(cb->getControls(), name);
 }

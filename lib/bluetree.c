@@ -131,6 +131,15 @@ float bt_get_radius(bt_tree tree, int id)
 	return n ? n->radius : -1.0f;
 }
 
+void bt_get_radius_curve(bt_tree tree, int id, bt_vec3 **curve, int *size)
+{
+	node *n = get_node(tree->root, id);
+	if (n) {
+		*curve = n->radius_curve;
+		*size = n->radius_curve_size;
+	}
+}
+
 bt_aabb bt_get_bounding_box(bt_tree tree, int id)
 {
 	node *n = get_node(tree->root, id);

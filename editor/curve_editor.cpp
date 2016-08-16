@@ -17,7 +17,7 @@
 CurveEditor::CurveEditor(QWidget *parent) : QOpenGLWidget(parent)
 {
 	enabled = false;
-	selected = -1;
+	point = -1;
 }
 
 void CurveEditor::initializeGL()
@@ -27,16 +27,6 @@ void CurveEditor::initializeGL()
 	onFloat(false);
 	connect(parent(), SIGNAL(topLevelChanged(bool)), this,
 			SLOT(onFloat(bool)));
-
-	controls.push_back((bt_vec3){0.0f, -0.3f, 1.0f});
-	controls.push_back((bt_vec3){0.2f, -0.3f, 1.0f});
-	controls.push_back((bt_vec3){0.4f, -0.3f, 0.6f});
-	controls.push_back((bt_vec3){0.5f, -0.3f, 0.5f});
-
-	controls.push_back((bt_vec3){0.5f, -0.3f, 0.5f});
-	controls.push_back((bt_vec3){0.6f, -0.3f, 0.4f});
-	controls.push_back((bt_vec3){0.8f, -0.3f, 0.0f});
-	controls.push_back((bt_vec3){1.0f, -0.3f, 0.0f});
 
 	ShaderInfo shaders[] = {
 		{GL_VERTEX_SHADER, "shaders/flat.vert"},
@@ -49,7 +39,7 @@ void CurveEditor::initializeGL()
 
 void CurveEditor::onFloat(bool topLevel)
 {
-	QList<QTabBar *> l = parent()->parent()->findChildren<QTabBar*>();
+	QList<QTabBar *> l = parent()->parent()->findChildren<QTabBar *>();
 	if (l.size() > 0)
 		l[0]->setDrawBase(false);
 }
@@ -78,10 +68,10 @@ int CurveEditor::createBackground(int offset)
 		bt_vec3 color = {0.3f, 0.3f, 0.3f};
 		bt_vec3 sectionColor = {0.3f, 0.3f, 0.3f};
 		RenderComponent *r = &ui.renderComponent[1];
-		createGrid(ui.geometry, 3, color, sectionColor, (bt_mat4){
-				1.0f/6.0f, 0.0f, 0.0f, 0.0f,
-				0.0f, 1.0f/6.0f, 0.0f, 0.0f,
-				0.0f, 0.0f, 1.0f/6.0f, 0.0f,
+		createGrid(ui.geometry, 2, color, sectionColor, (bt_mat4){
+				1.0f/4.0f, 0.0f, 0.0f, 0.0f,
+				0.0f, 1.0f/4.0f, 0.0f, 0.0f,
+				0.0f, 0.0f, 1.0f/4.0f, 0.0f,
 				0.5f, 0.0f, 0.5f, 1.0f});
 		r->type = RenderComponent::LINES;
 		r->vertexRange[0] = offset;
@@ -152,8 +142,8 @@ void CurveEditor::mousePressEvent(QMouseEvent *event)
 		int x = (controls[i].x * 0.9f + 0.05f) * width;
 		int y = (height - (controls[i].z * 0.9f + 0.05f) * height);
 		if (sqrt(pow(p.x() - x, 2) + pow(p.y() - y, 2)) < 8) {
-			selected = i;
-			curveIndex = -1;
+			point = i;
+			insertIndex = -1;
 			x = p.x();
 			y = p.y();
 		}
@@ -183,7 +173,7 @@ void CurveEditor::insertCurve(int i, float x, float y)
 	controls.insert(controls.begin()+i-1, curve, &curve[4]);
 	updateCurve();
 
-	emit controlsChanged(controls);
+	emit curveChanged(controls, curveName);
 	update();
 }
 
@@ -206,7 +196,7 @@ void CurveEditor::mouseDoubleClickEvent(QMouseEvent *event)
 
 void CurveEditor::mouseReleaseEvent(QMouseEvent *event)
 {
-	selected = -1;
+	point = -1;
 }
 
 void CurveEditor::mouseMoveEvent(QMouseEvent *event)
@@ -216,27 +206,27 @@ void CurveEditor::mouseMoveEvent(QMouseEvent *event)
 	float y = p.y();
 	toDeviceCoordinates(x, y, width, height);
 
-	if (selected < 0)
+	if (point < 0)
 		return;
-	if (curveIndex > 0 && !reinsertCurve(x))
+	if (insertIndex > 0 && !reinsertCurve(x))
 		return;
 
-	if (selected == 0)
+	if (point == 0)
 		placeTerminalControl(true, y);
-	else if (selected == controls.size() - 1)
+	else if (point == controls.size() - 1)
 		placeTerminalControl(false, y);
-	else if (selected % 4 == 0) {
+	else if (point % 4 == 0) {
 		if (!omitCurve(x))
 			placeOuterControl(x, y);
 	} else
 		placeInnerControl(x, y);
 
-	if (curveIndex < 0)
+	if (insertIndex < 0)
 		drawCurve();
 	else
 		updateCurve();
 
-	emit controlsChanged(controls);
+	emit curveChanged(controls, curveName);
 	update();
 }
 
@@ -264,11 +254,11 @@ void CurveEditor::drawCurve()
 
 bool CurveEditor::reinsertCurve(float x)
 {
-	if (x > controls[curveIndex-2].x) {
-		auto index = controls.begin()+curveIndex;
+	if (x > controls[insertIndex-2].x) {
+		auto index = controls.begin()+insertIndex;
 		controls.insert(index, &curve[0], &curve[4]);
 		updateCurve();
-		curveIndex = -1;
+		insertIndex = -1;
 		return true;
 	} else
 		return false;
@@ -276,11 +266,11 @@ bool CurveEditor::reinsertCurve(float x)
 
 bool CurveEditor::omitCurve(float x)
 {
-	if (x < controls[selected-4].x || x > controls[selected+3].x) {
-		curveIndex = selected - 2;
-		auto start = controls.begin() + curveIndex;
-		auto end = controls.begin() + curveIndex + 4;
-		memcpy(curve, &controls[curveIndex], sizeof(bt_vec3)*4);
+	if (x < controls[point-4].x || x > controls[point+3].x) {
+		insertIndex = point - 2;
+		auto start = controls.begin() + insertIndex;
+		auto end = controls.begin() + insertIndex + 4;
+		memcpy(curve, &controls[insertIndex], sizeof(bt_vec3)*4);
 		controls.erase(start, end);
 		return true;
 	} else
@@ -289,19 +279,19 @@ bool CurveEditor::omitCurve(float x)
 
 void CurveEditor::placeOuterControl(float x, float y)
 {
-	float dx1 = controls[selected-2].x-controls[selected].x;
-	float dy1 = controls[selected-2].z-controls[selected].z;
-	float dx2 = controls[selected+1].x-controls[selected].x;
-	float dy2 = controls[selected+1].z-controls[selected].z;
+	float dx1 = controls[point-2].x-controls[point].x;
+	float dy1 = controls[point-2].z-controls[point].z;
+	float dx2 = controls[point+1].x-controls[point].x;
+	float dy2 = controls[point+1].z-controls[point].z;
 
-	if (x < controls[selected-3].x)
-		x = controls[selected-3].x;
-	if (x > controls[selected+2].x)
-		x = controls[selected+2].x;
-	if (x + dx1 < controls[selected-4].x)
-		x = controls[selected-4].x - dx1;
-	if (x + dx2 > controls[selected+3].x)
-		x = controls[selected+3].x - dx2;
+	if (x < controls[point-3].x)
+		x = controls[point-3].x;
+	if (x > controls[point+2].x)
+		x = controls[point+2].x;
+	if (x + dx1 < controls[point-4].x)
+		x = controls[point-4].x - dx1;
+	if (x + dx2 > controls[point+3].x)
+		x = controls[point+3].x - dx2;
 	if (y + dy1 > 1.0f)
 		y = 1.0f - dy1;
 	if (y + dy1 < 0.0f)
@@ -315,37 +305,37 @@ void CurveEditor::placeOuterControl(float x, float y)
 	if (y < 0.0f)
 		y = 0.0f;
 
-	controls[selected+1].x = x + dx2;
-	controls[selected+1].z = y + dy2;
-	controls[selected+0].x = x;
-	controls[selected+0].z = y;
-	controls[selected-1].x = x;
-	controls[selected-1].z = y;
-	controls[selected-2].x = x + dx1;
-	controls[selected-2].z = y + dy1;
+	controls[point+1].x = x + dx2;
+	controls[point+1].z = y + dy2;
+	controls[point+0].x = x;
+	controls[point+0].z = y;
+	controls[point-1].x = x;
+	controls[point-1].z = y;
+	controls[point-2].x = x + dx1;
+	controls[point-2].z = y + dy1;
 }
 
 void CurveEditor::placeInnerControl(float x, float y)
 {
-	int l = (selected-1)%4 == 0 ? 0 : -1;
+	int l = (point-1)%4 == 0 ? 0 : -1;
 
-	if (x < controls[selected-1+l].x)
-		x = controls[selected-1+l].x;
-	else if (x > controls[selected+2+l].x)
-		x = controls[selected+2+l].x;
+	if (x < controls[point-1+l].x)
+		x = controls[point-1+l].x;
+	else if (x > controls[point+2+l].x)
+		x = controls[point+2+l].x;
 	if (y > 1.0f)
 		y = 1.0f;
 	else if (y < 0.0f)
 		y = 0.0f;
 
-	controls[selected].x = x;
-	controls[selected].z = y;
+	controls[point].x = x;
+	controls[point].z = y;
 }
 
 void CurveEditor::placeTerminalControl(bool first, float y)
 {
 	int adjacent = first ? 1 : -1;
-	float dy = controls[selected + adjacent].z - controls[selected].z;
+	float dy = controls[point + adjacent].z - controls[point].z;
 
 	if (y + dy > 1.0f)
 		y = 1.0f - dy;
@@ -356,8 +346,8 @@ void CurveEditor::placeTerminalControl(bool first, float y)
 	else if (y < 0.0f)
 		y = 0.0f;
 
-	controls[selected + adjacent].z = y + dy;
-	controls[selected].z = y;
+	controls[point + adjacent].z = y + dy;
+	controls[point].z = y;
 }
 
 void CurveEditor::paintGL()
@@ -371,13 +361,22 @@ void CurveEditor::paintGL()
 	rs.render(gu, 0.3f);
 }
 
-void CurveEditor::setControls(std::vector<bt_vec3> controls)
+void CurveEditor::setCurve(std::vector<bt_vec3> controls, QString name)
 {
+	parentWidget()->setWindowTitle("Curve: " + name);
 	this->controls = controls;
+	this->curveName = name;
+	updateCurve();
+	update();
 }
 
 void CurveEditor::setEnabled(bool enabled)
 {
+	if (enabled && curveName.size() > 0)
+		parentWidget()->setWindowTitle("Curve: " + curveName);
+	else
+		parentWidget()->setWindowTitle("Curve");
+
 	this->enabled = enabled;
 	rs.setHidden(0, 0, !enabled);
 	rs.setHidden(0, 1, !enabled);

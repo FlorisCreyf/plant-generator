@@ -13,24 +13,14 @@
 Window::Window()
 {
 	widget.setupUi(this);
-	widget.properties->createSignals(widget.scene);
+	widget.properties->setSignals(widget.scene, widget.curve);
+	widget.scene->setRenderSystem(&r);
 
 	QMenu *m = createPopupMenu();
 	m->setTitle("Window");
 	menuBar()->insertMenu(widget.menuHelp->menuAction(), m);
 
-	widget.scene->setRenderSystem(&r);
-
-	connect(widget.properties, SIGNAL(isEnabled(bool)), widget.curve,
-			SLOT(setEnabled(bool)));
-	connect(widget.curve, SIGNAL(controlsChanged(std::vector<bt_vec3>)),
-			widget.scene,
-			SLOT(changeRadiusCurve(std::vector<bt_vec3>)));
-	connect(widget.curve, SIGNAL(controlsChanged(std::vector<bt_vec3>)),
-			widget.properties,
-			SLOT(updateCurveButton(std::vector<bt_vec3>)));
-	connect(widget.actionReportIssue, SIGNAL(triggered()), this,
-			SLOT(reportIssue()));
+	connect(widget.actionReportIssue, SIGNAL(triggered()), this, SLOT(reportIssue()));
 }
 
 Window::~Window()

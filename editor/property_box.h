@@ -22,21 +22,27 @@ class PropertyBox : public QWidget
 public:
 	PropertyBox(QWidget *parent = 0);
 	QSize sizeHint() const;
-	void createSignals(ViewEditor *e);
+	void setSignals(ViewEditor *sceneEditor, CurveEditor *curveEditor);
 
 public slots:
-	void fill(bt_tree tree, int s);
-	void updateCurveButton(std::vector<bt_vec3> controls);
+	void fill(bt_tree tree, int branch);
+	void setCurve(std::vector<bt_vec3> control, QString names);
 
 signals:
 	void isEnabled(bool enabled);
+	void radiusCurveChanged(std::vector<bt_vec3>);
 
 private:
 	QTableWidget *t;
 	QDoubleSpinBox *radius;
+	CurveButtonWidget *radiusCB;
 	QSpinBox *resolution;
 	QSpinBox *sections;
-	CurveButtonWidget *radiusCurve;
+	QSpinBox *branches;
+	CurveButtonWidget *branchesCB;
+
+	void fillCurveButtons(bt_tree tree, int branch);
+	QWidget *createCenteredWidget(QWidget *);
 };
 
 #endif /* PROPERTY_BOX */

@@ -30,6 +30,7 @@ void bt_set_max_branch_depth(bt_tree tree, int depth);
 int bt_get_cross_sections(bt_tree tree, int id);
 int bt_get_resolution(bt_tree tree, int id);
 float bt_get_radius(bt_tree tree, int id);
+void bt_get_radius_curve(bt_tree tree, int id, bt_vec3 **curve, int *size);
 bt_aabb bt_get_bounding_box(bt_tree tree, int id);
 int bt_get_ebo_start(bt_tree tree, int id);
 int bt_get_ebo_end(bt_tree tree, int id);
