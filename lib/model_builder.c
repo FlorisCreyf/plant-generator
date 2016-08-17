@@ -24,13 +24,13 @@ static unsigned int vbo_index;
 static unsigned short ebo_index;
 static int overflow;
 
-void add_cs_point(float *buffer, float radius, float angle, bt_mat4 *t, int *i)
+void add_cs_point(float *buffer, float radius, float angle, tm_mat4 *t, int *i)
 {
 	vec3 normal = {cosf(angle), 0.0f, sinf(angle)};
-	vec3 point = bt_mult_vec3(radius, &normal);
+	vec3 point = tm_mult_vec3(radius, &normal);
 
-	bt_transform(&normal, t, 0.0f);
-	bt_transform(&point, t, 1.0f);
+	tm_transform(&normal, t, 0.0f);
+	tm_transform(&point, t, 1.0f);
 
 	buffer[(*i)++] = point.x;
 	buffer[(*i)++] = point.y;
@@ -40,7 +40,7 @@ void add_cs_point(float *buffer, float radius, float angle, bt_mat4 *t, int *i)
 	buffer[(*i)++] = normal.z;
 }
 
-void make_cross_section(float *buffer, bt_mat4 *t, float radius, float res)
+void make_cross_section(float *buffer, tm_mat4 *t, float radius, float res)
 {
 	const float ROTATION = 360.0f / res * M_PI / 180.0f;
 	float angle = 0.0f;
@@ -113,17 +113,17 @@ mat4 get_branch_transform(struct line_t *l, float offset)
 	float r1;
 	float r2;
 	vec3 normal = {0.0f, 1.0f, 0.0f};
-	mat4 rotation = bt_rotate_into_vec(&normal, &(l->direction));
+	mat4 rotation = tm_rotate_into_vec(&normal, &(l->direction));
 	mat4 translation;
 	mat4 transform;
 
-	translation = bt_translate(0.0f, offset, 0.0f);
-	transform = bt_translate(
+	translation = tm_translate(0.0f, offset, 0.0f);
+	transform = tm_translate(
 			l->start.x,
 			l->start.y,
 			l->start.z);
-	transform = bt_mult_mat4(&transform, &rotation);
-	return bt_mult_mat4(&transform, &translation);
+	transform = tm_mult_mat4(&transform, &rotation);
+	return tm_mult_mat4(&transform, &translation);
 }
 
 float get_radius(node *stem, float c)
@@ -132,7 +132,7 @@ float get_radius(node *stem, float c)
 		c = stem->radius * pow(1.0f - c, 0.75f);
 	else {
 		int n = stem->radius_curve_size / 4;
-		c = stem->radius * bt_get_path(c, stem->radius_curve, n).z;
+		c = stem->radius * tm_get_path(c, stem->radius_curve, n).z;
 	}
 	return c > stem->min_radius ? c : stem->min_radius;
 }
@@ -159,8 +159,8 @@ vec3 get_cs_normal(int i)
 {
 	vec3 a = {vbo[i+3], vbo[i+4], vbo[i+5]};
 	vec3 b = {vbo[i+9], vbo[i+10], vbo[i+11]};
-	vec3 c = bt_cross_vec3(&b, &a);
-	bt_normalize_vec3(&c);
+	vec3 c = tm_cross_vec3(&b, &a);
+	tm_normalize_vec3(&c);
 	return c;
 }
 
@@ -168,8 +168,8 @@ float get_branch_angle(int a, vec3 dir)
 {
 	vec3 norm_a = get_cs_normal(a);
 	vec3 y = {0.f, 1.f, 0.f};
-	mat4 rot = bt_rotate_into_vec(&norm_a, &y);
-	bt_transform(&dir, &rot, 0.0f);
+	mat4 rot = tm_rotate_into_vec(&norm_a, &y);
+	tm_transform(&dir, &rot, 0.0f);
 	float angle = atan(dir.z/dir.x);
 	if (dir.z < 0 && dir.x >= 0)
 		angle += 2.f*M_PI;
@@ -350,7 +350,7 @@ float offset_to_percent(node *stem, float offset, int i)
 void set_branch_bounds(node *stem)
 {
 	int len = stem->vbo_end - stem->vbo_start;
-	stem->bounds = bt_create_aabb(&vbo[stem->vbo_start], len);
+	stem->bounds = tm_create_aabb(&vbo[stem->vbo_start], len);
 }
 
 int add_branch(node *stem, node *parent, float offset)

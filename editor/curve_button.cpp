@@ -16,7 +16,7 @@ CurveButton::CurveButton(QWidget *parent)
 	curve.renderComponent[0].type = RenderComponent::LINE_STRIP;
 }
 
-void CurveButton::setControls(std::vector<bt_vec3> controls)
+void CurveButton::setControls(std::vector<tm_vec3> controls)
 {
 	this->controls = controls;
 	createGeometry();
@@ -28,7 +28,7 @@ void CurveButton::setControls(std::vector<bt_vec3> controls)
 	}
 }
 
-std::vector<bt_vec3> CurveButton::getControls()
+std::vector<tm_vec3> CurveButton::getControls()
 {
 	return controls;
 }
@@ -58,7 +58,7 @@ void CurveButton::initializeGL()
 void CurveButton::createGeometry()
 {
 	GeometryComponent g;
-	createPath(g, controls, 10, (bt_vec3){.2f, 0.46f, 0.6f});
+	createPath(g, controls, 10, (tm_vec3){.2f, 0.46f, 0.6f});
 	curve.geometry = g;
 	curve.renderComponent[0].vertexRange[1] = g.vertices.size() / 6;
 }
@@ -66,7 +66,7 @@ void CurveButton::createGeometry()
 void CurveButton::paintGL()
 {
 	GlobalUniforms gu;
-	gu.vp = (bt_mat4){
+	gu.vp = (tm_mat4){
 			1.8f, 0.0f, 0.0f, 0.0f,
 			0.0f, 0.0f, 0.9f, 0.0f,
 			0.0f, 1.8f, 0.0f, 0.0f,
@@ -100,7 +100,7 @@ QSize CurveButtonWidget::sizeHint() const
 	return QSize(26, 16);
 }
 
-void CurveButtonWidget::setControls(std::vector<bt_vec3> controls)
+void CurveButtonWidget::setControls(std::vector<tm_vec3> controls)
 {
 	cb->setControls(controls);
 }

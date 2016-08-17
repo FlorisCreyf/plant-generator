@@ -31,12 +31,15 @@ typedef struct node_t {
 	int branch_count;
 	int branch_capacity;
 	struct node_t *branches;
+	tm_vec3 *distribution_curve;
+	int distribution_curve_size;
+
 	int dichotomous_start;
 	int terminal;
 
 	float radius;
 	float min_radius;
-	bt_vec3 *radius_curve;
+	tm_vec3 *radius_curve;
 	int radius_curve_size;
 
 	int depth;
@@ -47,7 +50,7 @@ typedef struct node_t {
 	int vbo_end;
 	int ebo_start;
 	int ebo_end;
-	bt_aabb bounds;
+	tm_aabb bounds;
 } node;
 
 vec3 get_line_point(struct line_t *l, float t);

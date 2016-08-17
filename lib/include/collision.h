@@ -17,21 +17,21 @@ extern "C" {
 #include "vector.h"
 #include <stdio.h>
 
-typedef struct bt_bo_tag {
+typedef struct tm_bo_tag {
         float x1, x2;
         float y1, y2;
         float z1, z2;
-} bt_aabb;
+} tm_aabb;
 
-typedef struct bt_obb_tag {
+typedef struct tm_obb_tag {
         float h[3];
-        bt_vec3 n[3];
-        bt_vec3 center;
-} bt_obb;
+        tm_vec3 n[3];
+        tm_vec3 center;
+} tm_obb;
 
-bt_aabb bt_create_aabb(float *buffer, int size);
-float bt_intersects_obb(bt_vec3 origin, bt_vec3 direction, bt_obb obb);
-float bt_intersects_aabb(bt_vec3 origin, bt_vec3 direction, bt_aabb aabb);
+tm_aabb tm_create_aabb(float *buffer, int size);
+float tm_intersects_obb(tm_vec3 origin, tm_vec3 direction, tm_obb obb);
+float tm_intersects_aabb(tm_vec3 origin, tm_vec3 direction, tm_aabb aabb);
 
 #ifdef __cplusplus
 }

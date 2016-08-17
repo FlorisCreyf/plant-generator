@@ -13,7 +13,7 @@
 #include "objects.h"
 #include "camera.h"
 #include "vector.h"
-#include "bluetree.h"
+#include "treemaker.h"
 #include <vector>
 
 class Scene
@@ -24,7 +24,7 @@ public:
 	Entity *getSelected();
 	int getSelectedBranch();
 	Entity *setSelected(Camera &camera, int x, int y);
-	int setSelectedBranch(Camera &camera, int x, int y, bt_tree tree);
+	int setSelectedBranch(Camera &camera, int x, int y, tm_tree tree);
 	Entity *getEntity(int i);
 
 private:

@@ -16,8 +16,8 @@ extern "C" {
 
 #include "vector.h"
 
-bt_vec3 bt_get_bezier(float t, bt_vec3 *p, int degree);
-bt_vec3 bt_get_path(float t, bt_vec3 *p, int curve_count);
+tm_vec3 tm_get_bezier(float t, tm_vec3 *p, int degree);
+tm_vec3 tm_get_path(float t, tm_vec3 *p, int curve_count);
 
 #ifdef __cplusplus
 }

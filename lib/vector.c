@@ -10,21 +10,21 @@
 #include "vector.h"
 #include <math.h>
 
-typedef bt_vec3 vec3;
-typedef bt_mat4 mat4;
-typedef bt_quat quat;
+typedef tm_vec3 vec3;
+typedef tm_mat4 mat4;
+typedef tm_quat quat;
 
 float absf(float f)
 {
 	return f < 0 ? -f : f;
 }
 
-float bt_dot_vec3(vec3 *a, vec3 *b)
+float tm_dot_vec3(vec3 *a, vec3 *b)
 {
 	return a->x*b->x + a->y*b->y + a->z*b->z;
 }
 
-vec3 bt_cross_vec3(vec3 *a, vec3 *b)
+vec3 tm_cross_vec3(vec3 *a, vec3 *b)
 {
 	float x = a->y*b->z - a->z*b->y;
 	float y = a->z*b->x - a->x*b->z;
@@ -32,7 +32,7 @@ vec3 bt_cross_vec3(vec3 *a, vec3 *b)
 	return (vec3){x, y, z};
 }
 
-vec3 bt_mult_vec3(float a, vec3 *b)
+vec3 tm_mult_vec3(float a, vec3 *b)
 {
 	vec3 v;
 	v.x = b->x * a;
@@ -41,7 +41,7 @@ vec3 bt_mult_vec3(float a, vec3 *b)
 	return v;
 }
 
-vec3 bt_add_vec3(vec3 *a, vec3 *b)
+vec3 tm_add_vec3(vec3 *a, vec3 *b)
 {
 	float x = a->x + b->x;
 	float y = a->y + b->y;
@@ -49,7 +49,7 @@ vec3 bt_add_vec3(vec3 *a, vec3 *b)
 	return (vec3){x, y, z};
 }
 
-vec3 bt_sub_vec3(vec3 *a, vec3 *b)
+vec3 tm_sub_vec3(vec3 *a, vec3 *b)
 {
 	float x = a->x - b->x;
 	float y = a->y - b->y;
@@ -57,7 +57,7 @@ vec3 bt_sub_vec3(vec3 *a, vec3 *b)
 	return (vec3){x, y, z};
 }
 
-mat4 bt_mult_mat4(mat4 *a, mat4 *b)
+mat4 tm_mult_mat4(mat4 *a, mat4 *b)
 {
 	int row = 0;
 	int col = 0;
@@ -74,7 +74,7 @@ mat4 bt_mult_mat4(mat4 *a, mat4 *b)
 	return m;
 }
 
-void bt_normalize_vec3(vec3 *a)
+void tm_normalize_vec3(vec3 *a)
 {
 	float m = sqrt(a->x*a->x + a->y*a->y + a->z*a->z);
 	a->x /= m;
@@ -82,7 +82,7 @@ void bt_normalize_vec3(vec3 *a)
 	a->z /= m;
 }
 
-mat4 bt_transpose_mat4(mat4 *m)
+mat4 tm_transpose_mat4(mat4 *m)
 {
 	mat4 t;
 	int i, j;
@@ -92,15 +92,15 @@ mat4 bt_transpose_mat4(mat4 *m)
 	return t;
 }
 
-float bt_mag_vec3(bt_vec3 *a)
+float tm_mag_vec3(tm_vec3 *a)
 {
 	return sqrt(a->x*a->x + a->y*a->y + a->z*a->z);
 }
 
-mat4 bt_rotate_into_vec(vec3 *normal, vec3 *direction)
+mat4 tm_rotate_into_vec(vec3 *normal, vec3 *direction)
 {
-	vec3 v = bt_cross_vec3(normal, direction);
-	float e = bt_dot_vec3(normal, direction);
+	vec3 v = tm_cross_vec3(normal, direction);
+	float e = tm_dot_vec3(normal, direction);
 	float h = 1 / (1 + e);
 	return (mat4){
 		e + h*v.x*v.x, h*v.x*v.y + v.z, h*v.x*v.z - v.y, 0.0f,
@@ -110,20 +110,20 @@ mat4 bt_rotate_into_vec(vec3 *normal, vec3 *direction)
 	};
 }
 
-vec3 bt_rotate_around_axis(vec3 *v, vec3 *axis, float n)
+vec3 tm_rotate_around_axis(vec3 *v, vec3 *axis, float n)
 {
 	vec3 a, b, c, d;
-	a = bt_mult_vec3(cos(n), v);
-	b = bt_cross_vec3(axis, v);
-	b = bt_mult_vec3(sin(n), &b);
-	c = bt_mult_vec3((1.f - cos(n)) * bt_dot_vec3(axis, v), axis);
-	d = bt_add_vec3(&b, &c);
-	d = bt_add_vec3(&a, &d);
-	bt_normalize_vec3(&d);
+	a = tm_mult_vec3(cos(n), v);
+	b = tm_cross_vec3(axis, v);
+	b = tm_mult_vec3(sin(n), &b);
+	c = tm_mult_vec3((1.f - cos(n)) * tm_dot_vec3(axis, v), axis);
+	d = tm_add_vec3(&b, &c);
+	d = tm_add_vec3(&a, &d);
+	tm_normalize_vec3(&d);
 	return d;
 }
 
-mat4 bt_translate(float x, float y, float z)
+mat4 tm_translate(float x, float y, float z)
 {
 	return (mat4){
 		1.0f, 0.0f, 0.0f, 0.0f,
@@ -133,7 +133,7 @@ mat4 bt_translate(float x, float y, float z)
 	};
 }
 
-mat4 bt_rotate_xy(float x, float y)
+mat4 tm_rotate_xy(float x, float y)
 {
 	float sx = sin(x);
 	float cx = cos(x);
@@ -147,7 +147,7 @@ mat4 bt_rotate_xy(float x, float y)
 	};
 }
 
-float bt_transform(vec3 *v, mat4 *t, float w)
+float tm_transform(vec3 *v, mat4 *t, float w)
 {
 	float x, y, z, h;
 	x = v->x*t->m[0][0] + v->y*t->m[1][0] + v->z*t->m[2][0] + t->m[3][0]*w;
@@ -160,14 +160,14 @@ float bt_transform(vec3 *v, mat4 *t, float w)
 	return h;
 }
 
-quat bt_from_axis_angle(float x, float y, float z, float theta)
+quat tm_from_axis_angle(float x, float y, float z, float theta)
 {
 	float a = theta / 2.0f;
 	float b = sin(a);
 	return (quat){x*b, y*b, z*b, cos(a)};
 }
 
-mat4 bt_quat_to_mat4(quat *q)
+mat4 tm_quat_to_mat4(quat *q)
 {
 	mat4 m;
 	m.m[0][0] = 1.0f - 2.0f*(q->y*q->y + q->z*q->z);
@@ -185,18 +185,18 @@ mat4 bt_quat_to_mat4(quat *q)
 	return m;
 }
 
-quat bt_mult_quat(quat *a, quat *b)
+quat tm_mult_quat(quat *a, quat *b)
 {
-	float s = a->w*b->w - bt_dot_vec3(&(a->v), &(b->v));
-	vec3 x = bt_cross_vec3(&(a->v), &(b->v));
-	vec3 y = bt_mult_vec3(b->w, &(a->v));
-	vec3 z = bt_mult_vec3(a->w, &(b->v));
-	vec3 f = bt_add_vec3(&x, &y);
-	f = bt_add_vec3(&f, &z);
+	float s = a->w*b->w - tm_dot_vec3(&(a->v), &(b->v));
+	vec3 x = tm_cross_vec3(&(a->v), &(b->v));
+	vec3 y = tm_mult_vec3(b->w, &(a->v));
+	vec3 z = tm_mult_vec3(a->w, &(b->v));
+	vec3 f = tm_add_vec3(&x, &y);
+	f = tm_add_vec3(&f, &z);
 	return (quat){f.x, f.y, f.z, s};
 }
 
-void bt_normalize_quat(quat *q)
+void tm_normalize_quat(quat *q)
 {
 	float n = sqrt(q->x*q->x + q->y*q->y + q->z*q->z + q->w*q->w);
 	q->x /= n;
@@ -205,7 +205,7 @@ void bt_normalize_quat(quat *q)
 	q->w /= n;
 }
 
-quat bt_slerp(quat *a, quat *b, float t)
+quat tm_slerp(quat *a, quat *b, float t)
 {
 	float i = acos(a->x*b->x + a->y*b->y + a->z*b->z + a->w*b->w);
 	float j = sin(i);
@@ -223,7 +223,7 @@ quat bt_slerp(quat *a, quat *b, float t)
 	return m;
 }
 
-mat4 bt_mat4_identity()
+mat4 tm_mat4_identity()
 {
 	return (mat4){
 		1.0f, 0.0f, 0.0f, 0.0f,

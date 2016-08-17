@@ -23,11 +23,11 @@ public:
 	CurveEditor(QWidget *parent = 0);
 
 public slots:
-	void setCurve(std::vector<bt_vec3> controls, QString name);
+	void setCurve(std::vector<tm_vec3> controls, QString name);
 	void setEnabled(bool enabled);
 
 signals:
-	void curveChanged(std::vector<bt_vec3> controls, QString name);
+	void curveChanged(std::vector<tm_vec3> controls, QString name);
 
 protected slots:
 	void onFloat(bool);
@@ -49,8 +49,8 @@ private:
 	bool enabled;
 	int height;
 	int width;
-	std::vector<bt_vec3> controls;
-	bt_vec3 curve[4];
+	std::vector<tm_vec3> controls;
+	tm_vec3 curve[4];
 	int insertIndex;
 	int point;
 	QString curveName;

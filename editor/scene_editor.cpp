@@ -7,7 +7,7 @@
  * (at your option) any later version.
  */
 
-#include "view_editor.h"
+#include "scene_editor.h"
 #include "file_exporter.h"
 #include "primitives.h"
 #include "collision.h"
@@ -15,7 +15,7 @@
 #include <QtGui/QMouseEvent>
 #include <QtOpenGL/QGLFormat>
 
-ViewEditor::ViewEditor(QWidget *parent) : QOpenGLWidget(parent)
+SceneEditor::SceneEditor(QWidget *parent) : QOpenGLWidget(parent)
 {
 	ctrl = shift = midButton = false;
 	camera.action = Camera::NONE;
@@ -23,26 +23,26 @@ ViewEditor::ViewEditor(QWidget *parent) : QOpenGLWidget(parent)
 	setFocus();
 }
 
-ViewEditor::~ViewEditor()
+SceneEditor::~SceneEditor()
 {
-	bt_delete_tree(tree);
+	tm_delete_tree(tree);
 }
 
-void ViewEditor::exportObject(const char *filename)
+void SceneEditor::exportObject(const char *filename)
 {
 	FileExporter f;
 	Entity *e = scene.getEntity(0);
-	f.setVertices(&e->geometry.vertices[0], bt_get_vbo_size(tree));
-	f.setTriangles(&e->geometry.triangles[0], bt_get_ebo_size(tree));
+	f.setVertices(&e->geometry.vertices[0], tm_get_vbo_size(tree));
+	f.setTriangles(&e->geometry.triangles[0], tm_get_ebo_size(tree));
 	f.exportObj(filename);
 }
 
-void ViewEditor::setRenderSystem(RenderSystem *rs)
+void SceneEditor::setRenderSystem(RenderSystem *rs)
 {
 	this->rs = rs;
 }
 
-void ViewEditor::initializeGL()
+void SceneEditor::initializeGL()
 {
 	initializeOpenGLFunctions();
 	rs->init();
@@ -64,7 +64,7 @@ void ViewEditor::initializeGL()
 	initializeGrid();
 }
 
-void ViewEditor::resizeGL(int width, int height)
+void SceneEditor::resizeGL(int width, int height)
 {
 	float aspectRatio = (float)width / (float)height;
 	camera.setWindowSize(width, height);
@@ -73,12 +73,12 @@ void ViewEditor::resizeGL(int width, int height)
 	paintGL();
 }
 
-void ViewEditor::initializeGrid()
+void SceneEditor::initializeGrid()
 {
 	GeometryComponent g = {};
 	RenderComponent r = {};
-	bt_vec3 color = {0.46, 0.46, 0.46};
-	bt_vec3 sectionColor = {0.41, 0.41, 0.41};
+	tm_vec3 color = {0.46, 0.46, 0.46};
+	tm_vec3 sectionColor = {0.41, 0.41, 0.41};
 	createGrid(g, 5, color, sectionColor);
 	r.program = 0;
 	r.type = RenderComponent::LINES;
@@ -86,7 +86,7 @@ void ViewEditor::initializeGrid()
 	rs->registerComponent(rs->load(g), r);
 }
 
-void ViewEditor::initializeTree()
+void SceneEditor::initializeTree()
 {
 	const int es = 8000;
 	const int vs = 8000;
@@ -106,21 +106,22 @@ void ViewEditor::initializeTree()
 	r->program = 1;
 	r->type = RenderComponent::TRIANGLES;
 
-	tree = bt_new_tree();
-	bt_set_radius(tree, 0, 0.2f);
-	bt_set_resolution(tree, 0, 8);
-	bt_set_max_branch_depth(tree, 1);
-	bt_generate_structure(tree);
-	bt_generate_mesh(tree, &g->vertices[0], vs, &g->triangles[0], es);
+	tree = tm_new_tree();
+	tm_set_radius(tree, 0, 0.2f);
+	tm_set_resolution(tree, 0, 8);
+	tm_set_cross_sections(tree, 0, 12);
+	tm_set_max_branch_depth(tree, 1);
+	tm_generate_structure(tree);
+	tm_generate_mesh(tree, &g->vertices[0], vs, &g->triangles[0], es);
 
-	r->triangleRange[1] = bt_get_ebo_size(tree);
-	r->vertexRange[1] = bt_get_vbo_size(tree);
+	r->triangleRange[1] = tm_get_ebo_size(tree);
+	r->vertexRange[1] = tm_get_vbo_size(tree);
 
 	rs->registerComponent(rs->load(*g), *r);
 	scene.add(e);
 }
 
-void ViewEditor::keyPressEvent(QKeyEvent *event)
+void SceneEditor::keyPressEvent(QKeyEvent *event)
 {
 	switch (event->key()) {
 	case Qt::Key_Control:
@@ -132,7 +133,7 @@ void ViewEditor::keyPressEvent(QKeyEvent *event)
 	}
 }
 
-void ViewEditor::keyReleaseEvent(QKeyEvent *event)
+void SceneEditor::keyReleaseEvent(QKeyEvent *event)
 {
 	switch (event->key()) {
 	case Qt::Key_Control:
@@ -144,7 +145,7 @@ void ViewEditor::keyReleaseEvent(QKeyEvent *event)
 	}
 }
 
-void ViewEditor::selectBranch(int x, int y)
+void SceneEditor::selectBranch(int x, int y)
 {
 	Entity *selection;
 	int branch;
@@ -157,15 +158,15 @@ void ViewEditor::selectBranch(int x, int y)
 	branch = scene.setSelectedBranch(camera, x, y, tree);
 
 	if (selection != NULL && branch >= 0) {
-		int s = bt_get_ebo_start(tree, branch);
-		int e = bt_get_ebo_end(tree, branch);
+		int s = tm_get_ebo_start(tree, branch);
+		int e = tm_get_ebo_end(tree, branch);
 		rs->setWireframe(selection->geometry.buffer, 0, s, e);
 	}
 
 	emit selectionChanged(tree, branch);
 }
 
-void ViewEditor::mousePressEvent(QMouseEvent *event)
+void SceneEditor::mousePressEvent(QMouseEvent *event)
 {
 	QPoint p = event->pos();
 	midButton = false;
@@ -188,12 +189,12 @@ void ViewEditor::mousePressEvent(QMouseEvent *event)
 	setFocus();
 }
 
-void ViewEditor::mouseReleaseEvent(QMouseEvent *event)
+void SceneEditor::mouseReleaseEvent(QMouseEvent *event)
 {
 	camera.action = Camera::NONE;
 }
 
-void ViewEditor::mouseMoveEvent(QMouseEvent *event)
+void SceneEditor::mouseMoveEvent(QMouseEvent *event)
 {
 	QPoint point = event->pos();
 
@@ -212,7 +213,7 @@ void ViewEditor::mouseMoveEvent(QMouseEvent *event)
 	update();
 }
 
-void ViewEditor::paintGL()
+void SceneEditor::paintGL()
 {
 	GlobalUniforms gu;
 	gu.vp = camera.getVP();
@@ -220,20 +221,20 @@ void ViewEditor::paintGL()
 	rs->render(gu);
 }
 
-void ViewEditor::updateWireframe()
+void SceneEditor::updateWireframe()
 {
 	Entity *selection = scene.getSelected();
-	if (selection >= 0) {
+	if (selection) {
 		int branch = scene.getSelectedBranch();
 		if (branch >= 0) {
-			int s = bt_get_ebo_start(tree, branch);
-			int e = bt_get_ebo_end(tree, branch);
+			int s = tm_get_ebo_start(tree, branch);
+			int e = tm_get_ebo_end(tree, branch);
 			rs->setWireframe(selection->geometry.buffer, 0, s, e);
 		}
 	}
 }
 
-void ViewEditor::expandBuffer(GeometryComponent &g, RenderComponent &r)
+void SceneEditor::expandBuffer(GeometryComponent &g, RenderComponent &r)
 {
 	int status = 0;
 
@@ -242,30 +243,30 @@ void ViewEditor::expandBuffer(GeometryComponent &g, RenderComponent &r)
 		g.triangles.resize(g.triangles.size() + 1000);
 		int v = g.vertices.size();
 		int e = g.triangles.size();
-		status = bt_generate_mesh(tree, &g.vertices[0], v,
+		status = tm_generate_mesh(tree, &g.vertices[0], v,
 				&g.triangles[0], e);
 	}
 
-	r.triangleRange[1] = bt_get_ebo_size(tree);
-	r.vertexRange[1] = bt_get_vbo_size(tree);
+	r.triangleRange[1] = tm_get_ebo_size(tree);
+	r.vertexRange[1] = tm_get_vbo_size(tree);
 	rs->registerComponent(rs->load(g, 0), r);
 }
 
-void ViewEditor::change()
+void SceneEditor::change()
 {
 	Entity *e = scene.getEntity(0);
 	GeometryComponent *g = &e->geometry;
 	RenderComponent *r = &e->renderComponent[0];
 	int vs = g->vertices.size();
 	int es = g->triangles.size();
-	int status = bt_generate_mesh(tree, &g->vertices[0], vs,
+	int status = tm_generate_mesh(tree, &g->vertices[0], vs,
 			&g->triangles[0], es);
 
 	if (status == 0)
 		expandBuffer(*g, *r);
 	else  {
-		int v = bt_get_vbo_size(tree) * 6;
-		int i = bt_get_ebo_size(tree);
+		int v = tm_get_vbo_size(tree) * 6;
+		int i = tm_get_ebo_size(tree);
 
 		if (vs > 8000 && es > 8000 && vs - 2000 > v && es - 2000 > i) {
 			g->vertices.resize(v + 1000);
@@ -285,26 +286,26 @@ void ViewEditor::change()
 	update();
 }
 
-void ViewEditor::changeResolution(int i)
+void SceneEditor::changeResolution(int i)
 {
-	bt_set_resolution(tree, scene.getSelectedBranch(), i);
+	tm_set_resolution(tree, scene.getSelectedBranch(), i);
 	change();
 }
 
-void ViewEditor::changeSections(int i)
+void SceneEditor::changeSections(int i)
 {
-	bt_set_cross_sections(tree, scene.getSelectedBranch(), i);
+	tm_set_cross_sections(tree, scene.getSelectedBranch(), i);
 	change();
 }
 
-void ViewEditor::changeRadius(double d)
+void SceneEditor::changeRadius(double d)
 {
-	bt_set_radius(tree, scene.getSelectedBranch(), d);
+	tm_set_radius(tree, scene.getSelectedBranch(), d);
 	change();
 }
 
-void ViewEditor::changeRadiusCurve(std::vector<bt_vec3> c)
+void SceneEditor::changeRadiusCurve(std::vector<tm_vec3> c)
 {
-	bt_set_radius_curve(tree, scene.getSelectedBranch(), &c[0], c.size());
+	tm_set_radius_curve(tree, scene.getSelectedBranch(), &c[0], c.size());
 	change();
 }

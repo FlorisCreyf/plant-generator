@@ -65,10 +65,10 @@ void CurveEditor::createInterface()
 int CurveEditor::createBackground(int offset)
 {
 	{
-		bt_vec3 color = {0.3f, 0.3f, 0.3f};
-		bt_vec3 sectionColor = {0.3f, 0.3f, 0.3f};
+		tm_vec3 color = {0.3f, 0.3f, 0.3f};
+		tm_vec3 sectionColor = {0.3f, 0.3f, 0.3f};
 		RenderComponent *r = &ui.renderComponent[1];
-		createGrid(ui.geometry, 2, color, sectionColor, (bt_mat4){
+		createGrid(ui.geometry, 2, color, sectionColor, (tm_mat4){
 				1.0f/4.0f, 0.0f, 0.0f, 0.0f,
 				0.0f, 1.0f/4.0f, 0.0f, 0.0f,
 				0.0f, 0.0f, 1.0f/4.0f, 0.0f,
@@ -80,9 +80,9 @@ int CurveEditor::createBackground(int offset)
 	}
 
 	{
-		bt_vec3 a = {1.0f, 0.0f, 0.0f};
-		bt_vec3 b = {0.0f, 0.0f, 1.0f};
-		bt_vec3 center = {0.0f, 0.2f, 0.0f};
+		tm_vec3 a = {1.0f, 0.0f, 0.0f};
+		tm_vec3 b = {0.0f, 0.0f, 1.0f};
+		tm_vec3 center = {0.0f, 0.2f, 0.0f};
 		RenderComponent *r = &ui.renderComponent[0];
 		createPlane(ui.geometry, a, b, center);
 		r->type = RenderComponent::TRIANGLES;
@@ -96,7 +96,7 @@ int CurveEditor::createBackground(int offset)
 int CurveEditor::createControlLines(int offset)
 {
 	RenderComponent *r = &ui.renderComponent[2];
-	createLine(ui.geometry, controls, (bt_vec3){0.6f, 0.6f, 0.6f});
+	createLine(ui.geometry, controls, (tm_vec3){0.6f, 0.6f, 0.6f});
 	r->type = RenderComponent::LINES;
 	r->vertexRange[0] = offset;
 	r->vertexRange[1] = ui.geometry.vertices.size() / 6;
@@ -108,7 +108,7 @@ int CurveEditor::createControlLines(int offset)
 int CurveEditor::createCurve(int offset)
 {
 	RenderComponent *r = &ui.renderComponent[3];
-	createPath(ui.geometry, controls, 100, (bt_vec3){0.2f, 0.46f, 0.6f});
+	createPath(ui.geometry, controls, 100, (tm_vec3){0.2f, 0.46f, 0.6f});
 	r->type = RenderComponent::LINE_STRIP;
 	r->vertexRange[0] = offset;
 	r->vertexRange[1] = ui.geometry.vertices.size() / 6;
@@ -166,10 +166,10 @@ void CurveEditor::insertCurve(int i, float x, float y)
 	if (x >= controls[i-3].x && x <= controls[i-2].x)
 		return;
 
-	curve[0] = (bt_vec3){minX, 0.0f, y};
-	curve[1] = (bt_vec3){x, 0.0f, y};
-	curve[2] = (bt_vec3){x, 0.0f, y};
-	curve[3] = (bt_vec3){maxX, 0.0f, y};
+	curve[0] = (tm_vec3){minX, 0.0f, y};
+	curve[1] = (tm_vec3){x, 0.0f, y};
+	curve[2] = (tm_vec3){x, 0.0f, y};
+	curve[3] = (tm_vec3){maxX, 0.0f, y};
 	controls.insert(controls.begin()+i-1, curve, &curve[4]);
 	updateCurve();
 
@@ -247,8 +247,8 @@ void CurveEditor::drawCurve()
 {
 	int start = ui.renderComponent[2].vertexRange[0] * 6;
 	GeometryComponent g;
-	createLine(g, controls, (bt_vec3){0.6, 0.6, 0.6});
-	createPath(g, controls, 100, (bt_vec3){.2f, 0.46f, 0.6f});
+	createLine(g, controls, (tm_vec3){0.6, 0.6, 0.6});
+	createPath(g, controls, 100, (tm_vec3){.2f, 0.46f, 0.6f});
 	rs.updateVertices(0, &g.vertices[0], start, g.vertices.size());
 }
 
@@ -270,7 +270,7 @@ bool CurveEditor::omitCurve(float x)
 		insertIndex = point - 2;
 		auto start = controls.begin() + insertIndex;
 		auto end = controls.begin() + insertIndex + 4;
-		memcpy(curve, &controls[insertIndex], sizeof(bt_vec3)*4);
+		memcpy(curve, &controls[insertIndex], sizeof(tm_vec3)*4);
 		controls.erase(start, end);
 		return true;
 	} else
@@ -353,7 +353,7 @@ void CurveEditor::placeTerminalControl(bool first, float y)
 void CurveEditor::paintGL()
 {
 	GlobalUniforms gu;
-	gu.vp = (bt_mat4){
+	gu.vp = (tm_mat4){
 			1.8f, 0.0f, 0.0f, 0.0f,
 			0.0f, 0.0f, 0.9f, 0.0f,
 			0.0f, 1.8f, 0.0f, 0.0f,
@@ -361,7 +361,7 @@ void CurveEditor::paintGL()
 	rs.render(gu, 0.3f);
 }
 
-void CurveEditor::setCurve(std::vector<bt_vec3> controls, QString name)
+void CurveEditor::setCurve(std::vector<tm_vec3> controls, QString name)
 {
 	parentWidget()->setWindowTitle("Curve: " + name);
 	this->controls = controls;

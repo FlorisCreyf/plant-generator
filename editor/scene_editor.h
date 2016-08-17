@@ -7,25 +7,25 @@
  * (at your option) any later version.
  */
 
-#ifndef VIEW_EDITOR_H
-#define VIEW_EDITOR_H
+#ifndef SCENE_EDITOR_H
+#define SCENE_EDITOR_H
 
 #define GL_GLEXT_PROTOTYPES
 
-#include "bluetree.h"
+#include "treemaker.h"
 #include "render_system.h"
 #include "scene.h"
 #include "camera.h"
 #include <QtGui/QOpenGLFunctions>
 #include <QOpenGLWidget>
 
-class ViewEditor : public QOpenGLWidget, protected QOpenGLFunctions
+class SceneEditor : public QOpenGLWidget, protected QOpenGLFunctions
 {
 	Q_OBJECT;
 
 public:
-	ViewEditor(QWidget *parent = 0);
-	~ViewEditor();
+	SceneEditor(QWidget *parent = 0);
+	~SceneEditor();
 
 	void exportObject(const char *filename);
 	void setRenderSystem(RenderSystem *rs);
@@ -34,10 +34,10 @@ public slots:
 	void changeResolution(int i);
 	void changeSections(int i);
 	void changeRadius(double d);
-	void changeRadiusCurve(std::vector<bt_vec3> c);
+	void changeRadiusCurve(std::vector<tm_vec3> c);
 
 signals:
-	void selectionChanged(bt_tree tree, int s);
+	void selectionChanged(tm_tree tree, int s);
 
 protected:
 	void initializeGL();
@@ -55,7 +55,7 @@ private:
 	bool midButton;
 	int buffer;
 
-	bt_tree tree;
+	tm_tree tree;
 	Scene scene;
 	Camera camera;
 	RenderSystem *rs;
@@ -68,4 +68,4 @@ private:
 	void change();
 };
 
-#endif /* VIEW_EDITOR_H */
+#endif /* SCENE_EDITOR_H */

@@ -73,7 +73,7 @@ QSize PropertyBox::sizeHint() const
 	return QSize(300, 0);
 }
 
-void PropertyBox::setCurve(std::vector<bt_vec3> controls, QString name)
+void PropertyBox::setCurve(std::vector<tm_vec3> controls, QString name)
 {
 	if (name == "Radius") {
 		radiusCB->setControls(controls);
@@ -81,7 +81,7 @@ void PropertyBox::setCurve(std::vector<bt_vec3> controls, QString name)
 	}
 }
 
-void PropertyBox::fill(bt_tree tree, int branch)
+void PropertyBox::fill(tm_tree tree, int branch)
 {
 	if (branch < 0) {
 		t->hide();
@@ -89,35 +89,35 @@ void PropertyBox::fill(bt_tree tree, int branch)
 		return;
 	}
 
-	resolution->setValue(bt_get_resolution(tree, branch));
-	sections->setValue(bt_get_cross_sections(tree, branch));
-	radius->setValue(bt_get_radius(tree, branch));
+	resolution->setValue(tm_get_resolution(tree, branch));
+	sections->setValue(tm_get_cross_sections(tree, branch));
+	radius->setValue(tm_get_radius(tree, branch));
 	fillCurveButtons(tree, branch);
 
 	t->show();
 	emit isEnabled(true);
 
-	if (bt_is_terminal_branch(tree, branch))
+	if (tm_is_terminal_branch(tree, branch))
 		resolution->setEnabled(false);
 	else
 		resolution->setEnabled(true);
 }
 
-void PropertyBox::fillCurveButtons(bt_tree tree, int branch)
+void PropertyBox::fillCurveButtons(tm_tree tree, int branch)
 {
-	bt_vec3 *l;
+	tm_vec3 *l;
 	int size;
-	std::vector<bt_vec3> controls;
+	std::vector<tm_vec3> controls;
 
-	bt_get_radius_curve(tree, branch, &l, &size);
+	tm_get_radius_curve(tree, branch, &l, &size);
 	controls.insert(controls.begin(), l, &l[size]);
 	radiusCB->setControls(controls);
 }
 
-void PropertyBox::setSignals(ViewEditor *sceneEditor, CurveEditor *curveEditor)
+void PropertyBox::setSignals(SceneEditor *sceneEditor, CurveEditor *curveEditor)
 {
-	connect(sceneEditor, SIGNAL(selectionChanged(bt_tree, int)), this,
-			SLOT(fill(bt_tree, int)));
+	connect(sceneEditor, SIGNAL(selectionChanged(tm_tree, int)), this,
+			SLOT(fill(tm_tree, int)));
 	connect(resolution, SIGNAL(valueChanged(int)), sceneEditor,
 			SLOT(changeResolution(int)));
 	connect(sections, SIGNAL(valueChanged(int)), sceneEditor,
@@ -128,10 +128,10 @@ void PropertyBox::setSignals(ViewEditor *sceneEditor, CurveEditor *curveEditor)
 	connect(this, SIGNAL(isEnabled(bool)), curveEditor,
 			SLOT(setEnabled(bool)));
 
-	connect(radiusCB, SIGNAL(selected(std::vector<bt_vec3>, QString)),
-			curveEditor, SLOT(setCurve(std::vector<bt_vec3>, QString)));
-	connect(curveEditor, SIGNAL(curveChanged(std::vector<bt_vec3>, QString)),
-			this, SLOT(setCurve(std::vector<bt_vec3>, QString)));
-	connect(this, SIGNAL(radiusCurveChanged(std::vector<bt_vec3>)),
-			sceneEditor, SLOT(changeRadiusCurve(std::vector<bt_vec3>)));
+	connect(radiusCB, SIGNAL(selected(std::vector<tm_vec3>, QString)),
+			curveEditor, SLOT(setCurve(std::vector<tm_vec3>, QString)));
+	connect(curveEditor, SIGNAL(curveChanged(std::vector<tm_vec3>, QString)),
+			this, SLOT(setCurve(std::vector<tm_vec3>, QString)));
+	connect(this, SIGNAL(radiusCurveChanged(std::vector<tm_vec3>)),
+			sceneEditor, SLOT(changeRadiusCurve(std::vector<tm_vec3>)));
 }

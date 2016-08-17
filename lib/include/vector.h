@@ -14,7 +14,7 @@
 extern "C" {
 #endif
 
-typedef struct bt_vec3_tag {
+typedef struct tm_vec3_tag {
 	union {
 		float x;
 		float r;
@@ -27,50 +27,50 @@ typedef struct bt_vec3_tag {
 		float z;
 		float b;
 	};
-} bt_vec3;
+} tm_vec3;
 
-typedef struct bt_quat_tag {
+typedef struct tm_quat_tag {
 	union {
 		struct {
 			float x;
 			float y;
 			float z;
 		};
-		bt_vec3 v;
+		tm_vec3 v;
 	};
 	float w;
-} bt_quat;
+} tm_quat;
 
-typedef struct bt_mat4_tag {
+typedef struct tm_mat4_tag {
 	float m[4][4];
-} bt_mat4;
+} tm_mat4;
 
-typedef bt_mat4 mat4;
-typedef bt_quat quat;
-typedef bt_vec3 vec3;
+typedef tm_mat4 mat4;
+typedef tm_quat quat;
+typedef tm_vec3 vec3;
 
 float absf(float f);
-float bt_dot_vec3(bt_vec3 *a, bt_vec3 *b);
-bt_vec3 bt_cross_vec3(bt_vec3 *a, bt_vec3 *b);
-bt_vec3 bt_add_vec3(bt_vec3 *a, bt_vec3 *b);
-bt_vec3 bt_sub_vec3(bt_vec3 *a, bt_vec3 *b);
-bt_vec3 bt_mult_vec3(float a, bt_vec3 *b);
-float bt_mag_vec3(bt_vec3 *a);
-void bt_normalize_vec3(bt_vec3 *a);
-bt_mat4 bt_transpose_mat4(bt_mat4 *m);
-bt_mat4 bt_mult_mat4(bt_mat4 *a, bt_mat4 *b);
-bt_mat4 bt_rotate_into_vec(bt_vec3 *normal, bt_vec3 *direction);
-bt_vec3 bt_rotate_around_axis(vec3 *v, vec3 *axis, float n);
-bt_mat4 bt_translate(float x, float y, float z);
-float bt_transform(bt_vec3 *v, bt_mat4 *t, float w);
-bt_mat4 bt_rotate_xy(float x, float y);
-bt_quat bt_from_axis_angle(float x, float y, float z, float theta);
-bt_mat4 bt_quat_to_mat4(bt_quat *q);
-void bt_normalize_vec4(bt_quat *a);
-bt_quat bt_mult_quat(bt_quat *a, bt_quat *b);
-void bt_normalize_quat(bt_quat *q);
-bt_quat bt_slerp(bt_quat *a, bt_quat *b, float t);
-bt_mat4 bt_mat4_identity();
+float tm_dot_vec3(tm_vec3 *a, tm_vec3 *b);
+tm_vec3 tm_cross_vec3(tm_vec3 *a, tm_vec3 *b);
+tm_vec3 tm_add_vec3(tm_vec3 *a, tm_vec3 *b);
+tm_vec3 tm_sub_vec3(tm_vec3 *a, tm_vec3 *b);
+tm_vec3 tm_mult_vec3(float a, tm_vec3 *b);
+float tm_mag_vec3(tm_vec3 *a);
+void tm_normalize_vec3(tm_vec3 *a);
+tm_mat4 tm_transpose_mat4(tm_mat4 *m);
+tm_mat4 tm_mult_mat4(tm_mat4 *a, tm_mat4 *b);
+tm_mat4 tm_rotate_into_vec(tm_vec3 *normal, tm_vec3 *direction);
+tm_vec3 tm_rotate_around_axis(vec3 *v, vec3 *axis, float n);
+tm_mat4 tm_translate(float x, float y, float z);
+float tm_transform(tm_vec3 *v, tm_mat4 *t, float w);
+tm_mat4 tm_rotate_xy(float x, float y);
+tm_quat tm_from_axis_angle(float x, float y, float z, float theta);
+tm_mat4 tm_quat_to_mat4(tm_quat *q);
+void tm_normalize_vec4(tm_quat *a);
+tm_quat tm_mult_quat(tm_quat *a, tm_quat *b);
+void tm_normalize_quat(tm_quat *q);
+tm_quat tm_slerp(tm_quat *a, tm_quat *b, float t);
+tm_mat4 tm_mat4_identity();
 
 #ifdef __cplusplus
 }

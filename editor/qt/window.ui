@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>BlueTree</string>
+   <string>TreeMaker</string>
   </property>
   <property name="windowIcon">
    <iconset>
@@ -193,7 +193,7 @@
         <number>0</number>
        </property>
        <item row="0" column="0">
-        <widget class="ViewEditor" name="scene" native="true">
+        <widget class="SceneEditor" name="scene" native="true">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
            <horstretch>0</horstretch>
@@ -203,7 +203,6 @@
          <property name="styleSheet">
           <string notr="true">border:outset #999 2px;</string>
          </property>
-         <zorder>widget_2</zorder>
         </widget>
        </item>
       </layout>
@@ -217,7 +216,7 @@
      <x>0</x>
      <y>0</y>
      <width>1200</width>
-     <height>25</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -429,9 +428,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>ViewEditor</class>
+   <class>SceneEditor</class>
    <extends>QWidget</extends>
-   <header>../view_editor.h</header>
+   <header>../scene_editor.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>

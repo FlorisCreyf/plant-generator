@@ -83,7 +83,7 @@ void RenderSystem::registerComponent(int buffer, RenderComponent r)
 void RenderSystem::setGlobalUniforms(GlobalUniforms &gu, GLuint program)
 {
 	GLint loc;
-	bt_vec3 *pos = &gu.cameraPosition;
+	tm_vec3 *pos = &gu.cameraPosition;
 
 	loc = glGetUniformLocation(program, "vp");
 	glUniformMatrix4fv(loc, 1, GL_FALSE, &gu.vp.m[0][0]);

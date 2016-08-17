@@ -7,23 +7,23 @@
  * (at your option) any later version.
  */
 
-#include "bluetree.h"
+#include "treemaker.h"
 #include "tree_struct.h"
 #include "model_builder.h"
 #include "tree_data.h"
 #include <stdlib.h>
 #include <stdio.h>
 
-struct bt_tree_tag {
+struct tm_tree_tag {
 	node *root;
 	tree_data td;
 	float *vertex_buffer;
 	unsigned short *element_buffer;
 };
 
-bt_tree bt_new_tree()
+tm_tree tm_new_tree()
 {
-	bt_tree tree = (bt_tree)malloc(sizeof(struct bt_tree_tag));
+	tm_tree tree = (tm_tree)malloc(sizeof(struct tm_tree_tag));
 	tree->root = (node *)malloc(sizeof(struct node_t));
 	tree->root->branch_count = 0;
 	tree->root->line_count = 0;
@@ -33,7 +33,7 @@ bt_tree bt_new_tree()
 	return tree;
 }
 
-void bt_delete_tree(bt_tree tree)
+void tm_delete_tree(tm_tree tree)
 {
 	if (tree != NULL) {
 		free_tree_structure(tree->root);
@@ -64,20 +64,20 @@ node *get_node(node *n, int id)
 	return find_node(n, &i, id);
 }
 
-void bt_set_radius(bt_tree tree, int id, float radius)
+void tm_set_radius(tm_tree tree, int id, float radius)
 {
 	node *n = get_node(tree->root, id);
 	if (n)
 		n->radius = radius;
 }
 
-void bt_set_radius_curve(bt_tree tree, int id, bt_vec3 *controls, int size)
+void tm_set_radius_curve(tm_tree tree, int id, tm_vec3 *controls, int size)
 {
 	node *n = get_node(tree->root, id);
 	if (n->radius_curve_size != 0)
 		free(n->radius_curve);
-	n->radius_curve = malloc(sizeof(bt_vec3)*size);
-	memcpy(n->radius_curve, controls, sizeof(bt_vec3)*size);
+	n->radius_curve = malloc(sizeof(tm_vec3)*size);
+	memcpy(n->radius_curve, controls, sizeof(tm_vec3)*size);
 	n->radius_curve_size = size;
 }
 
@@ -92,7 +92,7 @@ void change_dichotomous_resolution(node *stem, int r)
 	}
 }
 
-void bt_set_resolution(bt_tree tree, int id, int resolution)
+void tm_set_resolution(tm_tree tree, int id, int resolution)
 {
 	node *n = get_node(tree->root, id);
 	if (n) {
@@ -101,37 +101,37 @@ void bt_set_resolution(bt_tree tree, int id, int resolution)
 	}
 }
 
-void bt_set_cross_sections(bt_tree tree, int id, int sections)
+void tm_set_cross_sections(tm_tree tree, int id, int sections)
 {
 	node *n = get_node(tree->root, id);
 	if (n)
 		n->cross_sections = sections;
 }
 
-void bt_set_max_branch_depth(bt_tree tree, int depth)
+void tm_set_max_branch_depth(tm_tree tree, int depth)
 {
 	tree->td.max_branch_depth = depth;
 }
 
-int bt_get_cross_sections(bt_tree tree, int id)
+int tm_get_cross_sections(tm_tree tree, int id)
 {
 	node *n = get_node(tree->root, id);
 	return n ? n->cross_sections : -1;
 }
 
-int bt_get_resolution(bt_tree tree, int id)
+int tm_get_resolution(tm_tree tree, int id)
 {
 	node *n = get_node(tree->root, id);
 	return n ? n->resolution : -1;
 }
 
-float bt_get_radius(bt_tree tree, int id)
+float tm_get_radius(tm_tree tree, int id)
 {
 	node *n = get_node(tree->root, id);
 	return n ? n->radius : -1.0f;
 }
 
-void bt_get_radius_curve(bt_tree tree, int id, bt_vec3 **curve, int *size)
+void tm_get_radius_curve(tm_tree tree, int id, tm_vec3 **curve, int *size)
 {
 	node *n = get_node(tree->root, id);
 	if (n) {
@@ -140,47 +140,47 @@ void bt_get_radius_curve(bt_tree tree, int id, bt_vec3 **curve, int *size)
 	}
 }
 
-bt_aabb bt_get_bounding_box(bt_tree tree, int id)
+tm_aabb tm_get_bounding_box(tm_tree tree, int id)
 {
 	node *n = get_node(tree->root, id);
-	return n ? n->bounds : (bt_aabb){0, 0, 0, 0, 0, 0};
+	return n ? n->bounds : (tm_aabb){0, 0, 0, 0, 0, 0};
 }
 
-int bt_get_ebo_start(bt_tree tree, int id)
+int tm_get_ebo_start(tm_tree tree, int id)
 {
 	node *n = get_node(tree->root, id);
 	return n->ebo_start;
 }
 
-int bt_get_ebo_end(bt_tree tree, int id)
+int tm_get_ebo_end(tm_tree tree, int id)
 {
 	node *n = get_node(tree->root, id);
 	return n->ebo_end;
 }
 
-int bt_is_terminal_branch(bt_tree tree, int id)
+int tm_is_terminal_branch(tm_tree tree, int id)
 {
 	node *n = get_node(tree->root, id);
 	return n->terminal;
 }
 
-void bt_generate_structure(bt_tree tree)
+void tm_generate_structure(tm_tree tree)
 {
 	reset_tree_structure(tree->root);
 	new_tree_structure(tree->root);
 }
 
-int bt_get_vbo_size(bt_tree tree)
+int tm_get_vbo_size(tm_tree tree)
 {
 	return tree->td.vbo_size;
 }
 
-int bt_get_ebo_size(bt_tree tree)
+int tm_get_ebo_size(tm_tree tree)
 {
 	return tree->td.ebo_size;
 }
 
-int bt_generate_mesh(bt_tree tree, float *vb, int vb_size,
+int tm_generate_mesh(tm_tree tree, float *vb, int vb_size,
 		unsigned short *eb, int eb_size)
 {
 	int status = build_model(vb, vb_size, eb, eb_size, tree->root);

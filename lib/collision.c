@@ -11,9 +11,9 @@
 #include <math.h>
 #include <float.h>
 
-bt_aabb bt_create_aabb(float *buffer, int size)
+tm_aabb tm_create_aabb(float *buffer, int size)
 {
-        bt_aabb aabb = {
+        tm_aabb aabb = {
                 buffer[0], buffer[0],
                 buffer[1], buffer[1],
                 buffer[2], buffer[2]};
@@ -44,17 +44,17 @@ void swap(float *a, float *b)
         *a = t;
 }
 
-float bt_intersects_obb(bt_vec3 origin, bt_vec3 direction, bt_obb obb)
+float tm_intersects_obb(tm_vec3 origin, tm_vec3 direction, tm_obb obb)
 {
         float e, f, t1, t2;
         float tmin = FLT_MIN;
         float tmax = FLT_MAX;
-        bt_vec3 p = bt_sub_vec3(&obb.center, &origin);
+        tm_vec3 p = tm_sub_vec3(&obb.center, &origin);
         int i;
 
         for (i = 0; i < 3; i++) {
-                e = bt_dot_vec3(&obb.n[i], &p);
-                f = bt_dot_vec3(&obb.n[i], &direction);
+                e = tm_dot_vec3(&obb.n[i], &p);
+                f = tm_dot_vec3(&obb.n[i], &direction);
 
                 if (abs(f) > 0.0001f) {
                         t1 = (e + obb.h[i]) / f;
@@ -77,22 +77,22 @@ float bt_intersects_obb(bt_vec3 origin, bt_vec3 direction, bt_obb obb)
         return tmin > 0 ? tmin : tmax;
 }
 
-float bt_intersects_aabb(bt_vec3 origin, bt_vec3 direction, bt_aabb aabb)
+float tm_intersects_aabb(tm_vec3 origin, tm_vec3 direction, tm_aabb aabb)
 {
-        bt_obb obb;
+        tm_obb obb;
         obb.h[0] = (aabb.x2 - aabb.x1) * 0.5f;
         obb.h[1] = (aabb.y2 - aabb.y1) * 0.5f;
         obb.h[2] = (aabb.z2 - aabb.z1) * 0.5f;
 
-        obb.center = (bt_vec3){
+        obb.center = (tm_vec3){
                 (aabb.x1 + aabb.x2) * 0.5f,
                 (aabb.y1 + aabb.y2) * 0.5f,
                 (aabb.z1 + aabb.z2) * 0.5f,
         };
 
-        obb.n[0] = (bt_vec3){1.0f, 0.0f, 0.0f};
-        obb.n[1] = (bt_vec3){0.0f, 1.0f, 0.0f};
-        obb.n[2] = (bt_vec3){0.0f, 0.0f, 1.0f};
+        obb.n[0] = (tm_vec3){1.0f, 0.0f, 0.0f};
+        obb.n[1] = (tm_vec3){0.0f, 1.0f, 0.0f};
+        obb.n[2] = (tm_vec3){0.0f, 0.0f, 1.0f};
 
-        return bt_intersects_obb(origin, direction, obb);
+        return tm_intersects_obb(origin, direction, obb);
 }

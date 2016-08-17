@@ -32,8 +32,8 @@ vec3 get_branch_direction(node *n, node *p)
 	float ratio = n->radius/p->radius;
 	ax = (float)rand() / RAND_MAX * ratio * 4.f;
 	ay = (float)rand() / RAND_MAX;
-	r = bt_rotate_xy(M_PI*0.1f + ax, ay*M_PI*2.0f);
-	bt_transform(&v, &r, 0.0f);
+	r = tm_rotate_xy(M_PI*0.1f + ax, ay*M_PI*2.0f);
+	tm_transform(&v, &r, 0.0f);
 	return v;
 }
 
@@ -43,10 +43,10 @@ void get_dichotomous_directions(node *n, vec3 *d)
 	float ay = (float)rand() / (RAND_MAX) + M_PI*.25f;
 	vec3 a1 = n->lines[n->line_count-1].direction;
 	vec3 a2 = {a1.x, 0, a1.z};
-	vec3 b = bt_cross_vec3(&a1, &a2);
-	b = bt_rotate_around_axis(&b, &a1, ay);
-	d[0] = bt_rotate_around_axis(&a1, &b, ax);
-	d[1] = bt_rotate_around_axis(&a1, &b, -ax);
+	vec3 b = tm_cross_vec3(&a1, &a2);
+	b = tm_rotate_around_axis(&b, &a1, ay);
+	d[0] = tm_rotate_around_axis(&a1, &b, ax);
+	d[1] = tm_rotate_around_axis(&a1, &b, -ax);
 }
 
 void remove_nodes(node *stem)
@@ -90,14 +90,14 @@ void set_radius_curve(node *n)
 		free(n->radius_curve);
 	n->radius_curve = malloc(sizeof(vec3)*8);
 	n->radius_curve_size = 8;
-	n->radius_curve[0] = (bt_vec3){0.0f, -0.3f, 1.0f};
-	n->radius_curve[1] = (bt_vec3){0.0f, -0.3f, 0.75f};
-	n->radius_curve[2] = (bt_vec3){0.05f, -0.3f, 0.75f};
-	n->radius_curve[3] = (bt_vec3){0.175f, -0.3f, 0.75f};
-	n->radius_curve[4] = (bt_vec3){0.175f, -0.3f, 0.75f};
-	n->radius_curve[5] = (bt_vec3){0.3f, -0.3f, 0.75f};
-	n->radius_curve[6] = (bt_vec3){1.0f, -0.3f, 0.25f};
-	n->radius_curve[7] = (bt_vec3){1.0f, -0.3f, 0.0f};
+	n->radius_curve[0] = (tm_vec3){0.0f, -0.3f, 1.0f};
+	n->radius_curve[1] = (tm_vec3){0.0f, -0.3f, 0.75f};
+	n->radius_curve[2] = (tm_vec3){0.05f, -0.3f, 0.75f};
+	n->radius_curve[3] = (tm_vec3){0.175f, -0.3f, 0.75f};
+	n->radius_curve[4] = (tm_vec3){0.175f, -0.3f, 0.75f};
+	n->radius_curve[5] = (tm_vec3){0.3f, -0.3f, 0.75f};
+	n->radius_curve[6] = (tm_vec3){1.0f, -0.3f, 0.25f};
+	n->radius_curve[7] = (tm_vec3){1.0f, -0.3f, 0.0f};
 }
 
 vec3 add_dichotomous_branches(node *stem);
