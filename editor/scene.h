@@ -28,7 +28,7 @@ public:
 	Entity *getEntity(int i);
 
 private:
-	std::vector<Entity> entities;
+	vector<Entity> entities;
 	Entity *selected;
 	int selectedBranch;
 	int selectionProgram;

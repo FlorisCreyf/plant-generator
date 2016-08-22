@@ -13,12 +13,14 @@
 #include "vector.h"
 #include <vector>
 
+using std::vector;
+
 struct GeometryComponent
 {
 	int attribs;
 	int stride;
-	std::vector<float> vertices;
-	std::vector<unsigned short> triangles;
+	vector<float> vertices;
+	vector<unsigned short> triangles;
 	bool dynamic;
 	int buffer;
 };
@@ -37,7 +39,7 @@ struct RenderComponent
 };
 
 struct Entity {
-	std::vector<RenderComponent> renderComponent;
+	vector<RenderComponent> renderComponent;
 	GeometryComponent geometry;
 };
 

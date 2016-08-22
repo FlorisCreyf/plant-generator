@@ -13,19 +13,15 @@
 Window::Window()
 {
 	widget.setupUi(this);
-	widget.properties->setSignals(widget.scene, widget.curve);
+	widget.properties->bind(widget.scene, widget.curve);
 	widget.scene->setRenderSystem(&r);
 
-	QMenu *m = createPopupMenu();
-	m->setTitle("Window");
+	QMenu *menu = createPopupMenu();
+	menu->setTitle("Window");
 	menuBar()->insertMenu(widget.menuHelp->menuAction(), m);
 
-	connect(widget.actionReportIssue, SIGNAL(triggered()), this, SLOT(reportIssue()));
-}
-
-Window::~Window()
-{
-
+	connect(widget.actionReportIssue, SIGNAL(triggered()), this,
+			SLOT(reportIssue()));
 }
 
 void Window::openDialogBox()
@@ -53,6 +49,6 @@ void Window::exportDialogBox()
 
 void Window::reportIssue()
 {
-	QString link = "https://github.com/FlorisCreyf/bluetree/issues";
+	QString link = "https://github.com/FlorisCreyf/treemaker/issues";
 	QDesktopServices::openUrl(QUrl(link));
 }

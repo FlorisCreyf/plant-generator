@@ -13,49 +13,49 @@
 PropertyBox::PropertyBox(QWidget *parent) : QWidget(parent)
 {
 	QHeaderView *header;
-	QVBoxLayout *l = new QVBoxLayout(this);
+	QVBoxLayout *layout = new QVBoxLayout(this);
 
 	resolution = new QSpinBox;
 	radius = new QDoubleSpinBox;
-	radiusCB = new CurveButtonWidget("Radius");
+	radiusCB = new CurveButtonWidget("Radius", this);
 	sections = new QSpinBox;
 	branches = new QSpinBox;
-	branchesCB = new CurveButtonWidget("Distribution");
+	branchesCB = new CurveButtonWidget("Distribution", this);
 
 	radius->setSingleStep(0.01);
 	sections->setMinimum(2);
 	resolution->setMinimum(5);
 
-	t = new QTableWidget(this);
-	t->setRowCount(5);
-	t->setColumnCount(3);
-	t->setCellWidget(0, 0, new QLabel(tr("Radius")));
-	t->setCellWidget(0, 1, radius);
-	t->setCellWidget(0, 2, createCenteredWidget(radiusCB));
-	t->setCellWidget(1, 0, new QLabel(tr("Resolution")));
-	t->setCellWidget(1, 1, resolution);
-	t->setCellWidget(2, 0, new QLabel(tr("Cross Sections")));
-	t->setCellWidget(2, 1, sections);
-	t->setCellWidget(3, 0, new QLabel(tr("Branches")));
-	t->setCellWidget(3, 1, branches);
-	t->setCellWidget(3, 2, createCenteredWidget(branchesCB));
-	t->horizontalHeader()->hide();
-	t->verticalHeader()->hide();
-	t->setShowGrid(false);
-	t->setFocusPolicy(Qt::NoFocus);
-	t->setEditTriggers(QAbstractItemView::NoEditTriggers);
-	t->setSelectionMode(QAbstractItemView::NoSelection);
+	table = new QTableWidget(this);
+	table->setRowCount(5);
+	table->setColumnCount(3);
+	table->setCellWidget(0, 0, new QLabel(tr("Radius")));
+	table->setCellWidget(0, 1, radius);
+	table->setCellWidget(0, 2, createCenteredWidget(radiusCB));
+	table->setCellWidget(1, 0, new QLabel(tr("Resolution")));
+	table->setCellWidget(1, 1, resolution);
+	table->setCellWidget(2, 0, new QLabel(tr("Cross Sections")));
+	table->setCellWidget(2, 1, sections);
+	table->setCellWidget(3, 0, new QLabel(tr("Branches")));
+	table->setCellWidget(3, 1, branches);
+	table->setCellWidget(3, 2, createCenteredWidget(branchesCB));
+	table->horizontalHeader()->hide();
+	table->verticalHeader()->hide();
+	table->setShowGrid(false);
+	table->setFocusPolicy(Qt::NoFocus);
+	table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+	table->setSelectionMode(QAbstractItemView::NoSelection);
 	for (int i = 0; i < 5; i++)
-		t->setRowHeight(i, 26);
+		table->setRowHeight(i, 26);
 
-	header = t->horizontalHeader();
+	header = table->horizontalHeader();
 	header->setSectionResizeMode(2, QHeaderView::Fixed);
 	header->setSectionResizeMode(1, QHeaderView::Stretch);
 	header->setSectionResizeMode(0, QHeaderView::ResizeToContents);
 	header->resizeSection(2, 30);
 
-	l->addWidget(t);
-	t->hide();
+	layout->addWidget(table);
+	table->hide();
 }
 
 QWidget *PropertyBox::createCenteredWidget(QWidget *widget)
@@ -73,19 +73,25 @@ QSize PropertyBox::sizeHint() const
 	return QSize(300, 0);
 }
 
-void PropertyBox::setCurve(std::vector<tm_vec3> controls, QString name)
+void PropertyBox::setCurve(vector<tm_vec3> controls, QString name)
 {
 	if (name == "Radius") {
-		radiusCB->setControls(controls);
-		emit radiusCurveChanged(controls);
+		radiusCB->getCurveButton()->setControls(controls);
+		sceneEditor->changeRadiusCurve(controls);
 	}
+}
+
+void PropertyBox::toggleCurve(CurveButtonWidget *w)
+{
+	activeCurve = w;
+	curveEditor->setCurve(w->getCurveButton()->getControls(), w->getName());
 }
 
 void PropertyBox::fill(tm_tree tree, int branch)
 {
 	if (branch < 0) {
-		t->hide();
-		emit isEnabled(false);
+		table->hide();
+		curveEditor->setEnabled(false);
 		return;
 	}
 
@@ -94,8 +100,11 @@ void PropertyBox::fill(tm_tree tree, int branch)
 	radius->setValue(tm_get_radius(tree, branch));
 	fillCurveButtons(tree, branch);
 
-	t->show();
-	emit isEnabled(true);
+	table->show();
+	curveEditor->setEnabled(true);
+
+	if (activeCurve)
+		activeCurve->select();
 
 	if (tm_is_terminal_branch(tree, branch))
 		resolution->setEnabled(false);
@@ -105,17 +114,17 @@ void PropertyBox::fill(tm_tree tree, int branch)
 
 void PropertyBox::fillCurveButtons(tm_tree tree, int branch)
 {
-	tm_vec3 *l;
 	int size;
-	std::vector<tm_vec3> controls;
-
+	tm_vec3 *l;
 	tm_get_radius_curve(tree, branch, &l, &size);
-	controls.insert(controls.begin(), l, &l[size]);
-	radiusCB->setControls(controls);
+	radiusCB->getCurveButton()->setControls(l, size);
 }
 
-void PropertyBox::setSignals(SceneEditor *sceneEditor, CurveEditor *curveEditor)
+void PropertyBox::bind(SceneEditor *sceneEditor, CurveEditor *curveEditor)
 {
+	this->curveEditor = curveEditor;
+	this->sceneEditor = sceneEditor;
+
 	connect(sceneEditor, SIGNAL(selectionChanged(tm_tree, int)), this,
 			SLOT(fill(tm_tree, int)));
 	connect(resolution, SIGNAL(valueChanged(int)), sceneEditor,
@@ -125,13 +134,14 @@ void PropertyBox::setSignals(SceneEditor *sceneEditor, CurveEditor *curveEditor)
 	connect(radius, SIGNAL(valueChanged(double)), sceneEditor,
 			SLOT(changeRadius(double)));
 
-	connect(this, SIGNAL(isEnabled(bool)), curveEditor,
-			SLOT(setEnabled(bool)));
+	bindCurveEditor();
+}
 
-	connect(radiusCB, SIGNAL(selected(std::vector<tm_vec3>, QString)),
-			curveEditor, SLOT(setCurve(std::vector<tm_vec3>, QString)));
-	connect(curveEditor, SIGNAL(curveChanged(std::vector<tm_vec3>, QString)),
-			this, SLOT(setCurve(std::vector<tm_vec3>, QString)));
-	connect(this, SIGNAL(radiusCurveChanged(std::vector<tm_vec3>)),
-			sceneEditor, SLOT(changeRadiusCurve(std::vector<tm_vec3>)));
+void PropertyBox::bindCurveEditor()
+{
+	connect(curveEditor, SIGNAL(curveChanged(vector<tm_vec3>, QString)),
+			this, SLOT(setCurve(vector<tm_vec3>, QString)));
+
+	connect(radiusCB, SIGNAL(selected(CurveButtonWidget *)), this,
+			SLOT(toggleCurve(CurveButtonWidget *)));
 }

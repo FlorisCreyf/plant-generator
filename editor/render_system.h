@@ -13,7 +13,6 @@
 #define GL_GLEXT_PROTOTYPES
 
 #include "objects.h"
-#include <vector>
 #include <QOpenGLFunctions>
 
 struct ShaderInfo {
@@ -50,10 +49,10 @@ private:
 		GLuint vao;
 		GLuint vbo;
 		GLuint ibo;
-		std::vector<RenderComponent> r;
+		vector<RenderComponent> r;
 	};
-	std::vector<BufferObject> buffers;
-	std::vector<GLuint> programs;
+	vector<BufferObject> buffers;
+	vector<GLuint> programs;
 
 	void loadTriangles(GeometryComponent &g, BufferObject &b);
 	void loadVertices(GeometryComponent &g, BufferObject &b);

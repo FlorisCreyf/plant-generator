@@ -21,8 +21,9 @@ class CurveButton : public QOpenGLWidget, protected QOpenGLFunctions
 
 public:
 	CurveButton(QWidget *parent = 0);
-	void setControls(std::vector<tm_vec3> controls);
-	std::vector<tm_vec3> getControls();
+	void setControls(tm_vec3 *controls, int size);
+	void setControls(vector<tm_vec3> controls);
+	vector<tm_vec3> getControls();
 
 protected:
 	void initializeGL();
@@ -34,7 +35,7 @@ private:
 	int buffer;
 	RenderSystem rs;
 	Entity curve;
-	std::vector<tm_vec3> controls;
+	vector<tm_vec3> controls;
 };
 
 class CurveButtonWidget : public QWidget
@@ -43,19 +44,20 @@ class CurveButtonWidget : public QWidget
 
 public:
 	CurveButtonWidget(QString name, QWidget *parent = 0);
-	void setControls(std::vector<tm_vec3> controls);
+	CurveButton *getCurveButton();
+	QString getName();
 	void select();
 
 signals:
-	void selected(std::vector<tm_vec3>, QString);
+	void selected(CurveButtonWidget *);
 
 protected:
-	void paintEvent(QPaintEvent *);
 	QSize sizeHint() const;
+	void paintEvent(QPaintEvent *);
 	void mousePressEvent(QMouseEvent *);
 
 private:
-	CurveButton *cb;
+	CurveButton *button;
 	QString name;
 };
 

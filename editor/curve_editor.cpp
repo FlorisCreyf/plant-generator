@@ -166,10 +166,10 @@ void CurveEditor::insertCurve(int i, float x, float y)
 	if (x >= controls[i-3].x && x <= controls[i-2].x)
 		return;
 
-	curve[0] = (tm_vec3){minX, 0.0f, y};
-	curve[1] = (tm_vec3){x, 0.0f, y};
-	curve[2] = (tm_vec3){x, 0.0f, y};
-	curve[3] = (tm_vec3){maxX, 0.0f, y};
+	curve[0] = (tm_vec3){minX, -0.3f, y};
+	curve[1] = (tm_vec3){x, -0.3f, y};
+	curve[2] = (tm_vec3){x, -0.3f, y};
+	curve[3] = (tm_vec3){maxX, -0.3f, y};
 	controls.insert(controls.begin()+i-1, curve, &curve[4]);
 	updateCurve();
 
@@ -361,7 +361,7 @@ void CurveEditor::paintGL()
 	rs.render(gu, 0.3f);
 }
 
-void CurveEditor::setCurve(std::vector<tm_vec3> controls, QString name)
+void CurveEditor::setCurve(vector<tm_vec3> controls, QString name)
 {
 	parentWidget()->setWindowTitle("Curve: " + name);
 	this->controls = controls;

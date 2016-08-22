@@ -34,7 +34,7 @@ public slots:
 	void changeResolution(int i);
 	void changeSections(int i);
 	void changeRadius(double d);
-	void changeRadiusCurve(std::vector<tm_vec3> c);
+	void changeRadiusCurve(vector<tm_vec3> c);
 
 signals:
 	void selectionChanged(tm_tree tree, int s);

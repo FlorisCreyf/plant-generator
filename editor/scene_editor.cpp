@@ -304,7 +304,7 @@ void SceneEditor::changeRadius(double d)
 	change();
 }
 
-void SceneEditor::changeRadiusCurve(std::vector<tm_vec3> c)
+void SceneEditor::changeRadiusCurve(vector<tm_vec3> c)
 {
 	tm_set_radius_curve(tree, scene.getSelectedBranch(), &c[0], c.size());
 	change();

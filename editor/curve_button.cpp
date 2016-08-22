@@ -16,7 +16,14 @@ CurveButton::CurveButton(QWidget *parent)
 	curve.renderComponent[0].type = RenderComponent::LINE_STRIP;
 }
 
-void CurveButton::setControls(std::vector<tm_vec3> controls)
+void CurveButton::setControls(tm_vec3 *controls, int size)
+{
+	vector<tm_vec3> v;
+	v.insert(v.begin(), controls, controls+size);
+	setControls(v);
+}
+
+void CurveButton::setControls(vector<tm_vec3> controls)
 {
 	this->controls = controls;
 	createGeometry();
@@ -28,7 +35,7 @@ void CurveButton::setControls(std::vector<tm_vec3> controls)
 	}
 }
 
-std::vector<tm_vec3> CurveButton::getControls()
+vector<tm_vec3> CurveButton::getControls()
 {
 	return controls;
 }
@@ -59,8 +66,8 @@ void CurveButton::createGeometry()
 {
 	GeometryComponent g;
 	createPath(g, controls, 10, (tm_vec3){.2f, 0.46f, 0.6f});
-	curve.geometry = g;
 	curve.renderComponent[0].vertexRange[1] = g.vertices.size() / 6;
+	curve.geometry = g;
 }
 
 void CurveButton::paintGL()
@@ -76,15 +83,19 @@ void CurveButton::paintGL()
 
 CurveButtonWidget::CurveButtonWidget(QString name, QWidget *parent)
 {
-	QHBoxLayout *b = new QHBoxLayout(this);
-	cb = new CurveButton(this);
-	b->addWidget(cb);
-	b->setMargin(1.5);
+	QHBoxLayout *layout = new QHBoxLayout(this);
+	button = new CurveButton(this);
+	layout->addWidget(button);
+	layout->setMargin(1.5);
 	setCursor(Qt::PointingHandCursor);
 	setStyleSheet("border:2px solid #999;");
-	setLayout(b);
-
+	setLayout(layout);
 	this->name = name;
+}
+
+QSize CurveButtonWidget::sizeHint() const
+{
+	return QSize(26, 16);
 }
 
 void CurveButtonWidget::paintEvent(QPaintEvent *e)
@@ -95,22 +106,22 @@ void CurveButtonWidget::paintEvent(QPaintEvent *e)
 	style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);
 }
 
-QSize CurveButtonWidget::sizeHint() const
+CurveButton *CurveButtonWidget::getCurveButton()
 {
-	return QSize(26, 16);
+	return button;
 }
 
-void CurveButtonWidget::setControls(std::vector<tm_vec3> controls)
+QString CurveButtonWidget::getName()
 {
-	cb->setControls(controls);
+	return name;
 }
 
 void CurveButtonWidget::select()
 {
-	emit selected(cb->getControls(), name);
+	emit selected(this);
 }
 
 void CurveButtonWidget::mousePressEvent(QMouseEvent *)
 {
-	emit selected(cb->getControls(), name);
+	select();
 }

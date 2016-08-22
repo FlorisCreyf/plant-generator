@@ -19,7 +19,6 @@ class Window : public QMainWindow
 
 public:
 	Window();
-	virtual ~Window();
 
 public Q_SLOTS:
 	void openDialogBox();

@@ -17,10 +17,10 @@
 void createGrid(GeometryComponent &g, int sections, tm_vec3 color,
                 tm_vec3 sectionColor, tm_mat4 transform = tm_mat4_identity());
 void createBox(GeometryComponent &g, tm_aabb &b, tm_vec3 c);
-void createLine(GeometryComponent &g, std::vector<vec3> p, tm_vec3 color);
-void createBezier(GeometryComponent &g, std::vector<vec3> p, int resolution,
+void createLine(GeometryComponent &g, vector<tm_vec3> p, tm_vec3 color);
+void createBezier(GeometryComponent &g, vector<tm_vec3> p, int resolution,
                 tm_vec3 color);
-void createPath(GeometryComponent &g, std::vector<tm_vec3> p, int resolution,
+void createPath(GeometryComponent &g, vector<tm_vec3> p, int resolution,
                 tm_vec3 color);
 void createPlane(GeometryComponent &g, tm_vec3 a, tm_vec3 b, tm_vec3 c);
 

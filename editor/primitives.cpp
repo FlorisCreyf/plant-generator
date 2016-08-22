@@ -88,7 +88,7 @@ void createBox(GeometryComponent &g, tm_aabb &b, tm_vec3 c)
 	addLine(v, (tm_vec3){b.x1, b.y1, b.z2}, (tm_vec3){b.x1, b.y2, b.z2}, c);
 }
 
-void createLine(GeometryComponent &g, std::vector<tm_vec3> p, tm_vec3 color)
+void createLine(GeometryComponent &g, vector<tm_vec3> p, tm_vec3 color)
 {
 	float *v = setGeometry(g, 6*p.size());
 	for (int i = p.size() - 1; i >= 0; --i) {
@@ -97,7 +97,7 @@ void createLine(GeometryComponent &g, std::vector<tm_vec3> p, tm_vec3 color)
 	}
 }
 
-void createBezier(GeometryComponent &g, std::vector<tm_vec3> p, int resolution,
+void createBezier(GeometryComponent &g, vector<tm_vec3> p, int resolution,
 		tm_vec3 color)
 {
 	float *v = setGeometry(g, resolution*6);
@@ -109,7 +109,7 @@ void createBezier(GeometryComponent &g, std::vector<tm_vec3> p, int resolution,
 	}
 }
 
-void createPath(GeometryComponent &g, std::vector<tm_vec3> p, int resolution,
+void createPath(GeometryComponent &g, vector<tm_vec3> p, int resolution,
                 tm_vec3 color)
 {
 	int curves = p.size()/4;
