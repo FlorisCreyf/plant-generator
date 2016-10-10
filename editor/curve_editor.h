@@ -21,6 +21,7 @@ class CurveEditor : public QOpenGLWidget, protected QOpenGLFunctions
 
 public:
 	CurveEditor(QWidget *parent = 0);
+	QSize sizeHint() const;
 
 public slots:
 	void setCurve(vector<tm_vec3> controls, QString name);

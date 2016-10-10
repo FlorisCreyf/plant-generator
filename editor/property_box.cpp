@@ -12,50 +12,83 @@
 
 PropertyBox::PropertyBox(QWidget *parent) : QWidget(parent)
 {
-	QHeaderView *header;
 	QVBoxLayout *layout = new QVBoxLayout(this);
+	QVBoxLayout *groupLayout;
+	QGroupBox *groupBox;
+	curveEditor = NULL;
+	activeCurve = NULL;
+	layout->setSizeConstraint(QLayout::SetMinimumSize);
 
+	groupBox = new QGroupBox(tr("Tree"));
+	groupLayout = new QVBoxLayout(groupBox);
+	global = new QTableWidget(this);
+	crownBaseHeight = new QDoubleSpinBox;
+	apicalDominance = new QDoubleSpinBox;
+	global->setRowCount(2);
+	global->setColumnCount(2);
+	apicalDominance->setEnabled(false);
+	crownBaseHeight->setEnabled(false);
+	global->setCellWidget(0, 0, new QLabel(tr("Crown Base Height")));
+	global->setCellWidget(0, 1, crownBaseHeight);
+	global->setCellWidget(1, 0, new QLabel(tr("Apical Dominance")));
+	global->setCellWidget(1, 1, apicalDominance);
+	configureTable(global);
+	groupLayout->addStretch(1);
+	groupLayout->addWidget(global);
+	layout->addWidget(groupBox);
+
+	localGroup = new QGroupBox(tr("Branch"));
+	groupLayout = new QVBoxLayout(localGroup);
+	local = new QTableWidget(this);
 	resolution = new QSpinBox;
 	radius = new QDoubleSpinBox;
 	radiusCB = new CurveButtonWidget("Radius", this);
 	sections = new QSpinBox;
-	branches = new QSpinBox;
-	branchesCB = new CurveButtonWidget("Distribution", this);
-
+	branches = new QDoubleSpinBox;
+	local->setRowCount(4);
+	local->setColumnCount(3);
 	radius->setSingleStep(0.01);
 	sections->setMinimum(2);
 	resolution->setMinimum(5);
+	local->setCellWidget(0, 0, new QLabel(tr("Radius")));
+	local->setCellWidget(0, 1, radius);
+	local->setCellWidget(0, 2, createCenteredWidget(radiusCB));
+	local->setCellWidget(1, 0, new QLabel(tr("Resolution")));
+	local->setCellWidget(1, 1, resolution);
+	local->setCellWidget(2, 0, new QLabel(tr("Cross Sections")));
+	local->setCellWidget(2, 1, sections);
+	local->setCellWidget(3, 0, new QLabel(tr("Branches / Unit")));
+	local->setCellWidget(3, 1, branches);
+	configureTable(local);
+	groupLayout->addStretch(1);
+	groupLayout->addWidget(local);
+	layout->addWidget(localGroup);
+	localGroup->hide();
+	
+	layout->addStretch(1);
+}
 
-	table = new QTableWidget(this);
-	table->setRowCount(5);
-	table->setColumnCount(3);
-	table->setCellWidget(0, 0, new QLabel(tr("Radius")));
-	table->setCellWidget(0, 1, radius);
-	table->setCellWidget(0, 2, createCenteredWidget(radiusCB));
-	table->setCellWidget(1, 0, new QLabel(tr("Resolution")));
-	table->setCellWidget(1, 1, resolution);
-	table->setCellWidget(2, 0, new QLabel(tr("Cross Sections")));
-	table->setCellWidget(2, 1, sections);
-	table->setCellWidget(3, 0, new QLabel(tr("Branches")));
-	table->setCellWidget(3, 1, branches);
-	table->setCellWidget(3, 2, createCenteredWidget(branchesCB));
+void PropertyBox::configureTable(QTableWidget *table)
+{
+	QHeaderView *header;
+
 	table->horizontalHeader()->hide();
 	table->verticalHeader()->hide();
 	table->setShowGrid(false);
 	table->setFocusPolicy(Qt::NoFocus);
 	table->setEditTriggers(QAbstractItemView::NoEditTriggers);
 	table->setSelectionMode(QAbstractItemView::NoSelection);
-	for (int i = 0; i < 5; i++)
-		table->setRowHeight(i, 26);
+
+	table->setMaximumHeight(24*table->rowCount());
+	for (int i = 0; i < table->rowCount(); i++)
+		table->setRowHeight(i, 24);
 
 	header = table->horizontalHeader();
-	header->setSectionResizeMode(2, QHeaderView::Fixed);
+	if (table->columnCount() == 3)
+		header->setSectionResizeMode(2, QHeaderView::Fixed);
 	header->setSectionResizeMode(1, QHeaderView::Stretch);
 	header->setSectionResizeMode(0, QHeaderView::ResizeToContents);
 	header->resizeSection(2, 30);
-
-	layout->addWidget(table);
-	table->hide();
 }
 
 QWidget *PropertyBox::createCenteredWidget(QWidget *widget)
@@ -89,8 +122,10 @@ void PropertyBox::toggleCurve(CurveButtonWidget *w)
 
 void PropertyBox::fill(tm_tree tree, int branch)
 {
+	crownBaseHeight->setValue(tm_get_crown_base_height(tree));
+
 	if (branch < 0) {
-		table->hide();
+		localGroup->hide();
 		curveEditor->setEnabled(false);
 		return;
 	}
@@ -98,9 +133,10 @@ void PropertyBox::fill(tm_tree tree, int branch)
 	resolution->setValue(tm_get_resolution(tree, branch));
 	sections->setValue(tm_get_cross_sections(tree, branch));
 	radius->setValue(tm_get_radius(tree, branch));
+	branches->setValue(tm_get_branch_density(tree, branch));
 	fillCurveButtons(tree, branch);
 
-	table->show();
+	localGroup->show();
 	curveEditor->setEnabled(true);
 
 	if (activeCurve)
@@ -133,6 +169,8 @@ void PropertyBox::bind(SceneEditor *sceneEditor, CurveEditor *curveEditor)
 			SLOT(changeSections(int)));
 	connect(radius, SIGNAL(valueChanged(double)), sceneEditor,
 			SLOT(changeRadius(double)));
+	connect(branches, SIGNAL(valueChanged(double)), sceneEditor,
+			SLOT(changeBranchDensity(double)));
 
 	bindCurveEditor();
 }

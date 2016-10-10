@@ -18,7 +18,7 @@ Window::Window()
 
 	QMenu *menu = createPopupMenu();
 	menu->setTitle("Window");
-	menuBar()->insertMenu(widget.menuHelp->menuAction(), m);
+	menuBar()->insertMenu(widget.menuHelp->menuAction(), menu);
 
 	connect(widget.actionReportIssue, SIGNAL(triggered()), this,
 			SLOT(reportIssue()));

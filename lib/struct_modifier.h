@@ -7,16 +7,12 @@
  * (at your option) any later version.
  */
 
-#ifndef TREE_DATA_H
-#define TREE_DATA_H
+#ifndef STRUCT_MODIFIER_H
+#define STRUCT_MODIFIER_H
 
-typedef struct tree_data_tag {
-	int vbo_size;
-	int ebo_size;
-	int resolution;
-	int cross_sections;
-	int max_branch_depth;
-	float crown_base_height;
-} tree_data;
+#include "node.h"
 
-#endif /* TREE_DATA_H */
+void modify_resolutions(node *stem, int r);
+void modify_crown_base_height();
+
+#endif /* STRUCT_MODIFIER_H */

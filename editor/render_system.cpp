@@ -133,7 +133,6 @@ void RenderSystem::renderWireframe(RenderComponent &r)
 {
 	int len = r.wireframeRange[1] - r.wireframeRange[0];
 	void *offset = (void *)(r.wireframeRange[0] * sizeof(unsigned short));
-
 	glPolygonOffset(-0.1f, -0.1f);
 	glEnable(GL_POLYGON_OFFSET_LINE);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -219,7 +218,8 @@ void RenderSystem::updateTriangles(int buffer, unsigned short *v, int offset,
 
 void RenderSystem::setHidden(int buffer, int index, bool value)
 {
-	buffers[buffer].r[index].hidden = value;
+	if (buffers.size() > buffer && buffers[buffer].r.size() > index)
+		buffers[buffer].r[index].hidden = value;
 }
 
 void RenderSystem::loadShaders(ShaderInfo *r, int size)

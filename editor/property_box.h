@@ -38,17 +38,22 @@ private:
 	SceneEditor *sceneEditor;
 	CurveButtonWidget *activeCurve;
 
-	QTableWidget *table;
+	QTableWidget *global;
+	QDoubleSpinBox *crownBaseHeight;
+	QDoubleSpinBox *apicalDominance;
+
+	QTableWidget *local;
+	QGroupBox *localGroup;
 	QDoubleSpinBox *radius;
 	CurveButtonWidget *radiusCB;
 	QSpinBox *resolution;
 	QSpinBox *sections;
-	QSpinBox *branches;
-	CurveButtonWidget *branchesCB;
+	QDoubleSpinBox *branches;
 
 	void bindCurveEditor();
 	void fillCurveButtons(tm_tree tree, int branch);
 	QWidget *createCenteredWidget(QWidget *);
+	void configureTable(QTableWidget *);
 };
 
 #endif /* PROPERTY_BOX */

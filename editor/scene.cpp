@@ -46,7 +46,7 @@ Entity *Scene::setSelected(Camera &camera, int x, int y)
 		GeometryComponent *g = &entities[i].geometry;
 		for (int j = 0; j < entities[i].renderComponent.size(); j++) {
 			RenderComponent *r = &entities[i].renderComponent[j];
-			int len = (r->vertexRange[1] - r->vertexRange[0]) * 12;
+			int len = (r->vertexRange[1] - r->vertexRange[0]) * 6;
 			tm_aabb box = tm_create_aabb(&g->vertices[0], len);
 			float t = tm_intersects_aabb(origin, direction, box);
 

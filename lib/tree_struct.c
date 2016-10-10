@@ -13,13 +13,36 @@
 #include <math.h>
 
 static int max_branch_depth;
+static tree_data *td;
 
-vec3 get_start_position(node *n, int i)
+struct position_t get_path_start_position(node *n)
 {
-	float offset;
-	float percent = (i+1.0f)/(n->branch_count+1.0f);
-	int line = get_line(n, percent, &offset);
-	return get_line_point(&n->lines[line], offset);
+	struct position_t pos = {-1, 0.0f};
+	int i;
+
+	for (i = 0; i < n->line_count; i++) {
+		float end_y = get_line_end_point(&n->lines[i]).y;
+
+		if (end_y >= td->crown_base_height) {
+			pos.t = td->crown_base_height - n->lines[i].start.y;
+			pos.index = i;
+			break;
+		}
+	}
+
+	return pos;
+}
+
+int increment_position(node *n, struct position_t *pos, float distance)
+{
+	distance += pos->t;
+	while (distance >= n->lines[pos->index].length) {
+		if (++pos->index >= n->line_count)
+			return 0;
+		distance -= n->lines[pos->index-1].length;
+	}
+	pos->t = distance;
+	return 1;
 }
 
 vec3 get_branch_direction(node *n, node *p)
@@ -49,20 +72,6 @@ void get_dichotomous_directions(node *n, vec3 *d)
 	d[1] = tm_rotate_around_axis(&a1, &b, -ax);
 }
 
-void remove_nodes(node *stem)
-{
-	int i;
-	if (stem != NULL) {
-		for (i = 0; i < stem->branch_count; i++)
-			remove_nodes(&stem->branches[i]);
-
-		if (stem->branch_capacity > 0)
-			free(stem->branches);
-		if (stem->line_count > 0)
-			free(stem->lines);
-	}
-}
-
 void set_path(node *n, vec3 *start, vec3 *direction)
 {
 	int i;
@@ -70,9 +79,10 @@ void set_path(node *n, vec3 *start, vec3 *direction)
 
 	n->line_count = 3;
 	n->lines = malloc(sizeof(struct line_t) * n->line_count);
-	n->lines[0].start = *start;
+	n->lines[0].start = (tm_vec3){0.f, 0.f, 0.f};
 	n->lines[0].length = len;
 	n->lines[0].direction = *direction;
+	n->glob_pos = *start;
 
 	for (i = 1; i < n->line_count; i++) {
 		struct line_t *l = &n->lines[i-1];
@@ -96,67 +106,89 @@ void set_radius_curve(node *n)
 	n->radius_curve[3] = (tm_vec3){0.175f, -0.3f, 0.75f};
 	n->radius_curve[4] = (tm_vec3){0.175f, -0.3f, 0.75f};
 	n->radius_curve[5] = (tm_vec3){0.3f, -0.3f, 0.75f};
-	n->radius_curve[6] = (tm_vec3){1.0f, -0.3f, 0.25f};
+	n->radius_curve[6] = (tm_vec3){0.75f, -0.3f, 0.25f};
 	n->radius_curve[7] = (tm_vec3){1.0f, -0.3f, 0.0f};
 }
 
-vec3 add_dichotomous_branches(node *stem);
+void set_branch_curve(node *n)
+{
+	if (n->branch_curve_size > 0)
+		n->branch_curve = realloc(n->branch_curve, sizeof(tm_vec3)*4);
+	else
+		n->branch_curve = malloc(sizeof(tm_vec3)*4);
+	n->branch_curve_size = 4;
+	n->branch_curve[0] = (tm_vec3){0.0f, -0.3f, 1.0f};
+	n->branch_curve[1] = (tm_vec3){0.25f, -0.3f, 1.0f};
+	n->branch_curve[2] = (tm_vec3){0.75f, -0.3f, 1.0f};
+	n->branch_curve[3] = (tm_vec3){1.0f, -0.3f, 1.0f};
+}
 
-void add_lateral_branches(node *stem)
+void add_lateral_branches(node *stem, struct position_t pos)
 {
 	node *n;
-	float diff;
-	const int total = 13;
-	int count = stem->branch_count;
 	int i;
 
-	stem->branch_count += total;
+	if (pos.index < 0 || stem->branch_density <= 0)
+		return;
 
-	for (i = count; i < total + count; i++) {
-		diff = pow(i + 1.0f, 0.3f);
+	for (i = stem->branch_count; i < stem->branch_capacity; i++) {
 		n = &stem->branches[i];
-		n->radius = stem->radius * 0.35f / diff;
+		n->radius = stem->radius * 0.35f / pow(i + 1.0f, 0.3f);
 		n->cross_sections = 4;
-		n->radius_curve_size = 0;
 		n->resolution = stem->resolution-4 < 5 ? 5 : stem->resolution-4;
 		n->dichotomous_start = -1;
 		n->terminal = 0;
-		vec3 start = get_start_position(stem, i);
+		n->branch_density = 0.0f;
+		vec3 start = get_line_point(&stem->lines[pos.index], pos.t);
+		start = tm_add_vec3(&start, &stem->glob_pos);
 		vec3 direction = get_branch_direction(n, stem);
 		set_path(n, &start, &direction);
 		set_radius_curve(n);
-		n->branch_count = 0;
+		set_branch_curve(n);
 		n->branch_capacity = 10;
-		n->branches = malloc(sizeof(node) * n->branch_capacity);
+		n->branch_count = 0;
+		n->branches = new_nodes(n->branch_capacity);
+		n->depth = stem->depth + 1;
+
 		if ((float)rand() / RAND_MAX > 0.8) {
 			n->min_radius = 0.02f;
 			add_dichotomous_branches(n);
 		} else
 			n->min_radius = 0.01f;
+
+		if (++stem->branch_count == stem->branch_capacity)
+			expand_branches(stem);
+		if (!increment_position(stem, &pos, 1.0f/stem->branch_density))
+			break;
 	}
 }
 
 void set_dichotomous_branch(node *n, node *p, vec3 direction)
 {
 	vec3 start = get_line_end_point(&p->lines[p->line_count-1]);
-
+	start = tm_add_vec3(&p->glob_pos, &start);
 	n->radius = p->min_radius;
 	n->min_radius = 0.01f;
 	n->cross_sections = 4;
 	n->resolution = p->resolution;
-	n->branch_count = 0;
 	n->branch_capacity = 0;
 	n->dichotomous_start = -1;
 	n->terminal = 1;
-	n->radius_curve_size = 0;
+	n->branch_density = 0.0f;
+	n->depth = p->depth + 1;
 	set_path(n, &start, &direction);
 	set_radius_curve(n);
+	set_branch_curve(n);
 }
 
 vec3 add_dichotomous_branches(node *stem)
 {
 	node *n;
 	vec3 d[2];
+
+	if (stem->branch_count + 2 >= stem->branch_capacity)
+		expand_branches(stem);
+
 	get_dichotomous_directions(stem, d);
 	stem->dichotomous_start = stem->branch_count;
 	n = &stem->branches[stem->branch_count++];
@@ -165,20 +197,22 @@ vec3 add_dichotomous_branches(node *stem)
 	set_dichotomous_branch(n, stem, d[1]);
 }
 
-node *new_tree_structure(node *root)
+node *new_tree_structure(tree_data *data, node *root)
 {
-	root->branch_count = 0;
+	td = data;
 	root->branch_capacity = 20;
-	root->branches = malloc(sizeof(node) * root->branch_capacity);
+	root->branches = new_nodes(root->branch_capacity);
 	root->depth = 1;
 	root->min_radius = 0.04f;
 	root->terminal = 0;
+	root->branch_density = 2.0f;
 	vec3 origin = {0.0f, 0.0f, 0.0f};
 	vec3 direction = {0.0f, 1.0f, 0.0f};
 	set_path(root, &origin, &direction);
 	set_radius_curve(root);
+	set_branch_curve(root);
 
-	add_lateral_branches(root);
+	add_lateral_branches(root, get_path_start_position(root));
 	add_dichotomous_branches(root);
 }
 

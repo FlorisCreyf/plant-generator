@@ -7,16 +7,10 @@
  * (at your option) any later version.
  */
 
-#ifndef TREE_DATA_H
-#define TREE_DATA_H
+#ifndef ARRAY_H
+#define ARRAY_H
 
-typedef struct tree_data_tag {
-	int vbo_size;
-	int ebo_size;
-	int resolution;
-	int cross_sections;
-	int max_branch_depth;
-	float crown_base_height;
-} tree_data;
+void set_array(void **dest, int *dsize, void *orig, int osize, int type_size);
+void expand(void **arr, int *capacity, int size);
 
-#endif /* TREE_DATA_H */
+#endif /* ARRAY_H */

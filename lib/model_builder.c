@@ -108,7 +108,7 @@ int add_rect_seg(unsigned short *buffer, int l, int h, int s, int e, int res)
 	return i;
 }
 
-mat4 get_branch_transform(struct line_t *l, float offset)
+mat4 get_branch_transform(struct line_t *l, float offset, tm_vec3 pos)
 {
 	float r1;
 	float r2;
@@ -118,10 +118,8 @@ mat4 get_branch_transform(struct line_t *l, float offset)
 	mat4 transform;
 
 	translation = tm_translate(0.0f, offset, 0.0f);
-	transform = tm_translate(
-			l->start.x,
-			l->start.y,
-			l->start.z);
+	pos = tm_add_vec3(&pos, &l->start);
+	transform = tm_translate(pos.x, pos.y, pos.z);
 	transform = tm_mult_mat4(&transform, &rotation);
 	return tm_mult_mat4(&transform, &translation);
 }
@@ -141,7 +139,7 @@ void add_cross_section(float *buffer, node *stem, float percent)
 {
 	float offset;
 	int j = get_line(stem, percent, &offset);
-	mat4 t = get_branch_transform(&stem->lines[j], offset);
+	mat4 t = get_branch_transform(&stem->lines[j], offset, stem->glob_pos);
 	float r = get_radius(stem, percent);
 	make_cross_section(buffer, &t, r, stem->resolution);
 }
@@ -150,7 +148,7 @@ void add_cross_section_o(float *buffer, node *stem, line *l, float offset)
 {
 	float len = get_line_length(stem);
 	float p = (len - offset + l->length)/len;
-	mat4 t = get_branch_transform(l, offset);
+	mat4 t = get_branch_transform(l, offset, stem->glob_pos);
 	float r = get_radius(stem, p);
 	make_cross_section(buffer, &t, r, stem->resolution);
 }
@@ -312,16 +310,17 @@ void add_dichotomous(node *n, node *p, int a_index)
 void add_subbranches(node *stem, int prev_index)
 {
 	int i = 0;
+
 	for (; i < stem->branch_count; i++) {
-		if (i >= stem->dichotomous_start) {
+		if (i == stem->dichotomous_start) {
 			add_dichotomous(&stem->branches[i], stem, prev_index);
 			if (overflow)
-				return 0;
+				return;
 			i++;
 		} else
 			if (!add_branch(&stem->branches[i], stem, 0.0f)) {
 				overflow = 1;
-				return 0;
+				return;
 			}
 	}
 }
@@ -362,7 +361,7 @@ int add_branch(node *stem, node *parent, float offset)
 	float p;
 
 	if (stem == NULL)
-		return;
+		return 1;
 
 	stem->vbo_start = vbo_index;
 	stem->ebo_start = ebo_index;

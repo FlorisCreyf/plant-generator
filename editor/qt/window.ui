@@ -55,15 +55,13 @@
 	border-top:3px solid #444;
 	margin-top:0;
 } QWidget {
-	color:#ddd;
-	background:#666;
-
- 	border-image: none;
-    border: 0px transparent black;
-    outline: 0;
+        color:#ddd;
+        border-image: none;
+        border: 0px transparent black;
+        outline: 0;
 } QDockWidget {
 	background:#666;
-    titlebar-normal-icon: url(&quot;resources/popup.png&quot;);
+        titlebar-normal-icon: url(&quot;resources/popup.png&quot;);
 	titlebar-close-icon: url(&quot;resources/close.png&quot;);
 } QDockWidget::title {
 	background:#444;
@@ -72,23 +70,23 @@
 	background:transparent;
 	border:solid 1px transparent;
 } QDockWidget::close-button:hover, QDockWidget::float-button:hover {
-    background:#333;
+        background:#333;
 } QDockWidget::close-button:pressed, QDockWidget::float-button:pressed {
-    background-color:#333;
+        background-color:#333;
 } QMainWindow::separator {
 	background-color:#666;
 } QDockWidget::close-button {
-	subcontrol-position: top right;
-    subcontrol-origin: margin;
-    position: absolute;
-    top: 0px; right: 4px; bottom: 0px;
-    width: 15px;
+        subcontrol-position: top right;
+        subcontrol-origin: margin;
+        position: absolute;
+        top: 0px; right: 4px; bottom: 0px;
+        width: 15px;
 } QDockWidget::float-button {
-    subcontrol-position: top right;
-    subcontrol-origin: margin;
-    position: absolute;
-    top: 0px; right: 22px; bottom: 0px;
-    width: 15px;
+        subcontrol-position: top right;
+        subcontrol-origin: margin;
+        position: absolute;
+        top: 0px; right: 22px; bottom: 0px;
+        width: 15px;
 } QLabel {
 	height:30px;
 } QSpinBox, QDoubleSpinBox {
@@ -96,46 +94,54 @@
 	background: #555;
 	border: 1px solid transparent;
 } QSpinBox::up-button, QDoubleSpinBox::up-button {
-    subcontrol-position: top right;
-	background-color:#444;
+        subcontrol-position: top right;
+	background-color:#4f4f4f;
 } QSpinBox::down-button, QDoubleSpinBox::down-button {
 	subcontrol-position: bottom right;
-	background-color:#444;
+	background-color:#4f4f4f;
 } QSpinBox::up-arrow, QDoubleSpinBox::up-arrow {
-    image: url(&quot;resources/uparrow.png&quot;);
-    width: 7px;
-    height: 6px;
+        image: url(&quot;resources/uparrow.png&quot;);
+        width: 7px;
+        height: 6px;
 } QSpinBox::down-arrow, QDoubleSpinBox::down-arrow {
-    image: url(&quot;resources/downarrow.png&quot;);
-    width: 7px;
-    height: 6px;
-} QSpinBox:disabled {
+        image: url(&quot;resources/downarrow.png&quot;);
+        width: 7px;
+        height: 6px;
+} QSpinBox:disabled, QDoubleSpinBox:disabled {
 	background:#5a5a5a;
-} QSpinBox::up-button:disabled, QSpinBox::down-button:disabled {
+} QSpinBox::up-button:disabled, QSpinBox::down-button:disabled,
+                QDoubleSpinBox::up-button:disabled, QDoubleSpinBox::down-button:disabled {
 	background:transparent;
-} QSpinBox::up-arrow:disabled, QSpinBox::down-arrow:disabled {
+} QSpinBox::up-arrow:disabled, QSpinBox::down-arrow:disabled,
+                QDoubleSpinBox::up-arrow:disabled, QDoubleSpinBox::down-arrow:disabled {
 	width:0;
 	height:0;
+} QMainWindow {
+	background:#666;
 } QLabel {
 	padding:0 2px 0 0;
 	qproperty-alignment:&quot;AlignRight|AlignVCenter&quot;;
 } QTableView::item {
 	margin:1px 0;
 } QGroupBox {
-    border: 1px solid #555;
-    margin-top: 0.5em;
-	padding-top:3px;
+        background:#5f5f5f;
+        padding-top:0px;
+        margin-top:0;
+        border-top:20px solid #4a4a4a;
 } QGroupBox::title {
-    subcontrol-origin: margin;
-    left: 4px;
-    padding: 0 4px 0 4px;
+        subcontrol-origin: margin;
+        background:transparent;
+        padding:2px 0 0 4px;
+        margin:0;
+} QTableView {
+	background:#5f5f5f;
 } QTabBar {
 	background:#333;
 	qproperty-drawBase: 0;
 } QTabBar::tab {
 	background:#333;
-	color:#ccc;
-	top:0;
+	color:#aaa;
+        top:0;
 	padding:4px 10px;
 	margin:0;
 } QTabBar::tab:selected {

@@ -20,6 +20,11 @@ CurveEditor::CurveEditor(QWidget *parent) : QOpenGLWidget(parent)
 	point = -1;
 }
 
+QSize CurveEditor::sizeHint() const
+{
+	return QSize(300, 40);
+}
+
 void CurveEditor::initializeGL()
 {
 	initializeOpenGLFunctions();
@@ -363,7 +368,7 @@ void CurveEditor::paintGL()
 
 void CurveEditor::setCurve(vector<tm_vec3> controls, QString name)
 {
-	parentWidget()->setWindowTitle("Curve: " + name);
+	parentWidget()->setWindowTitle(name + " curve");
 	this->controls = controls;
 	this->curveName = name;
 	updateCurve();
@@ -373,7 +378,7 @@ void CurveEditor::setCurve(vector<tm_vec3> controls, QString name)
 void CurveEditor::setEnabled(bool enabled)
 {
 	if (enabled && curveName.size() > 0)
-		parentWidget()->setWindowTitle("Curve: " + curveName);
+		parentWidget()->setWindowTitle(curveName + " curve");
 	else
 		parentWidget()->setWindowTitle("Curve");
 

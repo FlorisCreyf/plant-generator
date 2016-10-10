@@ -9,6 +9,59 @@
 
 #include "node.h"
 
+void reset_node(node *n)
+{
+	n->branch_count = 0;
+	n->branch_curve_size = 0;
+	n->radius_curve_size = 0;
+	n->dichotomous_start = -1;
+}
+
+node *new_nodes(int count)
+{
+	node *n = malloc(sizeof(node)*count);
+	for (count--; count >= 0; count--)
+		reset_node(&n[count]);
+	return n;
+}
+
+void remove_node(node *n)
+{
+	int i;
+	if (n != NULL) {
+		for (i = 0; i < n->branch_count; i++)
+			remove_node(&n->branches[i]);
+
+		if (n->branch_capacity > 0)
+			free(n->branches);
+		if (n->line_count > 0)
+			free(n->lines);
+	}
+}
+
+void remove_nodes(node *n)
+{
+	int i;
+	for (i = 0; i < n->branch_count; i++) {
+		remove_node(&n->branches[i]);
+		reset_node(&n->branches[i]);
+	}
+	n->branch_count = 0;
+	n->dichotomous_start = -1;
+}
+
+void expand_branches(node *n)
+{
+	int capacity = n->branch_capacity * 2;
+	int size = capacity * sizeof(node);
+	int i;
+
+	n->branches = realloc(n->branches, size);
+	for (i = n->branch_capacity; i < capacity; i++)
+		reset_node(&n->branches[i]);
+	n->branch_capacity = capacity;
+}
+
 vec3 get_line_point(struct line_t *l, float t)
 {
 	vec3 v;

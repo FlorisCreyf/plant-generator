@@ -65,7 +65,7 @@ void CurveButton::initializeGL()
 void CurveButton::createGeometry()
 {
 	GeometryComponent g;
-	createPath(g, controls, 10, (tm_vec3){.2f, 0.46f, 0.6f});
+	createPath(g, controls, 10, (tm_vec3){.6f, 0.6f, 0.6f});
 	curve.renderComponent[0].vertexRange[1] = g.vertices.size() / 6;
 	curve.geometry = g;
 }
@@ -78,7 +78,7 @@ void CurveButton::paintGL()
 			0.0f, 0.0f, 0.9f, 0.0f,
 			0.0f, 1.8f, 0.0f, 0.0f,
 			-0.9f, -0.9f, 0.0f, 1.0f};
-	rs.render(gu, 0.3f);
+	rs.render(gu, 0.32);
 }
 
 CurveButtonWidget::CurveButtonWidget(QString name, QWidget *parent)
@@ -88,14 +88,14 @@ CurveButtonWidget::CurveButtonWidget(QString name, QWidget *parent)
 	layout->addWidget(button);
 	layout->setMargin(1.5);
 	setCursor(Qt::PointingHandCursor);
-	setStyleSheet("border:2px solid #999;");
+	//setStyleSheet("border:2px solid #666;");
 	setLayout(layout);
 	this->name = name;
 }
 
 QSize CurveButtonWidget::sizeHint() const
 {
-	return QSize(26, 16);
+	return QSize(26, 19);
 }
 
 void CurveButtonWidget::paintEvent(QPaintEvent *e)

@@ -35,6 +35,8 @@ public slots:
 	void changeSections(int i);
 	void changeRadius(double d);
 	void changeRadiusCurve(vector<tm_vec3> c);
+	void changeBranchCurve(vector<tm_vec3> c);
+	void changeBranchDensity(double d);
 
 signals:
 	void selectionChanged(tm_tree tree, int s);

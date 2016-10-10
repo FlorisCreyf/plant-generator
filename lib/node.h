@@ -24,15 +24,22 @@ typedef struct line_t {
 	float length;
 } line;
 
+struct position_t {
+	int index;
+	float t;
+};
+
 typedef struct node_t {
+	tm_vec3 glob_pos;
 	int line_count;
 	struct line_t *lines;
 
 	int branch_count;
 	int branch_capacity;
+	float branch_density;
 	struct node_t *branches;
-	tm_vec3 *distribution_curve;
-	int distribution_curve_size;
+	tm_vec3 *branch_curve;
+	int branch_curve_size;
 
 	int dichotomous_start;
 	int terminal;
@@ -53,6 +60,9 @@ typedef struct node_t {
 	tm_aabb bounds;
 } node;
 
+node *new_nodes(int);
+void remove_nodes(node *);
+void expand_branches(node *);
 vec3 get_line_point(struct line_t *l, float t);
 vec3 get_line_end_point(struct line_t *l);
 int get_line(node *n, float percent, float *offset);

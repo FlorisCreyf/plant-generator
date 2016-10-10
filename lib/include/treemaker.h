@@ -24,16 +24,26 @@ void tm_delete_tree(tm_tree tree);
 void tm_set_radius(tm_tree tree, int id, float radius);
 float tm_get_radius(tm_tree tree, int id);
 
-void tm_set_radius_curve(tm_tree tree, int id, tm_vec3 *controls, int size);
+void tm_set_radius_curve(tm_tree tree, int id, tm_vec3 *curve, int size);
 void tm_get_radius_curve(tm_tree tree, int id, tm_vec3 **curve, int *size);
+
+void tm_set_branch_curve(tm_tree tree, int id, tm_vec3 *curve, int size);
+void tm_get_branch_curve(tm_tree tree, int id, tm_vec3 **curve, int *size);
 
 void tm_set_cross_sections(tm_tree tree, int id, int sections);
 int tm_get_cross_sections(tm_tree tree, int id);
 
 void tm_set_resolution(tm_tree tree, int id, int resolution);
+int tm_get_resolution(tm_tree tree, int id);
+
+void tm_set_crown_base_height(tm_tree tree, float cbh);
+float tm_get_crown_base_height(tm_tree tree);
+
+void tm_set_branch_density(tm_tree tree, int id, float density);
+float tm_get_branch_density(tm_tree, int id);
+
 void tm_set_max_branch_depth(tm_tree tree, int depth);
 
-int tm_get_resolution(tm_tree tree, int id);
 tm_aabb tm_get_bounding_box(tm_tree tree, int id);
 int tm_is_terminal_branch(tm_tree tree, int id);
 int tm_get_ebo_start(tm_tree tree, int id);

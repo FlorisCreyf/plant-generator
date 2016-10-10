@@ -13,8 +13,11 @@
 #include "node.h"
 #include "tree_data.h"
 
-node *new_tree_structure(node *root);
+node *new_tree_structure(tree_data *data, node *root);
 void free_tree_structure(node *root);
 void reset_tree_structure(node *root);
+struct position_t get_path_start_position(node *n);
+void add_lateral_branches(node *stem, struct position_t pos);
+vec3 add_dichotomous_branches(node *stem);
 
 #endif /* TREE_STRUCT_H */

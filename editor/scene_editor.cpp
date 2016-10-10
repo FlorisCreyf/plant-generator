@@ -111,6 +111,7 @@ void SceneEditor::initializeTree()
 	tm_set_resolution(tree, 0, 8);
 	tm_set_cross_sections(tree, 0, 12);
 	tm_set_max_branch_depth(tree, 1);
+	tm_set_crown_base_height(tree, 2.0f);
 	tm_generate_structure(tree);
 	tm_generate_mesh(tree, &g->vertices[0], vs, &g->triangles[0], es);
 
@@ -119,6 +120,7 @@ void SceneEditor::initializeTree()
 
 	rs->registerComponent(rs->load(*g), *r);
 	scene.add(e);
+	emit selectionChanged(tree, -1);
 }
 
 void SceneEditor::keyPressEvent(QKeyEvent *event)
@@ -271,14 +273,16 @@ void SceneEditor::change()
 		if (vs > 8000 && es > 8000 && vs - 2000 > v && es - 2000 > i) {
 			g->vertices.resize(v + 1000);
 			g->triangles.resize(i + 1000);
-			r->triangleRange[1] = v;
-			r->vertexRange[1] = i;
+			r->triangleRange[1] = tm_get_ebo_size(tree);
+			r->vertexRange[1] = tm_get_vbo_size(tree);
 			rs->registerComponent(rs->load(*g, 0), *r);
 		} else {
 			rs->updateVertices(0, &g->vertices[0], 0, v);
 			rs->updateTriangles(0, &g->triangles[0], 0, i);
 			rs->setVertexRange(0, 0, 0, v/6);
 			rs->setTriangleRange(0, 0, 0, i);
+			r->triangleRange[1] = tm_get_ebo_size(tree);
+			r->vertexRange[1] = tm_get_vbo_size(tree);
 		}
 	}
 
@@ -307,5 +311,17 @@ void SceneEditor::changeRadius(double d)
 void SceneEditor::changeRadiusCurve(vector<tm_vec3> c)
 {
 	tm_set_radius_curve(tree, scene.getSelectedBranch(), &c[0], c.size());
+	change();
+}
+
+void SceneEditor::changeBranchCurve(vector<tm_vec3> c)
+{
+	tm_set_branch_curve(tree, scene.getSelectedBranch(), &c[0], c.size());
+	change();
+}
+
+void SceneEditor::changeBranchDensity(double d)
+{
+	tm_set_branch_density(tree, scene.getSelectedBranch(), d);
 	change();
 }
