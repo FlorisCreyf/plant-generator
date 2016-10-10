@@ -1,21 +1,27 @@
-# BlueTree
-BlueTree is a procedural tree generator. The project is divided into a tree generator component and an editor component. The tree generator is written in C and is compiled as a static library. The editor is written in C++ and facilitates handcrafting trees. More information will be posted on the project page [treemaker.xyz](http://www.treemaker.xyz).
+# TreeMaker
+TreeMaker is a program for creating tree models in games. The project is divided into a tree generator component and an editor component. The tree generator is written in C and is compiled as a library. The editor is written in C++ and facilitates handcrafting trees. Creating a tree model using the generator requires several steps:
 
-![bluetree](http://www.fcreyf.com/img/bt.png)
+1. Create a tree object and define its initial properties.
+2. Generate an underlying tree structure with ``tm_generate_structure(tree)``.
+3. Generate vertices and triangles using ``tm_generate_mesh(tree, etc)``.
+
+There are a lot of things that still need to be done, such as:
+
+1. Preventing branches from colliding with each other.
+2. Textures and UV editors.
+3. Wind animations.
+4. Growing branches towards light and open spaces.
+
+More information will be posted on the project page [treemaker.xyz](http://www.treemaker.xyz).
+
+![treemaker](http://www.fcreyf.com/img/bt.png)
 
 ## Installation
-The editor requires Qt4 libraries and uses qmake to generate a makefile from `bluetree.pro`. To build the project:
+The editor requires Qt5 developer libraries and uses qmake to generate a makefile from `treemaker.pro`. To build the project:
 ```sh
 cd ${project/directory}
 make all
 ```
-
-## Overview
-The diagram bellow is a rough overview of how the generator is structured.
-
-![outline](http://www.fcreyf.com/img/btoutline.png)
-
-The vertex buffer is an interleaved buffer containing positions and normals.
 
 ## Style guide
 - Use 8 space hard tabs.
@@ -33,3 +39,4 @@ int func(int value)
 }
 ```
 - Continue an expression on a new line with two extra indentations if the expression is longer than 80 characters.
+
