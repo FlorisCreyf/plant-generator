@@ -24,7 +24,9 @@ int get_branch_ecount(node *stem)
 
 int get_cap_ecount(node *stem)
 {
-	return stem->resolution/2 * 5;
+	int odd = stem->resolution & 1 == 0 ? 0 : 3;
+	int squares = stem->resolution == 3 ? 3 : stem->resolution/2 - 1 * 6;
+	return squares + odd;
 }
 
 int get_dichotomous_ecount(node *stem)

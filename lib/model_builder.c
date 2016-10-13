@@ -337,6 +337,12 @@ void cap_branch(int vertex, int t)
 		ebo[ebo_index++] = vertex + t - i - 2;
 		ebo[ebo_index++] = vertex + t - i - 1;
 	}
+
+	if (t&1 != 0) {
+		ebo[ebo_index++] = vertex + i;
+		ebo[ebo_index++] = vertex + i + 2;
+		ebo[ebo_index++] = vertex + i + 1;
+	}
 }
 
 float offset_to_percent(node *stem, float offset, int i)
