@@ -330,12 +330,12 @@ void cap_branch(int vertex, int t)
 	int i;
 	for (i = 0; i < t/2-1; i++) {
 		ebo[ebo_index++] = vertex + i;
-		ebo[ebo_index++] = vertex + i + 1;
 		ebo[ebo_index++] = vertex + t - i - 1;
+		ebo[ebo_index++] = vertex + i + 1;
 
 		ebo[ebo_index++] = vertex + i + 1;
-		ebo[ebo_index++] = vertex + t - i - 2;
 		ebo[ebo_index++] = vertex + t - i - 1;
+		ebo[ebo_index++] = vertex + t - i - 2;
 	}
 
 	if (t&1 != 0) {
