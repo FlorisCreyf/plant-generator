@@ -64,7 +64,8 @@
         titlebar-normal-icon: url(&quot;resources/popup.png&quot;);
 	titlebar-close-icon: url(&quot;resources/close.png&quot;);
 } QDockWidget::title {
-	background:#444;
+	background:#3d3d3d;
+        font-size:12px;
 	padding:4px 5px 0 5px;
 } QDockWidget::close-button, QDockWidget::float-button {
 	background:transparent;
@@ -89,16 +90,19 @@
         width: 15px;
 } QLabel {
 	height:30px;
+        font-size:12px;
+        color:#eee;
 } QSpinBox, QDoubleSpinBox {
+        font-size:12px;
 	padding-right: 15px;
 	background: #555;
 	border: 1px solid transparent;
 } QSpinBox::up-button, QDoubleSpinBox::up-button {
         subcontrol-position: top right;
-	background-color:#4f4f4f;
+	background-color:#4a4a4a;
 } QSpinBox::down-button, QDoubleSpinBox::down-button {
 	subcontrol-position: bottom right;
-	background-color:#4f4f4f;
+	background-color:#4a4a4a;
 } QSpinBox::up-arrow, QDoubleSpinBox::up-arrow {
         image: url(&quot;resources/uparrow.png&quot;);
         width: 7px;
@@ -124,17 +128,16 @@
 } QTableView::item {
 	margin:1px 0;
 } QGroupBox {
-        background:#5f5f5f;
         padding-top:0px;
-        margin-top:0;
-        border-top:20px solid #4a4a4a;
+        margin:0;
+        border-top:23px solid #4a4a4a;
 } QGroupBox::title {
-        subcontrol-origin: margin;
+        font-size:12px;
         background:transparent;
-        padding:2px 0 0 4px;
+        padding:3px 0 0 8px;
         margin:0;
 } QTableView {
-	background:#5f5f5f;
+	background:transparent;
 } QTabBar {
 	background:#333;
 	qproperty-drawBase: 0;
@@ -146,7 +149,7 @@
 	margin:0;
 } QTabBar::tab:selected {
 	background:#222;
-} QWidget#CurveButtonWidget	 {
+} QWidget#CurveButtonWidget {
 	border:solid 1px #fff;
 }
 </string>
@@ -175,44 +178,17 @@
      <number>0</number>
     </property>
     <item>
-     <widget class="QFrame" name="frame">
-      <property name="enabled">
-       <bool>true</bool>
-      </property>
-      <property name="layoutDirection">
-       <enum>Qt::RightToLeft</enum>
-      </property>
-      <layout class="QGridLayout" name="gridLayout">
-       <property name="leftMargin">
-        <number>0</number>
+      <widget class="SceneEditor" name="scene" native="true">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
        </property>
-       <property name="topMargin">
-        <number>0</number>
+       <property name="styleSheet">
+        <string notr="true">border:outset #999 2px;</string>
        </property>
-       <property name="rightMargin">
-        <number>0</number>
-       </property>
-       <property name="bottomMargin">
-        <number>0</number>
-       </property>
-       <property name="spacing">
-        <number>0</number>
-       </property>
-       <item row="0" column="0">
-        <widget class="SceneEditor" name="scene" native="true">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">border:outset #999 2px;</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
+      </widget>
     </item>
    </layout>
   </widget>

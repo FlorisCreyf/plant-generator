@@ -18,6 +18,8 @@ PropertyBox::PropertyBox(QWidget *parent) : QWidget(parent)
 	curveEditor = NULL;
 	activeCurve = NULL;
 	layout->setSizeConstraint(QLayout::SetMinimumSize);
+	layout->setSpacing(0);
+	layout->setMargin(0);
 
 	groupBox = new QGroupBox(tr("Tree"));
 	groupLayout = new QVBoxLayout(groupBox);
@@ -183,3 +185,4 @@ void PropertyBox::bindCurveEditor()
 	connect(radiusCB, SIGNAL(selected(CurveButtonWidget *)), this,
 			SLOT(toggleCurve(CurveButtonWidget *)));
 }
+
