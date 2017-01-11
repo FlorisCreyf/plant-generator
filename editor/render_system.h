@@ -21,8 +21,8 @@ struct ShaderInfo {
 };
 
 struct GlobalUniforms {
-	tm_mat4 vp;
-	tm_vec3 cameraPosition;
+	TMmat4 vp;
+	TMvec3 cameraPosition;
 };
 
 class RenderSystem : protected QOpenGLFunctions

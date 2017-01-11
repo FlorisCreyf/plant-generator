@@ -17,22 +17,22 @@ void addVec3(float *&v, float x, float y, float z)
 	*(v++) = z;
 }
 
-void addVec3(float *&v, tm_vec3 a)
+void addVec3(float *&v, TMvec3 a)
 {
 	*(v++) = a.x;
 	*(v++) = a.y;
 	*(v++) = a.z;
 }
 
-void addPoint(float *&v, float x, float y, float z, tm_mat4 *t, tm_vec3 color)
+void addPoint(float *&v, float x, float y, float z, TMmat4 *t, TMvec3 color)
 {
-	tm_vec3 point = {x, y, z};
-	tm_transform(&point, t, 1.0f);
+	TMvec3 point = {x, y, z};
+	tmTransform(&point, t, 1.0f);
 	addVec3(v, point);
 	addVec3(v, color);
 }
 
-void addLine(float *&v, tm_vec3 a, tm_vec3 b, tm_vec3 color)
+void addLine(float *&v, TMvec3 a, TMvec3 b, TMvec3 color)
 {
 	addVec3(v, a);
 	addVec3(v, color);
@@ -48,8 +48,8 @@ float *setGeometry(GeometryComponent &g, int size)
 	return &g.vertices[g.vertices.size() - size];
 }
 
-void createGrid(GeometryComponent &g, int sections, tm_vec3 color,
-                tm_vec3 sectionColor, tm_mat4 transform)
+void createGrid(GeometryComponent &g, int sections, TMvec3 color,
+                TMvec3 sectionColor, TMmat4 transform)
 {
 	float *v = setGeometry(g, (8*sections + 4) * 6);
 
@@ -71,24 +71,24 @@ void createGrid(GeometryComponent &g, int sections, tm_vec3 color,
 	}
 }
 
-void createBox(GeometryComponent &g, tm_aabb &b, tm_vec3 c)
+void createBox(GeometryComponent &g, TMaabb &b, TMvec3 c)
 {
 	float *v = setGeometry(g, 144);
-	addLine(v, (tm_vec3){b.x1, b.y1, b.z1}, (tm_vec3){b.x2, b.y1, b.z1}, c);
-	addLine(v, (tm_vec3){b.x1, b.y1, b.z1}, (tm_vec3){b.x1, b.y2, b.z1}, c);
-	addLine(v, (tm_vec3){b.x1, b.y1, b.z1}, (tm_vec3){b.x1, b.y1, b.z2}, c);
-	addLine(v, (tm_vec3){b.x2, b.y2, b.z2}, (tm_vec3){b.x1, b.y2, b.z2}, c);
-	addLine(v, (tm_vec3){b.x2, b.y2, b.z2}, (tm_vec3){b.x2, b.y1, b.z2}, c);
-	addLine(v, (tm_vec3){b.x2, b.y2, b.z2}, (tm_vec3){b.x2, b.y2, b.z1}, c);
-	addLine(v, (tm_vec3){b.x2, b.y1, b.z1}, (tm_vec3){b.x2, b.y2, b.z1}, c);
-	addLine(v, (tm_vec3){b.x2, b.y1, b.z1}, (tm_vec3){b.x2, b.y1, b.z2}, c);
-	addLine(v, (tm_vec3){b.x1, b.y2, b.z1}, (tm_vec3){b.x2, b.y2, b.z1}, c);
-	addLine(v, (tm_vec3){b.x1, b.y2, b.z1}, (tm_vec3){b.x1, b.y2, b.z2}, c);
-	addLine(v, (tm_vec3){b.x1, b.y1, b.z2}, (tm_vec3){b.x2, b.y1, b.z2}, c);
-	addLine(v, (tm_vec3){b.x1, b.y1, b.z2}, (tm_vec3){b.x1, b.y2, b.z2}, c);
+	addLine(v, (TMvec3){b.x1, b.y1, b.z1}, (TMvec3){b.x2, b.y1, b.z1}, c);
+	addLine(v, (TMvec3){b.x1, b.y1, b.z1}, (TMvec3){b.x1, b.y2, b.z1}, c);
+	addLine(v, (TMvec3){b.x1, b.y1, b.z1}, (TMvec3){b.x1, b.y1, b.z2}, c);
+	addLine(v, (TMvec3){b.x2, b.y2, b.z2}, (TMvec3){b.x1, b.y2, b.z2}, c);
+	addLine(v, (TMvec3){b.x2, b.y2, b.z2}, (TMvec3){b.x2, b.y1, b.z2}, c);
+	addLine(v, (TMvec3){b.x2, b.y2, b.z2}, (TMvec3){b.x2, b.y2, b.z1}, c);
+	addLine(v, (TMvec3){b.x2, b.y1, b.z1}, (TMvec3){b.x2, b.y2, b.z1}, c);
+	addLine(v, (TMvec3){b.x2, b.y1, b.z1}, (TMvec3){b.x2, b.y1, b.z2}, c);
+	addLine(v, (TMvec3){b.x1, b.y2, b.z1}, (TMvec3){b.x2, b.y2, b.z1}, c);
+	addLine(v, (TMvec3){b.x1, b.y2, b.z1}, (TMvec3){b.x1, b.y2, b.z2}, c);
+	addLine(v, (TMvec3){b.x1, b.y1, b.z2}, (TMvec3){b.x2, b.y1, b.z2}, c);
+	addLine(v, (TMvec3){b.x1, b.y1, b.z2}, (TMvec3){b.x1, b.y2, b.z2}, c);
 }
 
-void createLine(GeometryComponent &g, vector<tm_vec3> p, tm_vec3 color)
+void createLine(GeometryComponent &g, vector<TMvec3> p, TMvec3 color)
 {
 	float *v = setGeometry(g, 6*p.size());
 	for (int i = p.size() - 1; i >= 0; --i) {
@@ -97,20 +97,20 @@ void createLine(GeometryComponent &g, vector<tm_vec3> p, tm_vec3 color)
 	}
 }
 
-void createBezier(GeometryComponent &g, vector<tm_vec3> p, int resolution,
-		tm_vec3 color)
+void createBezier(GeometryComponent &g, vector<TMvec3> p, int resolution,
+		TMvec3 color)
 {
 	float *v = setGeometry(g, resolution*6);
 
 	for (int i = 0; i < resolution; i++) {
 		float r = i/(float)(resolution-1);
-		addVec3(v, tm_get_bezier(r, &p[0], p.size()));
+		addVec3(v, tmGetBezier(r, &p[0], p.size()));
 		addVec3(v, color);
 	}
 }
 
-void createPath(GeometryComponent &g, vector<tm_vec3> p, int resolution,
-                tm_vec3 color)
+void createPath(GeometryComponent &g, vector<TMvec3> p, int resolution,
+                TMvec3 color)
 {
 	int curves = p.size()/4;
 	float *v = setGeometry(g, resolution*6*curves);
@@ -118,25 +118,25 @@ void createPath(GeometryComponent &g, vector<tm_vec3> p, int resolution,
 	for (int i = 0; i < curves; i++)
 		for (int j = 0; j < resolution; j++) {
 			float r = j/(float)(resolution-1);
-			addVec3(v, tm_get_bezier(r, &p[i*4], 4));
+			addVec3(v, tmGetBezier(r, &p[i*4], 4));
 			addVec3(v, color);
 		}
 }
 
-void createPlane(GeometryComponent &g, tm_vec3 a, tm_vec3 b, tm_vec3 c)
+void createPlane(GeometryComponent &g, TMvec3 a, TMvec3 b, TMvec3 c)
 {
 	const int size = 36;
 	float *v = setGeometry(g, size);
-	tm_vec3 d = tm_add_vec3(&a, &b);
+	TMvec3 d = tmAddVec3(&a, &b);
 
 	addVec3(v, c);
 	addVec3(v, .32f, 0.32f, 0.32f);
-	addVec3(v, tm_add_vec3(&c, &a));
+	addVec3(v, tmAddVec3(&c, &a));
 	addVec3(v, .32f, 0.32f, 0.32f);
 
-	addVec3(v, tm_add_vec3(&c, &b));
+	addVec3(v, tmAddVec3(&c, &b));
 	addVec3(v, .32f, 0.32f, 0.32f);
-	addVec3(v, tm_add_vec3(&c, &d));
+	addVec3(v, tmAddVec3(&c, &d));
 	addVec3(v, .32f, 0.32f, 0.32f);
 
 	int start = (g.vertices.size() - size)/6;

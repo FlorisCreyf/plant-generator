@@ -8,21 +8,16 @@
  */
 
 #include "array.h"
+#include <stdlib.h>
+#include <string.h>
 
-void set_array(void **dest, int *dsize, void *orig, int osize, int type_size)
+void *fillArray(void *dest, int dSize, void *orig, int oSize, int typeSize)
 {
-	if (*dsize > 0)
-		*dest = realloc(*dest, osize * type_size);
+	if (dSize > 0)
+		dest = realloc(dest, oSize * typeSize);
 	else
-		*dest = malloc(osize * type_size);
+		dest = malloc(oSize * typeSize);
 
-	memcpy(*dest, orig, osize * type_size);
-	*dsize = osize;
-}
-
-void expand(void **arr, int *capacity, int size)
-{
-	*capacity *= 2;
-	size *= *capacity;
-	*arr = realloc(*arr, size);
+	memcpy(dest, orig, oSize * typeSize);
+	return dest;
 }

@@ -25,13 +25,13 @@ public:
 	void bind(SceneEditor *sceneEditor, CurveEditor *curveEditor);
 
 public slots:
-	void fill(tm_tree tree, int branch);
-	void setCurve(vector<tm_vec3> control, QString names);
+	void fill(TMtree tree, int branch);
+	void setCurve(vector<TMvec3> control, QString names);
 	void toggleCurve(CurveButtonWidget *w);
 
 signals:
 	void isEnabled(bool enabled);
-	void radiusCurveChanged(vector<tm_vec3>);
+	void radiusCurveChanged(vector<TMvec3>);
 
 private:
 	CurveEditor *curveEditor;
@@ -51,7 +51,7 @@ private:
 	QDoubleSpinBox *branches;
 
 	void bindCurveEditor();
-	void fillCurveButtons(tm_tree tree, int branch);
+	void fillCurveButtons(TMtree tree, int branch);
 	QWidget *createCenteredWidget(QWidget *);
 	void configureTable(QTableWidget *);
 };

@@ -12,9 +12,8 @@
 
 #include "node.h"
 
-int get_vbo_size();
-int get_ebo_size();
-int build_model(float *vb, int vb_size, unsigned short *eb, int eb_size, 
-		node *root);
+int getVBOSize();
+int getIBOSize();
+int buildModel(float *v, int vSize, unsigned short *i, int iSize, Node *root);
 
 #endif /* MODEL_BUILDER_H */

@@ -10,58 +10,54 @@
 #include "vector.h"
 #include <math.h>
 
-typedef tm_vec3 vec3;
-typedef tm_mat4 mat4;
-typedef tm_quat quat;
-
 float absf(float f)
 {
 	return f < 0 ? -f : f;
 }
 
-float tm_dot_vec3(vec3 *a, vec3 *b)
+float tmDotVec3(TMvec3 *a, TMvec3 *b)
 {
 	return a->x*b->x + a->y*b->y + a->z*b->z;
 }
 
-vec3 tm_cross_vec3(vec3 *a, vec3 *b)
+TMvec3 tmCrossVec3(TMvec3 *a, TMvec3 *b)
 {
 	float x = a->y*b->z - a->z*b->y;
 	float y = a->z*b->x - a->x*b->z;
 	float z = a->x*b->y - a->y*b->x;
-	return (vec3){x, y, z};
+	return (TMvec3){x, y, z};
 }
 
-vec3 tm_mult_vec3(float a, vec3 *b)
+TMvec3 tmMultVec3(float a, TMvec3 *b)
 {
-	vec3 v;
+	TMvec3 v;
 	v.x = b->x * a;
 	v.y = b->y * a;
 	v.z = b->z * a;
 	return v;
 }
 
-vec3 tm_add_vec3(vec3 *a, vec3 *b)
+TMvec3 tmAddVec3(TMvec3 *a, TMvec3 *b)
 {
 	float x = a->x + b->x;
 	float y = a->y + b->y;
 	float z = a->z + b->z;
-	return (vec3){x, y, z};
+	return (TMvec3){x, y, z};
 }
 
-vec3 tm_sub_vec3(vec3 *a, vec3 *b)
+TMvec3 tmSubVec3(TMvec3 *a, TMvec3 *b)
 {
 	float x = a->x - b->x;
 	float y = a->y - b->y;
 	float z = a->z - b->z;
-	return (vec3){x, y, z};
+	return (TMvec3){x, y, z};
 }
 
-mat4 tm_mult_mat4(mat4 *a, mat4 *b)
+TMmat4 tmMultMat4(TMmat4 *a, TMmat4 *b)
 {
 	int row = 0;
 	int col = 0;
-	mat4 m;
+	TMmat4 m;
 
 	for (row = 0; row < 4; row++)
 		for (col = 0; col < 4; col++)
@@ -74,7 +70,7 @@ mat4 tm_mult_mat4(mat4 *a, mat4 *b)
 	return m;
 }
 
-void tm_normalize_vec3(vec3 *a)
+void tmNormalizeVec3(TMvec3 *a)
 {
 	float m = sqrt(a->x*a->x + a->y*a->y + a->z*a->z);
 	a->x /= m;
@@ -82,9 +78,9 @@ void tm_normalize_vec3(vec3 *a)
 	a->z /= m;
 }
 
-mat4 tm_transpose_mat4(mat4 *m)
+TMmat4 tmTransposeMat4(TMmat4 *m)
 {
-	mat4 t;
+	TMmat4 t;
 	int i, j;
 	for (i = 0; i < 4; i++)
 		for (j = 0; j < 4; j++)
@@ -92,17 +88,17 @@ mat4 tm_transpose_mat4(mat4 *m)
 	return t;
 }
 
-float tm_mag_vec3(tm_vec3 *a)
+float tmMagVec3(TMvec3 *a)
 {
 	return sqrt(a->x*a->x + a->y*a->y + a->z*a->z);
 }
 
-mat4 tm_rotate_into_vec(vec3 *normal, vec3 *direction)
+TMmat4 tmRotateIntoVec(TMvec3 *normal, TMvec3 *direction)
 {
-	vec3 v = tm_cross_vec3(normal, direction);
-	float e = tm_dot_vec3(normal, direction);
+	TMvec3 v = tmCrossVec3(normal, direction);
+	float e = tmDotVec3(normal, direction);
 	float h = 1 / (1 + e);
-	return (mat4){
+	return (TMmat4){
 		e + h*v.x*v.x, h*v.x*v.y + v.z, h*v.x*v.z - v.y, 0.0f,
 		h*v.x*v.y - v.z, e + h*v.y*v.y, h*v.y*v.z + v.x, 0.0f,
 		h*v.x*v.z + v.y, h*v.y*v.z - v.x, e + h*v.z*v.z, 0.0f,
@@ -110,22 +106,22 @@ mat4 tm_rotate_into_vec(vec3 *normal, vec3 *direction)
 	};
 }
 
-vec3 tm_rotate_around_axis(vec3 *v, vec3 *axis, float n)
+TMvec3 tmRotateAroundAxis(TMvec3 *v, TMvec3 *axis, float n)
 {
-	vec3 a, b, c, d;
-	a = tm_mult_vec3(cos(n), v);
-	b = tm_cross_vec3(axis, v);
-	b = tm_mult_vec3(sin(n), &b);
-	c = tm_mult_vec3((1.f - cos(n)) * tm_dot_vec3(axis, v), axis);
-	d = tm_add_vec3(&b, &c);
-	d = tm_add_vec3(&a, &d);
-	tm_normalize_vec3(&d);
+	TMvec3 a, b, c, d;
+	a = tmMultVec3(cos(n), v);
+	b = tmCrossVec3(axis, v);
+	b = tmMultVec3(sin(n), &b);
+	c = tmMultVec3((1.f - cos(n)) * tmDotVec3(axis, v), axis);
+	d = tmAddVec3(&b, &c);
+	d = tmAddVec3(&a, &d);
+	tmNormalizeVec3(&d);
 	return d;
 }
 
-mat4 tm_translate(float x, float y, float z)
+TMmat4 tmTranslate(float x, float y, float z)
 {
-	return (mat4){
+	return (TMmat4){
 		1.0f, 0.0f, 0.0f, 0.0f,
 		0.0f, 1.0f, 0.0f, 0.0f,
 		0.0f, 0.0f, 1.0f, 0.0f,
@@ -133,13 +129,13 @@ mat4 tm_translate(float x, float y, float z)
 	};
 }
 
-mat4 tm_rotate_xy(float x, float y)
+TMmat4 tmRotateXY(float x, float y)
 {
 	float sx = sin(x);
 	float cx = cos(x);
 	float sy = sin(y);
 	float cy = cos(y);
-	return (mat4){
+	return (TMmat4){
 		cy, 0.0f, sy, 0.0f,
 		sx*sy, cx, -sx*cy, 0.0f,
 		-cx*sy, sx, cx*cy, 0.0f,
@@ -147,7 +143,7 @@ mat4 tm_rotate_xy(float x, float y)
 	};
 }
 
-float tm_transform(vec3 *v, mat4 *t, float w)
+float tmTransform(TMvec3 *v, TMmat4 *t, float w)
 {
 	float x, y, z, h;
 	x = v->x*t->m[0][0] + v->y*t->m[1][0] + v->z*t->m[2][0] + t->m[3][0]*w;
@@ -160,16 +156,16 @@ float tm_transform(vec3 *v, mat4 *t, float w)
 	return h;
 }
 
-quat tm_from_axis_angle(float x, float y, float z, float theta)
+TMquat tmFromAxisAngle(float x, float y, float z, float theta)
 {
 	float a = theta / 2.0f;
 	float b = sin(a);
-	return (quat){x*b, y*b, z*b, cos(a)};
+	return (TMquat){x*b, y*b, z*b, cos(a)};
 }
 
-mat4 tm_quat_to_mat4(quat *q)
+TMmat4 tmQuatToMat4(TMquat *q)
 {
-	mat4 m;
+	TMmat4 m;
 	m.m[0][0] = 1.0f - 2.0f*(q->y*q->y + q->z*q->z);
 	m.m[1][0] = 2.0f*(q->x*q->y - q->w*q->z);
 	m.m[2][0] = 2.0f*(q->x*q->z + q->w*q->y);
@@ -185,18 +181,18 @@ mat4 tm_quat_to_mat4(quat *q)
 	return m;
 }
 
-quat tm_mult_quat(quat *a, quat *b)
+TMquat tmMultQuat(TMquat *a, TMquat *b)
 {
-	float s = a->w*b->w - tm_dot_vec3(&(a->v), &(b->v));
-	vec3 x = tm_cross_vec3(&(a->v), &(b->v));
-	vec3 y = tm_mult_vec3(b->w, &(a->v));
-	vec3 z = tm_mult_vec3(a->w, &(b->v));
-	vec3 f = tm_add_vec3(&x, &y);
-	f = tm_add_vec3(&f, &z);
-	return (quat){f.x, f.y, f.z, s};
+	float s = a->w*b->w - tmDotVec3(&(a->v), &(b->v));
+	TMvec3 x = tmCrossVec3(&(a->v), &(b->v));
+	TMvec3 y = tmMultVec3(b->w, &(a->v));
+	TMvec3 z = tmMultVec3(a->w, &(b->v));
+	TMvec3 f = tmAddVec3(&x, &y);
+	f = tmAddVec3(&f, &z);
+	return (TMquat){f.x, f.y, f.z, s};
 }
 
-void tm_normalize_quat(quat *q)
+void tmNormalizeQuat(TMquat *q)
 {
 	float n = sqrt(q->x*q->x + q->y*q->y + q->z*q->z + q->w*q->w);
 	q->x /= n;
@@ -205,7 +201,7 @@ void tm_normalize_quat(quat *q)
 	q->w /= n;
 }
 
-quat tm_slerp(quat *a, quat *b, float t)
+TMquat tmSlerp(TMquat *a, TMquat *b, float t)
 {
 	float i = acos(a->x*b->x + a->y*b->y + a->z*b->z + a->w*b->w);
 	float j = sin(i);
@@ -214,7 +210,7 @@ quat tm_slerp(quat *a, quat *b, float t)
 
 	float dot = a->x*b->x + a->y*b->y + a->z*b->z + a->w+b->w;
 
-	quat m;
+	TMquat m;
 	m.x = x*a->x + y*(b->x);
 	m.y = x*a->y + y*(b->y);
 	m.z = x*a->z + y*(b->z);
@@ -223,9 +219,9 @@ quat tm_slerp(quat *a, quat *b, float t)
 	return m;
 }
 
-mat4 tm_mat4_identity()
+TMmat4 tmMat4Identity()
 {
-	return (mat4){
+	return (TMmat4){
 		1.0f, 0.0f, 0.0f, 0.0f,
 		0.0f, 1.0f, 0.0f, 0.0f,
 		0.0f, 0.0f, 1.0f, 0.0f,

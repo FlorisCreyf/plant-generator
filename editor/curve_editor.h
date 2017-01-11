@@ -24,14 +24,14 @@ public:
 	QSize sizeHint() const;
 
 public slots:
-	void setCurve(vector<tm_vec3> controls, QString name);
+	void setCurve(vector<TMvec3> controls, QString name);
 	void setEnabled(bool enabled);
 
 signals:
-	void curveChanged(vector<tm_vec3> controls, QString name);
+	void curveChanged(vector<TMvec3> controls, QString name);
 
 protected slots:
-	void onFloat(bool);
+	void onFloat();
 
 protected:
 	void initializeGL();
@@ -40,8 +40,6 @@ protected:
 	void mousePressEvent(QMouseEvent *);
 	void mouseDoubleClickEvent(QMouseEvent *);
 	void mouseReleaseEvent(QMouseEvent *);
-	void keyPressEvent(QKeyEvent *);
-	void keyReleaseEvent(QKeyEvent *);
 	void mouseMoveEvent(QMouseEvent *);
 
 private:
@@ -50,10 +48,10 @@ private:
 	bool enabled;
 	int height;
 	int width;
-	vector<tm_vec3> controls;
-	tm_vec3 curve[4];
-	int insertIndex;
-	int point;
+	vector<TMvec3> controls;
+	TMvec3 curve[4];
+	size_t insertIndex;
+	size_t point;
 	QString curveName;
 
 	void createInterface();

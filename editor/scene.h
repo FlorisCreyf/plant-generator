@@ -24,7 +24,7 @@ public:
 	Entity *getSelected();
 	int getSelectedBranch();
 	Entity *setSelected(Camera &camera, int x, int y);
-	int setSelectedBranch(Camera &camera, int x, int y, tm_tree tree);
+	int setSelectedBranch(Camera &camera, int x, int y, TMtree tree);
 	Entity *getEntity(int i);
 
 private:

@@ -11,6 +11,8 @@
 #include <cmath>
 #include <stdio.h>
 
+#define UNUSED(x) (void)(x)
+
 Camera::Camera()
 {
 	up = {0.0f, 1.0f, 0.0f};
@@ -38,22 +40,22 @@ void Camera::setCoordinates(float x, float y)
 
 void Camera::setPan(float x, float y)
 {
-	vec3 a, b, f;
-	vec3 eye = getCameraPosition();
-	vec3 dir = tm_sub_vec3(&eye, &target);
-	tm_normalize_vec3(&dir);
+	TMvec3 a, b, f;
+	TMvec3 eye = getCameraPosition();
+	TMvec3 dir = tmSubVec3(&eye, &target);
+	tmNormalizeVec3(&dir);
 	float panSpeed = distance * 0.002f;
 
-	a = tm_cross_vec3(&dir, &up);
-	b = tm_cross_vec3(&dir, &a);
+	a = tmCrossVec3(&dir, &up);
+	b = tmCrossVec3(&dir, &a);
 
-	tm_normalize_vec3(&a);
-	tm_normalize_vec3(&b);
+	tmNormalizeVec3(&a);
+	tmNormalizeVec3(&b);
 
-	a = tm_mult_vec3((x - start.x)*panSpeed, &a);
-	b = tm_mult_vec3((start.y - y)*panSpeed, &b);
-	f = tm_add_vec3(&a, &b);
-	target = tm_add_vec3(&f, &ftarget);
+	a = tmMultVec3((x - start.x)*panSpeed, &a);
+	b = tmMultVec3((start.y - y)*panSpeed, &b);
+	f = tmAddVec3(&a, &b);
+	target = tmAddVec3(&f, &ftarget);
 }
 
 void Camera::setWindowSize(int width, int height)
@@ -62,14 +64,14 @@ void Camera::setWindowSize(int width, int height)
 	winHeight = height;
 }
 
-void Camera::zoom(float x, float y)
+void Camera::zoom(float y)
 {
 	float b = (y - start.y) / 10.0f;
 	if (fdistance + b > 0.1f)
 		distance = fdistance + b;
 }
 
-tm_vec3 Camera::getCameraPosition()
+TMvec3 Camera::getCameraPosition()
 {
 	const float toRadian = M_PI / 180.0f;
 	float x = (pos.x - posDiff.x + 0.1f) * toRadian * 0.5f;
@@ -94,41 +96,41 @@ tm_vec3 Camera::getCameraPosition()
 	return eye;
 }
 
-tm_vec3 Camera::getPosition()
+TMvec3 Camera::getPosition()
 {
 	return eye;
 }
 
-tm_mat4 Camera::getVP()
+TMmat4 Camera::getVP()
 {
-	tm_vec3 eye = getCameraPosition();
-	tm_mat4 l = getLookAtMatrix(&eye, &target, &up);
-	return tm_mult_mat4(&perspective, &l);
+	TMvec3 eye = getCameraPosition();
+	TMmat4 l = getLookAtMatrix(&eye, &target, &up);
+	return tmMultMat4(&perspective, &l);
 }
 
-tm_mat4 Camera::getInverseVP()
+TMmat4 Camera::getInverseVP()
 {
-	tm_mat4 invP = getInversePerspective();
-	tm_mat4 invL = getInverseLookAt();
-	return tm_mult_mat4(&invL, &invP);
+	TMmat4 invP = getInversePerspective();
+	TMmat4 invL = getInverseLookAt();
+	return tmMultMat4(&invL, &invP);
 }
 
-tm_mat4 Camera::getLookAtMatrix(tm_vec3 *eye, tm_vec3 *center, tm_vec3 *up)
+TMmat4 Camera::getLookAtMatrix(TMvec3 *eye, TMvec3 *center, TMvec3 *up)
 {
 	float x, y, z;
-	tm_vec3 a, b, c;
+	TMvec3 a, b, c;
 
-	a = tm_sub_vec3(center, eye);
-	tm_normalize_vec3(&a);
-	b = tm_cross_vec3(&a, up);
-	tm_normalize_vec3(&b);
-	c = tm_cross_vec3(&b, &a);
+	a = tmSubVec3(center, eye);
+	tmNormalizeVec3(&a);
+	b = tmCrossVec3(&a, up);
+	tmNormalizeVec3(&b);
+	c = tmCrossVec3(&b, &a);
 
-	x = -tm_dot_vec3(&b, eye);
-	y = -tm_dot_vec3(&c, eye);
-	z = tm_dot_vec3(&a, eye);
+	x = -tmDotVec3(&b, eye);
+	y = -tmDotVec3(&c, eye);
+	z = tmDotVec3(&a, eye);
 
-	return (tm_mat4){
+	return (TMmat4){
 		b.x, c.x, -a.x, 0.0f,
 		b.y, c.y, -a.y, 0.0f,
 		b.z, c.z, -a.z, 0.0f,
@@ -136,19 +138,19 @@ tm_mat4 Camera::getLookAtMatrix(tm_vec3 *eye, tm_vec3 *center, tm_vec3 *up)
 	};
 }
 
-tm_mat4 Camera::getInverseLookAt()
+TMmat4 Camera::getInverseLookAt()
 {
-	tm_vec3 eye = getCameraPosition();
-	tm_mat4 a = getLookAtMatrix(&eye, &target, &up);
-	tm_mat4 b = {0.0f};
+	TMvec3 eye = getCameraPosition();
+	TMmat4 a = getLookAtMatrix(&eye, &target, &up);
+	TMmat4 b = {0.0f};
 
 	b.m[3][3] = 1.0f;
 	for (int i = 0; i < 3;i++)
 		for (int j = 0; j < 3; j++)
 			b.m[i][j] = a.m[j][i];
 
-	tm_vec3 t = {a.m[3][0], a.m[3][1], a.m[3][2]};
-	tm_transform(&t, &b, 0.0f);
+	TMvec3 t = {a.m[3][0], a.m[3][1], a.m[3][2]};
+	tmTransform(&t, &b, 0.0f);
 	b.m[3][0] = -t.x;
 	b.m[3][1] = -t.y;
 	b.m[3][2] = -t.z;
@@ -165,7 +167,7 @@ void Camera::setPerspective(float fovy, float near, float far, float aspect)
 	float d = -1.0f;
 	float e = -(2.0f * far * near) / (far - near);
 
-	perspective = (tm_mat4){
+	perspective = (TMmat4){
 		a, 0.0f, 0.0f, 0.0f,
 		0.0f, b, 0.0f, 0.0f,
 		0.0f, 0.0f, c, d,
@@ -173,7 +175,7 @@ void Camera::setPerspective(float fovy, float near, float far, float aspect)
 	};
 }
 
-tm_mat4 Camera::getInversePerspective()
+TMmat4 Camera::getInversePerspective()
 {
 	float a = perspective.m[0][0];
 	float b = perspective.m[1][1];
@@ -181,7 +183,7 @@ tm_mat4 Camera::getInversePerspective()
 	float d = perspective.m[2][3];
 	float e = perspective.m[3][2];
 
-	return (tm_mat4){
+	return (TMmat4){
 		1.0f/a, 0.0f, 0.0f, 0.0f,
 		0.0f, 1.0f/b, 0.0f, 0.0f,
 		0.0f, 0.0f, 0.0f, 1.0f/e,
@@ -189,19 +191,19 @@ tm_mat4 Camera::getInversePerspective()
 	};
 }
 
-tm_vec3 Camera::getRayDirection(int x, int y)
+TMvec3 Camera::getRayDirection(int x, int y)
 {
-	tm_vec3 p;
-	tm_mat4 invP = getInversePerspective();
-	tm_mat4 invL = getInverseLookAt();
+	TMvec3 p;
+	TMmat4 invP = getInversePerspective();
+	TMmat4 invL = getInverseLookAt();
 
 	p.x = 2.0f*x/(winWidth-1) - 1.0f;
 	p.y = 1.0f - 2.0f*y/(winHeight-1);
 	p.z = -1.0f;
-	tm_transform(&p, &invP, 1.0f);
+	tmTransform(&p, &invP, 1.0f);
 	p.z = -1.f;
-	tm_transform(&p, &invL, 0.0f);
-	tm_normalize_vec3(&p);
+	tmTransform(&p, &invL, 0.0f);
+	tmNormalizeVec3(&p);
 
 	return p;
 }

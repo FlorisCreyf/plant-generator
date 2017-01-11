@@ -66,7 +66,7 @@ PropertyBox::PropertyBox(QWidget *parent) : QWidget(parent)
 	groupLayout->addWidget(local);
 	layout->addWidget(localGroup);
 	localGroup->hide();
-	
+
 	layout->addStretch(1);
 }
 
@@ -108,7 +108,7 @@ QSize PropertyBox::sizeHint() const
 	return QSize(300, 0);
 }
 
-void PropertyBox::setCurve(vector<tm_vec3> controls, QString name)
+void PropertyBox::setCurve(vector<TMvec3> controls, QString name)
 {
 	if (name == "Radius") {
 		radiusCB->getCurveButton()->setControls(controls);
@@ -122,9 +122,9 @@ void PropertyBox::toggleCurve(CurveButtonWidget *w)
 	curveEditor->setCurve(w->getCurveButton()->getControls(), w->getName());
 }
 
-void PropertyBox::fill(tm_tree tree, int branch)
+void PropertyBox::fill(TMtree tree, int branch)
 {
-	crownBaseHeight->setValue(tm_get_crown_base_height(tree));
+	crownBaseHeight->setValue(tmGetCrownBaseHeight(tree));
 
 	if (branch < 0) {
 		localGroup->hide();
@@ -132,10 +132,10 @@ void PropertyBox::fill(tm_tree tree, int branch)
 		return;
 	}
 
-	resolution->setValue(tm_get_resolution(tree, branch));
-	sections->setValue(tm_get_cross_sections(tree, branch));
-	radius->setValue(tm_get_radius(tree, branch));
-	branches->setValue(tm_get_branch_density(tree, branch));
+	resolution->setValue(tmGetResolution(tree, branch));
+	sections->setValue(tmGetCrossSections(tree, branch));
+	radius->setValue(tmGetRadius(tree, branch));
+	branches->setValue(tmGetBranchDensity(tree, branch));
 	fillCurveButtons(tree, branch);
 
 	localGroup->show();
@@ -144,17 +144,17 @@ void PropertyBox::fill(tm_tree tree, int branch)
 	if (activeCurve)
 		activeCurve->select();
 
-	if (tm_is_terminal_branch(tree, branch))
+	if (tmIsTerminalBranch(tree, branch))
 		resolution->setEnabled(false);
 	else
 		resolution->setEnabled(true);
 }
 
-void PropertyBox::fillCurveButtons(tm_tree tree, int branch)
+void PropertyBox::fillCurveButtons(TMtree tree, int branch)
 {
 	int size;
-	tm_vec3 *l;
-	tm_get_radius_curve(tree, branch, &l, &size);
+	TMvec3 *l;
+	tmGetRadiusCurve(tree, branch, &l, &size);
 	radiusCB->getCurveButton()->setControls(l, size);
 }
 
@@ -163,8 +163,8 @@ void PropertyBox::bind(SceneEditor *sceneEditor, CurveEditor *curveEditor)
 	this->curveEditor = curveEditor;
 	this->sceneEditor = sceneEditor;
 
-	connect(sceneEditor, SIGNAL(selectionChanged(tm_tree, int)), this,
-			SLOT(fill(tm_tree, int)));
+	connect(sceneEditor, SIGNAL(selectionChanged(TMtree, int)), this,
+			SLOT(fill(TMtree, int)));
 	connect(resolution, SIGNAL(valueChanged(int)), sceneEditor,
 			SLOT(changeResolution(int)));
 	connect(sections, SIGNAL(valueChanged(int)), sceneEditor,
@@ -179,10 +179,9 @@ void PropertyBox::bind(SceneEditor *sceneEditor, CurveEditor *curveEditor)
 
 void PropertyBox::bindCurveEditor()
 {
-	connect(curveEditor, SIGNAL(curveChanged(vector<tm_vec3>, QString)),
-			this, SLOT(setCurve(vector<tm_vec3>, QString)));
+	connect(curveEditor, SIGNAL(curveChanged(vector<TMvec3>, QString)),
+			this, SLOT(setCurve(vector<TMvec3>, QString)));
 
 	connect(radiusCB, SIGNAL(selected(CurveButtonWidget *)), this,
 			SLOT(toggleCurve(CurveButtonWidget *)));
 }
-

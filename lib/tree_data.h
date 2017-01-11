@@ -10,13 +10,13 @@
 #ifndef TREE_DATA_H
 #define TREE_DATA_H
 
-typedef struct tree_data_tag {
-	int vbo_size;
-	int ebo_size;
+typedef struct TreeData {
+	int vboSize;
+	int iboSize;
 	int resolution;
-	int cross_sections;
-	int max_branch_depth;
-	float crown_base_height;
-} tree_data;
+	int crossSections;
+	int maxBranchDepth;
+	float crownBaseHeight;
+} TreeData;
 
 #endif /* TREE_DATA_H */

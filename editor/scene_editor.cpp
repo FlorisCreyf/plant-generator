@@ -15,6 +15,8 @@
 #include <QtGui/QMouseEvent>
 #include <QtOpenGL/QGLFormat>
 
+#define UNUSED(x) (void)(x)
+
 SceneEditor::SceneEditor(QWidget *parent) : QOpenGLWidget(parent)
 {
 	ctrl = shift = midButton = false;
@@ -25,15 +27,15 @@ SceneEditor::SceneEditor(QWidget *parent) : QOpenGLWidget(parent)
 
 SceneEditor::~SceneEditor()
 {
-	tm_delete_tree(tree);
+	tmDeleteTree(tree);
 }
 
 void SceneEditor::exportObject(const char *filename)
 {
 	FileExporter f;
 	Entity *e = scene.getEntity(0);
-	f.setVertices(&e->geometry.vertices[0], tm_get_vbo_size(tree));
-	f.setTriangles(&e->geometry.triangles[0], tm_get_ebo_size(tree));
+	f.setVertices(&e->geometry.vertices[0], tmGetVBOSize(tree));
+	f.setTriangles(&e->geometry.triangles[0], tmGetIBOSize(tree));
 	f.exportObj(filename);
 }
 
@@ -77,8 +79,8 @@ void SceneEditor::initializeGrid()
 {
 	GeometryComponent g = {};
 	RenderComponent r = {};
-	tm_vec3 color = {0.46, 0.46, 0.46};
-	tm_vec3 sectionColor = {0.41, 0.41, 0.41};
+	TMvec3 color = {0.46, 0.46, 0.46};
+	TMvec3 sectionColor = {0.41, 0.41, 0.41};
 	createGrid(g, 5, color, sectionColor);
 	r.program = 0;
 	r.type = RenderComponent::LINES;
@@ -106,17 +108,17 @@ void SceneEditor::initializeTree()
 	r->program = 1;
 	r->type = RenderComponent::TRIANGLES;
 
-	tree = tm_new_tree();
-	tm_set_radius(tree, 0, 0.2f);
-	tm_set_resolution(tree, 0, 8);
-	tm_set_cross_sections(tree, 0, 12);
-	tm_set_max_branch_depth(tree, 1);
-	tm_set_crown_base_height(tree, 2.0f);
-	tm_generate_structure(tree);
-	tm_generate_mesh(tree, &g->vertices[0], vs, &g->triangles[0], es);
+	tree = tmNewTree();
+	tmSetRadius(tree, 0, 0.2f);
+	tmSetResolution(tree, 0, 8);
+	tmSetCrossSections(tree, 0, 12);
+	tmSetMaxBranchDepth(tree, 1);
+	tmSetCrownBaseHeight(tree, 2.0f);
+	tmGenerateStructure(tree);
+	tmGenerateMesh(tree, &g->vertices[0], vs, &g->triangles[0], es);
 
-	r->triangleRange[1] = tm_get_ebo_size(tree);
-	r->vertexRange[1] = tm_get_vbo_size(tree);
+	r->triangleRange[1] = tmGetIBOSize(tree);
+	r->vertexRange[1] = tmGetVBOSize(tree);
 
 	rs->registerComponent(rs->load(*g), *r);
 	scene.add(e);
@@ -160,8 +162,8 @@ void SceneEditor::selectBranch(int x, int y)
 	branch = scene.setSelectedBranch(camera, x, y, tree);
 
 	if (selection != NULL && branch >= 0) {
-		int s = tm_get_ebo_start(tree, branch);
-		int e = tm_get_ebo_end(tree, branch);
+		int s = tmGetIBOStart(tree, branch);
+		int e = tmGetIBOEnd(tree, branch);
 		rs->setWireframe(selection->geometry.buffer, 0, s, e);
 	}
 
@@ -193,6 +195,7 @@ void SceneEditor::mousePressEvent(QMouseEvent *event)
 
 void SceneEditor::mouseReleaseEvent(QMouseEvent *event)
 {
+	UNUSED(event);
 	camera.action = Camera::NONE;
 }
 
@@ -202,13 +205,15 @@ void SceneEditor::mouseMoveEvent(QMouseEvent *event)
 
 	switch (camera.action) {
 	case Camera::ZOOM:
-		camera.zoom(point.x(), point.y());
+		camera.zoom(point.y());
 		break;
 	case Camera::ROTATE:
 		camera.setCoordinates(point.x(), point.y());
 		break;
 	case Camera::PAN:
 		camera.setPan(point.x(), point.y());
+		break;
+	default:
 		break;
 	}
 
@@ -229,8 +234,8 @@ void SceneEditor::updateWireframe()
 	if (selection) {
 		int branch = scene.getSelectedBranch();
 		if (branch >= 0) {
-			int s = tm_get_ebo_start(tree, branch);
-			int e = tm_get_ebo_end(tree, branch);
+			int s = tmGetIBOStart(tree, branch);
+			int e = tmGetIBOEnd(tree, branch);
 			rs->setWireframe(selection->geometry.buffer, 0, s, e);
 		}
 	}
@@ -245,12 +250,12 @@ void SceneEditor::expandBuffer(GeometryComponent &g, RenderComponent &r)
 		g.triangles.resize(g.triangles.size() + 1000);
 		int v = g.vertices.size();
 		int e = g.triangles.size();
-		status = tm_generate_mesh(tree, &g.vertices[0], v,
+		status = tmGenerateMesh(tree, &g.vertices[0], v,
 				&g.triangles[0], e);
 	}
 
-	r.triangleRange[1] = tm_get_ebo_size(tree);
-	r.vertexRange[1] = tm_get_vbo_size(tree);
+	r.triangleRange[1] = tmGetIBOSize(tree);
+	r.vertexRange[1] = tmGetVBOSize(tree);
 	rs->registerComponent(rs->load(g, 0), r);
 }
 
@@ -261,28 +266,28 @@ void SceneEditor::change()
 	RenderComponent *r = &e->renderComponent[0];
 	int vs = g->vertices.size();
 	int es = g->triangles.size();
-	int status = tm_generate_mesh(tree, &g->vertices[0], vs,
+	int status = tmGenerateMesh(tree, &g->vertices[0], vs,
 			&g->triangles[0], es);
 
 	if (status == 0)
 		expandBuffer(*g, *r);
 	else  {
-		int v = tm_get_vbo_size(tree) * 6;
-		int i = tm_get_ebo_size(tree);
+		int v = tmGetVBOSize(tree) * 6;
+		int i = tmGetIBOSize(tree);
 
 		if (vs > 8000 && es > 8000 && vs - 2000 > v && es - 2000 > i) {
 			g->vertices.resize(v + 1000);
 			g->triangles.resize(i + 1000);
-			r->triangleRange[1] = tm_get_ebo_size(tree);
-			r->vertexRange[1] = tm_get_vbo_size(tree);
+			r->triangleRange[1] = tmGetIBOSize(tree);
+			r->vertexRange[1] = tmGetVBOSize(tree);
 			rs->registerComponent(rs->load(*g, 0), *r);
 		} else {
 			rs->updateVertices(0, &g->vertices[0], 0, v);
 			rs->updateTriangles(0, &g->triangles[0], 0, i);
 			rs->setVertexRange(0, 0, 0, v/6);
 			rs->setTriangleRange(0, 0, 0, i);
-			r->triangleRange[1] = tm_get_ebo_size(tree);
-			r->vertexRange[1] = tm_get_vbo_size(tree);
+			r->triangleRange[1] = tmGetIBOSize(tree);
+			r->vertexRange[1] = tmGetVBOSize(tree);
 		}
 	}
 
@@ -292,36 +297,36 @@ void SceneEditor::change()
 
 void SceneEditor::changeResolution(int i)
 {
-	tm_set_resolution(tree, scene.getSelectedBranch(), i);
+	tmSetResolution(tree, scene.getSelectedBranch(), i);
 	change();
 }
 
 void SceneEditor::changeSections(int i)
 {
-	tm_set_cross_sections(tree, scene.getSelectedBranch(), i);
+	tmSetCrossSections(tree, scene.getSelectedBranch(), i);
 	change();
 }
 
 void SceneEditor::changeRadius(double d)
 {
-	tm_set_radius(tree, scene.getSelectedBranch(), d);
+	tmSetRadius(tree, scene.getSelectedBranch(), d);
 	change();
 }
 
-void SceneEditor::changeRadiusCurve(vector<tm_vec3> c)
+void SceneEditor::changeRadiusCurve(vector<TMvec3> c)
 {
-	tm_set_radius_curve(tree, scene.getSelectedBranch(), &c[0], c.size());
+	tmSetRadiusCurve(tree, scene.getSelectedBranch(), &c[0], c.size());
 	change();
 }
 
-void SceneEditor::changeBranchCurve(vector<tm_vec3> c)
+void SceneEditor::changeBranchCurve(vector<TMvec3> c)
 {
-	tm_set_branch_curve(tree, scene.getSelectedBranch(), &c[0], c.size());
+	tmSetBranchCurve(tree, scene.getSelectedBranch(), &c[0], c.size());
 	change();
 }
 
 void SceneEditor::changeBranchDensity(double d)
 {
-	tm_set_branch_density(tree, scene.getSelectedBranch(), d);
+	tmSetBranchDensity(tree, scene.getSelectedBranch(), d);
 	change();
 }

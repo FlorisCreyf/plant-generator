@@ -10,20 +10,20 @@
 #include "curve_button.h"
 #include "primitives.h"
 
-CurveButton::CurveButton(QWidget *parent)
+CurveButton::CurveButton(QWidget *parent) : QOpenGLWidget(parent)
 {
 	curve.renderComponent.resize(1);
 	curve.renderComponent[0].type = RenderComponent::LINE_STRIP;
 }
 
-void CurveButton::setControls(tm_vec3 *controls, int size)
+void CurveButton::setControls(TMvec3 *controls, int size)
 {
-	vector<tm_vec3> v;
+	vector<TMvec3> v;
 	v.insert(v.begin(), controls, controls+size);
 	setControls(v);
 }
 
-void CurveButton::setControls(vector<tm_vec3> controls)
+void CurveButton::setControls(vector<TMvec3> controls)
 {
 	this->controls = controls;
 	createGeometry();
@@ -35,7 +35,7 @@ void CurveButton::setControls(vector<tm_vec3> controls)
 	}
 }
 
-vector<tm_vec3> CurveButton::getControls()
+vector<TMvec3> CurveButton::getControls()
 {
 	return controls;
 }
@@ -65,7 +65,7 @@ void CurveButton::initializeGL()
 void CurveButton::createGeometry()
 {
 	GeometryComponent g;
-	createPath(g, controls, 10, (tm_vec3){.6f, 0.6f, 0.6f});
+	createPath(g, controls, 10, (TMvec3){.6f, 0.6f, 0.6f});
 	curve.renderComponent[0].vertexRange[1] = g.vertices.size() / 6;
 	curve.geometry = g;
 }
@@ -73,7 +73,7 @@ void CurveButton::createGeometry()
 void CurveButton::paintGL()
 {
 	GlobalUniforms gu;
-	gu.vp = (tm_mat4){
+	gu.vp = (TMmat4){
 			1.8f, 0.0f, 0.0f, 0.0f,
 			0.0f, 0.0f, 0.9f, 0.0f,
 			0.0f, 1.8f, 0.0f, 0.0f,
@@ -81,14 +81,14 @@ void CurveButton::paintGL()
 	rs.render(gu, 0.32);
 }
 
-CurveButtonWidget::CurveButtonWidget(QString name, QWidget *parent)
+CurveButtonWidget::CurveButtonWidget(QString name, QWidget *parent) :
+		QWidget(parent)
 {
 	QHBoxLayout *layout = new QHBoxLayout(this);
 	button = new CurveButton(this);
 	layout->addWidget(button);
 	layout->setMargin(1.5);
 	setCursor(Qt::PointingHandCursor);
-	//setStyleSheet("border:2px solid #666;");
 	setLayout(layout);
 	this->name = name;
 }
@@ -96,14 +96,6 @@ CurveButtonWidget::CurveButtonWidget(QString name, QWidget *parent)
 QSize CurveButtonWidget::sizeHint() const
 {
 	return QSize(26, 19);
-}
-
-void CurveButtonWidget::paintEvent(QPaintEvent *e)
-{
-	QStyleOption opt;
-	opt.init(this);
-	QPainter p(this);
-	style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);
 }
 
 CurveButton *CurveButtonWidget::getCurveButton()

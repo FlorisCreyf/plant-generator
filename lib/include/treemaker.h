@@ -16,44 +16,33 @@ extern "C" {
 
 #include "collision.h"
 
-typedef struct tm_tree_tag *tm_tree;
+typedef struct __TMtree *TMtree;
 
-tm_tree tm_new_tree();
-void tm_delete_tree(tm_tree tree);
-
-void tm_set_radius(tm_tree tree, int id, float radius);
-float tm_get_radius(tm_tree tree, int id);
-
-void tm_set_radius_curve(tm_tree tree, int id, tm_vec3 *curve, int size);
-void tm_get_radius_curve(tm_tree tree, int id, tm_vec3 **curve, int *size);
-
-void tm_set_branch_curve(tm_tree tree, int id, tm_vec3 *curve, int size);
-void tm_get_branch_curve(tm_tree tree, int id, tm_vec3 **curve, int *size);
-
-void tm_set_cross_sections(tm_tree tree, int id, int sections);
-int tm_get_cross_sections(tm_tree tree, int id);
-
-void tm_set_resolution(tm_tree tree, int id, int resolution);
-int tm_get_resolution(tm_tree tree, int id);
-
-void tm_set_crown_base_height(tm_tree tree, float cbh);
-float tm_get_crown_base_height(tm_tree tree);
-
-void tm_set_branch_density(tm_tree tree, int id, float density);
-float tm_get_branch_density(tm_tree, int id);
-
-void tm_set_max_branch_depth(tm_tree tree, int depth);
-
-tm_aabb tm_get_bounding_box(tm_tree tree, int id);
-int tm_is_terminal_branch(tm_tree tree, int id);
-int tm_get_ebo_start(tm_tree tree, int id);
-int tm_get_ebo_end(tm_tree tree, int id);
-int tm_get_vbo_size(tm_tree tree);
-int tm_get_ebo_size(tm_tree tree);
-
-void tm_generate_structure(tm_tree tree);
-int tm_generate_mesh(tm_tree tree, float *vertex_buffer, int vb_size,
-		unsigned short *element_buffer, int eb_size);
+TMtree tmNewTree();
+void tmDeleteTree(TMtree tree);
+void tmSetRadius(TMtree tree, int id, float radius);
+float tmGetRadius(TMtree tree, int id);
+void tmSetRadiusCurve(TMtree tree, int id, TMvec3 *curve, int size);
+void tmGetRadiusCurve(TMtree tree, int id, TMvec3 **curve, int *size);
+void tmSetBranchCurve(TMtree tree, int id, TMvec3 *curve, int size);
+void tmGetBranchCurve(TMtree tree, int id, TMvec3 **curve, int *size);
+void tmSetCrossSections(TMtree tree, int id, int sections);
+int tmGetCrossSections(TMtree tree, int id);
+void tmSetResolution(TMtree tree, int id, int resolution);
+int tmGetResolution(TMtree tree, int id);
+void tmSetCrownBaseHeight(TMtree tree, float cbh);
+float tmGetCrownBaseHeight(TMtree tree);
+void tmSetBranchDensity(TMtree tree, int id, float density);
+float tmGetBranchDensity(TMtree, int id);
+void tmSetMaxBranchDepth(TMtree tree, int depth);
+TMaabb tmGetBoundingBox(TMtree tree, int id);
+int tmIsTerminalBranch(TMtree tree, int id);
+int tmGetIBOStart(TMtree tree, int id);
+int tmGetIBOEnd(TMtree tree, int id);
+int tmGetVBOSize(TMtree tree);
+int tmGetIBOSize(TMtree tree);
+void tmGenerateStructure(TMtree tree);
+int tmGenerateMesh(TMtree tree, float *v, int vs, unsigned short *i, int is);
 
 #ifdef __cplusplus
 }

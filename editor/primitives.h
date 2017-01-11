@@ -14,14 +14,14 @@
 #include "collision.h"
 #include <vector>
 
-void createGrid(GeometryComponent &g, int sections, tm_vec3 color,
-                tm_vec3 sectionColor, tm_mat4 transform = tm_mat4_identity());
-void createBox(GeometryComponent &g, tm_aabb &b, tm_vec3 c);
-void createLine(GeometryComponent &g, vector<tm_vec3> p, tm_vec3 color);
-void createBezier(GeometryComponent &g, vector<tm_vec3> p, int resolution,
-                tm_vec3 color);
-void createPath(GeometryComponent &g, vector<tm_vec3> p, int resolution,
-                tm_vec3 color);
-void createPlane(GeometryComponent &g, tm_vec3 a, tm_vec3 b, tm_vec3 c);
+void createGrid(GeometryComponent &g, int sections, TMvec3 color,
+                TMvec3 sectionColor, TMmat4 transform = tmMat4Identity());
+void createBox(GeometryComponent &g, TMaabb &b, TMvec3 c);
+void createLine(GeometryComponent &g, vector<TMvec3> p, TMvec3 color);
+void createBezier(GeometryComponent &g, vector<TMvec3> p, int resolution,
+                TMvec3 color);
+void createPath(GeometryComponent &g, vector<TMvec3> p, int resolution,
+                TMvec3 color);
+void createPlane(GeometryComponent &g, TMvec3 a, TMvec3 b, TMvec3 c);
 
 #endif /* PRIMITIVES_H */

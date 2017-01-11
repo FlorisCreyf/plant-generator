@@ -14,7 +14,7 @@
 extern "C" {
 #endif
 
-typedef struct tm_vec3_tag {
+typedef struct TMvec3 {
 	union {
 		float x;
 		float r;
@@ -27,50 +27,46 @@ typedef struct tm_vec3_tag {
 		float z;
 		float b;
 	};
-} tm_vec3;
+} TMvec3;
 
-typedef struct tm_quat_tag {
+typedef struct TMquat {
 	union {
 		struct {
 			float x;
 			float y;
 			float z;
 		};
-		tm_vec3 v;
+		TMvec3 v;
 	};
 	float w;
-} tm_quat;
+} TMquat;
 
-typedef struct tm_mat4_tag {
+typedef struct TMmat4 {
 	float m[4][4];
-} tm_mat4;
-
-typedef tm_mat4 mat4;
-typedef tm_quat quat;
-typedef tm_vec3 vec3;
+} TMmat4;
 
 float absf(float f);
-float tm_dot_vec3(tm_vec3 *a, tm_vec3 *b);
-tm_vec3 tm_cross_vec3(tm_vec3 *a, tm_vec3 *b);
-tm_vec3 tm_add_vec3(tm_vec3 *a, tm_vec3 *b);
-tm_vec3 tm_sub_vec3(tm_vec3 *a, tm_vec3 *b);
-tm_vec3 tm_mult_vec3(float a, tm_vec3 *b);
-float tm_mag_vec3(tm_vec3 *a);
-void tm_normalize_vec3(tm_vec3 *a);
-tm_mat4 tm_transpose_mat4(tm_mat4 *m);
-tm_mat4 tm_mult_mat4(tm_mat4 *a, tm_mat4 *b);
-tm_mat4 tm_rotate_into_vec(tm_vec3 *normal, tm_vec3 *direction);
-tm_vec3 tm_rotate_around_axis(vec3 *v, vec3 *axis, float n);
-tm_mat4 tm_translate(float x, float y, float z);
-float tm_transform(tm_vec3 *v, tm_mat4 *t, float w);
-tm_mat4 tm_rotate_xy(float x, float y);
-tm_quat tm_from_axis_angle(float x, float y, float z, float theta);
-tm_mat4 tm_quat_to_mat4(tm_quat *q);
-void tm_normalize_vec4(tm_quat *a);
-tm_quat tm_mult_quat(tm_quat *a, tm_quat *b);
-void tm_normalize_quat(tm_quat *q);
-tm_quat tm_slerp(tm_quat *a, tm_quat *b, float t);
-tm_mat4 tm_mat4_identity();
+float tmDotVec3(TMvec3 *a, TMvec3 *b);
+TMvec3 tmCrossVec3(TMvec3 *a, TMvec3 *b);
+TMvec3 tmAddVec3(TMvec3 *a, TMvec3 *b);
+TMvec3 tmSubVec3(TMvec3 *a, TMvec3 *b);
+TMvec3 tmMultVec3(float a, TMvec3 *b);
+float tmMagVec3(TMvec3 *a);
+void tmNormalizeVec3(TMvec3 *a);
+TMmat4 tmTransposeMat4(TMmat4 *m);
+TMmat4 tmMultMat4(TMmat4 *a, TMmat4 *b);
+TMmat4 tmRotateIntoVec(TMvec3 *normal, TMvec3 *direction);
+TMvec3 tmRotateAroundAxis(TMvec3 *v, TMvec3 *axis, float n);
+TMmat4 tmTranslate(float x, float y, float z);
+float tmTransform(TMvec3 *v, TMmat4 *t, float w);
+TMmat4 tmRotateXY(float x, float y);
+TMquat tmFromAxisAngle(float x, float y, float z, float theta);
+TMmat4 tmQuatToMat4(TMquat *q);
+void tmNormalizeVec4(TMquat *a);
+TMquat tmMultQuat(TMquat *a, TMquat *b);
+void tmNormalizeQuat(TMquat *q);
+TMquat tmSlerp(TMquat *a, TMquat *b, float t);
+TMmat4 tmMat4Identity();
 
 #ifdef __cplusplus
 }

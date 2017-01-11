@@ -17,20 +17,20 @@
 #include <stdlib.h>
 
 static float *vbo;
-static unsigned short *ebo;
-static int vbo_size;
-static int ebo_size;
-static unsigned int vbo_index;
-static unsigned short ebo_index;
+static unsigned short *ibo;
+static int vboSize;
+static int iboSize;
+static unsigned int vboIndex;
+static unsigned short iboIndex;
 static int overflow;
 
-void add_cs_point(float *buffer, float radius, float angle, tm_mat4 *t, int *i)
+void addCSPoint(float *buffer, float radius, float angle, TMmat4 *t, int *i)
 {
-	vec3 normal = {cosf(angle), 0.0f, sinf(angle)};
-	vec3 point = tm_mult_vec3(radius, &normal);
+	TMvec3 normal = {cosf(angle), 0.0f, sinf(angle)};
+	TMvec3 point = tmMultVec3(radius, &normal);
 
-	tm_transform(&normal, t, 0.0f);
-	tm_transform(&point, t, 1.0f);
+	tmTransform(&normal, t, 0.0f);
+	tmTransform(&point, t, 1.0f);
 
 	buffer[(*i)++] = point.x;
 	buffer[(*i)++] = point.y;
@@ -40,19 +40,19 @@ void add_cs_point(float *buffer, float radius, float angle, tm_mat4 *t, int *i)
 	buffer[(*i)++] = normal.z;
 }
 
-void make_cross_section(float *buffer, tm_mat4 *t, float radius, float res)
+void makeCrossSection(float *buffer, TMmat4 *t, float radius, float res)
 {
-	const float ROTATION = 360.0f / res * M_PI / 180.0f;
+	const float rotation = 360.0f / res * M_PI / 180.0f;
 	float angle = 0.0f;
 	int i = 0;
 
 	while (i < res*6) {
-		add_cs_point(buffer, radius, angle, t, &i);
-		angle += ROTATION;
+		addCSPoint(buffer, radius, angle, t, &i);
+		angle += rotation;
 	}
 }
 
-int add_rect(unsigned short *buffer, int *l, int *h, int *i)
+int addRect(unsigned short *buffer, int *l, int *h, int *i)
 {
 	buffer[(*i)++] = *h;
 	buffer[(*i)++] = ++(*h);
@@ -63,7 +63,7 @@ int add_rect(unsigned short *buffer, int *l, int *h, int *i)
 	buffer[(*i)++] = ++(*l);
 }
 
-int add_last_rect(unsigned short *buffer, int l, int h, int il, int ih, int *i)
+int addLastRect(unsigned short *buffer, int l, int h, int il, int ih, int *i)
 {
 	buffer[(*i)++] = ih;
 	buffer[(*i)++] = il;
@@ -74,100 +74,100 @@ int add_last_rect(unsigned short *buffer, int l, int h, int il, int ih, int *i)
 	buffer[(*i)++] = ih;
 }
 
-int add_triangle_ring(unsigned short *buffer, int l, int h, int res)
+int addTriangleRing(unsigned short *buffer, int l, int h, int res)
 {
-	int init_h = h;
-	int init_l = l;
+	int initH = h;
+	int initL = l;
 	int i = 0;
-	while (i < 6*(res-1))
-		add_rect(buffer, &l, &h, &i);
-	add_last_rect(buffer, l, h, init_l, init_h, &i);
+	while (i < 6 * (res-1))
+		addRect(buffer, &l, &h, &i);
+	addLastRect(buffer, l, h, initL, initH, &i);
 	return i;
 }
 
-int add_rect_seg(unsigned short *buffer, int l, int h, int s, int e, int res)
+int addRectSeg(unsigned short *buffer, int l, int h, int s, int e, int res)
 {
-	int init_h = h;
-	int init_l = l;
+	int initH = h;
+	int initL = l;
 	int i = 0, j = 0;
 
 	for (; j < res-1; j++)
 		if (j >= s && j <= e)
-			add_rect(buffer, &l, &h, &i);
+			addRect(buffer, &l, &h, &i);
 		else {
 			l++;
 			h++;
 		}
 
 	if (j >= s && j <= e) {
-		l = init_l + res - 1;
-		h = init_h + res - 1;
-		add_last_rect(buffer, l, h, init_l, init_h, &i);
+		l = initL + res - 1;
+		h = initH + res - 1;
+		addLastRect(buffer, l, h, initL, initH, &i);
 	}
 
 	return i;
 }
 
-mat4 get_branch_transform(struct line_t *l, float offset, tm_vec3 pos)
+TMmat4 getBranchTransform(struct Line *l, float offset, TMvec3 pos)
 {
 	float r1;
 	float r2;
-	vec3 normal = {0.0f, 1.0f, 0.0f};
-	mat4 rotation = tm_rotate_into_vec(&normal, &(l->direction));
-	mat4 translation;
-	mat4 transform;
+	TMvec3 normal = {0.0f, 1.0f, 0.0f};
+	TMmat4 rotation = tmRotateIntoVec(&normal, &(l->direction));
+	TMmat4 translation;
+	TMmat4 transform;
 
-	translation = tm_translate(0.0f, offset, 0.0f);
-	pos = tm_add_vec3(&pos, &l->start);
-	transform = tm_translate(pos.x, pos.y, pos.z);
-	transform = tm_mult_mat4(&transform, &rotation);
-	return tm_mult_mat4(&transform, &translation);
+	translation = tmTranslate(0.0f, offset, 0.0f);
+	pos = tmAddVec3(&pos, &l->start);
+	transform = tmTranslate(pos.x, pos.y, pos.z);
+	transform = tmMultMat4(&transform, &rotation);
+	return tmMultMat4(&transform, &translation);
 }
 
-float get_radius(node *stem, float c)
+float getRadius(Node *stem, float c)
 {
-	if (stem->radius_curve_size < 2)
+	if (stem->radiusCurveSize < 2)
 		c = stem->radius * pow(1.0f - c, 0.75f);
 	else {
-		int n = stem->radius_curve_size / 4;
-		c = stem->radius * tm_get_path(c, stem->radius_curve, n).z;
+		int n = stem->radiusCurveSize / 4;
+		c = stem->radius * tmGetPath(c, stem->radiusCurve, n).z;
 	}
-	return c > stem->min_radius ? c : stem->min_radius;
+	return c > stem->minRadius ? c : stem->minRadius;
 }
 
-void add_cross_section(float *buffer, node *stem, float percent)
+void addCrossSection(float *buffer, Node *stem, float percent)
 {
 	float offset;
-	int j = get_line(stem, percent, &offset);
-	mat4 t = get_branch_transform(&stem->lines[j], offset, stem->glob_pos);
-	float r = get_radius(stem, percent);
-	make_cross_section(buffer, &t, r, stem->resolution);
+	int j = getLine(stem, percent, &offset);
+	TMmat4 t = getBranchTransform(&stem->lines[j], offset, stem->globPos);
+	float r = getRadius(stem, percent);
+	makeCrossSection(buffer, &t, r, stem->resolution);
 }
 
-void add_cross_section_o(float *buffer, node *stem, line *l, float offset)
+void addCrossSectionO(float *buffer, Node *stem, Line *l, float offset)
 {
-	float len = get_line_length(stem);
+	float len = getLineLength(stem);
 	float p = (len - offset + l->length)/len;
-	mat4 t = get_branch_transform(l, offset, stem->glob_pos);
-	float r = get_radius(stem, p);
-	make_cross_section(buffer, &t, r, stem->resolution);
+	TMmat4 t = getBranchTransform(l, offset, stem->globPos);
+	float r = getRadius(stem, p);
+	makeCrossSection(buffer, &t, r, stem->resolution);
 }
 
-vec3 get_cs_normal(int i)
+TMvec3 getCSNormal(int i)
 {
-	vec3 a = {vbo[i+3], vbo[i+4], vbo[i+5]};
-	vec3 b = {vbo[i+9], vbo[i+10], vbo[i+11]};
-	vec3 c = tm_cross_vec3(&b, &a);
-	tm_normalize_vec3(&c);
+	TMvec3 a = {vbo[i+3], vbo[i+4], vbo[i+5]};
+	TMvec3 b = {vbo[i+9], vbo[i+10], vbo[i+11]};
+	TMvec3 c = tmCrossVec3(&b, &a);
+	tmNormalizeVec3(&c);
 	return c;
 }
 
-float get_branch_angle(int a, vec3 dir)
+float getBranchAngle(int a, TMvec3 dir)
 {
-	vec3 norm_a = get_cs_normal(a);
-	vec3 y = {0.f, 1.f, 0.f};
-	mat4 rot = tm_rotate_into_vec(&norm_a, &y);
-	tm_transform(&dir, &rot, 0.0f);
+	TMvec3 normA = getCSNormal(a);
+	TMvec3 y = {0.f, 1.f, 0.f};
+	TMmat4 rot = tmRotateIntoVec(&normA, &y);
+	tmTransform(&dir, &rot, 0.0f);
 	float angle = atan(dir.z/dir.x);
 	if (dir.z < 0 && dir.x >= 0)
 		angle += 2.f*M_PI;
@@ -178,9 +178,9 @@ float get_branch_angle(int a, vec3 dir)
 	return angle;
 }
 
-void get_bounds(vec3 dir, int t, int a, int *lb, int *ub, float *angle)
+void getBounds(TMvec3 dir, int t, int a, int *lb, int *ub, float *angle)
 {
-	*angle = get_branch_angle(a, dir);
+	*angle = getBranchAngle(a, dir);
 	float inc = 2.f*M_PI/t;
 	int min = *lb = *ub = (int)round(*angle/inc);
 	int i;
@@ -199,7 +199,7 @@ void get_bounds(vec3 dir, int t, int a, int *lb, int *ub, float *angle)
 }
 
 /** This limits the max number of vertices per cross section to 180. */
-int is_dichotomous_twisted(float angle, int t)
+int isDichotomousTwisted(float angle, int t)
 {
 	int m = angle*180.f/M_PI - 90;
 	int l = 360.f/t;
@@ -207,235 +207,233 @@ int is_dichotomous_twisted(float angle, int t)
 }
 
 /** Connects three cross sections labeled a, b, and c. */
-void connect_dichotomous(int a, int b, int c, int t, node *n)
+void connectDichotomous(int a, int b, int c, int t, Node *n)
 {
 	int ub, lb;
 	float angle;
 	int twisted;
 	int x, y;
 	int i;
-	get_bounds(n[1].lines[0].direction, t, a, &lb, &ub, &angle);
-	twisted = is_dichotomous_twisted(angle, t);
+	getBounds(n[1].lines[0].direction, t, a, &lb, &ub, &angle);
+	twisted = isDichotomousTwisted(angle, t);
 
 	a /= 6;
 	b /= 6;
 	c /= 6;
 
 	if (lb > ub)
-		ebo_index += add_rect_seg(&ebo[ebo_index], a, b, ub+1, lb-1, t);
+		iboIndex += addRectSeg(&ibo[iboIndex], a, b, ub+1, lb-1, t);
 	else {
-		ebo_index += add_rect_seg(&ebo[ebo_index], a, b, 0, lb-1, t);
-		ebo_index += add_rect_seg(&ebo[ebo_index], a, b, ub+1, t, t);
+		iboIndex += addRectSeg(&ibo[iboIndex], a, b, 0, lb-1, t);
+		iboIndex += addRectSeg(&ibo[iboIndex], a, b, ub+1, t, t);
 	}
 
 	if (lb < ub)
-		ebo_index += add_rect_seg(&ebo[ebo_index], a, c, lb, ub, t);
+		iboIndex += addRectSeg(&ibo[iboIndex], a, c, lb, ub, t);
 	else {
-		ebo_index += add_rect_seg(&ebo[ebo_index], a, c, 0, ub, t);
-		ebo_index += add_rect_seg(&ebo[ebo_index], a, c, lb, t, t);
+		iboIndex += addRectSeg(&ibo[iboIndex], a, c, 0, ub, t);
+		iboIndex += addRectSeg(&ibo[iboIndex], a, c, lb, t, t);
 	}
 
 	x = ub+1 >= t ? ub+1-t : ub+1;
-	ebo[ebo_index++] = b + x;
-	ebo[ebo_index++] = a + x;
-	ebo[ebo_index++] = c + x;
+	ibo[iboIndex++] = b + x;
+	ibo[iboIndex++] = a + x;
+	ibo[iboIndex++] = c + x;
 	y = x;
 	if (twisted && t%2 != 0)
 		y = y+1 < t ? y+1 : 0;
 	for (i = 0; i < t/2 + (twisted || t%2 == 0 ? 0 : 1); i++) {
 		if (twisted) {
-			ebo[ebo_index++] = b + (x-1 < 0 ? t-1 : x-1);
-			ebo[ebo_index++] = b + x;
-			ebo[ebo_index++] = c + y;
+			ibo[iboIndex++] = b + (x-1 < 0 ? t-1 : x-1);
+			ibo[iboIndex++] = b + x;
+			ibo[iboIndex++] = c + y;
 			y = y+1 < t ? y+1 : 0;
 			x = x-1 < 0 ? t-1 : x-1;
 		} else {
-			ebo[ebo_index++] = c + x;
-			ebo[ebo_index++] = c + (x+1 < t ? x+1 : 0);
-			ebo[ebo_index++] = b + y;
+			ibo[iboIndex++] = c + x;
+			ibo[iboIndex++] = c + (x+1 < t ? x+1 : 0);
+			ibo[iboIndex++] = b + y;
 			y = y-1 < 0 ? t-1 : y-1;
 			x = x+1 < t ? x+1 : 0;
 		}
 	}
 
-	ebo[ebo_index++] = a + lb;
-	ebo[ebo_index++] = b + lb;
-	ebo[ebo_index++] = c + lb;
+	ibo[iboIndex++] = a + lb;
+	ibo[iboIndex++] = b + lb;
+	ibo[iboIndex++] = c + lb;
 	x = y = lb;
 	if (!twisted && t%2 != 0)
 		y = y-1 < 0 ? t-1 : y-1;
 	for (i = 0; i < t/2 + (!twisted || t%2 == 0 ? 0 : 1); i++) {
 		if (twisted) {
-			ebo[ebo_index++] = c + (x-1 < 0 ? t-1 : x-1);
-			ebo[ebo_index++] = c + x;
-			ebo[ebo_index++] = b + y;
+			ibo[iboIndex++] = c + (x-1 < 0 ? t-1 : x-1);
+			ibo[iboIndex++] = c + x;
+			ibo[iboIndex++] = b + y;
 			y = y+1 < t ? y+1 : 0;
 			x = x-1 < 0 ? t-1 : x-1;
 		} else {
-			ebo[ebo_index++] = b + x;
-			ebo[ebo_index++] = b + (x+1 < t ? x+1 : 0);
-			ebo[ebo_index++] = c + y;
+			ibo[iboIndex++] = b + x;
+			ibo[iboIndex++] = b + (x+1 < t ? x+1 : 0);
+			ibo[iboIndex++] = c + y;
 			y = y-1 < 0 ? t-1 : y-1;
 			x = x+1 < t ? x+1 : 0;
 		}
 	}
 }
 
-int add_branch(node *stem, node *parent, float offset);
+int addBranch(Node *stem, Node *parent, float offset);
 
-void add_dichotomous(node *n, node *p, int a_index)
+void addDichotomous(Node *n, Node *p, int aIndex)
 {
-	struct line_t *l = &p->lines[p->line_count-1];
+	struct Line *l = &p->lines[p->lineCount-1];
 	float offset = l->length - n->radius;
-	int b_index = vbo_index;
+	int bIndex = vboIndex;
 
-	add_cross_section_o(&vbo[a_index], p, l, offset);
-	if (!add_branch(&n[0], p, 0.05)) {
+	addCrossSectionO(&vbo[aIndex], p, l, offset);
+	if (!addBranch(&n[0], p, 0.05)) {
 		overflow = 1;
 		return;
 	}
 
-	if (get_dichotomous_ecount(&n[0]) + ebo_index > ebo_size) {
+	if (getDichotomousICount(&n[0]) + iboIndex > iboSize) {
 		overflow = 1;
 		return;
 	}
-	connect_dichotomous(a_index, b_index, vbo_index, p->resolution, n);
+	connectDichotomous(aIndex, bIndex, vboIndex, p->resolution, n);
 
-	if(!add_branch(&n[1], p, 0.05)) {
+	if(!addBranch(&n[1], p, 0.05)) {
 		overflow = 1;
 		return;
 	}
 }
 
-void add_subbranches(node *stem, int prev_index)
+void addSubBranches(Node *stem, int prevIndex)
 {
 	int i = 0;
 
-	for (; i < stem->branch_count; i++) {
-		if (i == stem->dichotomous_start) {
-			add_dichotomous(&stem->branches[i], stem, prev_index);
+	for (; i < stem->branchCount; i++) {
+		if (i == stem->dichotomousStart) {
+			addDichotomous(&stem->branches[i], stem, prevIndex);
 			if (overflow)
 				return;
 			i++;
 		} else
-			if (!add_branch(&stem->branches[i], stem, 0.0f)) {
+			if (!addBranch(&stem->branches[i], stem, 0.0f)) {
 				overflow = 1;
 				return;
 			}
 	}
 }
 
-void cap_branch(int vertex, int t)
+void capBranch(int vertex, int t)
 {
 	int i;
 	for (i = 0; i < t/2-1; i++) {
-		ebo[ebo_index++] = vertex + i;
-		ebo[ebo_index++] = vertex + t - i - 1;
-		ebo[ebo_index++] = vertex + i + 1;
+		ibo[iboIndex++] = vertex + i;
+		ibo[iboIndex++] = vertex + t - i - 1;
+		ibo[iboIndex++] = vertex + i + 1;
 
-		ebo[ebo_index++] = vertex + i + 1;
-		ebo[ebo_index++] = vertex + t - i - 1;
-		ebo[ebo_index++] = vertex + t - i - 2;
+		ibo[iboIndex++] = vertex + i + 1;
+		ibo[iboIndex++] = vertex + t - i - 1;
+		ibo[iboIndex++] = vertex + t - i - 2;
 	}
 
 	if (t&1 != 0) {
-		ebo[ebo_index++] = vertex + i;
-		ebo[ebo_index++] = vertex + i + 2;
-		ebo[ebo_index++] = vertex + i + 1;
+		ibo[iboIndex++] = vertex + i;
+		ibo[iboIndex++] = vertex + i + 2;
+		ibo[iboIndex++] = vertex + i + 1;
 	}
 }
 
-float offset_to_percent(node *stem, float offset, int i)
+float offsetToPercent(Node *stem, float offset, int i)
 {
-	float len = get_line_length(stem);
-	float a = (len - offset) / (stem->cross_sections-1);
+	float len = getLineLength(stem);
+	float a = (len - offset) / (stem->crossSections-1);
 	return (offset + i*a) / len;
 }
 
-void set_branch_bounds(node *stem)
+void setBranchBounds(Node *stem)
 {
-	int len = stem->vbo_end - stem->vbo_start;
-	stem->bounds = tm_create_aabb(&vbo[stem->vbo_start], len);
+	int len = stem->vboEnd - stem->vboStart;
+	stem->bounds = tmCreateAABB(&vbo[stem->vboStart], len);
 }
 
-int add_branch(node *stem, node *parent, float offset)
+int addBranch(Node *stem, Node *parent, float offset)
 {
-	unsigned short l_index;
-	unsigned short r_index;
-	int prev_index;
+	unsigned short lIndex;
+	unsigned short rIndex;
+	int prevIndex;
 	int i, j;
 	float p;
 
 	if (stem == NULL)
 		return 1;
 
-	stem->vbo_start = vbo_index;
-	stem->ebo_start = ebo_index;
+	stem->vboStart = vboIndex;
+	stem->iboStart = iboIndex;
 
-	for (i = 0; i < stem->cross_sections - 1; i++) {
-		if (get_branch_vcount(stem) + vbo_index > vbo_size)
+	for (i = 0; i < stem->crossSections - 1; i++) {
+		if (getBranchVCount(stem) + vboIndex > vboSize)
 			return 0;
-		else if (get_branch_ecount(stem) + ebo_index > ebo_size)
+		else if (getBranchICount(stem) + iboIndex > iboSize)
 			return 0;
 
-		p = offset_to_percent(stem, offset, i);
-		add_cross_section(&vbo[vbo_index], stem, p);
-		prev_index = vbo_index;
-		vbo_index += get_branch_vcount(stem);
-		add_triangle_ring(&ebo[ebo_index], prev_index/6, vbo_index/6,
+		p = offsetToPercent(stem, offset, i);
+		addCrossSection(&vbo[vboIndex], stem, p);
+		prevIndex = vboIndex;
+		vboIndex += getBranchVCount(stem);
+		addTriangleRing(&ibo[iboIndex], prevIndex/6, vboIndex/6,
 				stem->resolution);
-		ebo_index += get_branch_ecount(stem);
+		iboIndex += getBranchICount(stem);
 	}
 
-	if (get_branch_vcount(stem) + vbo_index > vbo_size)
+	if (getBranchVCount(stem) + vboIndex > vboSize)
 		return 0;
 
-	prev_index = vbo_index;
-	vbo_index += get_branch_vcount(stem);
-	stem->vbo_end = vbo_index;
-	stem->ebo_end = ebo_index;
+	prevIndex = vboIndex;
+	vboIndex += getBranchVCount(stem);
+	stem->vboEnd = vboIndex;
+	stem->iboEnd = iboIndex;
 
-	add_subbranches(stem, prev_index);
+	addSubBranches(stem, prevIndex);
 	if (overflow)
 		return 0;
 
-	if (stem->dichotomous_start == -1) {
-		if (get_cap_ecount(stem) + ebo_index > ebo_size)
+	if (stem->dichotomousStart == -1) {
+		if (getCapICount(stem) + iboIndex > iboSize)
 			return 0;
 
-		add_cross_section(&vbo[prev_index], stem, 1.0f);
-		cap_branch(prev_index/6, stem->resolution);
+		addCrossSection(&vbo[prevIndex], stem, 1.0f);
+		capBranch(prevIndex/6, stem->resolution);
 	}
 
-	set_branch_bounds(stem);
+	setBranchBounds(stem);
 
 	return 1;
 }
 
-int build_model(float *vb, int vb_size, unsigned short *eb, int eb_size,
-		node *root)
+int buildModel(float *v, int vSize, unsigned short *i, int iSize, Node *root)
 {
-	int i;
-	vbo = vb;
-	ebo = eb;
-	vbo_size = vb_size;
-	ebo_size = eb_size;
-	vbo_index = 0;
-	ebo_index = 0;
+	vbo = v;
+	ibo = i;
+	vboSize = vSize;
+	iboSize = iSize;
+	vboIndex = 0;
+	iboIndex = 0;
 	overflow = 0;
 
-	if(!add_branch(root, NULL, 0.0f))
+	if(!addBranch(root, NULL, 0.0f))
 		return 0;
 	else
 		return 1;
 }
 
-int get_vbo_size()
+int getVBOSize()
 {
-	return vbo_index/6;
+	return vboIndex/6;
 }
 
-int get_ebo_size()
+int getIBOSize()
 {
-	return ebo_index;
+	return iboIndex;
 }

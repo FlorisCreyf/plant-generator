@@ -34,12 +34,12 @@ public slots:
 	void changeResolution(int i);
 	void changeSections(int i);
 	void changeRadius(double d);
-	void changeRadiusCurve(vector<tm_vec3> c);
-	void changeBranchCurve(vector<tm_vec3> c);
+	void changeRadiusCurve(vector<TMvec3> c);
+	void changeBranchCurve(vector<TMvec3> c);
 	void changeBranchDensity(double d);
 
 signals:
-	void selectionChanged(tm_tree tree, int s);
+	void selectionChanged(TMtree tree, int s);
 
 protected:
 	void initializeGL();
@@ -57,7 +57,7 @@ private:
 	bool midButton;
 	int buffer;
 
-	tm_tree tree;
+	TMtree tree;
 	Scene scene;
 	Camera camera;
 	RenderSystem *rs;

@@ -39,16 +39,17 @@ int Scene::getSelectedBranch()
 
 Entity *Scene::setSelected(Camera &camera, int x, int y)
 {
-	tm_vec3 direction = camera.getRayDirection(x, y);
-	tm_vec3 origin = camera.getPosition();
+	TMvec3 direction = camera.getRayDirection(x, y);
+	TMvec3 origin = camera.getPosition();
+	unsigned i, j;
 
-	for (int i = 0; i < (int)entities.size(); i++) {
+	for (i = 0; i < entities.size(); i++) {
 		GeometryComponent *g = &entities[i].geometry;
-		for (int j = 0; j < entities[i].renderComponent.size(); j++) {
+		for (j = 0; j < entities[i].renderComponent.size(); j++) {
 			RenderComponent *r = &entities[i].renderComponent[j];
 			int len = (r->vertexRange[1] - r->vertexRange[0]) * 6;
-			tm_aabb box = tm_create_aabb(&g->vertices[0], len);
-			float t = tm_intersects_aabb(origin, direction, box);
+			TMaabb box = tmCreateAABB(&g->vertices[0], len);
+			float t = tmIntersectsAABB(origin, direction, box);
 
 			if (t != 0.0f) {
 				selected = &entities[i];
@@ -61,20 +62,21 @@ Entity *Scene::setSelected(Camera &camera, int x, int y)
 	return selected;
 }
 
-int Scene::setSelectedBranch(Camera &camera, int x, int y, tm_tree tree)
+int Scene::setSelectedBranch(Camera &camera, int x, int y, TMtree tree)
 {
-	tm_vec3 dir = camera.getRayDirection(x, y);
-	tm_vec3 orig = camera.getPosition();
-	tm_aabb box = tm_get_bounding_box(tree, 0);
+	TMvec3 dir = camera.getRayDirection(x, y);
+	TMvec3 orig = camera.getPosition();
+	TMaabb box = tmGetBoundingBox(tree, 0);
 	float t;
+	unsigned i;
 
-	for (int i = 0; box.x1 != box.x2;) {
-		t = tm_intersects_aabb(orig, dir, box);
+	for (i = 0; box.x1 != box.x2;) {
+		t = tmIntersectsAABB(orig, dir, box);
 		if (t != 0.0f) {
 			selectedBranch = i;
 			return i;
 		}
-		box = tm_get_bounding_box(tree, ++i);
+		box = tmGetBoundingBox(tree, ++i);
 	}
 
 	selectedBranch = -1;

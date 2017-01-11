@@ -9,13 +9,13 @@
 
  #include "struct_modifier.h"
 
- void modify_resolutions(node *stem, int r)
+ void modifyResolutions(Node *stem, int r)
  {
  	int i;
- 	if (stem->branch_count == 0 && stem->dichotomous_start < 0)
+ 	if (stem->branchCount == 0 && stem->dichotomousStart < 0)
  		return;
- 	for (i = stem->dichotomous_start; i < stem->branch_count; i++) {
+ 	for (i = stem->dichotomousStart; i < stem->branchCount; i++) {
  		stem->branches[i].resolution = r;
- 		modify_resolutions(&stem->branches[i], r);
+ 		modifyResolutions(&stem->branches[i], r);
  	}
  }

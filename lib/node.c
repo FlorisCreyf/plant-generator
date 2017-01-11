@@ -8,90 +8,90 @@
  */
 
 #include "node.h"
+#include <stdlib.h>
 
-void reset_node(node *n)
+void resetNode(Node *n)
 {
-	n->branch_count = 0;
-	n->branch_curve_size = 0;
-	n->radius_curve_size = 0;
-	n->dichotomous_start = -1;
+	n->branchCount = 0;
+	n->branchCurveSize = 0;
+	n->radiusCurveSize = 0;
+	n->dichotomousStart = -1;
+	n->lineCount = 0;
 }
 
-node *new_nodes(int count)
+Node *newNodes(int count)
 {
-	node *n = malloc(sizeof(node)*count);
+	Node *n = malloc(sizeof(Node)*count);
 	for (count--; count >= 0; count--)
-		reset_node(&n[count]);
+		resetNode(&n[count]);
 	return n;
 }
 
-void remove_node(node *n)
+void removeNode(Node *n)
 {
 	int i;
 	if (n != NULL) {
-		for (i = 0; i < n->branch_count; i++)
-			remove_node(&n->branches[i]);
-
-		if (n->branch_capacity > 0)
+		for (i = 0; i < n->branchCount; i++)
+			removeNode(&n->branches[i]);
+		if (n->branchCapacity > 0)
 			free(n->branches);
-		if (n->line_count > 0)
+		if (n->lineCount > 0)
 			free(n->lines);
 	}
 }
 
-void remove_nodes(node *n)
+void removeNodes(Node *n)
 {
 	int i;
-	for (i = 0; i < n->branch_count; i++) {
-		remove_node(&n->branches[i]);
-		reset_node(&n->branches[i]);
+	for (i = 0; i < n->branchCount; i++) {
+		removeNode(&n->branches[i]);
+		resetNode(&n->branches[i]);
 	}
-	n->branch_count = 0;
-	n->dichotomous_start = -1;
+	n->branchCount = 0;
+	n->dichotomousStart = -1;
 }
 
-void expand_branches(node *n)
+void expandBranches(Node *n)
 {
-	int capacity = n->branch_capacity * 2;
-	int size = capacity * sizeof(node);
+	int capacity = n->branchCapacity * 2;
+	int size = capacity * sizeof(Node);
 	int i;
 
 	n->branches = realloc(n->branches, size);
-	for (i = n->branch_capacity; i < capacity; i++)
-		reset_node(&n->branches[i]);
-	n->branch_capacity = capacity;
+	for (i = n->branchCapacity; i < capacity; i++)
+		resetNode(&n->branches[i]);
+	n->branchCapacity = capacity;
 }
 
-vec3 get_line_point(struct line_t *l, float t)
+TMvec3 getLinePoint(struct Line *l, float t)
 {
-	vec3 v;
-	v.x = l->direction.x*t + l->start.x;
-	v.y = l->direction.y*t + l->start.y;
-	v.z = l->direction.z*t + l->start.z;
-	return v;
+	float x = l->direction.x*t + l->start.x;
+	float y = l->direction.y*t + l->start.y;
+	float z = l->direction.z*t + l->start.z;
+	return (TMvec3){x, y, z};
 }
 
-vec3 get_line_end_point(struct line_t *l)
+TMvec3 getLineEndPoint(struct Line *l)
 {
-	return get_line_point(l, l->length);
+	return getLinePoint(l, l->length);
 }
 
-float get_line_length(node *stem)
+float getLineLength(Node *stem)
 {
 	float len = 0.0f;
-	int i = 0;
-	for (; i < stem->line_count; i++)
+	int i;
+	for (i = 0; i < stem->lineCount; i++)
 		len += stem->lines[i].length;
 	return len;
 }
 
-int get_line(node *n, float percent, float *offset)
+int getLine(Node *n, float percent, float *offset)
 {
-	float d = percent * get_line_length(n);
+	float d = percent * getLineLength(n);
 	float s = 0.0f;
-	int j = 0;
+	int j;
 
-	for (; j < n->cross_sections; j++) {
+	for (j = 0; j < n->crossSections; j++) {
 		s += n->lines[j].length;
 		if (d <= s) {
 			*offset = n->lines[j].length - (s - d);

@@ -21,10 +21,10 @@ public:
 	void setCoordinates(float x, float y);
 	void setPerspective(float fovy, float near, float far, float aspect);
 	void setWindowSize(int width, int height);
-	void zoom(float x, float y);
-	tm_vec3 getPosition();
-	tm_mat4 getVP();
-	tm_vec3 getRayDirection(int x, int y);
+	void zoom(float y);
+	TMvec3 getPosition();
+	TMmat4 getVP();
+	TMvec3 getRayDirection(int x, int y);
 
 	enum Action {
 		ZOOM, ROTATE, PAN, NONE
@@ -39,22 +39,22 @@ private:
 	Point pos;
 	Point start;
 
-	tm_mat4 perspective;
-	tm_vec3 up;
-	tm_vec3 eye;
-	tm_vec3 feye;
-	tm_vec3 target;
-	tm_vec3 ftarget;
+	TMmat4 perspective;
+	TMvec3 up;
+	TMvec3 eye;
+	TMvec3 feye;
+	TMvec3 target;
+	TMvec3 ftarget;
 	int winWidth;
 	int winHeight;
 	float distance;
 	float fdistance;
 
-	tm_vec3 getCameraPosition();
-	tm_mat4 getInverseVP();
-	tm_mat4 getInversePerspective();
-	tm_mat4 getInverseLookAt();
-	tm_mat4 getLookAtMatrix(tm_vec3 *eye, tm_vec3 *target, tm_vec3 *up);
+	TMvec3 getCameraPosition();
+	TMmat4 getInverseVP();
+	TMmat4 getInversePerspective();
+	TMmat4 getInverseLookAt();
+	TMmat4 getLookAtMatrix(TMvec3 *eye, TMvec3 *target, TMvec3 *up);
 };
 
 #endif /* CAMERA_H */

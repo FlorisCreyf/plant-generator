@@ -10,7 +10,6 @@
 #ifndef ARRAY_H
 #define ARRAY_H
 
-void set_array(void **dest, int *dsize, void *orig, int osize, int type_size);
-void expand(void **arr, int *capacity, int size);
+void *fillArray(void *dest, int dSize, void *orig, int oSize, int typeSize);
 
 #endif /* ARRAY_H */

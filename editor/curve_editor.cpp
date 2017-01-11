@@ -13,11 +13,14 @@
 #include <QtGui/QMouseEvent>
 #include <QtGui/QTabBar>
 #include <cmath>
+#include <limits>
+
+#define UNUSED(x) (void)(x)
 
 CurveEditor::CurveEditor(QWidget *parent) : QOpenGLWidget(parent)
 {
 	enabled = false;
-	point = -1;
+	point = std::numeric_limits<size_t>::max();
 }
 
 QSize CurveEditor::sizeHint() const
@@ -29,9 +32,9 @@ void CurveEditor::initializeGL()
 {
 	initializeOpenGLFunctions();
 	rs.init();
-	onFloat(false);
+	onFloat();
 	connect(parent(), SIGNAL(topLevelChanged(bool)), this,
-			SLOT(onFloat(bool)));
+			SLOT(onFloat()));
 
 	ShaderInfo shaders[] = {
 		{GL_VERTEX_SHADER, "shaders/flat.vert"},
@@ -42,7 +45,7 @@ void CurveEditor::initializeGL()
 	createInterface();
 }
 
-void CurveEditor::onFloat(bool topLevel)
+void CurveEditor::onFloat()
 {
 	QList<QTabBar *> l = parent()->parent()->findChildren<QTabBar *>();
 	if (l.size() > 0)
@@ -51,7 +54,6 @@ void CurveEditor::onFloat(bool topLevel)
 
 void CurveEditor::createInterface()
 {
-	RenderComponent *r;
 	int offset = 0;
 	int buffer;
 
@@ -70,10 +72,10 @@ void CurveEditor::createInterface()
 int CurveEditor::createBackground(int offset)
 {
 	{
-		tm_vec3 color = {0.3f, 0.3f, 0.3f};
-		tm_vec3 sectionColor = {0.3f, 0.3f, 0.3f};
+		TMvec3 color = {0.3f, 0.3f, 0.3f};
+		TMvec3 sectionColor = {0.3f, 0.3f, 0.3f};
 		RenderComponent *r = &ui.renderComponent[1];
-		createGrid(ui.geometry, 2, color, sectionColor, (tm_mat4){
+		createGrid(ui.geometry, 2, color, sectionColor, (TMmat4){
 				1.0f/4.0f, 0.0f, 0.0f, 0.0f,
 				0.0f, 1.0f/4.0f, 0.0f, 0.0f,
 				0.0f, 0.0f, 1.0f/4.0f, 0.0f,
@@ -85,9 +87,9 @@ int CurveEditor::createBackground(int offset)
 	}
 
 	{
-		tm_vec3 a = {1.0f, 0.0f, 0.0f};
-		tm_vec3 b = {0.0f, 0.0f, 1.0f};
-		tm_vec3 center = {0.0f, 0.2f, 0.0f};
+		TMvec3 a = {1.0f, 0.0f, 0.0f};
+		TMvec3 b = {0.0f, 0.0f, 1.0f};
+		TMvec3 center = {0.0f, 0.2f, 0.0f};
 		RenderComponent *r = &ui.renderComponent[0];
 		createPlane(ui.geometry, a, b, center);
 		r->type = RenderComponent::TRIANGLES;
@@ -101,7 +103,7 @@ int CurveEditor::createBackground(int offset)
 int CurveEditor::createControlLines(int offset)
 {
 	RenderComponent *r = &ui.renderComponent[2];
-	createLine(ui.geometry, controls, (tm_vec3){0.6f, 0.6f, 0.6f});
+	createLine(ui.geometry, controls, {0.6f, 0.6f, 0.6f});
 	r->type = RenderComponent::LINES;
 	r->vertexRange[0] = offset;
 	r->vertexRange[1] = ui.geometry.vertices.size() / 6;
@@ -113,7 +115,7 @@ int CurveEditor::createControlLines(int offset)
 int CurveEditor::createCurve(int offset)
 {
 	RenderComponent *r = &ui.renderComponent[3];
-	createPath(ui.geometry, controls, 100, (tm_vec3){0.2f, 0.46f, 0.6f});
+	createPath(ui.geometry, controls, 100, {0.2f, 0.46f, 0.6f});
 	r->type = RenderComponent::LINE_STRIP;
 	r->vertexRange[0] = offset;
 	r->vertexRange[1] = ui.geometry.vertices.size() / 6;
@@ -127,28 +129,18 @@ void CurveEditor::resizeGL(int width, int height)
 	this->height = height;
 }
 
-void CurveEditor::keyPressEvent(QKeyEvent *event)
-{
-
-}
-
-void CurveEditor::keyReleaseEvent(QKeyEvent *event)
-{
-
-}
-
 void CurveEditor::mousePressEvent(QMouseEvent *event)
 {
-	if (!enabled)
+	if (!enabled || event->button() != Qt::LeftButton)
 		return;
 
 	QPoint p = event->pos();
-	for (int i = 0; i < controls.size(); i++) {
+	for (unsigned i = 0; i < controls.size(); i++) {
 		int x = (controls[i].x * 0.9f + 0.05f) * width;
 		int y = (height - (controls[i].z * 0.9f + 0.05f) * height);
 		if (sqrt(pow(p.x() - x, 2) + pow(p.y() - y, 2)) < 8) {
 			point = i;
-			insertIndex = -1;
+			insertIndex = std::numeric_limits<size_t>::max();
 			x = p.x();
 			y = p.y();
 		}
@@ -171,20 +163,20 @@ void CurveEditor::insertCurve(int i, float x, float y)
 	if (x >= controls[i-3].x && x <= controls[i-2].x)
 		return;
 
-	curve[0] = (tm_vec3){minX, -0.3f, y};
-	curve[1] = (tm_vec3){x, -0.3f, y};
-	curve[2] = (tm_vec3){x, -0.3f, y};
-	curve[3] = (tm_vec3){maxX, -0.3f, y};
+	curve[0] = {minX, -0.3f, y};
+	curve[1] = {x, -0.3f, y};
+	curve[2] = {x, -0.3f, y};
+	curve[3] = {maxX, -0.3f, y};
 	controls.insert(controls.begin()+i-1, curve, &curve[4]);
-	updateCurve();
 
+	updateCurve();
 	emit curveChanged(controls, curveName);
 	update();
 }
 
 void CurveEditor::mouseDoubleClickEvent(QMouseEvent *event)
 {
-	if (!enabled)
+	if (!enabled || event->button() != Qt::LeftButton)
 		return;
 
 	QPoint p = event->pos();
@@ -192,7 +184,7 @@ void CurveEditor::mouseDoubleClickEvent(QMouseEvent *event)
 	float y = p.y();
 	toDeviceCoordinates(x, y, width, height);
 
-	for (int i = 3; i < controls.size(); i += 4)
+	for (size_t i = 3; i < controls.size(); i += 4)
 		if (controls[i].x > x) {
 			insertCurve(i, x, y);
 			break;
@@ -201,7 +193,8 @@ void CurveEditor::mouseDoubleClickEvent(QMouseEvent *event)
 
 void CurveEditor::mouseReleaseEvent(QMouseEvent *event)
 {
-	point = -1;
+	if (event->button() == Qt::LeftButton)
+		point = std::numeric_limits<size_t>::max();
 }
 
 void CurveEditor::mouseMoveEvent(QMouseEvent *event)
@@ -209,11 +202,13 @@ void CurveEditor::mouseMoveEvent(QMouseEvent *event)
 	QPoint p = event->pos();
 	float x = p.x();
 	float y = p.y();
+	const size_t max = std::numeric_limits<size_t>::max();
+	bool removed = insertIndex != 0 && insertIndex != max;
 	toDeviceCoordinates(x, y, width, height);
 
-	if (point < 0)
+	if (point == std::numeric_limits<size_t>::max())
 		return;
-	if (insertIndex > 0 && !reinsertCurve(x))
+	if (removed && !reinsertCurve(x))
 		return;
 
 	if (point == 0)
@@ -226,7 +221,7 @@ void CurveEditor::mouseMoveEvent(QMouseEvent *event)
 	} else
 		placeInnerControl(x, y);
 
-	if (insertIndex < 0)
+	if (insertIndex == std::numeric_limits<size_t>::max())
 		drawCurve();
 	else
 		updateCurve();
@@ -252,18 +247,18 @@ void CurveEditor::drawCurve()
 {
 	int start = ui.renderComponent[2].vertexRange[0] * 6;
 	GeometryComponent g;
-	createLine(g, controls, (tm_vec3){0.6, 0.6, 0.6});
-	createPath(g, controls, 100, (tm_vec3){.2f, 0.46f, 0.6f});
+	createLine(g, controls, {0.6, 0.6, 0.6});
+	createPath(g, controls, 100, {.2f, 0.46f, 0.6f});
 	rs.updateVertices(0, &g.vertices[0], start, g.vertices.size());
 }
 
 bool CurveEditor::reinsertCurve(float x)
 {
 	if (x > controls[insertIndex-2].x) {
-		auto index = controls.begin()+insertIndex;
+		auto index = controls.begin() + insertIndex;
 		controls.insert(index, &curve[0], &curve[4]);
 		updateCurve();
-		insertIndex = -1;
+		insertIndex = std::numeric_limits<size_t>::max();
 		return true;
 	} else
 		return false;
@@ -275,7 +270,7 @@ bool CurveEditor::omitCurve(float x)
 		insertIndex = point - 2;
 		auto start = controls.begin() + insertIndex;
 		auto end = controls.begin() + insertIndex + 4;
-		memcpy(curve, &controls[insertIndex], sizeof(tm_vec3)*4);
+		memcpy(curve, &controls[insertIndex], sizeof(TMvec3)*4);
 		controls.erase(start, end);
 		return true;
 	} else
@@ -358,7 +353,7 @@ void CurveEditor::placeTerminalControl(bool first, float y)
 void CurveEditor::paintGL()
 {
 	GlobalUniforms gu;
-	gu.vp = (tm_mat4){
+	gu.vp = (TMmat4){
 			1.8f, 0.0f, 0.0f, 0.0f,
 			0.0f, 0.0f, 0.9f, 0.0f,
 			0.0f, 1.8f, 0.0f, 0.0f,
@@ -366,7 +361,7 @@ void CurveEditor::paintGL()
 	rs.render(gu, 0.3f);
 }
 
-void CurveEditor::setCurve(vector<tm_vec3> controls, QString name)
+void CurveEditor::setCurve(vector<TMvec3> controls, QString name)
 {
 	parentWidget()->setWindowTitle(name + " curve");
 	this->controls = controls;

@@ -12,7 +12,7 @@
 
 #include "node.h"
 
-void modify_resolutions(node *stem, int r);
-void modify_crown_base_height();
+void modifyResolutions(Node *stem, int r);
+void modifyCrownBaseHeight();
 
 #endif /* STRUCT_MODIFIER_H */

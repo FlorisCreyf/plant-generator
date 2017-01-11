@@ -16,40 +16,40 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-struct tm_tree_tag {
-	node *root;
-	tree_data td;
-	float *vertex_buffer;
-	unsigned short *element_buffer;
+struct __TMtree {
+	Node *root;
+	TreeData td;
+	float *vertexBuffer;
+	unsigned short *elementBuffer;
 };
 
-tm_tree tm_new_tree()
+TMtree tmNewTree()
 {
-	tm_tree tree = (tm_tree)malloc(sizeof(struct tm_tree_tag));
-	tree->root = new_nodes(1);
-	tree->td.vbo_size = 0;
-	tree->td.ebo_size = 0;
+	TMtree tree = (TMtree)malloc(sizeof(struct __TMtree));
+	tree->root = newNodes(1);
+	tree->td.vboSize = 0;
+	tree->td.iboSize = 0;
 	return tree;
 }
 
-void tm_delete_tree(tm_tree tree)
+void tmDeleteTree(TMtree tree)
 {
 	if (tree != NULL) {
-		free_tree_structure(tree->root);
+		freeTreeStructure(tree->root);
 		free(tree);
 	}
 }
 
-node *find_node(node *n, int *i, int id)
+Node *findNode(Node *n, int *i, int id)
 {
-	node *m;
-	int j = 0;
+	Node *m;
+	int j;
 
 	if ((*i)++ == id)
 		return n;
 
-	for (; j < n->branch_count; j++) {
-		m = find_node(&(n->branches[j]), i, id);
+	for (j = 0; j < n->branchCount; j++) {
+		m = findNode(&(n->branches[j]), i, id);
 		if (m != NULL)
 			return m;
 	}
@@ -57,173 +57,178 @@ node *find_node(node *n, int *i, int id)
 	return NULL;
 }
 
-node *get_node(node *n, int id)
+Node *getNode(Node *n, int id)
 {
 	int i = 0;
-	return find_node(n, &i, id);
+	return findNode(n, &i, id);
 }
 
-void tm_set_radius(tm_tree tree, int id, float radius)
+void tmSetRadius(TMtree tree, int id, float radius)
 {
-	node *n = get_node(tree->root, id);
+	Node *n = getNode(tree->root, id);
 	if (n)
 		n->radius = radius;
 }
 
-void tm_set_radius_curve(tm_tree tree, int id, tm_vec3 *curve, int size)
+void tmSetRadiusCurve(TMtree tree, int id, TMvec3 *curve, int size)
 {
-	node *n = get_node(tree->root, id);
-	int ts = sizeof(tm_vec3);
-	set_array(&n->radius_curve, &n->radius_curve_size, curve, size, ts);
+	Node *n = getNode(tree->root, id);
+	int ts = sizeof(TMvec3);
+	void *p;
+	p = fillArray(n->radiusCurve, n->radiusCurveSize, curve, size, ts);
+	n->radiusCurve = p;
+	n->radiusCurveSize = size;
 }
 
-void tm_set_branch_curve(tm_tree tree, int id, tm_vec3 *curve, int size)
+void tmSetBranchCurve(TMtree tree, int id, TMvec3 *curve, int size)
 {
-	node *n = get_node(tree->root, id);
-	int ts = sizeof(tm_vec3);
-	set_array(&n->branch_curve, &n->branch_curve_size, curve, size, ts);
+	Node *n = getNode(tree->root, id);
+	int ts = sizeof(TMvec3);
+	void *p;
+	p = fillArray(n->branchCurve, n->branchCurveSize, curve, size, ts);
+	n->branchCurve = p;
+	n->branchCurveSize = size;
 }
 
-void tm_set_resolution(tm_tree tree, int id, int resolution)
+void tmSetResolution(TMtree tree, int id, int resolution)
 {
-	node *n = get_node(tree->root, id);
+	Node *n = getNode(tree->root, id);
 	if (n) {
 		n->resolution = resolution;
-		modify_resolutions(n, resolution);
+		modifyResolutions(n, resolution);
 	}
 }
 
-void tm_set_crown_base_height(tm_tree tree, float cbh)
+void tmSetCrownBaseHeight(TMtree tree, float cbh)
 {
-	tree->td.crown_base_height = cbh;
+	tree->td.crownBaseHeight = cbh;
 }
 
-float tm_get_crown_base_height(tm_tree tree)
+float tmGetCrownBaseHeight(TMtree tree)
 {
-	return tree->td.crown_base_height;
+	return tree->td.crownBaseHeight;
 }
 
-void tm_set_branch_density(tm_tree tree, int id, float density)
+void tmSetBranchDensity(TMtree tree, int id, float density)
 {
-	node *n = get_node(tree->root, id);
-	if (n && n->branch_density != density) {
-		struct position_t p;
-		int dichotomous = n->dichotomous_start;
+	Node *n = getNode(tree->root, id);
+	if (n && n->branchDensity != density) {
+		Position p;
+		int dichotomous = n->dichotomousStart;
 
 		if (tree->root == n)
-			p = get_path_start_position(n);
+			p = getPathStartPosition(n);
 		else {
 			p.t = 0.0f;
 			p.index = 0;
 		}
-		n->branch_density = density;
+		n->branchDensity = density;
 
-		remove_nodes(n);
-		add_lateral_branches(n, p);
+		removeNodes(n);
+		addLateralBranches(n, p);
 		if (dichotomous >= 0)
-			add_dichotomous_branches(n);
+			addDichotomousBranches(n);
 	}
 }
 
-float tm_get_branch_density(tm_tree tree, int id)
+float tmGetBranchDensity(TMtree tree, int id)
 {
-	node *n = get_node(tree->root, id);
-	return n ? n->branch_density : 0.0f;
+	Node *n = getNode(tree->root, id);
+	return n ? n->branchDensity : 0.0f;
 }
 
-void tm_set_cross_sections(tm_tree tree, int id, int sections)
+void tmSetCrossSections(TMtree tree, int id, int sections)
 {
-	node *n = get_node(tree->root, id);
+	Node *n = getNode(tree->root, id);
 	if (n)
-		n->cross_sections = sections;
+		n->crossSections = sections;
 }
 
-void tm_set_max_branch_depth(tm_tree tree, int depth)
+void tmSetMaxBranchDepth(TMtree tree, int depth)
 {
-	tree->td.max_branch_depth = depth;
+	tree->td.maxBranchDepth = depth;
 }
 
-int tm_get_cross_sections(tm_tree tree, int id)
+int tmGetCrossSections(TMtree tree, int id)
 {
-	node *n = get_node(tree->root, id);
-	return n ? n->cross_sections : -1;
+	Node *n = getNode(tree->root, id);
+	return n ? n->crossSections : -1;
 }
 
-int tm_get_resolution(tm_tree tree, int id)
+int tmGetResolution(TMtree tree, int id)
 {
-	node *n = get_node(tree->root, id);
+	Node *n = getNode(tree->root, id);
 	return n ? n->resolution : -1;
 }
 
-float tm_get_radius(tm_tree tree, int id)
+float tmGetRadius(TMtree tree, int id)
 {
-	node *n = get_node(tree->root, id);
+	Node *n = getNode(tree->root, id);
 	return n ? n->radius : -1.0f;
 }
 
-void tm_get_radius_curve(tm_tree tree, int id, tm_vec3 **curve, int *size)
+void tmGetRadiusCurve(TMtree tree, int id, TMvec3 **curve, int *size)
 {
-	node *n = get_node(tree->root, id);
+	Node *n = getNode(tree->root, id);
 	if (n) {
-		*curve = n->radius_curve;
-		*size = n->radius_curve_size;
+		*curve = n->radiusCurve;
+		*size = n->radiusCurveSize;
 	}
 }
 
-void tm_get_branch_curve(tm_tree tree, int id, tm_vec3 **curve, int *size)
+void tmGetBranchCurve(TMtree tree, int id, TMvec3 **curve, int *size)
 {
-	node *n = get_node(tree->root, id);
+	Node *n = getNode(tree->root, id);
 	if (n) {
-		*curve = n->branch_curve;
-		*size = n->branch_curve_size;
+		*curve = n->branchCurve;
+		*size = n->branchCurveSize;
 	}
 }
 
-tm_aabb tm_get_bounding_box(tm_tree tree, int id)
+TMaabb tmGetBoundingBox(TMtree tree, int id)
 {
-	node *n = get_node(tree->root, id);
-	return n ? n->bounds : (tm_aabb){0, 0, 0, 0, 0, 0};
+	Node *n = getNode(tree->root, id);
+	return n ? n->bounds : (TMaabb){0, 0, 0, 0, 0, 0};
 }
 
-int tm_get_ebo_start(tm_tree tree, int id)
+int tmGetIBOStart(TMtree tree, int id)
 {
-	node *n = get_node(tree->root, id);
-	return n->ebo_start;
+	Node *n = getNode(tree->root, id);
+	return n->iboStart;
 }
 
-int tm_get_ebo_end(tm_tree tree, int id)
+int tmGetIBOEnd(TMtree tree, int id)
 {
-	node *n = get_node(tree->root, id);
-	return n->ebo_end;
+	Node *n = getNode(tree->root, id);
+	return n->iboEnd;
 }
 
-int tm_is_terminal_branch(tm_tree tree, int id)
+int tmIsTerminalBranch(TMtree tree, int id)
 {
-	node *n = get_node(tree->root, id);
+	Node *n = getNode(tree->root, id);
 	return n->terminal;
 }
 
-int tm_get_vbo_size(tm_tree tree)
+int tmGetVBOSize(TMtree tree)
 {
-	return tree->td.vbo_size;
+	return tree->td.vboSize;
 }
 
-int tm_get_ebo_size(tm_tree tree)
+int tmGetIBOSize(TMtree tree)
 {
-	return tree->td.ebo_size;
+	return tree->td.iboSize;
 }
 
-void tm_generate_structure(tm_tree tree)
+void tmGenerateStructure(TMtree tree)
 {
-	reset_tree_structure(tree->root);
-	new_tree_structure(&tree->td, tree->root);
+	resetTreeStructure(tree->root);
+	newTreeStructure(&tree->td, tree->root);
 }
 
-int tm_generate_mesh(tm_tree tree, float *vb, int vb_size,
-		unsigned short *eb, int eb_size)
+int tmGenerateMesh(TMtree tree, float *v, int vs, unsigned short *i, int is)
 {
-	int status = build_model(vb, vb_size, eb, eb_size, tree->root);
-	tree->td.ebo_size = get_ebo_size();
-	tree->td.vbo_size = get_vbo_size();
+	int status = buildModel(v, vs, i, is, tree->root);
+	tree->td.iboSize = getIBOSize();
+	tree->td.vboSize = getVBOSize();
 	return status;
 }
