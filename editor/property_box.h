@@ -10,19 +10,18 @@
 #ifndef PROPERTY_BOX
 #define PROPERTY_BOX
 
-#include "scene_editor.h"
+#include "editor.h"
 #include "curve_button.h"
 #include "curve_editor.h"
 #include <QtWidgets>
 
-class PropertyBox : public QWidget
-{
+class PropertyBox : public QWidget {
 	Q_OBJECT
 
 public:
 	PropertyBox(QWidget *parent = 0);
 	QSize sizeHint() const;
-	void bind(SceneEditor *sceneEditor, CurveEditor *curveEditor);
+	void bind(Editor *editor, CurveEditor *curveEditor);
 
 public slots:
 	void fill(TMtree tree, int branch);
@@ -34,8 +33,8 @@ signals:
 	void radiusCurveChanged(vector<TMvec3>);
 
 private:
+	Editor *editor;
 	CurveEditor *curveEditor;
-	SceneEditor *sceneEditor;
 	CurveButtonWidget *activeCurve;
 
 	QTableWidget *global;

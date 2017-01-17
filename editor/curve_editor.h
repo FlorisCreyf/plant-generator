@@ -15,8 +15,7 @@
 #include <QtGui/QOpenGLFunctions>
 #include <QOpenGLWidget>
 
-class CurveEditor : public QOpenGLWidget, protected QOpenGLFunctions
-{
+class CurveEditor : public QOpenGLWidget, protected QOpenGLFunctions {
 	Q_OBJECT
 
 public:

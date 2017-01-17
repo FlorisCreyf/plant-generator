@@ -7,7 +7,7 @@
  * (at your option) any later version.
  */
 
-#include "scene_editor.h"
+#include "editor.h"
 #include "file_exporter.h"
 #include "primitives.h"
 #include "collision.h"
@@ -17,7 +17,7 @@
 
 #define UNUSED(x) (void)(x)
 
-SceneEditor::SceneEditor(QWidget *parent) : QOpenGLWidget(parent)
+Editor::Editor(QWidget *parent) : QOpenGLWidget(parent)
 {
 	ctrl = shift = midButton = false;
 	camera.action = Camera::NONE;
@@ -25,12 +25,12 @@ SceneEditor::SceneEditor(QWidget *parent) : QOpenGLWidget(parent)
 	setFocus();
 }
 
-SceneEditor::~SceneEditor()
+Editor::~Editor()
 {
 	tmDeleteTree(tree);
 }
 
-void SceneEditor::exportObject(const char *filename)
+void Editor::exportObject(const char *filename)
 {
 	FileExporter f;
 	Entity *e = scene.getEntity(0);
@@ -39,12 +39,12 @@ void SceneEditor::exportObject(const char *filename)
 	f.exportObj(filename);
 }
 
-void SceneEditor::setRenderSystem(RenderSystem *rs)
+void Editor::setRenderSystem(RenderSystem *rs)
 {
 	this->rs = rs;
 }
 
-void SceneEditor::initializeGL()
+void Editor::initializeGL()
 {
 	initializeOpenGLFunctions();
 	rs->init();
@@ -66,7 +66,7 @@ void SceneEditor::initializeGL()
 	initializeGrid();
 }
 
-void SceneEditor::resizeGL(int width, int height)
+void Editor::resizeGL(int width, int height)
 {
 	float aspectRatio = (float)width / (float)height;
 	camera.setWindowSize(width, height);
@@ -75,7 +75,7 @@ void SceneEditor::resizeGL(int width, int height)
 	paintGL();
 }
 
-void SceneEditor::initializeGrid()
+void Editor::initializeGrid()
 {
 	GeometryComponent g = {};
 	RenderComponent r = {};
@@ -88,7 +88,7 @@ void SceneEditor::initializeGrid()
 	rs->registerComponent(rs->load(g), r);
 }
 
-void SceneEditor::initializeTree()
+void Editor::initializeTree()
 {
 	const int es = 8000;
 	const int vs = 8000;
@@ -125,7 +125,7 @@ void SceneEditor::initializeTree()
 	emit selectionChanged(tree, -1);
 }
 
-void SceneEditor::keyPressEvent(QKeyEvent *event)
+void Editor::keyPressEvent(QKeyEvent *event)
 {
 	switch (event->key()) {
 	case Qt::Key_Control:
@@ -137,7 +137,7 @@ void SceneEditor::keyPressEvent(QKeyEvent *event)
 	}
 }
 
-void SceneEditor::keyReleaseEvent(QKeyEvent *event)
+void Editor::keyReleaseEvent(QKeyEvent *event)
 {
 	switch (event->key()) {
 	case Qt::Key_Control:
@@ -149,7 +149,7 @@ void SceneEditor::keyReleaseEvent(QKeyEvent *event)
 	}
 }
 
-void SceneEditor::selectBranch(int x, int y)
+void Editor::selectBranch(int x, int y)
 {
 	Entity *selection;
 	int branch;
@@ -170,7 +170,7 @@ void SceneEditor::selectBranch(int x, int y)
 	emit selectionChanged(tree, branch);
 }
 
-void SceneEditor::mousePressEvent(QMouseEvent *event)
+void Editor::mousePressEvent(QMouseEvent *event)
 {
 	QPoint p = event->pos();
 	midButton = false;
@@ -193,13 +193,13 @@ void SceneEditor::mousePressEvent(QMouseEvent *event)
 	setFocus();
 }
 
-void SceneEditor::mouseReleaseEvent(QMouseEvent *event)
+void Editor::mouseReleaseEvent(QMouseEvent *event)
 {
 	UNUSED(event);
 	camera.action = Camera::NONE;
 }
 
-void SceneEditor::mouseMoveEvent(QMouseEvent *event)
+void Editor::mouseMoveEvent(QMouseEvent *event)
 {
 	QPoint point = event->pos();
 
@@ -220,7 +220,7 @@ void SceneEditor::mouseMoveEvent(QMouseEvent *event)
 	update();
 }
 
-void SceneEditor::paintGL()
+void Editor::paintGL()
 {
 	GlobalUniforms gu;
 	gu.vp = camera.getVP();
@@ -228,7 +228,7 @@ void SceneEditor::paintGL()
 	rs->render(gu);
 }
 
-void SceneEditor::updateWireframe()
+void Editor::updateWireframe()
 {
 	Entity *selection = scene.getSelected();
 	if (selection) {
@@ -241,7 +241,7 @@ void SceneEditor::updateWireframe()
 	}
 }
 
-void SceneEditor::expandBuffer(GeometryComponent &g, RenderComponent &r)
+void Editor::expandBuffer(GeometryComponent &g, RenderComponent &r)
 {
 	int status = 0;
 
@@ -259,7 +259,7 @@ void SceneEditor::expandBuffer(GeometryComponent &g, RenderComponent &r)
 	rs->registerComponent(rs->load(g, 0), r);
 }
 
-void SceneEditor::change()
+void Editor::change()
 {
 	Entity *e = scene.getEntity(0);
 	GeometryComponent *g = &e->geometry;
@@ -295,37 +295,37 @@ void SceneEditor::change()
 	update();
 }
 
-void SceneEditor::changeResolution(int i)
+void Editor::changeResolution(int i)
 {
 	tmSetResolution(tree, scene.getSelectedBranch(), i);
 	change();
 }
 
-void SceneEditor::changeSections(int i)
+void Editor::changeSections(int i)
 {
 	tmSetCrossSections(tree, scene.getSelectedBranch(), i);
 	change();
 }
 
-void SceneEditor::changeRadius(double d)
+void Editor::changeRadius(double d)
 {
 	tmSetRadius(tree, scene.getSelectedBranch(), d);
 	change();
 }
 
-void SceneEditor::changeRadiusCurve(vector<TMvec3> c)
+void Editor::changeRadiusCurve(vector<TMvec3> c)
 {
 	tmSetRadiusCurve(tree, scene.getSelectedBranch(), &c[0], c.size());
 	change();
 }
 
-void SceneEditor::changeBranchCurve(vector<TMvec3> c)
+void Editor::changeBranchCurve(vector<TMvec3> c)
 {
 	tmSetBranchCurve(tree, scene.getSelectedBranch(), &c[0], c.size());
 	change();
 }
 
-void SceneEditor::changeBranchDensity(double d)
+void Editor::changeBranchDensity(double d)
 {
 	tmSetBranchDensity(tree, scene.getSelectedBranch(), d);
 	change();

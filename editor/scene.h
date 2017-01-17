@@ -16,8 +16,7 @@
 #include "treemaker.h"
 #include <vector>
 
-class Scene
-{
+class Scene {
 public:
 	Scene();
 	void add(Entity e);

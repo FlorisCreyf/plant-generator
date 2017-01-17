@@ -10,8 +10,7 @@
 #ifndef FILE_EXPORTER_H
 #define FILE_EXPORTER_H
 
-class FileExporter
-{
+class FileExporter {
 public:
 	void setVertices(float *vertices, int size);
 	void setTriangles(unsigned short *triangles, int size);

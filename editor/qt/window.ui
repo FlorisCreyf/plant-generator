@@ -178,7 +178,7 @@
      <number>0</number>
     </property>
     <item>
-      <widget class="SceneEditor" name="scene" native="true">
+      <widget class="Editor" name="editor" native="true">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
          <horstretch>0</horstretch>
@@ -410,9 +410,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>SceneEditor</class>
+   <class>Editor</class>
    <extends>QWidget</extends>
-   <header>../scene_editor.h</header>
+   <header>../editor.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>

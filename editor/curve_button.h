@@ -15,8 +15,7 @@
 #include <QOpenGLWidget>
 #include <QtWidgets>
 
-class CurveButton : public QOpenGLWidget, protected QOpenGLFunctions
-{
+class CurveButton : public QOpenGLWidget, protected QOpenGLFunctions {
 	Q_OBJECT
 
 public:

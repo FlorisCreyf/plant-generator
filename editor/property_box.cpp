@@ -112,7 +112,7 @@ void PropertyBox::setCurve(vector<TMvec3> controls, QString name)
 {
 	if (name == "Radius") {
 		radiusCB->getCurveButton()->setControls(controls);
-		sceneEditor->changeRadiusCurve(controls);
+		editor->changeRadiusCurve(controls);
 	}
 }
 
@@ -158,20 +158,20 @@ void PropertyBox::fillCurveButtons(TMtree tree, int branch)
 	radiusCB->getCurveButton()->setControls(l, size);
 }
 
-void PropertyBox::bind(SceneEditor *sceneEditor, CurveEditor *curveEditor)
+void PropertyBox::bind(Editor *editor, CurveEditor *curveEditor)
 {
 	this->curveEditor = curveEditor;
-	this->sceneEditor = sceneEditor;
+	this->editor =editor;
 
-	connect(sceneEditor, SIGNAL(selectionChanged(TMtree, int)), this,
+	connect(editor, SIGNAL(selectionChanged(TMtree, int)), this,
 			SLOT(fill(TMtree, int)));
-	connect(resolution, SIGNAL(valueChanged(int)), sceneEditor,
+	connect(resolution, SIGNAL(valueChanged(int)), editor,
 			SLOT(changeResolution(int)));
-	connect(sections, SIGNAL(valueChanged(int)), sceneEditor,
+	connect(sections, SIGNAL(valueChanged(int)), editor,
 			SLOT(changeSections(int)));
-	connect(radius, SIGNAL(valueChanged(double)), sceneEditor,
+	connect(radius, SIGNAL(valueChanged(double)), editor,
 			SLOT(changeRadius(double)));
-	connect(branches, SIGNAL(valueChanged(double)), sceneEditor,
+	connect(branches, SIGNAL(valueChanged(double)), editor,
 			SLOT(changeBranchDensity(double)));
 
 	bindCurveEditor();

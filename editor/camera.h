@@ -12,8 +12,7 @@
 
 #include "vector.h"
 
-class Camera
-{
+class Camera {
 public:
 	Camera();
 	void setStartCoordinates(float x, float y);

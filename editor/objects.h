@@ -15,8 +15,7 @@
 
 using std::vector;
 
-struct GeometryComponent
-{
+struct GeometryComponent {
 	int attribs;
 	int stride;
 	vector<float> vertices;
@@ -25,8 +24,7 @@ struct GeometryComponent
 	int buffer;
 };
 
-struct RenderComponent
-{
+struct RenderComponent {
 	bool hidden;
 	int program;
 	int wireframeRange[2];

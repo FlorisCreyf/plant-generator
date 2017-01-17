@@ -13,8 +13,7 @@
 #include "qt/ui_window.h"
 #include "render_system.h"
 
-class Window : public QMainWindow
-{
+class Window : public QMainWindow {
 	Q_OBJECT
 
 public:

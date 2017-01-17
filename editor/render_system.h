@@ -25,8 +25,7 @@ struct GlobalUniforms {
 	TMvec3 cameraPosition;
 };
 
-class RenderSystem : protected QOpenGLFunctions
-{
+class RenderSystem : protected QOpenGLFunctions {
 public:
 	RenderSystem();
 	void init();

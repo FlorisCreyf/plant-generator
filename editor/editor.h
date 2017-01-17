@@ -19,13 +19,12 @@
 #include <QtGui/QOpenGLFunctions>
 #include <QOpenGLWidget>
 
-class SceneEditor : public QOpenGLWidget, protected QOpenGLFunctions
-{
+class Editor : public QOpenGLWidget, protected QOpenGLFunctions {
 	Q_OBJECT;
 
 public:
-	SceneEditor(QWidget *parent = 0);
-	~SceneEditor();
+	Editor(QWidget *parent = 0);
+	~Editor();
 
 	void exportObject(const char *filename);
 	void setRenderSystem(RenderSystem *rs);

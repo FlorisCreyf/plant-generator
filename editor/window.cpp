@@ -13,8 +13,8 @@
 Window::Window()
 {
 	widget.setupUi(this);
-	widget.properties->bind(widget.scene, widget.curve);
-	widget.scene->setRenderSystem(&r);
+	widget.properties->bind(widget.editor, widget.curve);
+	widget.editor->setRenderSystem(&r);
 
 	QMenu *menu = createPopupMenu();
 	menu->setTitle("Window");
@@ -28,14 +28,14 @@ void Window::openDialogBox()
 {
 	QString filename;
 	filename = QFileDialog::getOpenFileName(this, tr("Open File"), "",
-		tr("BlueTree (*.tree)"));
+		tr("TreeMaker (*.tree)"));
 }
 
 void Window::saveDialogBox()
 {
 	QString filename;
 	filename = QFileDialog::getSaveFileName(this, tr("Save File"),
-		"untitled.tree", tr("BlueTree (*.tree)"));
+		"untitled.tree", tr("TreeMaker (*.tree)"));
 }
 
 void Window::exportDialogBox()
@@ -44,7 +44,7 @@ void Window::exportDialogBox()
 	filename = QFileDialog::getSaveFileName(this, tr("Export File"),
 		"untitled.obj", tr("Wavefront (*.obj)"));
 	QByteArray b = filename.toLatin1();
-	widget.scene->exportObject(b.data());
+	widget.editor->exportObject(b.data());
 }
 
 void Window::reportIssue()
