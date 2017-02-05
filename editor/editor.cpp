@@ -1,27 +1,37 @@
-/*
- * Copyright (C) 2016 Floris Creyf
+/* TreeMaker: 3D tree model editor
+ * Copyright (C) 2016-2017  Floris Creyf
  *
- * This program is free software; you can redistribute it and/or modify
+ * TreeMaker is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
+ * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
+ *
+ * TreeMaker is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include "editor.h"
 #include "file_exporter.h"
-#include "primitives.h"
+#include "geometry.h"
 #include "collision.h"
+#include "vector.h"
 #include <QtGui/QKeyEvent>
 #include <QtGui/QMouseEvent>
 #include <QtOpenGL/QGLFormat>
 
 #define UNUSED(x) (void)(x)
 
-Editor::Editor(QWidget *parent) : QOpenGLWidget(parent)
+Editor::Editor(SharedResources *shared, QWidget *parent) : QOpenGLWidget(parent)
 {
+	this->shared = shared;
 	ctrl = shift = midButton = false;
 	camera.action = Camera::NONE;
-	rs = NULL;
+	selectedBranch = -1;
 	setFocus();
 }
 
@@ -33,35 +43,22 @@ Editor::~Editor()
 void Editor::exportObject(const char *filename)
 {
 	FileExporter f;
-	Entity *e = scene.getEntity(0);
-	f.setVertices(&e->geometry.vertices[0], tmGetVBOSize(tree));
-	f.setTriangles(&e->geometry.triangles[0], tmGetIBOSize(tree));
+	f.setVertices(&vertices[0], tmGetVBOSize(tree));
+	f.setTriangles(&indices[0], tmGetIBOSize(tree));
 	f.exportObj(filename);
-}
-
-void Editor::setRenderSystem(RenderSystem *rs)
-{
-	this->rs = rs;
 }
 
 void Editor::initializeGL()
 {
 	initializeOpenGLFunctions();
-	rs->init();
 
-	ShaderInfo shaders[] = {
-		{GL_VERTEX_SHADER, "shaders/flat.vert"},
-		{GL_FRAGMENT_SHADER, "shaders/flat.frag"},
-		{GL_VERTEX_SHADER, "shaders/basic.vert"},
-		{GL_FRAGMENT_SHADER, "shaders/basic.frag"},
-		{GL_VERTEX_SHADER, "shaders/solid.vert"},
-		{GL_FRAGMENT_SHADER, "shaders/flat.frag"}
-	};
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_LINE_SMOOTH);
+	glDepthMask(GL_TRUE);
+	glDepthFunc(GL_LEQUAL);
+	glDepthRange(0.0f, 1.0f);
 
-	rs->loadShaders(&shaders[0], 2);
-	rs->loadShaders(&shaders[2], 2);
-	rs->loadShaders(&shaders[4], 2);
-
+	shared->create();
 	initializeTree();
 	initializeGrid();
 }
@@ -77,36 +74,24 @@ void Editor::resizeGL(int width, int height)
 
 void Editor::initializeGrid()
 {
-	GeometryComponent g = {};
-	RenderComponent r = {};
-	TMvec3 color = {0.46, 0.46, 0.46};
-	TMvec3 sectionColor = {0.41, 0.41, 0.41};
-	createGrid(g, 5, color, sectionColor);
-	r.program = 0;
-	r.type = RenderComponent::LINES;
-	r.vertexRange[1] = g.vertices.size() / 6;
-	rs->registerComponent(rs->load(g), r);
+	Geometry geometry;
+	gridInfo = geometry.addGrid(5, {0.41, 0.41, 0.41}, {0.46, 0.46, 0.46});
+	glGenVertexArrays(1, &bufferSets[0].vao);
+	glBindVertexArray(bufferSets[0].vao);
+	glGenBuffers(1, bufferSets[0].buffers);
+	glBindBuffer(GL_ARRAY_BUFFER, bufferSets[0].buffers[0]);
+	graphics::load(GL_ARRAY_BUFFER, geometry.vertices, GL_STATIC_DRAW);
+	graphics::setVertexFormat(geometry.getVertexFormat());
 }
 
 void Editor::initializeTree()
 {
-	const int es = 8000;
-	const int vs = 8000;
+	glGenVertexArrays(1, &bufferSets[1].vao);
+	glBindVertexArray(bufferSets[1].vao);
+	glGenBuffers(2, bufferSets[1].buffers);
 
-	Entity e = {};
-	RenderComponent *r;
-	GeometryComponent *g;
-
-	e.renderComponent.resize(1);
-	r = &e.renderComponent[0];
-	g = &e.geometry;
-
-	g->attribs = 2;
-	g->stride = sizeof(float) * 6;
-	g->vertices.resize(vs);
-	g->triangles.resize(es);
-	r->program = 1;
-	r->type = RenderComponent::TRIANGLES;
+	vertices.resize(8000);
+	indices.resize(8000);
 
 	tree = tmNewTree();
 	tmSetRadius(tree, 0, 0.2f);
@@ -115,13 +100,20 @@ void Editor::initializeTree()
 	tmSetMaxBranchDepth(tree, 1);
 	tmSetCrownBaseHeight(tree, 2.0f);
 	tmGenerateStructure(tree);
-	tmGenerateMesh(tree, &g->vertices[0], vs, &g->triangles[0], es);
+	tmGenerateMesh(tree, &vertices[0], 8000, &indices[0], 8000);
 
-	r->triangleRange[1] = tmGetIBOSize(tree);
-	r->vertexRange[1] = tmGetVBOSize(tree);
+	treeInfo.type = GL_TRIANGLES;
+	treeInfo.start[0] = treeInfo.start[1] = 0;
+	treeInfo.count[0] = tmGetVBOSize(tree);
+	treeInfo.count[1] = tmGetIBOSize(tree);
 
-	rs->registerComponent(rs->load(*g), *r);
-	scene.add(e);
+	glBindBuffer(GL_ARRAY_BUFFER, bufferSets[1].buffers[0]);
+	graphics::load(GL_ARRAY_BUFFER, vertices, GL_DYNAMIC_DRAW);
+	graphics::setVertexFormat(graphics::VERTEX_NORMAL);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferSets[1].buffers[1]);
+	graphics::load(GL_ELEMENT_ARRAY_BUFFER, indices, GL_DYNAMIC_DRAW);
+
 	emit selectionChanged(tree, -1);
 }
 
@@ -151,23 +143,27 @@ void Editor::keyReleaseEvent(QKeyEvent *event)
 
 void Editor::selectBranch(int x, int y)
 {
-	Entity *selection;
-	int branch;
+	TMvec3 direction = camera.getRayDirection(x, y);
+	TMvec3 origin = camera.getPosition();
+	TMaabb box = tmGetBoundingBox(tree, 0);
+	int branch = 0;
 
-	selection = scene.getSelected();
-	if (selection != NULL)
-		rs->setWireframe(selection->geometry.buffer, 0, 0, 0);
-
-	selection = scene.setSelected(camera, x, y);
-	branch = scene.setSelectedBranch(camera, x, y, tree);
-
-	if (selection != NULL && branch >= 0) {
-		int s = tmGetIBOStart(tree, branch);
-		int e = tmGetIBOEnd(tree, branch);
-		rs->setWireframe(selection->geometry.buffer, 0, s, e);
+	while (box.x1 != box.x2) {
+		float t = tmIntersectsAABB(origin, direction, box);
+		if (t != 0.0f) {
+			int start = tmGetIBOStart(tree, branch);
+			int end = tmGetIBOEnd(tree, branch);
+			selection.start[1] = start;
+			selection.count[1] = end - start;
+			selectedBranch = branch;
+			emit selectionChanged(tree, branch);
+			return;
+		}
+		box = tmGetBoundingBox(tree, ++branch);
 	}
 
-	emit selectionChanged(tree, branch);
+	selectedBranch = -1;
+	emit selectionChanged(tree, selectedBranch);
 }
 
 void Editor::mousePressEvent(QMouseEvent *event)
@@ -175,19 +171,18 @@ void Editor::mousePressEvent(QMouseEvent *event)
 	QPoint p = event->pos();
 	midButton = false;
 
-	if (event->button() == Qt::MidButton) {
-		camera.setStartCoordinates(p.x(), p.y());
+	if (event->button() == Qt::RightButton) {
+		selectBranch(p.x(), p.y());
+		update();
+	} else if (event->button() == Qt::MidButton) {
 		midButton = true;
-
+		camera.setStartCoordinates(p.x(), p.y());
 		if (ctrl && !shift)
 			camera.action = Camera::ZOOM;
 		else if (shift && !ctrl)
 			camera.action = Camera::PAN;
 		else
 			camera.action = Camera::ROTATE;
-	} else if (event->button() == Qt::RightButton) {
-		selectBranch(p.x(), p.y());
-		update();
 	}
 
 	setFocus();
@@ -202,7 +197,6 @@ void Editor::mouseReleaseEvent(QMouseEvent *event)
 void Editor::mouseMoveEvent(QMouseEvent *event)
 {
 	QPoint point = event->pos();
-
 	switch (camera.action) {
 	case Camera::ZOOM:
 		camera.zoom(point.y());
@@ -216,117 +210,161 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
 	default:
 		break;
 	}
-
 	update();
 }
 
 void Editor::paintGL()
 {
-	GlobalUniforms gu;
-	gu.vp = camera.getVP();
-	gu.cameraPosition = camera.getPosition();
-	rs->render(gu);
+	TMmat4 vp = camera.getVP();
+	TMvec3 cp = camera.getPosition();
+
+	glClearColor(0.5f, 0.5f, 0.5f, 1.0);
+	glClearDepth(1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glUseProgram(shared->getProgramName(shared->FLAT_SHADER));
+	glBindVertexArray(bufferSets[0].vao);
+	glUniformMatrix4fv(0, 1, GL_FALSE, &vp.m[0][0]);
+	glDrawArrays(gridInfo.type, gridInfo.start[0], gridInfo.count[0]);
+
+	glUseProgram(shared->getProgramName(shared->MODEL_SHADER));
+	glBindVertexArray(bufferSets[1].vao);
+	glUniformMatrix4fv(0, 1, GL_FALSE, &vp.m[0][0]);
+	glUniform4f(1, cp.x, cp.y, cp.z, 0.0f);
+	glDrawElements(GL_TRIANGLES, treeInfo.count[1], GL_UNSIGNED_SHORT, 0);
+
+	if (selectedBranch != -1)
+		paintSelection();
+
+	glFlush();
 }
 
-void Editor::updateWireframe()
+/* This method assumes that the proper vertex array is already set. */
+void Editor::paintSelection()
 {
-	Entity *selection = scene.getSelected();
-	if (selection) {
-		int branch = scene.getSelectedBranch();
-		if (branch >= 0) {
-			int s = tmGetIBOStart(tree, branch);
-			int e = tmGetIBOEnd(tree, branch);
-			rs->setWireframe(selection->geometry.buffer, 0, s, e);
-		}
+	TMmat4 vp = camera.getVP();
+	GLvoid *p = (GLvoid *)(selection.start[1] * sizeof(unsigned short));
+
+	glUseProgram(shared->getProgramName(shared->WIREFRAME_SHADER));
+	glUniformMatrix4fv(0, 1, GL_FALSE, &vp.m[0][0]);
+	glPolygonOffset(-0.1f, -0.1f);
+	glEnable(GL_POLYGON_OFFSET_LINE);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glDrawElements(GL_TRIANGLES, selection.count[1], GL_UNSIGNED_SHORT, p);
+	glPolygonOffset(0.0f, 0.0f);
+	glDisable(GL_POLYGON_OFFSET_LINE);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+}
+
+void Editor::updateSelection()
+{
+	if (selectedBranch != -1) {
+		int start = tmGetIBOStart(tree, selectedBranch);
+		int end = tmGetIBOEnd(tree, selectedBranch);
+		selection.start[1] = start;
+		selection.count[1] = end - start;
 	}
 }
 
-void Editor::expandBuffer(GeometryComponent &g, RenderComponent &r)
+void Editor::expandBuffers()
 {
 	int status = 0;
 
 	while (status == 0) {
-		g.vertices.resize(g.vertices.size() + 1000);
-		g.triangles.resize(g.triangles.size() + 1000);
-		int v = g.vertices.size();
-		int e = g.triangles.size();
-		status = tmGenerateMesh(tree, &g.vertices[0], v,
-				&g.triangles[0], e);
+		vertices.resize(vertices.size() * 2);
+		indices.resize(indices.size() * 2);
+		int v = vertices.size();
+		int e = indices.size();
+		status = tmGenerateMesh(tree, &vertices[0], v, &indices[0], e);
 	}
 
-	r.triangleRange[1] = tmGetIBOSize(tree);
-	r.vertexRange[1] = tmGetVBOSize(tree);
-	rs->registerComponent(rs->load(g, 0), r);
+	createBuffers();
+	treeInfo.count[0] = tmGetVBOSize(tree);
+	treeInfo.count[1] = tmGetIBOSize(tree);
+}
+
+void Editor::createBuffers()
+{
+	glBindBuffer(GL_ARRAY_BUFFER, bufferSets[1].buffers[0]);
+	graphics::load(GL_ARRAY_BUFFER, vertices, GL_DYNAMIC_DRAW);
+	graphics::setVertexFormat(graphics::VERTEX_NORMAL);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferSets[1].buffers[1]);
+	graphics::load(GL_ELEMENT_ARRAY_BUFFER, indices, GL_DYNAMIC_DRAW);
+}
+
+void Editor::updateBuffers()
+{
+	int size = treeInfo.count[0];
+	size *= graphics::getSize(graphics::VERTEX_NORMAL) * sizeof(float);
+	glBindBuffer(GL_ARRAY_BUFFER, bufferSets[1].buffers[0]);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, size, &vertices[0]);
+
+	size = treeInfo.count[1] * sizeof(unsigned short);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferSets[1].buffers[1]);
+	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, size, &indices[0]);
 }
 
 void Editor::change()
 {
-	Entity *e = scene.getEntity(0);
-	GeometryComponent *g = &e->geometry;
-	RenderComponent *r = &e->renderComponent[0];
-	int vs = g->vertices.size();
-	int es = g->triangles.size();
-	int status = tmGenerateMesh(tree, &g->vertices[0], vs,
-			&g->triangles[0], es);
+	int vs = vertices.size();
+	int es = indices.size();
+	int status = tmGenerateMesh(tree, &vertices[0], vs, &indices[0], es);
 
 	if (status == 0)
-		expandBuffer(*g, *r);
+		expandBuffers();
 	else  {
 		int v = tmGetVBOSize(tree) * 6;
 		int i = tmGetIBOSize(tree);
 
-		if (vs > 8000 && es > 8000 && vs - 2000 > v && es - 2000 > i) {
-			g->vertices.resize(v + 1000);
-			g->triangles.resize(i + 1000);
-			r->triangleRange[1] = tmGetIBOSize(tree);
-			r->vertexRange[1] = tmGetVBOSize(tree);
-			rs->registerComponent(rs->load(*g, 0), *r);
+		if (vs > 8000 && es > 8000 && vs/2 > v && es/2 > i) {
+			vertices.resize(v + 1000);
+			indices.resize(i + 1000);
+			treeInfo.count[0] = tmGetVBOSize(tree);
+			treeInfo.count[1] = tmGetIBOSize(tree);
+			createBuffers();
 		} else {
-			rs->updateVertices(0, &g->vertices[0], 0, v);
-			rs->updateTriangles(0, &g->triangles[0], 0, i);
-			rs->setVertexRange(0, 0, 0, v/6);
-			rs->setTriangleRange(0, 0, 0, i);
-			r->triangleRange[1] = tmGetIBOSize(tree);
-			r->vertexRange[1] = tmGetVBOSize(tree);
+			treeInfo.count[0] = tmGetVBOSize(tree);
+			treeInfo.count[1] = tmGetIBOSize(tree);
+			updateBuffers();
 		}
 	}
 
-	updateWireframe();
+	updateSelection();
 	update();
 }
 
 void Editor::changeResolution(int i)
 {
-	tmSetResolution(tree, scene.getSelectedBranch(), i);
+	tmSetResolution(tree, selectedBranch, i);
 	change();
 }
 
 void Editor::changeSections(int i)
 {
-	tmSetCrossSections(tree, scene.getSelectedBranch(), i);
+	tmSetCrossSections(tree, selectedBranch, i);
 	change();
 }
 
 void Editor::changeRadius(double d)
 {
-	tmSetRadius(tree, scene.getSelectedBranch(), d);
+	tmSetRadius(tree, selectedBranch, d);
 	change();
 }
 
-void Editor::changeRadiusCurve(vector<TMvec3> c)
+void Editor::changeRadiusCurve(std::vector<TMvec3> c)
 {
-	tmSetRadiusCurve(tree, scene.getSelectedBranch(), &c[0], c.size());
+	tmSetRadiusCurve(tree, selectedBranch, &c[0], c.size());
 	change();
 }
 
-void Editor::changeBranchCurve(vector<TMvec3> c)
+void Editor::changeBranchCurve(std::vector<TMvec3> c)
 {
-	tmSetBranchCurve(tree, scene.getSelectedBranch(), &c[0], c.size());
+	tmSetBranchCurve(tree, selectedBranch, &c[0], c.size());
 	change();
 }
 
 void Editor::changeBranchDensity(double d)
 {
-	tmSetBranchDensity(tree, scene.getSelectedBranch(), d);
+	tmSetBranchDensity(tree, selectedBranch, d);
 	change();
 }

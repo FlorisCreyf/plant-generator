@@ -1,8 +1,8 @@
-#version 330 core
+#version 430 core
 
-layout (location = 0) in vec4 vPosition;
-layout (location = 1) in vec4 vColor;
-uniform mat4 vp;
+layout(location = 0) in vec4 vPosition;
+layout(location = 1) in vec4 vColor;
+layout(location = 0) uniform mat4 vp;
 out vec4 iColor;
 
 void main()

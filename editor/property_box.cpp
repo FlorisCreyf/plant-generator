@@ -1,28 +1,43 @@
-/*
- * Copyright (C) 2016 Floris Creyf
+/* TreeMaker: 3D tree model editor
+ * Copyright (C) 2016-2017  Floris Creyf
  *
- * This program is free software; you can redistribute it and/or modify
+ * TreeMaker is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
+ * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
+ *
+ * TreeMaker is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include "property_box.h"
 #include <stdio.h>
 
-PropertyBox::PropertyBox(QWidget *parent) : QWidget(parent)
+PropertyBox::PropertyBox(SharedResources *shared, QWidget *parent) :
+		QWidget(parent)
 {
+	this->shared = shared;
+	curveEditor = nullptr;
+	activeCurve = nullptr;
+
 	QVBoxLayout *layout = new QVBoxLayout(this);
-	QVBoxLayout *groupLayout;
-	QGroupBox *groupBox;
-	curveEditor = NULL;
-	activeCurve = NULL;
 	layout->setSizeConstraint(QLayout::SetMinimumSize);
 	layout->setSpacing(0);
 	layout->setMargin(0);
+	createGlobalBox(layout);
+	createLocalBox(layout);
+	layout->addStretch(1);
+}
 
-	groupBox = new QGroupBox(tr("Tree"));
-	groupLayout = new QVBoxLayout(groupBox);
+void PropertyBox::createGlobalBox(QVBoxLayout *layout)
+{
+	QGroupBox *globalGroup = new QGroupBox(tr("Tree"));
+	QVBoxLayout *groupLayout = new QVBoxLayout(globalGroup);
 	global = new QTableWidget(this);
 	crownBaseHeight = new QDoubleSpinBox;
 	apicalDominance = new QDoubleSpinBox;
@@ -37,14 +52,17 @@ PropertyBox::PropertyBox(QWidget *parent) : QWidget(parent)
 	configureTable(global);
 	groupLayout->addStretch(1);
 	groupLayout->addWidget(global);
-	layout->addWidget(groupBox);
+	layout->addWidget(globalGroup);
+}
 
+void PropertyBox::createLocalBox(QVBoxLayout *layout)
+{
 	localGroup = new QGroupBox(tr("Branch"));
-	groupLayout = new QVBoxLayout(localGroup);
+	QVBoxLayout *groupLayout = new QVBoxLayout(localGroup);
 	local = new QTableWidget(this);
 	resolution = new QSpinBox;
 	radius = new QDoubleSpinBox;
-	radiusCB = new CurveButtonWidget("Radius", this);
+	radiusCB = new CurveButton("Radius", shared, this);
 	sections = new QSpinBox;
 	branches = new QDoubleSpinBox;
 	local->setRowCount(4);
@@ -66,8 +84,6 @@ PropertyBox::PropertyBox(QWidget *parent) : QWidget(parent)
 	groupLayout->addWidget(local);
 	layout->addWidget(localGroup);
 	localGroup->hide();
-
-	layout->addStretch(1);
 }
 
 void PropertyBox::configureTable(QTableWidget *table)
@@ -111,15 +127,15 @@ QSize PropertyBox::sizeHint() const
 void PropertyBox::setCurve(vector<TMvec3> controls, QString name)
 {
 	if (name == "Radius") {
-		radiusCB->getCurveButton()->setControls(controls);
+		radiusCB->setControls(controls);
 		editor->changeRadiusCurve(controls);
 	}
 }
 
-void PropertyBox::toggleCurve(CurveButtonWidget *w)
+void PropertyBox::toggleCurve(CurveButton *w)
 {
 	activeCurve = w;
-	curveEditor->setCurve(w->getCurveButton()->getControls(), w->getName());
+	curveEditor->setCurve(w->getControls(), w->getName());
 }
 
 void PropertyBox::fill(TMtree tree, int branch)
@@ -155,7 +171,7 @@ void PropertyBox::fillCurveButtons(TMtree tree, int branch)
 	int size;
 	TMvec3 *l;
 	tmGetRadiusCurve(tree, branch, &l, &size);
-	radiusCB->getCurveButton()->setControls(l, size);
+	radiusCB->setControls(l, size);
 }
 
 void PropertyBox::bind(Editor *editor, CurveEditor *curveEditor)
@@ -182,6 +198,6 @@ void PropertyBox::bindCurveEditor()
 	connect(curveEditor, SIGNAL(curveChanged(vector<TMvec3>, QString)),
 			this, SLOT(setCurve(vector<TMvec3>, QString)));
 
-	connect(radiusCB, SIGNAL(selected(CurveButtonWidget *)), this,
-			SLOT(toggleCurve(CurveButtonWidget *)));
+	connect(radiusCB, SIGNAL(selected(CurveButton *)), this,
+			SLOT(toggleCurve(CurveButton *)));
 }

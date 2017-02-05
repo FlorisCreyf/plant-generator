@@ -1,14 +1,22 @@
-/*
- * Copyright (C) 2016 Floris Creyf
+/* TreeMaker: 3D tree model editor
+ * Copyright (C) 2016-2017  Floris Creyf
  *
- * This program is free software; you can redistribute it and/or modify
+ * TreeMaker is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
+ * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
+ *
+ * TreeMaker is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include "curve_editor.h"
-#include "primitives.h"
+#include "geometry.h"
 #include "curve.h"
 #include <QtGui/QMouseEvent>
 #include <QtGui/QTabBar>
@@ -17,8 +25,10 @@
 
 #define UNUSED(x) (void)(x)
 
-CurveEditor::CurveEditor(QWidget *parent) : QOpenGLWidget(parent)
+CurveEditor::CurveEditor(SharedResources *shared, QWidget *parent) :
+		QOpenGLWidget(parent)
 {
+	this->shared = shared;
 	enabled = false;
 	point = std::numeric_limits<size_t>::max();
 }
@@ -31,95 +41,62 @@ QSize CurveEditor::sizeHint() const
 void CurveEditor::initializeGL()
 {
 	initializeOpenGLFunctions();
-	rs.init();
 	onFloat();
-	connect(parent(), SIGNAL(topLevelChanged(bool)), this,
-			SLOT(onFloat()));
+	connect(parent(), SIGNAL(topLevelChanged(bool)), this, SLOT(onFloat()));
 
-	ShaderInfo shaders[] = {
-		{GL_VERTEX_SHADER, "shaders/flat.vert"},
-		{GL_FRAGMENT_SHADER, "shaders/flat.frag"},
-	};
-	rs.loadShaders(&shaders[0], 2);
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_LINE_SMOOTH);
+	glDepthMask(GL_TRUE);
+	glDepthFunc(GL_LEQUAL);
+	glDepthRange(0.0f, 1.0f);
 
+	glGenVertexArrays(1, &bufferSet.vao);
+	glBindVertexArray(bufferSet.vao);
+	glGenBuffers(2, bufferSet.buffers);
 	createInterface();
 }
 
 void CurveEditor::onFloat()
 {
-	QList<QTabBar *> l = parent()->parent()->findChildren<QTabBar *>();
-	if (l.size() > 0)
-		l[0]->setDrawBase(false);
+	QList<QTabBar *> list = parent()->parent()->findChildren<QTabBar *>();
+	if (list.size() > 0)
+		list[0]->setDrawBase(false);
 }
 
+/* Order matters here. */
 void CurveEditor::createInterface()
 {
-	int offset = 0;
-	int buffer;
-
-	ui.renderComponent.resize(4);
-	offset = createBackground(offset);
-	offset = createControlLines(offset);
-	offset = createCurve(offset);
-	ui.renderComponent[2].hidden = true;
-	ui.renderComponent[3].hidden = true;
-
-	buffer = rs.load(ui.geometry);
-	for (int i = 3; i >= 0; i--)
-		rs.registerComponent(buffer, ui.renderComponent[i]);
-}
-
-int CurveEditor::createBackground(int offset)
-{
-	{
-		TMvec3 color = {0.3f, 0.3f, 0.3f};
-		TMvec3 sectionColor = {0.3f, 0.3f, 0.3f};
-		RenderComponent *r = &ui.renderComponent[1];
-		createGrid(ui.geometry, 2, color, sectionColor, (TMmat4){
-				1.0f/4.0f, 0.0f, 0.0f, 0.0f,
-				0.0f, 1.0f/4.0f, 0.0f, 0.0f,
-				0.0f, 0.0f, 1.0f/4.0f, 0.0f,
-				0.5f, 0.0f, 0.5f, 1.0f});
-		r->type = RenderComponent::LINES;
-		r->vertexRange[0] = offset;
-		r->vertexRange[1] = ui.geometry.vertices.size() / 6;
-		offset = r->vertexRange[1];
-	}
+	Geometry geom;
 
 	{
 		TMvec3 a = {1.0f, 0.0f, 0.0f};
 		TMvec3 b = {0.0f, 0.0f, 1.0f};
 		TMvec3 center = {0.0f, 0.2f, 0.0f};
-		RenderComponent *r = &ui.renderComponent[0];
-		createPlane(ui.geometry, a, b, center);
-		r->type = RenderComponent::TRIANGLES;
-		r->vertexRange[0] = offset;
-		r->vertexRange[1] = ui.geometry.vertices.size() / 6;
-		r->triangleRange[1] = ui.geometry.triangles.size();
-		return r->vertexRange[1];
+		TMvec3 color = {0.32f, 0.32f, 0.32f};
+		planeInfo = geom.addPlane(a, b, center, color);
 	}
-}
 
-int CurveEditor::createControlLines(int offset)
-{
-	RenderComponent *r = &ui.renderComponent[2];
-	createLine(ui.geometry, controls, {0.6f, 0.6f, 0.6f});
-	r->type = RenderComponent::LINES;
-	r->vertexRange[0] = offset;
-	r->vertexRange[1] = ui.geometry.vertices.size() / 6;
-	r->pointRange[0] = offset;
-	r->pointRange[1] = ui.geometry.vertices.size() / 6;
-	return r->vertexRange[1];
-}
+	{
+		TMvec3 color = {0.3f, 0.3f, 0.3f};
+		TMmat4 t = {
+			1.0f/4.0f, 0.0f, 0.0f, 0.0f,
+			0.0f, 1.0f/4.0f, 0.0f, 0.0f,
+			0.0f, 0.0f, 1.0f/4.0f, 0.0f,
+			0.5f, 0.0f, 0.5f, 1.0f
+		};
+		gridInfo = geom.addGrid(2, color, color);
+		geom.transform(gridInfo.start[0], gridInfo.count[0], t);
+	}
 
-int CurveEditor::createCurve(int offset)
-{
-	RenderComponent *r = &ui.renderComponent[3];
-	createPath(ui.geometry, controls, 100, {0.2f, 0.46f, 0.6f});
-	r->type = RenderComponent::LINE_STRIP;
-	r->vertexRange[0] = offset;
-	r->vertexRange[1] = ui.geometry.vertices.size() / 6;
-	return r->vertexRange[1];
+	controlInfo = geom.addLine(controls, {0.6f, 0.6f, 0.6f});
+	curveInfo = geom.addBPath(controls, 100, {0.2f, 0.46f, 0.6f});
+
+        glBindBuffer(GL_ARRAY_BUFFER, bufferSet.buffers[0]);
+	graphics::load(GL_ARRAY_BUFFER, geom.vertices, GL_DYNAMIC_DRAW);
+	graphics::setVertexFormat(geom.getVertexFormat());
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferSet.buffers[1]);
+	graphics::load(GL_ELEMENT_ARRAY_BUFFER, geom.indices, GL_DYNAMIC_DRAW);
 }
 
 void CurveEditor::resizeGL(int width, int height)
@@ -169,7 +146,7 @@ void CurveEditor::insertCurve(int i, float x, float y)
 	curve[3] = {maxX, -0.3f, y};
 	controls.insert(controls.begin()+i-1, curve, &curve[4]);
 
-	updateCurve();
+	createInterface();
 	emit curveChanged(controls, curveName);
 	update();
 }
@@ -222,9 +199,9 @@ void CurveEditor::mouseMoveEvent(QMouseEvent *event)
 		placeInnerControl(x, y);
 
 	if (insertIndex == std::numeric_limits<size_t>::max())
-		drawCurve();
-	else
 		updateCurve();
+	else
+		createInterface();
 
 	emit curveChanged(controls, curveName);
 	update();
@@ -232,24 +209,17 @@ void CurveEditor::mouseMoveEvent(QMouseEvent *event)
 
 void CurveEditor::updateCurve()
 {
-	int start = ui.renderComponent[2].vertexRange[0];
-	ui.geometry.vertices.resize(start * 6);
-	start = createControlLines(start);
-	start = createCurve(start);
-	ui.renderComponent[2].hidden = false;
-	ui.renderComponent[3].hidden = false;
-	rs.load(ui.geometry, 0);
-	for (int i = 3; i >= 0; i--)
-		rs.registerComponent(0, ui.renderComponent[i]);
-}
+	Geometry geom;
+	int start = controlInfo.start[0];
+	int index = start * graphics::getSize(graphics::VERTEX_COLOR);
 
-void CurveEditor::drawCurve()
-{
-	int start = ui.renderComponent[2].vertexRange[0] * 6;
-	GeometryComponent g;
-	createLine(g, controls, {0.6, 0.6, 0.6});
-	createPath(g, controls, 100, {.2f, 0.46f, 0.6f});
-	rs.updateVertices(0, &g.vertices[0], start, g.vertices.size());
+	controlInfo = geom.addLine(controls, {0.6, 0.6, 0.6});
+	curveInfo = geom.addBPath(controls, 100, {.2f, 0.46f, 0.6f});
+	controlInfo.start[0] += start;
+	curveInfo.start[0] += start;
+
+	glBindBuffer(GL_ARRAY_BUFFER, bufferSet.buffers[0]);
+	graphics::update(GL_ARRAY_BUFFER, index, geom.vertices);
 }
 
 bool CurveEditor::reinsertCurve(float x)
@@ -257,7 +227,7 @@ bool CurveEditor::reinsertCurve(float x)
 	if (x > controls[insertIndex-2].x) {
 		auto index = controls.begin() + insertIndex;
 		controls.insert(index, &curve[0], &curve[4]);
-		updateCurve();
+		createInterface();
 		insertIndex = std::numeric_limits<size_t>::max();
 		return true;
 	} else
@@ -352,21 +322,40 @@ void CurveEditor::placeTerminalControl(bool first, float y)
 
 void CurveEditor::paintGL()
 {
-	GlobalUniforms gu;
-	gu.vp = (TMmat4){
-			1.8f, 0.0f, 0.0f, 0.0f,
-			0.0f, 0.0f, 0.9f, 0.0f,
-			0.0f, 1.8f, 0.0f, 0.0f,
-			-0.9f, -0.9f, 0.0f, 1.0f};
-	rs.render(gu, 0.3f);
+	TMmat4 vp = {
+		1.8f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.9f, 0.0f,
+		0.0f, 1.8f, 0.0f, 0.0f,
+		-0.9f, -0.9f, 0.0f, 1.0f
+	};
+
+	glClearColor(0.3f, 0.3f, 0.3f, 1.0);
+	glClearDepth(1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glUseProgram(shared->getProgramName(shared->FLAT_SHADER));
+	glBindVertexArray(bufferSet.vao);
+	glUniformMatrix4fv(0, 1, GL_FALSE, &vp.m[0][0]);
+	glDrawElements(GL_TRIANGLES, planeInfo.count[1], GL_UNSIGNED_SHORT, 0);
+	glDrawArrays(gridInfo.type, gridInfo.start[0], gridInfo.count[0]);
+	if (enabled)
+		paintCurve();
+	glFlush();
 }
 
-void CurveEditor::setCurve(vector<TMvec3> controls, QString name)
+void CurveEditor::paintCurve()
+{
+	glPointSize(8);
+	glDrawArrays(curveInfo.type, curveInfo.start[0], curveInfo.count[0]);
+	glDrawArrays(GL_LINES, controlInfo.start[0], controlInfo.count[0]);
+	glDrawArrays(GL_POINTS, controlInfo.start[0], controlInfo.count[0]);
+}
+
+void CurveEditor::setCurve(std::vector<TMvec3> controls, QString name)
 {
 	parentWidget()->setWindowTitle(name + " curve");
 	this->controls = controls;
 	this->curveName = name;
-	updateCurve();
+	createInterface();
 	update();
 }
 
@@ -378,7 +367,5 @@ void CurveEditor::setEnabled(bool enabled)
 		parentWidget()->setWindowTitle("Curve");
 
 	this->enabled = enabled;
-	rs.setHidden(0, 0, !enabled);
-	rs.setHidden(0, 1, !enabled);
 	update();
 }

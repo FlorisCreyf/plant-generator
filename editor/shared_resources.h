@@ -1,5 +1,5 @@
 /* TreeMaker: 3D tree model editor
- * Copyright (C) 2016-2017  Floris Creyf
+ * Copyright (C) 2017  Floris Creyf
  *
  * TreeMaker is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,27 +15,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "window.h"
-#include <QApplication>
-#include <QtGui/QTabBar>
+#ifndef SHARED_RESOURCES_H
+#define SHARED_RESOURCES_H
 
-int main(int argc, char *argv[])
-{
-	QSurfaceFormat format;
-	format.setVersion(4, 3);
-	format.setSamples(4);
-	format.setProfile(QSurfaceFormat::CoreProfile);
-	format.setRenderableType(QSurfaceFormat::OpenGL);
-	format.setDepthBufferSize(24);
-        format.setStencilBufferSize(8);
-	format.setAlphaBufferSize(8);
-	QSurfaceFormat::setDefaultFormat(format);
+#define GL_GLEXT_PROTOTYPES
 
-	QApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
-	QApplication app(argc, argv);
+#include <QOpenGLFunctions>
 
-	Window window;
-	window.show();
+class SharedResources {
+public:
+        enum Program {
+                MODEL_SHADER,
+                LINE_SHADER,
+                FLAT_SHADER,
+                WIREFRAME_SHADER
+        };
 
-	return app.exec();
-}
+        void create();
+        GLuint getProgramName(Program program);
+
+private:
+        GLuint programs[4] = {0};
+};
+
+#endif /* SHARED_RESOURCES_H */

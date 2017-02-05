@@ -1,10 +1,10 @@
-#version 330 core
+#version 430 core
 
-layout (location = 0) in vec4 point;
-layout (location = 1) in vec4 normal;
+layout(location = 0) in vec4 point;
+layout(location = 1) in vec4 normal;
 
-uniform mat4 vp;
-uniform vec4 cameraPosition;
+layout(location = 0) uniform mat4 vp;
+layout(location = 1) uniform vec4 cameraPosition;
 
 out vec3 iColor;
 
