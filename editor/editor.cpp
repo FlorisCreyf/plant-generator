@@ -30,7 +30,6 @@ Editor::Editor(SharedResources *shared, QWidget *parent) : QOpenGLWidget(parent)
 {
 	this->shared = shared;
 	ctrl = shift = midButton = false;
-	camera.action = Camera::NONE;
 	selectedBranch = -1;
 	setFocus();
 }
