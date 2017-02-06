@@ -1,6 +1,6 @@
 # TreeMaker — [www.treemaker.xyz](http://www.treemaker.xyz)
 
-TreeMaker is a program for creating tree models. The project is divided into a tree generator component and an editor component. The tree generator is written in C and handles generating geometry. The editor is written in C++ and facilitates handcrafting trees. Creating a tree model using the generator requires several steps:
+TreeMaker is a program for creating tree models. The project is divided into a tree generator component and an editor component. The tree generator is written in C and handles generating geometry. The editor is written in C++ and facilitates handcrafting trees. Creating a tree model using the generator library requires several steps:
 
 1. Create a tree object and set its initial properties.
 2. Generate an underlying tree structure with ``tmGenerateStructure(tree)``.
@@ -9,9 +9,11 @@ TreeMaker is a program for creating tree models. The project is divided into a t
 ![treemaker](http://www.treemaker.xyz/window.png)
 
 ## Installation
-The editor requires Qt5 developer libraries and uses qmake to generate a makefile from `treemaker.pro`. To build the project:
+Qt5 developer libraries are required to build the editor. Furthermore, the project uses qmake to generate a makefile from `treemaker.pro`, and images used by the application are stored in a separate repository. To build the project:
 
 ```sh
-cd ${project/directory}
+sudo dnf install qt-devel
+cd ~/treemaker
+git submodule update --init --recursive
 make all
 ```
