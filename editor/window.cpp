@@ -24,21 +24,8 @@ Window::Window()
 {
 	editor = new Editor(&shared, this);
 	this->setCentralWidget(editor);
-
-	auto areas = Qt::LeftDockWidgetArea|Qt::RightDockWidgetArea;
-
-	QDockWidget *dockWidget = new QDockWidget(tr("Properties"), this);
-        dockWidget->setAllowedAreas(areas);
-        PropertyBox *propertyBox = new PropertyBox(&shared, this);
-        dockWidget->setWidget(propertyBox);
-        this->addDockWidget(static_cast<Qt::DockWidgetArea>(1), dockWidget);
-
-	dockWidget = new QDockWidget(tr("Curve"), this);
-	dockWidget->setAllowedAreas(areas);
-	CurveEditor *curveEditor = new CurveEditor(&shared, this);
-	dockWidget->setWidget(curveEditor);
-	this->addDockWidget(static_cast<Qt::DockWidgetArea>(1), dockWidget);
-
+	createPropertyBox();
+	createCurveEditor();
 	propertyBox->bind(editor, curveEditor);
 	widget.setupUi(this);
 
@@ -47,6 +34,31 @@ Window::Window()
 	menuBar()->insertMenu(widget.menuHelp->menuAction(), menu);
 	connect(widget.actionReportIssue, SIGNAL(triggered()), this,
 			SLOT(reportIssue()));
+}
+
+void Window::createPropertyBox()
+{
+	auto areas = Qt::LeftDockWidgetArea|Qt::RightDockWidgetArea;
+	QScrollArea *scrollArea = new QScrollArea();
+	QDockWidget *dockWidget = new QDockWidget(tr("Properties"), this);
+	propertyBox = new PropertyBox(&shared, this);
+	dockWidget->setAllowedAreas(areas);
+        dockWidget->setWidget(scrollArea);
+	dockWidget->setMinimumWidth(200);
+	scrollArea->setWidget(propertyBox);
+	scrollArea->setWidgetResizable(true);
+	scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+	this->addDockWidget(static_cast<Qt::DockWidgetArea>(1), dockWidget);
+}
+
+void Window::createCurveEditor()
+{
+	auto areas = Qt::LeftDockWidgetArea|Qt::RightDockWidgetArea;
+	QDockWidget *dockWidget = new QDockWidget(tr("Curve"), this);
+	curveEditor = new CurveEditor(&shared, this);
+	dockWidget->setAllowedAreas(areas);
+	dockWidget->setWidget(curveEditor);
+	this->addDockWidget(static_cast<Qt::DockWidgetArea>(1), dockWidget);
 }
 
 void Window::openDialogBox()

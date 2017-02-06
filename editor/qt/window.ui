@@ -56,13 +56,13 @@
 	margin-top:0;
 } QWidget {
         color:#ddd;
-        border-image: none;
-        border: 0px transparent black;
-        outline: 0;
+        border-image:none;
+        border:0px transparent black;
+        outline:0;
 } QDockWidget {
 	background:#666;
-        titlebar-normal-icon: url(&quot;resources/popup.png&quot;);
-	titlebar-close-icon: url(&quot;resources/close.png&quot;);
+        titlebar-normal-icon:url(&quot;resources/popup.png&quot;);
+	titlebar-close-icon:url(&quot;resources/close.png&quot;);
 } QDockWidget::title {
 	background:#3d3d3d;
         font-size:12px;
@@ -77,40 +77,44 @@
 } QMainWindow::separator {
 	background-color:#666;
 } QDockWidget::close-button {
-        subcontrol-position: top right;
-        subcontrol-origin: margin;
-        position: absolute;
-        top: 0px; right: 4px; bottom: 0px;
-        width: 15px;
+        subcontrol-position:top right;
+        subcontrol-origin:margin;
+        position:absolute;
+        top:0px;
+        right:4px;
+        bottom:0px;
+        width:15px;
 } QDockWidget::float-button {
-        subcontrol-position: top right;
-        subcontrol-origin: margin;
-        position: absolute;
-        top: 0px; right: 22px; bottom: 0px;
-        width: 15px;
+        subcontrol-position:top right;
+        subcontrol-origin:margin;
+        position:absolute;
+        top:0px;
+        right:22px;
+        bottom:0px;
+        width:15px;
 } QLabel {
 	height:30px;
         font-size:12px;
         color:#eee;
 } QSpinBox, QDoubleSpinBox {
         font-size:12px;
-	padding-right: 15px;
-	background: #555;
-	border: 1px solid transparent;
+	padding-right:0px;
+	background:#555;
+	border:1px solid transparent;
 } QSpinBox::up-button, QDoubleSpinBox::up-button {
-        subcontrol-position: top right;
+        subcontrol-position:top right;
 	background-color:#4a4a4a;
 } QSpinBox::down-button, QDoubleSpinBox::down-button {
-	subcontrol-position: bottom right;
+	subcontrol-position:bottom right;
 	background-color:#4a4a4a;
 } QSpinBox::up-arrow, QDoubleSpinBox::up-arrow {
-        image: url(&quot;resources/uparrow.png&quot;);
-        width: 7px;
-        height: 6px;
+        image:url(&quot;resources/uparrow.png&quot;);
+        width:7px;
+        height:6px;
 } QSpinBox::down-arrow, QDoubleSpinBox::down-arrow {
-        image: url(&quot;resources/downarrow.png&quot;);
-        width: 7px;
-        height: 6px;
+        image:url(&quot;resources/downarrow.png&quot;);
+        width:7px;
+        height:6px;
 } QSpinBox:disabled, QDoubleSpinBox:disabled {
 	background:#5a5a5a;
 } QSpinBox::up-button:disabled, QSpinBox::down-button:disabled,
@@ -140,7 +144,7 @@
 	background:transparent;
 } QTabBar {
 	background:#333;
-	qproperty-drawBase: 0;
+	qproperty-drawBase:0;
 } QTabBar::tab {
 	background:#333;
 	color:#aaa;
@@ -151,8 +155,22 @@
 	background:#222;
 } QWidget#CurveButtonWidget {
 	border:solid 1px #fff;
-}
-</string>
+} QScrollArea {
+        background:transparent;
+} QScrollBar:vertical {
+        width:8px;
+        background:#666;
+} QScrollBar::handle:vertical {
+        background:#888;
+        border:0;
+        min-height:20px;
+} QScrollBar::add-line:vertical {
+        border:0;
+        background:#666;
+} QScrollBar::sub-line:vertical {
+        border:0;
+        background:#666;
+}</string>
   </property>
   <property name="documentMode">
    <bool>false</bool>
@@ -202,7 +220,6 @@
    <addaction name="menuEdit"/>
    <addaction name="menuHelp"/>
   </widget>
-  
   <action name="actionOpen">
    <property name="enabled">
     <bool>false</bool>

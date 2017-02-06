@@ -52,6 +52,7 @@ void PropertyBox::createGlobalBox(QVBoxLayout *layout)
 	configureTable(global);
 	groupLayout->addStretch(1);
 	groupLayout->addWidget(global);
+	globalGroup->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
 	layout->addWidget(globalGroup);
 }
 
@@ -82,31 +83,31 @@ void PropertyBox::createLocalBox(QVBoxLayout *layout)
 	configureTable(local);
 	groupLayout->addStretch(1);
 	groupLayout->addWidget(local);
-	layout->addWidget(localGroup);
 	localGroup->hide();
+	localGroup->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
+	layout->addWidget(localGroup);
 }
 
 void PropertyBox::configureTable(QTableWidget *table)
 {
-	QHeaderView *header;
-
 	table->horizontalHeader()->hide();
 	table->verticalHeader()->hide();
 	table->setShowGrid(false);
 	table->setFocusPolicy(Qt::NoFocus);
 	table->setEditTriggers(QAbstractItemView::NoEditTriggers);
 	table->setSelectionMode(QAbstractItemView::NoSelection);
-
 	table->setMaximumHeight(24*table->rowCount());
 	for (int i = 0; i < table->rowCount(); i++)
 		table->setRowHeight(i, 24);
 
-	header = table->horizontalHeader();
-	if (table->columnCount() == 3)
-		header->setSectionResizeMode(2, QHeaderView::Fixed);
-	header->setSectionResizeMode(1, QHeaderView::Stretch);
-	header->setSectionResizeMode(0, QHeaderView::ResizeToContents);
-	header->resizeSection(2, 30);
+	{
+		QHeaderView *header = table->horizontalHeader();
+		if (table->columnCount() == 3)
+			header->setSectionResizeMode(2, QHeaderView::Fixed);
+		header->setSectionResizeMode(1, QHeaderView::Stretch);
+		header->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+		header->resizeSection(2, 30);
+	}
 }
 
 QWidget *PropertyBox::createCenteredWidget(QWidget *widget)
@@ -169,15 +170,15 @@ void PropertyBox::fill(TMtree tree, int branch)
 void PropertyBox::fillCurveButtons(TMtree tree, int branch)
 {
 	int size;
-	TMvec3 *l;
-	tmGetRadiusCurve(tree, branch, &l, &size);
-	radiusCB->setControls(l, size);
+	TMvec3 *curve;
+	tmGetRadiusCurve(tree, branch, &curve, &size);
+	radiusCB->setControls(curve, size);
 }
 
 void PropertyBox::bind(Editor *editor, CurveEditor *curveEditor)
 {
 	this->curveEditor = curveEditor;
-	this->editor =editor;
+	this->editor = editor;
 
 	connect(editor, SIGNAL(selectionChanged(TMtree, int)), this,
 			SLOT(fill(TMtree, int)));
@@ -197,7 +198,6 @@ void PropertyBox::bindCurveEditor()
 {
 	connect(curveEditor, SIGNAL(curveChanged(vector<TMvec3>, QString)),
 			this, SLOT(setCurve(vector<TMvec3>, QString)));
-
 	connect(radiusCB, SIGNAL(selected(CurveButton *)), this,
 			SLOT(toggleCurve(CurveButton *)));
 }

@@ -38,6 +38,11 @@ private:
 	Ui::Window widget;
 	SharedResources shared;
 	Editor *editor;
+	PropertyBox *propertyBox;
+	CurveEditor *curveEditor;
+
+	void createPropertyBox();
+	void createCurveEditor();
 };
 
 #endif /* WINDOW_H */
