@@ -65,20 +65,27 @@ private:
 	size_t insertIndex;
 	size_t point;
 
+	GLuint pointTex;
+
 	QString curveName;
 	bool enabled;
 	int height;
 	int width;
+	int margin = 20;
 
+	void loadTextures();
 	void createInterface();
 	void updateCurve();
-	void paintCurve();
 	void insertCurve(int, float, float);
 	bool reinsertCurve(float);
 	bool omitCurve(float);
 	void placeOuterControl(float, float);
 	void placeInnerControl(float, float);
 	void placeTerminalControl(bool, float);
+	void toDeviceCoordinates(float &x, float &y, int width, int height);
+	void paintInterface();
+	void paintCurve(TMmat4 &vp);
+	TMmat4 createVP();
 };
 
 #endif /* CURVE_EDITOR_H */

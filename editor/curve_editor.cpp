@@ -44,12 +44,16 @@ void CurveEditor::initializeGL()
 	onFloat();
 	connect(parent(), SIGNAL(topLevelChanged(bool)), this, SLOT(onFloat()));
 
+	glPointSize(8);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_LINE_SMOOTH);
 	glDepthMask(GL_TRUE);
-	glDepthFunc(GL_LEQUAL);
+	glDepthFunc(GL_ALWAYS);
 	glDepthRange(0.0f, 1.0f);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+	loadTextures();
 	glGenVertexArrays(1, &bufferSet.vao);
 	glBindVertexArray(bufferSet.vao);
 	glGenBuffers(2, bufferSet.buffers);
@@ -63,6 +67,20 @@ void CurveEditor::onFloat()
 		list[0]->setDrawBase(false);
 }
 
+void CurveEditor::loadTextures()
+{
+	glGenTextures(1, &pointTex);
+	glBindTexture(GL_TEXTURE_2D, pointTex);
+	QImage image("resources/dot.png");
+	image.convertToFormat(QImage::Format_RGB32);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width(), image.height(),
+			0,  GL_BGRA, GL_UNSIGNED_BYTE, image.bits());
+	glTexEnvi(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+	glEnable(GL_TEXTURE_2D);
+}
+
 /* Order matters here. */
 void CurveEditor::createInterface()
 {
@@ -72,7 +90,7 @@ void CurveEditor::createInterface()
 		TMvec3 a = {1.0f, 0.0f, 0.0f};
 		TMvec3 b = {0.0f, 0.0f, 1.0f};
 		TMvec3 center = {0.0f, 0.2f, 0.0f};
-		TMvec3 color = {0.32f, 0.32f, 0.32f};
+		TMvec3 color = {0.33f, 0.33f, 0.33f};
 		planeInfo = geom.addPlane(a, b, center, color);
 	}
 
@@ -84,7 +102,7 @@ void CurveEditor::createInterface()
 			0.0f, 0.0f, 1.0f/4.0f, 0.0f,
 			0.5f, 0.0f, 0.5f, 1.0f
 		};
-		gridInfo = geom.addGrid(2, color, color);
+		gridInfo = geom.addGrid(3, color, color);
 		geom.transform(gridInfo.start[0], gridInfo.count[0], t);
 	}
 
@@ -113,8 +131,11 @@ void CurveEditor::mousePressEvent(QMouseEvent *event)
 
 	QPoint p = event->pos();
 	for (unsigned i = 0; i < controls.size(); i++) {
-		int x = (controls[i].x * 0.9f + 0.05f) * width;
-		int y = (height - (controls[i].z * 0.9f + 0.05f) * height);
+		int w = width - margin;
+		int h = height - margin;
+		int x = (controls[i].x) * w + margin/2;
+		int y = (h - (controls[i].z) * h) + margin/2;
+
 		if (sqrt(pow(p.x() - x, 2) + pow(p.y() - y, 2)) < 8) {
 			point = i;
 			insertIndex = std::numeric_limits<size_t>::max();
@@ -124,10 +145,10 @@ void CurveEditor::mousePressEvent(QMouseEvent *event)
 	}
 }
 
-void toDeviceCoordinates(float &x, float &y, int width, int height)
+void CurveEditor::toDeviceCoordinates(float &x, float &y, int width, int height)
 {
-	x = x/(width - 1.0f)*10.0f/9.0f - 1.0f/18.0f;
-	y = (1.0f - y/(height - 1.0f))*10.0f/9.0f - 1.0f/18.0f;
+	x = (x-10)/(width - 1 - margin);
+	y = (1.0f - (y-10)/(height - 1 - margin));
 }
 
 void CurveEditor::insertCurve(int i, float x, float y)
@@ -320,39 +341,60 @@ void CurveEditor::placeTerminalControl(bool first, float y)
 	controls[point].z = y;
 }
 
+TMmat4 CurveEditor::createVP()
+{
+	float w = QWidget::width();
+	float h = QWidget::height();
+	float marginWRatio = margin / w;
+	float marginHRatio = margin / h;
+	float planeWRatio = (w - margin) / w;
+	float planeHRatio = (h - margin) / h;
+
+	return (TMmat4){
+		2.0f * planeWRatio, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.9f, 0.0f,
+		0.0f, 2.0f * planeHRatio, 0.0f, 0.0f,
+		-1.0f + marginWRatio, -1.0f + marginHRatio, 0.0f, 1.0f
+	};
+}
+
 void CurveEditor::paintGL()
 {
-	TMmat4 vp = {
-		1.8f, 0.0f, 0.0f, 0.0f,
-		0.0f, 0.0f, 0.9f, 0.0f,
-		0.0f, 1.8f, 0.0f, 0.0f,
-		-0.9f, -0.9f, 0.0f, 1.0f
-	};
-
-	glClearColor(0.3f, 0.3f, 0.3f, 1.0);
+	glClearColor(0.32f, 0.32f, 0.32f, 1.0);
 	glClearDepth(1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	if (QWidget::height() > margin*2)
+	 	paintInterface();
+
+	glFlush();
+}
+
+void CurveEditor::paintInterface()
+{
+	TMmat4 vp = createVP();
 	glUseProgram(shared->getProgramName(shared->FLAT_SHADER));
 	glBindVertexArray(bufferSet.vao);
 	glUniformMatrix4fv(0, 1, GL_FALSE, &vp.m[0][0]);
 	glDrawElements(GL_TRIANGLES, planeInfo.count[1], GL_UNSIGNED_SHORT, 0);
 	glDrawArrays(gridInfo.type, gridInfo.start[0], gridInfo.count[0]);
 	if (enabled)
-		paintCurve();
-	glFlush();
+		paintCurve(vp);
 }
 
-void CurveEditor::paintCurve()
+void CurveEditor::paintCurve(TMmat4 &vp)
 {
-	glPointSize(8);
 	glDrawArrays(curveInfo.type, curveInfo.start[0], curveInfo.count[0]);
 	glDrawArrays(GL_LINES, controlInfo.start[0], controlInfo.count[0]);
+	glBindTexture(GL_TEXTURE_2D, pointTex);
+	glUseProgram(shared->getProgramName(shared->POINT_SHADER));
+	glUniformMatrix4fv(0, 1, GL_FALSE, &vp.m[0][0]);
 	glDrawArrays(GL_POINTS, controlInfo.start[0], controlInfo.count[0]);
 }
 
 void CurveEditor::setCurve(std::vector<TMvec3> controls, QString name)
 {
-	parentWidget()->setWindowTitle(name + " curve");
+	parentWidget()->setWindowTitle(name + " Curve");
 	this->controls = controls;
 	this->curveName = name;
 	createInterface();
@@ -362,7 +404,7 @@ void CurveEditor::setCurve(std::vector<TMvec3> controls, QString name)
 void CurveEditor::setEnabled(bool enabled)
 {
 	if (enabled && curveName.size() > 0)
-		parentWidget()->setWindowTitle(curveName + " curve");
+		parentWidget()->setWindowTitle(curveName + " Curve");
 	else
 		parentWidget()->setWindowTitle("Curve");
 

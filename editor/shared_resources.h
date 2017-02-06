@@ -28,7 +28,8 @@ public:
                 MODEL_SHADER,
                 LINE_SHADER,
                 FLAT_SHADER,
-                WIREFRAME_SHADER
+                WIREFRAME_SHADER,
+                POINT_SHADER
         };
 
         void create();

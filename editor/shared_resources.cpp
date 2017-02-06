@@ -30,6 +30,8 @@ void SharedResources::create()
 			"shaders/flat.frag");
 	GLuint vertWireframe = graphics::buildShader(GL_VERTEX_SHADER,
 			"shaders/solid.vert");
+	GLuint fragPoint = graphics::buildShader(GL_FRAGMENT_SHADER,
+			"shaders/point.frag");
 
 	{
 		GLuint shaders[] = {vertModel, fragModel};
@@ -42,6 +44,10 @@ void SharedResources::create()
 	{
 		GLuint shaders[] = {vertWireframe, fragFlat};
 		programs[WIREFRAME_SHADER] = graphics::buildProgram(shaders, 2);
+	}
+	{
+		GLuint shaders[] = {vertFlat, fragPoint};
+		programs[POINT_SHADER] = graphics::buildProgram(shaders, 2);
 	}
 }
 
