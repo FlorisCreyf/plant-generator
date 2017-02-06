@@ -147,16 +147,16 @@ void PropertyBox::fill(TMtree tree, int branch)
 		localGroup->hide();
 		curveEditor->setEnabled(false);
 		return;
+	} else {
+		localGroup->show();
+		curveEditor->setEnabled(true);
 	}
-
+	
 	resolution->setValue(tmGetResolution(tree, branch));
 	sections->setValue(tmGetCrossSections(tree, branch));
 	radius->setValue(tmGetRadius(tree, branch));
 	branches->setValue(tmGetBranchDensity(tree, branch));
 	fillCurveButtons(tree, branch);
-
-	localGroup->show();
-	curveEditor->setEnabled(true);
 
 	if (activeCurve)
 		activeCurve->select();
