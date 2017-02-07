@@ -73,7 +73,6 @@ private:
 	int width;
 	int margin = 20;
 
-	void loadTextures();
 	void createInterface();
 	void updateCurve();
 	void insertCurve(int, float, float);

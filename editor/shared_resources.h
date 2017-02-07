@@ -22,7 +22,7 @@
 
 #include <QOpenGLFunctions>
 
-class SharedResources {
+class SharedResources : protected QOpenGLFunctions {
 public:
         enum Program {
                 MODEL_SHADER,
@@ -31,12 +31,20 @@ public:
                 WIREFRAME_SHADER,
                 POINT_SHADER
         };
+        enum Texture {
+                DOT_TEX
+        };
 
         void create();
         GLuint getProgramName(Program program);
+        GLuint getTextureName(Texture texture);
 
 private:
-        GLuint programs[4] = {0};
+        GLuint programs[5] = {0};
+        GLuint textures[1] = {0};
+
+        void createPrograms();
+        void createTextures();
 };
 
 #endif /* SHARED_RESOURCES_H */

@@ -21,6 +21,7 @@
 #include "struct_modifier.h"
 #include "tree_data.h"
 #include "array.h"
+#include "node.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
@@ -71,6 +72,27 @@ Node *getNode(Node *n, int id)
 {
 	int i = 0;
 	return findNode(n, &i, id);
+}
+
+int tmGetBranchLineSize(TMtree tree, int branch)
+{
+	Node *n = getNode(tree->root, branch);
+	return n ? n->lineCount + 1 : 0;
+}
+
+void tmGetBranchLine(TMtree tree, int branch, TMvec3 *data)
+{
+	Node *n = getNode(tree->root, branch);
+	int i;
+
+	if (n) {
+		for (i = 0; i < n->lineCount; i++) {
+			data[i] = n->lines[i].start;
+			data[i] = tmAddVec3(&data[i], &n->globPos);
+		}
+		data[i] = getLineEndPoint(&n->lines[i-1]);
+		data[i] = tmAddVec3(&data[i], &n->globPos);
+	}
 }
 
 void tmSetRadius(TMtree tree, int id, float radius)

@@ -19,6 +19,7 @@
 #define CAMERA_H
 
 #include "vector.h"
+#include <utility>
 
 class Camera {
 public:
@@ -32,6 +33,7 @@ public:
 	TMvec3 getPosition();
 	TMmat4 getVP();
 	TMvec3 getRayDirection(int x, int y);
+	std::pair<int, int> getViewport();
 
 	enum Action {
 		ZOOM, ROTATE, PAN, NONE

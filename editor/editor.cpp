@@ -56,10 +56,13 @@ void Editor::initializeGL()
 	glDepthMask(GL_TRUE);
 	glDepthFunc(GL_LEQUAL);
 	glDepthRange(0.0f, 1.0f);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	shared->create();
 	initializeTree();
 	initializeGrid();
+	intializeLines();
 }
 
 void Editor::resizeGL(int width, int height)
@@ -116,6 +119,42 @@ void Editor::initializeTree()
 	emit selectionChanged(tree, -1);
 }
 
+void Editor::intializeLines()
+{
+	GLsizeiptr size = sizeof(TMvec3) * maxLines;
+	glGenVertexArrays(1, &bufferSets[2].vao);
+	glBindVertexArray(bufferSets[2].vao);
+	glGenBuffers(1, bufferSets[2].buffers);
+	glBindBuffer(GL_ARRAY_BUFFER, bufferSets[2].buffers[0]);
+	glBufferData(GL_ARRAY_BUFFER, size, nullptr, GL_DYNAMIC_DRAW);
+	graphics::setVertexFormat(graphics::VERTEX_COLOR);
+}
+
+void Editor::updateLines(int branch)
+{
+	Geometry geom;
+	const int size = tmGetBranchLineSize(tree, 0);
+	TMvec3 curve[size];
+	tmGetBranchLine(tree, branch, &curve[0]);
+	std::vector<TMvec3> points(curve, curve+size);
+	lineInfo = geom.addLine(points, {0.76, 0.54, 0.29});
+
+	glBindBuffer(GL_ARRAY_BUFFER, bufferSets[2].buffers[0]);
+	if (points.size() > maxLines) {
+		maxLines *= 2;
+		GLsizeiptr size = sizeof(TMvec3) * maxLines;
+		glBufferData(GL_ARRAY_BUFFER, size, nullptr, GL_DYNAMIC_DRAW);
+		graphics::setVertexFormat(geom.getVertexFormat());
+	} else if (maxLines > minLines && points.size()/2 < maxLines ) {
+		maxLines /= 2;
+		GLsizeiptr size = sizeof(TMvec3) * maxLines;
+		glBufferData(GL_ARRAY_BUFFER, size, nullptr, GL_DYNAMIC_DRAW);
+		graphics::setVertexFormat(geom.getVertexFormat());
+	}
+
+	graphics::update(GL_ARRAY_BUFFER, 0, geom.vertices);
+}
+
 void Editor::keyPressEvent(QKeyEvent *event)
 {
 	switch (event->key()) {
@@ -155,6 +194,7 @@ void Editor::selectBranch(int x, int y)
 			selection.start[1] = start;
 			selection.count[1] = end - start;
 			selectedBranch = branch;
+			updateLines(branch);
 			emit selectionChanged(tree, branch);
 			return;
 		}
@@ -217,14 +257,10 @@ void Editor::paintGL()
 	TMmat4 vp = camera.getVP();
 	TMvec3 cp = camera.getPosition();
 
+	glDepthFunc(GL_LEQUAL);
 	glClearColor(0.5f, 0.5f, 0.5f, 1.0);
 	glClearDepth(1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	glUseProgram(shared->getProgramName(shared->FLAT_SHADER));
-	glBindVertexArray(bufferSets[0].vao);
-	glUniformMatrix4fv(0, 1, GL_FALSE, &vp.m[0][0]);
-	glDrawArrays(gridInfo.type, gridInfo.start[0], gridInfo.count[0]);
 
 	glUseProgram(shared->getProgramName(shared->MODEL_SHADER));
 	glBindVertexArray(bufferSets[1].vao);
@@ -233,13 +269,21 @@ void Editor::paintGL()
 	glDrawElements(GL_TRIANGLES, treeInfo.count[1], GL_UNSIGNED_SHORT, 0);
 
 	if (selectedBranch != -1)
-		paintSelection();
+		paintSelectionWireframe();
+
+	glUseProgram(shared->getProgramName(shared->FLAT_SHADER));
+	glBindVertexArray(bufferSets[0].vao);
+	glUniformMatrix4fv(0, 1, GL_FALSE, &vp.m[0][0]);
+	glDrawArrays(gridInfo.type, gridInfo.start[0], gridInfo.count[0]);
+
+	if (selectedBranch != -1)
+		paintSelectionLines();
 
 	glFlush();
 }
 
 /* This method assumes that the proper vertex array is already set. */
-void Editor::paintSelection()
+void Editor::paintSelectionWireframe()
 {
 	TMmat4 vp = camera.getVP();
 	GLvoid *p = (GLvoid *)(selection.start[1] * sizeof(unsigned short));
@@ -253,6 +297,28 @@ void Editor::paintSelection()
 	glPolygonOffset(0.0f, 0.0f);
 	glDisable(GL_POLYGON_OFFSET_LINE);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+}
+
+/* This method assumes that FLAT_SHADER is already set. */
+void Editor::paintSelectionLines()
+{
+	std::pair<int, int> viewport = camera.getViewport();
+	TMmat4 vp = camera.getVP();
+
+	glDepthFunc(GL_ALWAYS);
+	glPointSize(10);
+
+	glBindVertexArray(bufferSets[2].vao);
+	glBindTexture(GL_TEXTURE_2D, shared->getTextureName(shared->DOT_TEX));
+	glUseProgram(shared->getProgramName(shared->POINT_SHADER));
+	glUniformMatrix4fv(0, 1, GL_FALSE, &vp.m[0][0]);
+	glDrawArrays(GL_POINTS, lineInfo.start[0], lineInfo.count[0]);
+
+	glUseProgram(shared->getProgramName(shared->LINE_SHADER));
+	glBindVertexArray(bufferSets[2].vao);
+	glUniformMatrix4fv(0, 1, GL_FALSE, &vp.m[0][0]);
+	glUniform2f(1, viewport.first, viewport.second);
+	glDrawArrays(lineInfo.type, lineInfo.start[0], lineInfo.count[0]);
 }
 
 void Editor::updateSelection()

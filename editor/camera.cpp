@@ -216,3 +216,11 @@ TMvec3 Camera::getRayDirection(int x, int y)
 
 	return p;
 }
+
+std::pair<int, int> Camera::getViewport()
+{
+	std::pair<int, int> viewport;
+	viewport.first = winWidth;
+	viewport.second = winHeight;
+	return viewport;
+}

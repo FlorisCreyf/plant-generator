@@ -6,7 +6,7 @@ layout(location = 1) in vec4 normal;
 layout(location = 0) uniform mat4 vp;
 layout(location = 1) uniform vec4 cameraPosition;
 
-out vec3 iColor;
+out vec4 iColor;
 
 void main()
 {
@@ -25,5 +25,6 @@ void main()
 	iColor.r = d;
 	iColor.g = d + 0.02;
 	iColor.b = d + 0.08;
+	iColor.a = 1.0f;
 	gl_Position = vp * point;
 }

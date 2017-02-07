@@ -53,7 +53,6 @@ void CurveEditor::initializeGL()
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	loadTextures();
 	glGenVertexArrays(1, &bufferSet.vao);
 	glBindVertexArray(bufferSet.vao);
 	glGenBuffers(2, bufferSet.buffers);
@@ -65,20 +64,6 @@ void CurveEditor::onFloat()
 	QList<QTabBar *> list = parent()->parent()->findChildren<QTabBar *>();
 	if (list.size() > 0)
 		list[0]->setDrawBase(false);
-}
-
-void CurveEditor::loadTextures()
-{
-	glGenTextures(1, &pointTex);
-	glBindTexture(GL_TEXTURE_2D, pointTex);
-	QImage image("resources/dot.png");
-	image.convertToFormat(QImage::Format_RGB32);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width(), image.height(),
-			0,  GL_BGRA, GL_UNSIGNED_BYTE, image.bits());
-	glTexEnvi(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-	glEnable(GL_TEXTURE_2D);
 }
 
 /* Order matters here. */
@@ -386,7 +371,7 @@ void CurveEditor::paintCurve(TMmat4 &vp)
 {
 	glDrawArrays(curveInfo.type, curveInfo.start[0], curveInfo.count[0]);
 	glDrawArrays(GL_LINES, controlInfo.start[0], controlInfo.count[0]);
-	glBindTexture(GL_TEXTURE_2D, pointTex);
+	glBindTexture(GL_TEXTURE_2D, shared->getTextureName(shared->DOT_TEX));
 	glUseProgram(shared->getProgramName(shared->POINT_SHADER));
 	glUniformMatrix4fv(0, 1, GL_FALSE, &vp.m[0][0]);
 	glDrawArrays(GL_POINTS, controlInfo.start[0], controlInfo.count[0]);

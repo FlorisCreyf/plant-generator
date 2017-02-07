@@ -62,14 +62,18 @@ private:
 	bool shift;
 	bool midButton;
 
-	graphics::BufferSet bufferSets[2];
+	graphics::BufferSet bufferSets[3];
 	graphics::Fragment gridInfo;
 	graphics::Fragment treeInfo;
+	graphics::Fragment lineInfo;
 	graphics::Fragment selection;
 	int selectedBranch;
 
 	std::vector<float> vertices;
 	std::vector<unsigned short> indices;
+
+	unsigned maxLines = 100;
+	unsigned minLines = 100;
 
 	TMtree tree;
 	SharedResources *shared;
@@ -77,9 +81,12 @@ private:
 
 	void initializeTree();
 	void initializeGrid();
+	void intializeLines();
+	void updateLines(int branch);
 	void selectBranch(int x, int y);
 	void updateSelection();
-	void paintSelection();
+	void paintSelectionWireframe();
+	void paintSelectionLines();
 	void expandBuffers();
 	void createBuffers();
 	void updateBuffers();
