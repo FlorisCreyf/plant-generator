@@ -58,16 +58,17 @@ protected:
 	void mouseMoveEvent(QMouseEvent *);
 
 private:
-	bool ctrl;
-	bool shift;
-	bool midButton;
+	bool ctrl = false;
+	bool shift = false;
+	bool midButton = false;
 
 	graphics::BufferSet bufferSets[3];
 	graphics::Fragment gridInfo;
 	graphics::Fragment treeInfo;
 	graphics::Fragment lineInfo;
 	graphics::Fragment selection;
-	int selectedBranch;
+	int selectedBranch = -1;
+	int selectedPoint = -1;
 
 	std::vector<float> vertices;
 	std::vector<unsigned short> indices;
@@ -84,6 +85,8 @@ private:
 	void intializeLines();
 	void updateLines(int branch);
 	void selectBranch(int x, int y);
+	void selectPoint(int x, int y);
+	void movePoint(int x, int y);
 	void updateSelection();
 	void paintSelectionWireframe();
 	void paintSelectionLines();

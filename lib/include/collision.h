@@ -29,9 +29,15 @@ typedef struct TMobb {
         TMvec3 center;
 } TMobb;
 
+typedef struct TMplane {
+        TMvec3 point;
+        TMvec3 normal;
+} TMplane;
+
 TMaabb tmCreateAABB(float *buffer, int size);
 float tmIntersectsOBB(TMvec3 origin, TMvec3 direction, TMobb obb);
 float tmIntersectsAABB(TMvec3 origin, TMvec3 direction, TMaabb aabb);
+float tmIntersectsPlane(TMvec3 origin, TMvec3 direction, TMplane);
 
 #ifdef __cplusplus
 }

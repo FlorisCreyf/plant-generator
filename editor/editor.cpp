@@ -20,6 +20,7 @@
 #include "geometry.h"
 #include "collision.h"
 #include "vector.h"
+#include <math.h>
 #include <QtGui/QKeyEvent>
 #include <QtGui/QMouseEvent>
 #include <QtOpenGL/QGLFormat>
@@ -29,8 +30,6 @@
 Editor::Editor(SharedResources *shared, QWidget *parent) : QOpenGLWidget(parent)
 {
 	this->shared = shared;
-	ctrl = shift = midButton = false;
-	selectedBranch = -1;
 	setFocus();
 }
 
@@ -133,10 +132,9 @@ void Editor::intializeLines()
 void Editor::updateLines(int branch)
 {
 	Geometry geom;
-	const int size = tmGetBranchLineSize(tree, 0);
-	TMvec3 curve[size];
-	tmGetBranchLine(tree, branch, &curve[0]);
-	std::vector<TMvec3> points(curve, curve+size);
+	const int size = tmGetBranchPathSize(tree, 0);
+	std::vector<TMvec3> points(size);
+	tmGetBranchPath(tree, branch, &points[0]);
 	lineInfo = geom.addLine(points, {0.76, 0.54, 0.29});
 
 	glBindBuffer(GL_ARRAY_BUFFER, bufferSets[2].buffers[0]);
@@ -205,6 +203,34 @@ void Editor::selectBranch(int x, int y)
 	emit selectionChanged(tree, selectedBranch);
 }
 
+void Editor::selectPoint(int x, int y)
+{
+	TMmat4 vp = camera.getVP();
+	int width = QWidget::width();
+	int height = QWidget::height();
+
+	int size = tmGetBranchPathSize(tree, 0);
+	std::vector<TMvec3> points(size);
+	tmGetBranchPath(tree, selectedBranch, &points[0]);
+
+	for (int i = 0; i < size; i++) {
+		TMvec3 point = points[i];
+		float w = tmTransform(&point, &vp, 1.0f);
+
+		point.x /= w;
+		point.y /= w;
+		point.x = (point.x + 1.0f) / 2.0f * width;
+		point.y = height - (point.y + 1.0f) / 2.0f * height;
+
+		if (sqrt(pow(point.x - x, 2) + pow(point.y - y, 2)) < 10) {
+			selectedPoint = i;
+			return;
+		}
+	}
+
+	selectedPoint = -1;
+}
+
 void Editor::mousePressEvent(QMouseEvent *event)
 {
 	QPoint p = event->pos();
@@ -222,6 +248,8 @@ void Editor::mousePressEvent(QMouseEvent *event)
 			camera.action = Camera::PAN;
 		else
 			camera.action = Camera::ROTATE;
+	} else if (event->button() == Qt::LeftButton) {
+		selectPoint(p.x(), p.y());
 	}
 
 	setFocus();
@@ -230,12 +258,16 @@ void Editor::mousePressEvent(QMouseEvent *event)
 void Editor::mouseReleaseEvent(QMouseEvent *event)
 {
 	UNUSED(event);
-	camera.action = Camera::NONE;
+	if (event->button() == Qt::MidButton)
+		camera.action = Camera::NONE;
+	if (event->button() == Qt::LeftButton)
+		selectedPoint = -1;
 }
 
 void Editor::mouseMoveEvent(QMouseEvent *event)
 {
 	QPoint point = event->pos();
+
 	switch (camera.action) {
 	case Camera::ZOOM:
 		camera.zoom(point.y());
@@ -249,7 +281,39 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
 	default:
 		break;
 	}
+
+	if (selectedPoint >= 0)
+		movePoint(point.x(), point.y());
+
 	update();
+}
+
+void Editor::movePoint(int x, int y)
+{
+	TMvec3 direction = camera.getRayDirection(x, y);
+	TMvec3 origin = camera.getPosition();
+	TMplane plane;
+	float t;
+	TMvec3 p;
+
+	int size = tmGetBranchPathSize(tree, 0);
+	std::vector<TMvec3> points(size);
+	tmGetBranchPath(tree, selectedBranch, &points[0]);
+
+	plane.point = points[selectedPoint];
+	plane.normal = direction;
+	t = tmIntersectsPlane(origin, direction, plane);
+	p = tmMultVec3(t, &direction);
+	p = tmAddVec3(&origin, &p);
+
+	{
+		int vs = vertices.size();
+		int es = indices.size();
+		tmSetBranchPoint(tree, selectedBranch, p, selectedPoint);
+		tmGenerateMesh(tree, &vertices[0], vs, &indices[0], es);
+		updateLines(selectedBranch);
+		updateBuffers();
+	}
 }
 
 void Editor::paintGL()

@@ -97,3 +97,13 @@ float tmIntersectsAABB(TMvec3 origin, TMvec3 direction, TMaabb aabb)
 
         return tmIntersectsOBB(origin, direction, obb);
 }
+
+float tmIntersectsPlane(TMvec3 origin, TMvec3 direction, TMplane plane)
+{
+        float a = tmDotVec3(&plane.normal, &direction);
+        if (a > 0.0f) {
+                TMvec3 b = tmSubVec3(&plane.point, &origin);
+                return tmDotVec3(&b, &plane.normal);
+        }
+        return 0.0f;
+}

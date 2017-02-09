@@ -21,8 +21,9 @@ typedef struct __TMtree *TMtree;
 TMtree tmNewTree();
 void tmDeleteTree(TMtree tree);
 
-int tmGetBranchLineSize(TMtree tree, int branch);
-void tmGetBranchLine(TMtree, int branch, TMvec3 *data);
+int tmGetBranchPathSize(TMtree tree, int branch);
+void tmGetBranchPath(TMtree, int branch, TMvec3 *data);
+void tmSetBranchPoint(TMtree tree, int name, TMvec3 point, int index);
 
 void tmSetRadius(TMtree tree, int id, float radius);
 float tmGetRadius(TMtree tree, int id);
