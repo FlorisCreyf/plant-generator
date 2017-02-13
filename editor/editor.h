@@ -20,6 +20,7 @@
 
 #define GL_GLEXT_PROTOTYPES
 
+#include "axis.h"
 #include "graphics.h"
 #include "treemaker.h"
 #include "shared_resources.h"
@@ -56,8 +57,10 @@ protected:
 	void keyPressEvent(QKeyEvent *);
 	void keyReleaseEvent(QKeyEvent *);
 	void mouseMoveEvent(QMouseEvent *);
+	bool event(QEvent *);
 
 private:
+	int clickOffset[2];
 	bool ctrl = false;
 	bool shift = false;
 	bool midButton = false;
@@ -67,6 +70,8 @@ private:
 	graphics::Fragment treeInfo;
 	graphics::Fragment lineInfo;
 	graphics::Fragment selection;
+	Axis axis;
+
 	int selectedBranch = -1;
 	int selectedPoint = -1;
 
@@ -86,10 +91,12 @@ private:
 	void updateLines(int branch);
 	void selectBranch(int x, int y);
 	void selectPoint(int x, int y);
+	void selectAxis(int x, int y);
 	void movePoint(int x, int y);
 	void updateSelection();
 	void paintSelectionWireframe();
 	void paintSelectionLines();
+	void paintAxis();
 	void expandBuffers();
 	void createBuffers();
 	void updateBuffers();

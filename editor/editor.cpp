@@ -69,20 +69,27 @@ void Editor::resizeGL(int width, int height)
 	float aspectRatio = (float)width / (float)height;
 	camera.setWindowSize(width, height);
 	camera.setPerspective(45.0f, 0.1f, 100.0f, aspectRatio);
+	axis.setScale(height);
 	glViewport(0, 0, width, height);
 	paintGL();
 }
 
 void Editor::initializeGrid()
 {
-	Geometry geometry;
-	gridInfo = geometry.addGrid(5, {0.41, 0.41, 0.41}, {0.46, 0.46, 0.46});
+	Geometry geom;
+	gridInfo = geom.addGrid(5, {0.41, 0.41, 0.41}, {0.46, 0.46, 0.46});
+	axis.create(geom);
+
 	glGenVertexArrays(1, &bufferSets[0].vao);
 	glBindVertexArray(bufferSets[0].vao);
-	glGenBuffers(1, bufferSets[0].buffers);
+	glGenBuffers(2, bufferSets[0].buffers);
+
 	glBindBuffer(GL_ARRAY_BUFFER, bufferSets[0].buffers[0]);
-	graphics::load(GL_ARRAY_BUFFER, geometry.vertices, GL_STATIC_DRAW);
-	graphics::setVertexFormat(geometry.getVertexFormat());
+	graphics::load(GL_ARRAY_BUFFER, geom.vertices, GL_STATIC_DRAW);
+	graphics::setVertexFormat(geom.getVertexFormat());
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferSets[0].buffers[1]);
+	graphics::load(GL_ELEMENT_ARRAY_BUFFER, geom.indices, GL_STATIC_DRAW);
 }
 
 void Editor::initializeTree()
@@ -174,7 +181,19 @@ void Editor::keyReleaseEvent(QKeyEvent *event)
 	case Qt::Key_Shift:
 		shift = false;
 		break;
+	case Qt::Key_Tab:
+		break;
 	}
+}
+
+bool Editor::event(QEvent *e)
+{
+	if (e->type() == QEvent::KeyPress) {
+		QKeyEvent *k = static_cast<QKeyEvent *>(e);
+		keyPressEvent(k);
+		return true;
+	}
+	return QWidget::event(e);
 }
 
 void Editor::selectBranch(int x, int y)
@@ -205,23 +224,13 @@ void Editor::selectBranch(int x, int y)
 
 void Editor::selectPoint(int x, int y)
 {
-	TMmat4 vp = camera.getVP();
-	int width = QWidget::width();
-	int height = QWidget::height();
-
 	int size = tmGetBranchPathSize(tree, 0);
 	std::vector<TMvec3> points(size);
 	tmGetBranchPath(tree, selectedBranch, &points[0]);
 
 	for (int i = 0; i < size; i++) {
 		TMvec3 point = points[i];
-		float w = tmTransform(&point, &vp, 1.0f);
-
-		point.x /= w;
-		point.y /= w;
-		point.x = (point.x + 1.0f) / 2.0f * width;
-		point.y = height - (point.y + 1.0f) / 2.0f * height;
-
+		point = camera.toScreenSpace(points[i]);
 		if (sqrt(pow(point.x - x, 2) + pow(point.y - y, 2)) < 10) {
 			selectedPoint = i;
 			return;
@@ -231,13 +240,34 @@ void Editor::selectPoint(int x, int y)
 	selectedPoint = -1;
 }
 
+void Editor::selectAxis(int x, int y)
+{
+	TMvec3 c = tmGetBranchPoint(tree, selectedBranch, selectedPoint);
+	TMvec3 o = camera.getPosition();
+	TMvec3 d = camera.getRayDirection(x, y);
+	TMvec3 s = camera.toScreenSpace(c);
+
+	clickOffset[0] = s.x - x;
+	clickOffset[1] = s.y - y;
+
+	axis.pickAxis(c, {o, d});
+}
+
 void Editor::mousePressEvent(QMouseEvent *event)
 {
 	QPoint p = event->pos();
 	midButton = false;
 
 	if (event->button() == Qt::RightButton) {
-		selectBranch(p.x(), p.y());
+		int prevBranch = selectedBranch;
+
+		if (selectedBranch >= 0)
+			selectPoint(p.x(), p.y());
+		if (selectedPoint == -1)
+			selectBranch(p.x(), p.y());
+		if (selectedBranch != prevBranch)
+			selectedPoint = -1;
+
 		update();
 	} else if (event->button() == Qt::MidButton) {
 		midButton = true;
@@ -249,7 +279,8 @@ void Editor::mousePressEvent(QMouseEvent *event)
 		else
 			camera.action = Camera::ROTATE;
 	} else if (event->button() == Qt::LeftButton) {
-		selectPoint(p.x(), p.y());
+		if (selectedPoint >= 0 && selectedBranch >= 0)
+			selectAxis(p.x(), p.y());
 	}
 
 	setFocus();
@@ -261,7 +292,7 @@ void Editor::mouseReleaseEvent(QMouseEvent *event)
 	if (event->button() == Qt::MidButton)
 		camera.action = Camera::NONE;
 	if (event->button() == Qt::LeftButton)
-		selectedPoint = -1;
+		axis.clearLastSelected();
 }
 
 void Editor::mouseMoveEvent(QMouseEvent *event)
@@ -282,7 +313,7 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
 		break;
 	}
 
-	if (selectedPoint >= 0)
+	if (axis.getLastSelected() != Axis::NONE)
 		movePoint(point.x(), point.y());
 
 	update();
@@ -290,26 +321,17 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
 
 void Editor::movePoint(int x, int y)
 {
-	TMvec3 direction = camera.getRayDirection(x, y);
-	TMvec3 origin = camera.getPosition();
-	TMplane plane;
-	float t;
-	TMvec3 p;
+	x += clickOffset[0];
+	y += clickOffset[1];
 
-	int size = tmGetBranchPathSize(tree, 0);
-	std::vector<TMvec3> points(size);
-	tmGetBranchPath(tree, selectedBranch, &points[0]);
-
-	plane.point = points[selectedPoint];
-	plane.normal = direction;
-	t = tmIntersectsPlane(origin, direction, plane);
-	p = tmMultVec3(t, &direction);
-	p = tmAddVec3(&origin, &p);
+	TMray r = {camera.getPosition(), camera.getRayDirection(x, y)};
+	TMvec3 p = tmGetBranchPoint(tree, selectedBranch, selectedPoint);
+	p = axis.move(axis.getLastSelected(), r, camera.getDirection(), p);
+	tmSetBranchPoint(tree, selectedBranch, p, selectedPoint);
 
 	{
 		int vs = vertices.size();
 		int es = indices.size();
-		tmSetBranchPoint(tree, selectedBranch, p, selectedPoint);
 		tmGenerateMesh(tree, &vertices[0], vs, &indices[0], es);
 		updateLines(selectedBranch);
 		updateBuffers();
@@ -340,8 +362,11 @@ void Editor::paintGL()
 	glUniformMatrix4fv(0, 1, GL_FALSE, &vp.m[0][0]);
 	glDrawArrays(gridInfo.type, gridInfo.start[0], gridInfo.count[0]);
 
-	if (selectedBranch != -1)
+	if (selectedBranch != -1) {
 		paintSelectionLines();
+		if (selectedPoint != -1)
+			paintAxis();
+	}
 
 	glFlush();
 }
@@ -366,11 +391,10 @@ void Editor::paintSelectionWireframe()
 /* This method assumes that FLAT_SHADER is already set. */
 void Editor::paintSelectionLines()
 {
-	std::pair<int, int> viewport = camera.getViewport();
 	TMmat4 vp = camera.getVP();
 
 	glDepthFunc(GL_ALWAYS);
-	glPointSize(10);
+	glPointSize(8);
 
 	glBindVertexArray(bufferSets[2].vao);
 	glBindTexture(GL_TEXTURE_2D, shared->getTextureName(shared->DOT_TEX));
@@ -381,8 +405,28 @@ void Editor::paintSelectionLines()
 	glUseProgram(shared->getProgramName(shared->LINE_SHADER));
 	glBindVertexArray(bufferSets[2].vao);
 	glUniformMatrix4fv(0, 1, GL_FALSE, &vp.m[0][0]);
-	glUniform2f(1, viewport.first, viewport.second);
+	glUniform2f(1, QWidget::width(), QWidget::height());
 	glDrawArrays(lineInfo.type, lineInfo.start[0], lineInfo.count[0]);
+}
+
+void Editor::paintAxis()
+{
+	TMmat4 vp = camera.getVP();
+	TMvec3 cp = camera.getPosition();
+	graphics::Fragment lines = axis.getLineFragment();
+	graphics::Fragment arrows = axis.getArrowFragment();
+	GLvoid *p = BUFFER_OFFSET(arrows.start[1]);
+	TMvec3 center = tmGetBranchPoint(tree, selectedBranch, selectedPoint);
+	TMmat4 mat = axis.getModelMatrix(center, cp);
+	mat = tmMultMat4(&vp, &mat);
+
+	glClear(GL_DEPTH_BUFFER_BIT);
+	glDepthFunc(GL_LEQUAL);
+	glUseProgram(shared->getProgramName(shared->FLAT_SHADER));
+	glBindVertexArray(bufferSets[0].vao);
+	glUniformMatrix4fv(0, 1, GL_FALSE, &mat.m[0][0]);
+	glDrawArrays(lines.type, lines.start[0], lines.count[0]);
+	glDrawElements(GL_TRIANGLES, arrows.count[1], GL_UNSIGNED_SHORT, p);
 }
 
 void Editor::updateSelection()

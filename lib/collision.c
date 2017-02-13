@@ -98,12 +98,30 @@ float tmIntersectsAABB(TMvec3 origin, TMvec3 direction, TMaabb aabb)
         return tmIntersectsOBB(origin, direction, obb);
 }
 
-float tmIntersectsPlane(TMvec3 origin, TMvec3 direction, TMplane plane)
+float tmIntersectsPlane(TMray ray, TMplane plane)
 {
-        float a = tmDotVec3(&plane.normal, &direction);
+        float a = tmDotVec3(&plane.normal, &ray.direction);
         if (a > 0.0f) {
-                TMvec3 b = tmSubVec3(&plane.point, &origin);
-                return tmDotVec3(&b, &plane.normal);
+                TMvec3 b = tmSubVec3(&plane.point, &ray.origin);
+                return tmDotVec3(&b, &plane.normal) / a;
         }
         return 0.0f;
+}
+
+float tmIntersectsSphere(TMray ray, TMvec3 position, float radius)
+{
+        TMvec3 l = tmSubVec3(&position, &ray.origin);
+        float a = tmDotVec3(&l, &ray.direction);
+        float b = tmDotVec3(&l, &l);
+        float c;
+        float d;
+
+        if (a < 0.0f && b > pow(radius, 2))
+                return 0.0f;
+        c = b - a*a;
+        if (c > pow(radius, 2))
+                return 0.0f;
+        d = sqrt(pow(radius, 2) - c);
+
+        return b > pow(radius, 2) ? a - d : a + d;
 }

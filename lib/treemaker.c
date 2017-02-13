@@ -77,6 +77,22 @@ void tmGetBranchPath(TMtree tree, int name, TMvec3 *data)
 	}
 }
 
+TMvec3 tmGetBranchPoint(TMtree tree, int name, int index)
+{
+	Node *n = getNode(tree->root, name);
+
+	if (n) {
+		TMvec3 point;
+		if (n->lineCount == index)
+			point = getLineEndPoint(&n->lines[index-1]);
+		else
+			point = n->lines[index].start;
+
+		return tmAddVec3(&point, &n->globPos);
+	}
+	return (TMvec3){0.0f, 0.0f, 0.0f};
+}
+
 void tmSetBranchPoint(TMtree tree, int name, TMvec3 point, int index)
 {
 	Node *n = getNode(tree->root, name);

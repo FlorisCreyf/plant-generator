@@ -33,6 +33,8 @@ public:
         graphics::Fragment addBPath(std::vector<TMvec3> points, int sections,
                         TMvec3 color);
         graphics::Fragment addPlane(TMvec3 a, TMvec3 b, TMvec3 c, TMvec3 color);
+        graphics::Fragment addCone(float radius, float height,
+                        unsigned divisions, TMvec3 color);
         graphics::VertexFormat getVertexFormat();
         void transform(int start, int count, TMmat4 t);
 

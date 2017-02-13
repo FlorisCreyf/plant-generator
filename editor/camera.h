@@ -19,10 +19,13 @@
 #define CAMERA_H
 
 #include "vector.h"
-#include <utility>
 
 class Camera {
 public:
+	enum Action {
+		ZOOM, ROTATE, PAN, NONE
+	} action;
+
 	Camera();
 	void setStartCoordinates(float x, float y);
 	void setPan(float x, float y);
@@ -31,13 +34,10 @@ public:
 	void setWindowSize(int width, int height);
 	void zoom(float y);
 	TMvec3 getPosition();
+	TMvec3 getDirection();
 	TMmat4 getVP();
 	TMvec3 getRayDirection(int x, int y);
-	std::pair<int, int> getViewport();
-
-	enum Action {
-		ZOOM, ROTATE, PAN, NONE
-	} action;
+	TMvec3 toScreenSpace(TMvec3 point);
 
 private:
 	struct Point {

@@ -15,7 +15,7 @@ out VertexData {
 
 void main()
 {
-	float width = 3.0;
+	float width = 2.0f;
 	vec4 p0 = gl_in[0].gl_Position;
 	vec4 p1 = gl_in[1].gl_Position;
 	vec3 ndc0 = p0.xyz / p0.w;

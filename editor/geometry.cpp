@@ -17,6 +17,7 @@
 
 #include "geometry.h"
 #include "curve.h"
+#include <math.h>
 
 using std::vector;
 using namespace graphics;
@@ -195,6 +196,34 @@ Fragment Geometry::addPlane(TMvec3 a, TMvec3 b, TMvec3 c, TMvec3 color)
 	indices.push_back(VERTEX_START + 3);
 
 	return newFragment(SIZE, 6, GL_TRIANGLES);
+}
+
+Fragment Geometry::addCone(float radius, float height, unsigned divisions,
+		TMvec3 color)
+{
+	const int SIZE = (divisions + 2)*6;
+	const int VERTEX_START = vertices.size()/6;
+	vector<float>::iterator itr;
+
+	vertices.resize(vertices.size() + SIZE);
+	itr = vertices.end() - SIZE;
+
+	for (unsigned i = 0; i < divisions; i++) {
+		float r = i*2.0f*M_PI/divisions;
+		insertPoint(itr, {cos(r)*radius, 0.0f, sin(r)*radius}, color);
+		indices.push_back(VERTEX_START + i);
+		indices.push_back(VERTEX_START + divisions);
+		indices.push_back(VERTEX_START + (i == divisions-1 ? 0 : i+1));
+
+		indices.push_back(VERTEX_START + i);
+		indices.push_back(VERTEX_START + divisions + 1);
+		indices.push_back(VERTEX_START + (i == divisions-1 ? 0 : i+1));
+	}
+
+	insertPoint(itr, {0.0f, height, 0.0f}, color);
+	insertPoint(itr, {0.0f, 0.0f, 0.0f}, color);
+
+	return newFragment(SIZE, 6*divisions, GL_TRIANGLES);
 }
 
 void Geometry::transform(int start, int count, TMmat4 m)

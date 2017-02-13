@@ -110,6 +110,13 @@ TMvec3 Camera::getPosition()
 	return eye;
 }
 
+TMvec3 Camera::getDirection()
+{
+	TMvec3 v = tmSubVec3(&eye, &target);
+	tmNormalizeVec3(&v);
+	return v;
+}
+
 TMmat4 Camera::getVP()
 {
 	TMvec3 eye = getCameraPosition();
@@ -217,10 +224,13 @@ TMvec3 Camera::getRayDirection(int x, int y)
 	return p;
 }
 
-std::pair<int, int> Camera::getViewport()
+TMvec3 Camera::toScreenSpace(TMvec3 point)
 {
-	std::pair<int, int> viewport;
-	viewport.first = winWidth;
-	viewport.second = winHeight;
-	return viewport;
+	TMmat4 vp = getVP();
+	float w = tmTransform(&point, &vp, 1.0f);
+	point.x /= w;
+	point.y /= w;
+	point.x = (point.x + 1.0f) / 2.0f * winWidth;
+	point.y = winHeight - (point.y + 1.0f) / 2.0f * winHeight;
+	return point;
 }

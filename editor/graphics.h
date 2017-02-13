@@ -19,6 +19,7 @@
 #define GRAPHICS_H
 
 #define GL_GLEXT_PROTOTYPES
+#define BUFFER_OFFSET(num) (static_cast<char *>(0) + (num));
 
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>

@@ -23,6 +23,7 @@ void tmDeleteTree(TMtree tree);
 
 int tmGetBranchPathSize(TMtree tree, int branch);
 void tmGetBranchPath(TMtree, int branch, TMvec3 *data);
+TMvec3 tmGetBranchPoint(TMtree, int name, int index);
 void tmSetBranchPoint(TMtree tree, int name, TMvec3 point, int index);
 
 void tmSetRadius(TMtree tree, int id, float radius);

@@ -17,7 +17,12 @@ extern "C" {
 #include "vector.h"
 #include <stdio.h>
 
-typedef struct TMbo {
+typedef struct TMray {
+        TMvec3 origin;
+        TMvec3 direction;
+} TMray;
+
+typedef struct TMaabb {
         float x1, x2;
         float y1, y2;
         float z1, z2;
@@ -37,7 +42,8 @@ typedef struct TMplane {
 TMaabb tmCreateAABB(float *buffer, int size);
 float tmIntersectsOBB(TMvec3 origin, TMvec3 direction, TMobb obb);
 float tmIntersectsAABB(TMvec3 origin, TMvec3 direction, TMaabb aabb);
-float tmIntersectsPlane(TMvec3 origin, TMvec3 direction, TMplane);
+float tmIntersectsPlane(TMray ray, TMplane plane);
+float tmIntersectsSphere(TMray ray, TMvec3 position, float radius);
 
 #ifdef __cplusplus
 }
