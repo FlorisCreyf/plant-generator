@@ -20,25 +20,26 @@
 
 #include "graphics.h"
 #include "shared_resources.h"
-#include "vector.h"
+#include "math.h"
 #include <QtGui/QOpenGLFunctions>
 #include <QOpenGLWidget>
-
-using std::vector;
 
 class CurveEditor : public QOpenGLWidget, protected QOpenGLFunctions {
 	Q_OBJECT
 
 public:
+	typedef treemaker::Vec3 Vec3;
+	typedef treemaker::Mat4 Mat4;
+
 	CurveEditor(SharedResources *shared, QWidget *parent = 0);
 	QSize sizeHint() const;
 
 public slots:
-	void setCurve(std::vector<TMvec3> controls, QString name);
+	void setCurve(std::vector<treemaker::Vec3> controls, QString name);
 	void setEnabled(bool enabled);
 
 signals:
-	void curveChanged(vector<TMvec3> controls, QString name);
+	void curveChanged(std::vector<treemaker::Vec3> controls, QString name);
 
 protected slots:
 	void onFloat();
@@ -60,8 +61,8 @@ private:
 	graphics::Fragment controlInfo;
 	graphics::Fragment curveInfo;
 
-	std::vector<TMvec3> controls;
-	TMvec3 curve[4];
+	std::vector<Vec3> controls;
+	Vec3 curve[4];
 	size_t insertIndex;
 	size_t point;
 
@@ -83,8 +84,8 @@ private:
 	void placeTerminalControl(bool, float);
 	void toDeviceCoordinates(float &x, float &y, int width, int height);
 	void paintInterface();
-	void paintCurve(TMmat4 &vp);
-	TMmat4 createVP();
+	void paintCurve(Mat4 &vp);
+	Mat4 createVP();
 };
 
 #endif /* CURVE_EDITOR_H */

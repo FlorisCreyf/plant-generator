@@ -19,6 +19,8 @@
 #include <cmath>
 #include <stdio.h>
 
+using namespace treemaker;
+
 #define UNUSED(x) (void)(x)
 
 Camera::Camera()
@@ -49,22 +51,18 @@ void Camera::setCoordinates(float x, float y)
 
 void Camera::setPan(float x, float y)
 {
-	TMvec3 a, b, f;
-	TMvec3 eye = getCameraPosition();
-	TMvec3 dir = tmSubVec3(&eye, &target);
-	tmNormalizeVec3(&dir);
+	Vec3 a, b;
+	Vec3 eye = getCameraPosition();
+	Vec3 dir = normalize(eye - target);
 	float panSpeed = distance * 0.002f;
-
-	a = tmCrossVec3(&dir, &up);
-	b = tmCrossVec3(&dir, &a);
-
-	tmNormalizeVec3(&a);
-	tmNormalizeVec3(&b);
-
-	a = tmMultVec3((x - start.x)*panSpeed, &a);
-	b = tmMultVec3((start.y - y)*panSpeed, &b);
-	f = tmAddVec3(&a, &b);
-	target = tmAddVec3(&f, &ftarget);
+	
+	a = cross(dir, up);
+	b = cross(dir, a);
+	
+	a = (x - start.x) * panSpeed * a;
+	b = (start.y - y) * panSpeed * b;
+	
+	target = a + b + ftarget;
 }
 
 void Camera::setWindowSize(int width, int height)
@@ -80,14 +78,14 @@ void Camera::zoom(float y)
 		distance = fdistance + b;
 }
 
-TMvec3 Camera::getCameraPosition()
+Vec3 Camera::getCameraPosition()
 {
 	const float toRadian = M_PI / 180.0f;
 	float x = (pos.x - posDiff.x + 0.1f) * toRadian * 0.5f;
 	float y = (pos.y - posDiff.y + 0.1f) * toRadian * 0.5f;
-	eye.x = distance * cos(x) * cos(y) + target.x;
-	eye.y = distance * sin(y) + target.y;
-	eye.z = distance * sin(x) * cos(y) + target.z;
+	eye.x = distance * std::cos(x) * std::cos(y) + target.x;
+	eye.y = distance * std::sin(y) + target.y;
+	eye.z = distance * std::sin(x) * std::cos(y) + target.z;
 
 	if (std::abs(x) >= M_PI*2.0f)
 		posDiff.x = pos.x;
@@ -105,48 +103,44 @@ TMvec3 Camera::getCameraPosition()
 	return eye;
 }
 
-TMvec3 Camera::getPosition()
+Vec3 Camera::getPosition()
 {
 	return eye;
 }
 
-TMvec3 Camera::getDirection()
+Vec3 Camera::getDirection()
 {
-	TMvec3 v = tmSubVec3(&eye, &target);
-	tmNormalizeVec3(&v);
-	return v;
+	return normalize(eye - target);
 }
 
-TMmat4 Camera::getVP()
+Mat4 Camera::getVP()
 {
-	TMvec3 eye = getCameraPosition();
-	TMmat4 l = getLookAtMatrix(&eye, &target, &up);
-	return tmMultMat4(&perspective, &l);
+	Vec3 eye = getCameraPosition();
+	Mat4 l = getLookAtMatrix(eye, target, up);
+	return perspective * l;
 }
 
-TMmat4 Camera::getInverseVP()
+Mat4 Camera::getInverseVP()
 {
-	TMmat4 invP = getInversePerspective();
-	TMmat4 invL = getInverseLookAt();
-	return tmMultMat4(&invL, &invP);
+	Mat4 invP = getInversePerspective();
+	Mat4 invL = getInverseLookAt();
+	return invL * invP;
 }
 
-TMmat4 Camera::getLookAtMatrix(TMvec3 *eye, TMvec3 *center, TMvec3 *up)
+Mat4 Camera::getLookAtMatrix(Vec3 &eye, Vec3 &center, Vec3 &up)
 {
 	float x, y, z;
-	TMvec3 a, b, c;
+	Vec3 a, b, c;
 
-	a = tmSubVec3(center, eye);
-	tmNormalizeVec3(&a);
-	b = tmCrossVec3(&a, up);
-	tmNormalizeVec3(&b);
-	c = tmCrossVec3(&b, &a);
+	a = normalize(center - eye);
+	b = normalize(cross(a, up));
+	c = cross(b, a);
 
-	x = -tmDotVec3(&b, eye);
-	y = -tmDotVec3(&c, eye);
-	z = tmDotVec3(&a, eye);
+	x = -dot(b, eye);
+	y = -dot(c, eye);
+	z = dot(a, eye);
 
-	return (TMmat4){
+	return (Mat4){
 		b.x, c.x, -a.x, 0.0f,
 		b.y, c.y, -a.y, 0.0f,
 		b.z, c.z, -a.z, 0.0f,
@@ -154,36 +148,35 @@ TMmat4 Camera::getLookAtMatrix(TMvec3 *eye, TMvec3 *center, TMvec3 *up)
 	};
 }
 
-TMmat4 Camera::getInverseLookAt()
+Mat4 Camera::getInverseLookAt()
 {
-	TMvec3 eye = getCameraPosition();
-	TMmat4 a = getLookAtMatrix(&eye, &target, &up);
-	TMmat4 b = {0.0f};
+	Vec3 eye = getCameraPosition();
+	Mat4 a = getLookAtMatrix(eye, target, up);
+	Mat4 b = identity();
 
-	b.m[3][3] = 1.0f;
 	for (int i = 0; i < 3;i++)
 		for (int j = 0; j < 3; j++)
-			b.m[i][j] = a.m[j][i];
+			b[i][j] = a[j][i];
 
-	TMvec3 t = {a.m[3][0], a.m[3][1], a.m[3][2]};
-	tmTransform(&t, &b, 0.0f);
-	b.m[3][0] = -t.x;
-	b.m[3][1] = -t.y;
-	b.m[3][2] = -t.z;
+	Vec3 t = {a[3][0], a[3][1], a[3][2]};
+	t = toVec3(b * toVec4(t, 0.0f));
+	b[3][0] = -t.x;
+	b[3][1] = -t.y;
+	b[3][2] = -t.z;
 
 	return b;
 }
 
 void Camera::setPerspective(float fovy, float near, float far, float aspect)
 {
-	float t = tan((fovy * M_PI / 180.0f) / 2.0f);
+	float t = std::tan((fovy * M_PI / 180.0f) / 2.0f);
 	float a = 1.0f / (aspect * t);
 	float b = 1.0f / t;
 	float c = -(far + near) / (far - near);
 	float d = -1.0f;
 	float e = -(2.0f * far * near) / (far - near);
 
-	perspective = (TMmat4){
+	perspective = (Mat4){
 		a, 0.0f, 0.0f, 0.0f,
 		0.0f, b, 0.0f, 0.0f,
 		0.0f, 0.0f, c, d,
@@ -191,15 +184,15 @@ void Camera::setPerspective(float fovy, float near, float far, float aspect)
 	};
 }
 
-TMmat4 Camera::getInversePerspective()
+Mat4 Camera::getInversePerspective()
 {
-	float a = perspective.m[0][0];
-	float b = perspective.m[1][1];
-	float c = perspective.m[2][2];
-	float d = perspective.m[2][3];
-	float e = perspective.m[3][2];
+	float a = perspective[0][0];
+	float b = perspective[1][1];
+	float c = perspective[2][2];
+	float d = perspective[2][3];
+	float e = perspective[3][2];
 
-	return (TMmat4){
+	return (Mat4){
 		1.0f/a, 0.0f, 0.0f, 0.0f,
 		0.0f, 1.0f/b, 0.0f, 0.0f,
 		0.0f, 0.0f, 0.0f, 1.0f/e,
@@ -207,29 +200,30 @@ TMmat4 Camera::getInversePerspective()
 	};
 }
 
-TMvec3 Camera::getRayDirection(int x, int y)
+Vec3 Camera::getRayDirection(int x, int y)
 {
-	TMvec3 p;
-	TMmat4 invP = getInversePerspective();
-	TMmat4 invL = getInverseLookAt();
+	Vec3 p;
+	Mat4 invP = getInversePerspective();
+	Mat4 invL = getInverseLookAt();
 
 	p.x = 2.0f*x/(winWidth-1) - 1.0f;
 	p.y = 1.0f - 2.0f*y/(winHeight-1);
 	p.z = -1.0f;
-	tmTransform(&p, &invP, 1.0f);
-	p.z = -1.f;
-	tmTransform(&p, &invL, 0.0f);
-	tmNormalizeVec3(&p);
+	p = toVec3(invP * toVec4(p, 1.0f));
+	p.z = -1.0f;
+	p = toVec3(invL * toVec4(p, 0.0f));
+	p = normalize(p);
 
 	return p;
 }
 
-TMvec3 Camera::toScreenSpace(TMvec3 point)
+Vec3 Camera::toScreenSpace(Vec3 point)
 {
-	TMmat4 vp = getVP();
-	float w = tmTransform(&point, &vp, 1.0f);
-	point.x /= w;
-	point.y /= w;
+	Mat4 vp = getVP();
+	Vec4 v = vp * toVec4(point, 1.0f);
+	point = toVec3(v);
+	point.x /= v.w;
+	point.y /= v.w;
 	point.x = (point.x + 1.0f) / 2.0f * winWidth;
 	point.y = winHeight - (point.y + 1.0f) / 2.0f * winHeight;
 	return point;

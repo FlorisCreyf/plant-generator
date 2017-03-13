@@ -72,14 +72,14 @@ void Window::saveDialogBox()
 {
 	QString filename;
 	filename = QFileDialog::getSaveFileName(this, tr("Save File"),
-		"untitled.tree", tr("TreeMaker (*.tree)"));
+		"saved/untitled.tree", tr("TreeMaker (*.tree)"));
 }
 
 void Window::exportDialogBox()
 {
 	QString filename;
 	filename = QFileDialog::getSaveFileName(this, tr("Export File"),
-		"untitled.obj", tr("Wavefront (*.obj)"));
+		"saved/untitled.obj", tr("Wavefront (*.obj)"));
 	QByteArray b = filename.toLatin1();
 	editor->exportObject(b.data());
 }

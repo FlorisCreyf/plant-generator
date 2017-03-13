@@ -58,14 +58,14 @@ void PropertyBox::createGlobalBox(QVBoxLayout *layout)
 
 void PropertyBox::createLocalBox(QVBoxLayout *layout)
 {
-	localGroup = new QGroupBox(tr("Branch"));
+	localGroup = new QGroupBox(tr("Stem"));
 	QVBoxLayout *groupLayout = new QVBoxLayout(localGroup);
 	local = new QTableWidget(this);
 	resolution = new QSpinBox;
 	radius = new QDoubleSpinBox;
 	radiusCB = new CurveButton("Radius", shared, this);
 	sections = new QSpinBox;
-	branches = new QDoubleSpinBox;
+	stems = new QDoubleSpinBox;
 	local->setRowCount(4);
 	local->setColumnCount(3);
 	radius->setSingleStep(0.01);
@@ -78,8 +78,8 @@ void PropertyBox::createLocalBox(QVBoxLayout *layout)
 	local->setCellWidget(1, 1, resolution);
 	local->setCellWidget(2, 0, new QLabel(tr("Cross Sections")));
 	local->setCellWidget(2, 1, sections);
-	local->setCellWidget(3, 0, new QLabel(tr("Branches / Unit")));
-	local->setCellWidget(3, 1, branches);
+	local->setCellWidget(3, 0, new QLabel(tr("Stem Density")));
+	local->setCellWidget(3, 1, stems);
 	configureTable(local);
 	groupLayout->addStretch(1);
 	groupLayout->addWidget(local);
@@ -125,7 +125,7 @@ QSize PropertyBox::sizeHint() const
 	return QSize(300, 0);
 }
 
-void PropertyBox::setCurve(vector<TMvec3> controls, QString name)
+void PropertyBox::setCurve(std::vector<treemaker::Vec3> controls, QString name)
 {
 	if (name == "Radius") {
 		radiusCB->setControls(controls);
@@ -133,17 +133,17 @@ void PropertyBox::setCurve(vector<TMvec3> controls, QString name)
 	}
 }
 
-void PropertyBox::toggleCurve(CurveButton *w)
+void PropertyBox::toggleCurve(CurveButton *button)
 {
-	activeCurve = w;
-	curveEditor->setCurve(w->getControls(), w->getName());
+	activeCurve = button;
+	curveEditor->setCurve(button->getControls(), button->getName());
 }
 
-void PropertyBox::fill(TMtree tree, int branch)
+void PropertyBox::fill(treemaker::Tree &tree, int stem)
 {
-	crownBaseHeight->setValue(tmGetCrownBaseHeight(tree));
+	crownBaseHeight->setValue(tree.getCrownBaseHeight());
 
-	if (branch < 0) {
+	if (stem < 0) {
 		localGroup->hide();
 		curveEditor->setEnabled(false);
 		return;
@@ -151,28 +151,22 @@ void PropertyBox::fill(TMtree tree, int branch)
 		localGroup->show();
 		curveEditor->setEnabled(true);
 	}
-	
-	resolution->setValue(tmGetResolution(tree, branch));
-	sections->setValue(tmGetCrossSections(tree, branch));
-	radius->setValue(tmGetRadius(tree, branch));
-	branches->setValue(tmGetBranchDensity(tree, branch));
-	fillCurveButtons(tree, branch);
+
+	resolution->setValue(tree.getResolution(stem));
+	sections->setValue(tree.getGeneratedPathSize(stem));
+	radius->setValue(tree.getRadius(stem));
+	stems->setValue(tree.getStemDensity(stem));
+	fillCurveButtons(tree, stem);
 
 	if (activeCurve)
 		activeCurve->select();
-
-	if (tmIsTerminalBranch(tree, branch))
-		resolution->setEnabled(false);
-	else
-		resolution->setEnabled(true);
 }
 
-void PropertyBox::fillCurveButtons(TMtree tree, int branch)
+void PropertyBox::fillCurveButtons(treemaker::Tree &tree, int stem)
 {
-	int size;
-	TMvec3 *curve;
-	tmGetRadiusCurve(tree, branch, &curve, &size);
-	radiusCB->setControls(curve, size);
+	std::vector<treemaker::Vec3> curve(tree.getRadiusCurveSize(stem));
+	tree.getRadiusCurve(stem, &curve[0]);
+	radiusCB->setControls(curve);
 }
 
 void PropertyBox::bind(Editor *editor, CurveEditor *curveEditor)
@@ -180,24 +174,27 @@ void PropertyBox::bind(Editor *editor, CurveEditor *curveEditor)
 	this->curveEditor = curveEditor;
 	this->editor = editor;
 
-	connect(editor, SIGNAL(selectionChanged(TMtree, int)), this,
-			SLOT(fill(TMtree, int)));
+	connect(editor, SIGNAL(selectionChanged(treemaker::Tree &, int)), this,
+			SLOT(fill(treemaker::Tree &, int)));
 	connect(resolution, SIGNAL(valueChanged(int)), editor,
 			SLOT(changeResolution(int)));
 	connect(sections, SIGNAL(valueChanged(int)), editor,
 			SLOT(changeSections(int)));
 	connect(radius, SIGNAL(valueChanged(double)), editor,
 			SLOT(changeRadius(double)));
-	connect(branches, SIGNAL(valueChanged(double)), editor,
-			SLOT(changeBranchDensity(double)));
+	connect(stems, SIGNAL(valueChanged(double)), editor,
+			SLOT(changeStemDensity(double)));
 
 	bindCurveEditor();
 }
 
 void PropertyBox::bindCurveEditor()
 {
-	connect(curveEditor, SIGNAL(curveChanged(vector<TMvec3>, QString)),
-			this, SLOT(setCurve(vector<TMvec3>, QString)));
-	connect(radiusCB, SIGNAL(selected(CurveButton *)), this,
+	connect(curveEditor, SIGNAL(
+			curveChanged(std::vector<treemaker::Vec3>, QString)),
+			this,
+			SLOT(setCurve(std::vector<treemaker::Vec3>, QString)));
+	
+	connect(radiusCB, SIGNAL(selected(CurveButton *)), this, 
 			SLOT(toggleCurve(CurveButton *)));
 }

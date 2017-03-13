@@ -13,17 +13,30 @@
  * limitations under the License.
  */
 
-#ifndef TM_CURVE_H
-#define TM_CURVE_H
+#ifndef TM_PROC_GENERATOR_H
+#define TM_PROC_GENERATOR_H
 
-#include "math.h"
-#include <vector>
-#include <cstddef>
+#include "stem.h"
 
 namespace treemaker {
-
-	Vec3 getBezierPath(float t, Vec3 *points, size_t size);
-	Vec3 getBezier(float t, Vec3 *points, size_t size);
+	class TreeImpl;
 }
 
-#endif /* TM_CURVE_H */
+using namespace treemaker;
+
+class ProcGenerator {
+	TreeImpl *tree;
+	Vec3 getStemDirection(Stem *stem);
+	void getDichotomousDirections(Stem *parent, Vec3 directions[2]);
+	void setPath(Stem *stem, Vec3 direction);
+	void setRadiusCurve(Stem *stem);
+	void addLateralStems(Stem *parent, float position);
+	void addDichotomousStems(Stem *stem);
+
+public:
+	ProcGenerator(TreeImpl *tree);
+	void regenerate(Stem *stem);
+	void generateTree();
+};
+
+#endif /* TM_PROC_GENERATOR_H */

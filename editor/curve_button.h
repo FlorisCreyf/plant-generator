@@ -20,7 +20,7 @@
 
 #include "graphics.h"
 #include "shared_resources.h"
-#include "vector.h"
+#include "math.h"
 #include <QtGui/QOpenGLFunctions>
 #include <QOpenGLWidget>
 #include <QtWidgets>
@@ -29,10 +29,13 @@ class CurveButton : public QOpenGLWidget, protected QOpenGLFunctions {
 	Q_OBJECT
 
 public:
+	typedef treemaker::Vec3 Vec3;
+	typedef treemaker::Mat4 Mat4;
+
 	CurveButton(QString name, SharedResources *shared, QWidget *parent = 0);
-	void setControls(TMvec3 *controls, int size);
-	void setControls(std::vector<TMvec3> controls);
-	std::vector<TMvec3> getControls();
+	void setControls(Vec3 *controls, int size);
+	void setControls(std::vector<Vec3> controls);
+	std::vector<Vec3> getControls();
 	QString getName();
 	void select();
 
@@ -49,7 +52,7 @@ private:
 	SharedResources *shared;
 	graphics::BufferSet bufferSet;
 	graphics::Fragment curveInfo;
-	std::vector<TMvec3> controls;
+	std::vector<Vec3> controls;
 	QString name;
 
 	void createGeometry();

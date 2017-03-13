@@ -10,7 +10,7 @@ out vec4 iColor;
 
 void main()
 {
-	float angle = 3.141f/5.0f;
+	float angle = 3.141f/2.0f;
 	mat4 r = mat4(
 			cos(angle), 0.0f, sin(angle), 0.0f,
 			0.0f, 1.0f, 0.0f, 0.0f,
@@ -24,7 +24,7 @@ void main()
 
 	iColor.r = d;
 	iColor.g = d + 0.02;
-	iColor.b = d + 0.08;
+	iColor.b = d + 0.1;
 	iColor.a = 1.0f;
 	gl_Position = vp * point;
 }

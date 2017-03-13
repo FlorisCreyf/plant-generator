@@ -1,10 +1,10 @@
 # TreeMaker — [www.treemaker.xyz](http://www.treemaker.xyz)
 
-TreeMaker is a program for creating tree models. The project is divided into a tree generator component and an editor component. The tree generator is written in C and handles generating geometry. The editor is written in C++ and facilitates handcrafting trees. Creating a tree model using the generator library requires several steps:
+TreeMaker is a program for creating tree models. The project is divided into a tree generator component and an editor component. The tree generator handles generating geometry and is implemented by the editor. Creating a tree model using the generator library requires several steps:
 
 1. Create a tree object and set its initial properties.
-2. Generate an underlying tree structure with ``tmGenerateStructure(tree)``.
-3. Generate vertices and triangles using ``tmGenerateMesh(tree)``.
+2. Generate an initial tree structure with ``tree.generateTree()``.
+3. Generate vertices and triangle indices using ``tree.generateMesh()``.
 
 ![treemaker](http://www.treemaker.xyz/window.png)
 

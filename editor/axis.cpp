@@ -19,11 +19,13 @@
 #include <vector>
 #include <limits>
 
+using namespace treemaker;
+
 void Axis::create(Geometry &geom)
 {
 	graphics::Fragment fragment;
 
-	std::vector<TMvec3> line(2);
+	std::vector<Vec3> line(2);
 	line[0] = {lineLength[0], 0.0f, 0.0f};
 	line[1] = {lineLength[1], 0.0f, 0.0f};
 	lines = geom.addLine(line, {1.0f, 0.2f, 0.0f});
@@ -87,51 +89,49 @@ Axis::Name Axis::pickClosest(float t[3])
 	return selected;
 }
 
-Axis::Name Axis::pickAxis(TMvec3 center, TMray ray)
+Axis::Name Axis::pickAxis(Vec3 center, Ray ray)
 {
-	TMaabb box;
-	TMvec3 diff = tmSubVec3(&ray.origin, &center);
-	float scale = tmMagVec3(&diff) / 15.0f * viewportScale;
+	Aabb box;
+	float scale = magnitude(ray.origin - center) / 15.0f * viewportScale;
 	float t[3];
 
-	if (tmIntersectsSphere(ray, center, 0.5f * scale) > 0.0f) {
+	if (intersectsSphere(ray, center, 0.5f * scale) > 0.0f) {
 		lastSelected = CENTER;
 		return lastSelected;
 	}
 
-	box.x1 = coneLength[0] * scale + center.x;
-	box.x2 = coneLength[1] * scale + center.x;
-	box.y1 = -radius * scale + center.y;
-	box.y2 = radius * scale + center.y;
-	box.z1 = -radius * scale + center.z;
-	box.z2 = radius * scale + center.z;
-	t[0] = tmIntersectsAABB(ray.origin, ray.direction, box);
+	box.a.x = coneLength[0] * scale + center.x;
+	box.b.x = coneLength[1] * scale + center.x;
+	box.a.y = -radius * scale + center.y;
+	box.b.y = radius * scale + center.y;
+	box.a.z = -radius * scale + center.z;
+	box.b.z = radius * scale + center.z;
+	t[0] = intersectsAABB(ray, box);
 
-	box.y1 = coneLength[0] * scale + center.y;
-	box.y2 = coneLength[1] * scale + center.y;
-	box.x1 = -radius * scale + center.x;
-	box.x2 = radius * scale + center.x;
-	box.z1 = -radius * scale + center.z;
-	box.z2 = radius * scale + center.z;
-	t[1] = tmIntersectsAABB(ray.origin, ray.direction, box);
+	box.a.y = coneLength[0] * scale + center.y;
+	box.b.y = coneLength[1] * scale + center.y;
+	box.a.x = -radius * scale + center.x;
+	box.b.x = radius * scale + center.x;
+	box.a.z = -radius * scale + center.z;
+	box.b.z = radius * scale + center.z;
+	t[1] = intersectsAABB(ray, box);
 
-	box.z1 = coneLength[0] * scale + center.z;
-	box.z2 = coneLength[1] * scale + center.z;
-	box.x1 = -radius * scale + center.x;
-	box.x2 = radius * scale + center.x;
-	box.y1 = -radius * scale + center.y;
-	box.y2 = radius * scale + center.y;
-	t[2] = tmIntersectsAABB(ray.origin, ray.direction, box);
+	box.a.z = coneLength[0] * scale + center.z;
+	box.b.z = coneLength[1] * scale + center.z;
+	box.a.x = -radius * scale + center.x;
+	box.b.x = radius * scale + center.x;
+	box.a.y = -radius * scale + center.y;
+	box.b.y = radius * scale + center.y;
+	t[2] = intersectsAABB(ray, box);
 
 	lastSelected = pickClosest(t);
 	return lastSelected;
 }
 
-TMmat4 Axis::getModelMatrix(TMvec3 center, TMvec3 position)
+Mat4 Axis::getModelMatrix(Vec3 center, Vec3 position)
 {
-	TMvec3 a = tmSubVec3(&position, &center);
-	float m = tmMagVec3(&a) / 15.0f * viewportScale;
-	return (TMmat4){
+	float m = magnitude(position - center) / 15.0f * viewportScale;
+	return (Mat4){
 		m, 0.0f, 0.0f, 0.0f,
 		0.0f, m, 0.0f, 0.0f,
 		0.0f, 0.0f, m, 0.0f,
@@ -149,10 +149,10 @@ graphics::Fragment Axis::getArrowFragment()
 	return arrows;
 }
 
-TMvec3 Axis::move(Axis::Name axis, TMray ray, TMvec3 direction, TMvec3 point)
+Vec3 Axis::move(Axis::Name axis, Ray ray, Vec3 direction, Vec3 point)
 {
 	float distance;
-	TMplane plane = {point, direction};
+	Plane plane = {point, direction};
 
 	switch (axis) {
 	case X_AXIS:
@@ -168,15 +168,14 @@ TMvec3 Axis::move(Axis::Name axis, TMray ray, TMvec3 direction, TMvec3 point)
 		break;
 	}
 
-	tmNormalizeVec3(&plane.normal);
+	plane.normal = normalize(plane.normal);
 
 	plane.normal.x = -plane.normal.x;
 	plane.normal.y = -plane.normal.y;
 	plane.normal.z = -plane.normal.z;
 
-	distance = tmIntersectsPlane(ray, plane);
-	point = tmMultVec3(distance, &ray.direction);
-	point = tmAddVec3(&ray.origin, &point);
+	distance = intersectsPlane(ray, plane);
+	point = distance * ray.direction + ray.origin;
 
 	switch (axis) {
 	case X_AXIS:
@@ -198,12 +197,12 @@ TMvec3 Axis::move(Axis::Name axis, TMray ray, TMvec3 direction, TMvec3 point)
 	return point;
 }
 
-Axis::Name Axis::getLastSelected()
+Axis::Name Axis::getSelected()
 {
 	return lastSelected;
 }
 
-void Axis::clearLastSelected()
+void Axis::clearSelected()
 {
 	lastSelected = NONE;
 }

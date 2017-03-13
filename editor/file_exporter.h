@@ -18,17 +18,19 @@
 #ifndef FILE_EXPORTER_H
 #define FILE_EXPORTER_H
 
+#include <cstddef>
+
 class FileExporter {
 public:
-	void setVertices(float *vertices, int size);
-	void setTriangles(unsigned short *triangles, int size);
+	void setVertices(const float *vertices, size_t size);
+	void setTriangles(const unsigned *triangles, size_t size);
 	void exportObj(const char *filename);
 
 private:
-	float *vb;
-	int vbSize;
-	unsigned short *eb;
-	int ebSize;
+	const float *vb;
+	size_t vbSize;
+	const unsigned *eb;
+	size_t ebSize;
 };
 
 #endif /* FILE_EXPORTER_H */

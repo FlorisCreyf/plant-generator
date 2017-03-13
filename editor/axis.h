@@ -17,22 +17,25 @@
 
 #include "graphics.h"
 #include "geometry.h"
-#include "vector.h"
-#include "collision.h"
+#include "math.h"
+#include "intersection.h"
 
 class Axis {
 public:
+        typedef treemaker::Vec3 Vec3;
+        typedef treemaker::Mat4 Mat4;
+
         enum Name {X_AXIS, Y_AXIS, Z_AXIS, CENTER, NONE};
 
         void create(Geometry &geom);
         void setScale(float height);
-        Name pickAxis(TMvec3 center, TMray ray);
-        TMmat4 getModelMatrix(TMvec3 center, TMvec3 position);
+        Name pickAxis(Vec3 center, treemaker::Ray ray);
+        treemaker::Mat4 getModelMatrix(Vec3 center, Vec3 position);
         graphics::Fragment getLineFragment();
         graphics::Fragment getArrowFragment();
-        TMvec3 move(Name axis, TMray ray, TMvec3 direction, TMvec3 point);
-        Name getLastSelected();
-        void clearLastSelected();
+        Vec3 move(Name axis, treemaker::Ray ray, Vec3 direction, Vec3 point);
+        Name getSelected();
+        void clearSelected();
 
 private:
         const float radius = 0.08f;

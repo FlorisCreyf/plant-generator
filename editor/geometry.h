@@ -15,34 +15,34 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
- #ifndef LINES_H
- #define LINES_H
+#ifndef LINES_H
+#define LINES_H
 
 #include "graphics.h"
-#include "collision.h"
+#include "intersection.h"
 #include <vector>
 
 class Geometry {
 public:
-        graphics::Fragment addGrid(int sections, TMvec3 primColor,
-                        TMvec3 secColor);
-        graphics::Fragment addBox(TMaabb &b, TMvec3 c);
-        graphics::Fragment addLine(std::vector<TMvec3> points, TMvec3 color);
-        graphics::Fragment addBezier(std::vector<TMvec3> points, int sections,
-                        TMvec3 color);
-        graphics::Fragment addBPath(std::vector<TMvec3> points, int sections,
-                        TMvec3 color);
-        graphics::Fragment addPlane(TMvec3 a, TMvec3 b, TMvec3 c, TMvec3 color);
-        graphics::Fragment addCone(float radius, float height,
-                        unsigned divisions, TMvec3 color);
+        typedef treemaker::Vec3 Vec3;
+        typedef treemaker::Mat4 Mat4;
+        typedef graphics::Fragment Fragment;
+
+        Fragment addGrid(int sections, Vec3 primColor, Vec3 secColor);
+        Fragment addLine(std::vector<Vec3> points, Vec3 color);
+        Fragment addBezier(std::vector<Vec3> points, int sections, Vec3 color);
+        Fragment addBPath(std::vector<Vec3> points, int sections, Vec3 color);
+        Fragment addPlane(Vec3 a, Vec3 b, Vec3 c, Vec3 color);
+        Fragment addCone(float radius, float height, unsigned divisions,
+                        Vec3 color);
         graphics::VertexFormat getVertexFormat();
-        void transform(int start, int count, TMmat4 t);
+        void transform(int start, int count, Mat4 t);
 
         std::vector<float> vertices;
         std::vector<unsigned short> indices;
 
 private:
-        graphics::Fragment newFragment(int vsize, int isize, GLenum type);
+        Fragment newFragment(int vsize, int isize, GLenum type);
 };
 
 #endif /* LINES_H */

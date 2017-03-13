@@ -18,10 +18,13 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
-#include "vector.h"
+#include "math.h"
 
 class Camera {
 public:
+	typedef treemaker::Vec3 Vec3;
+	typedef treemaker::Mat4 Mat4;
+
 	enum Action {
 		ZOOM, ROTATE, PAN, NONE
 	} action;
@@ -33,11 +36,11 @@ public:
 	void setPerspective(float fovy, float near, float far, float aspect);
 	void setWindowSize(int width, int height);
 	void zoom(float y);
-	TMvec3 getPosition();
-	TMvec3 getDirection();
-	TMmat4 getVP();
-	TMvec3 getRayDirection(int x, int y);
-	TMvec3 toScreenSpace(TMvec3 point);
+	Vec3 getPosition();
+	Vec3 getDirection();
+	Mat4 getVP();
+	Vec3 getRayDirection(int x, int y);
+	Vec3 toScreenSpace(Vec3 point);
 
 private:
 	struct Point {
@@ -48,22 +51,22 @@ private:
 	Point pos;
 	Point start;
 
-	TMmat4 perspective;
-	TMvec3 up;
-	TMvec3 eye;
-	TMvec3 feye;
-	TMvec3 target;
-	TMvec3 ftarget;
+	Mat4 perspective;
+	Vec3 up;
+	Vec3 eye;
+	Vec3 feye;
+	Vec3 target;
+	Vec3 ftarget;
 	int winWidth;
 	int winHeight;
 	float distance;
 	float fdistance;
 
-	TMvec3 getCameraPosition();
-	TMmat4 getInverseVP();
-	TMmat4 getInversePerspective();
-	TMmat4 getInverseLookAt();
-	TMmat4 getLookAtMatrix(TMvec3 *eye, TMvec3 *target, TMvec3 *up);
+	Vec3 getCameraPosition();
+	Mat4 getInverseVP();
+	Mat4 getInversePerspective();
+	Mat4 getInverseLookAt();
+	Mat4 getLookAtMatrix(Vec3 &eye, Vec3 &target, Vec3 &up);
 };
 
 #endif /* CAMERA_H */

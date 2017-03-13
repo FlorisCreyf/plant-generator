@@ -13,17 +13,40 @@
  * limitations under the License.
  */
 
-#ifndef TM_CURVE_H
-#define TM_CURVE_H
+#ifndef TM_INTERSECTION_H
+#define TM_INTERSECTION_H
 
 #include "math.h"
-#include <vector>
 #include <cstddef>
 
 namespace treemaker {
 
-	Vec3 getBezierPath(float t, Vec3 *points, size_t size);
-	Vec3 getBezier(float t, Vec3 *points, size_t size);
+	struct Ray {
+		Vec3 origin;
+		Vec3 direction;
+	};
+
+	struct Aabb {
+		Vec3 a;
+		Vec3 b;
+	};
+
+	struct Obb {
+		float h[3];
+		Vec3 n[3];
+		Vec3 center;
+	};
+
+	struct Plane {
+		Vec3 point;
+		Vec3 normal;
+	};
+
+	Aabb createAABB(const float *buffer, size_t size);
+	float intersectsOBB(Ray &ray, Obb &obb);
+	float intersectsAABB(Ray &ray, Aabb &aabb);
+	float intersectsPlane(Ray &ray, Plane &plane);
+	float intersectsSphere(Ray &ray, Vec3 position, float radius);
 }
 
-#endif /* TM_CURVE_H */
+#endif /* TM_INTERSECTION_H */

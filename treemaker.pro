@@ -1,4 +1,4 @@
-CONFIG += release
+CONFIG += debug
 TARGET = treemaker
 QT = core gui widgets opengl
 SOURCES += editor/axis.cpp editor/shared_resources.cpp editor/geometry.cpp editor/graphics.cpp editor/main.cpp editor/window.cpp editor/editor.cpp editor/camera.cpp editor/file_exporter.cpp editor/property_box.cpp editor/curve_editor.cpp editor/curve_button.cpp

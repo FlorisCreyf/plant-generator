@@ -72,16 +72,16 @@ void CurveEditor::createInterface()
 	Geometry geom;
 
 	{
-		TMvec3 a = {1.0f, 0.0f, 0.0f};
-		TMvec3 b = {0.0f, 0.0f, 1.0f};
-		TMvec3 center = {0.0f, 0.2f, 0.0f};
-		TMvec3 color = {0.33f, 0.33f, 0.33f};
+		Vec3 a = {1.0f, 0.0f, 0.0f};
+		Vec3 b = {0.0f, 0.0f, 1.0f};
+		Vec3 center = {0.0f, 0.2f, 0.0f};
+		Vec3 color = {0.33f, 0.33f, 0.33f};
 		planeInfo = geom.addPlane(a, b, center, color);
 	}
 
 	{
-		TMvec3 color = {0.3f, 0.3f, 0.3f};
-		TMmat4 t = {
+		Vec3 color = {0.3f, 0.3f, 0.3f};
+		Mat4 t = {
 			1.0f/4.0f, 0.0f, 0.0f, 0.0f,
 			0.0f, 1.0f/4.0f, 0.0f, 0.0f,
 			0.0f, 0.0f, 1.0f/4.0f, 0.0f,
@@ -120,8 +120,10 @@ void CurveEditor::mousePressEvent(QMouseEvent *event)
 		int h = height - margin;
 		int x = (controls[i].x) * w + margin/2;
 		int y = (h - (controls[i].z) * h) + margin/2;
-
-		if (sqrt(pow(p.x() - x, 2) + pow(p.y() - y, 2)) < 8) {
+		float dx2 = std::pow(p.x() - x, 2);
+		float dy2 = std::pow(p.y() - y, 2);
+		
+		if (std::sqrt(dx2 + dy2) < 8) {
 			point = i;
 			insertIndex = std::numeric_limits<size_t>::max();
 			x = p.x();
@@ -246,7 +248,7 @@ bool CurveEditor::omitCurve(float x)
 		insertIndex = point - 2;
 		auto start = controls.begin() + insertIndex;
 		auto end = controls.begin() + insertIndex + 4;
-		memcpy(curve, &controls[insertIndex], sizeof(TMvec3)*4);
+		memcpy(curve, &controls[insertIndex], sizeof(Vec3)*4);
 		controls.erase(start, end);
 		return true;
 	} else
@@ -326,7 +328,7 @@ void CurveEditor::placeTerminalControl(bool first, float y)
 	controls[point].z = y;
 }
 
-TMmat4 CurveEditor::createVP()
+treemaker::Mat4 CurveEditor::createVP()
 {
 	float w = QWidget::width();
 	float h = QWidget::height();
@@ -335,7 +337,7 @@ TMmat4 CurveEditor::createVP()
 	float planeWRatio = (w - margin) / w;
 	float planeHRatio = (h - margin) / h;
 
-	return (TMmat4){
+	return (Mat4){
 		2.0f * planeWRatio, 0.0f, 0.0f, 0.0f,
 		0.0f, 0.0f, 0.9f, 0.0f,
 		0.0f, 2.0f * planeHRatio, 0.0f, 0.0f,
@@ -357,27 +359,27 @@ void CurveEditor::paintGL()
 
 void CurveEditor::paintInterface()
 {
-	TMmat4 vp = createVP();
+	Mat4 vp = createVP();
 	glUseProgram(shared->getProgramName(shared->FLAT_SHADER));
 	glBindVertexArray(bufferSet.vao);
-	glUniformMatrix4fv(0, 1, GL_FALSE, &vp.m[0][0]);
+	glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
 	glDrawElements(GL_TRIANGLES, planeInfo.count[1], GL_UNSIGNED_SHORT, 0);
 	glDrawArrays(gridInfo.type, gridInfo.start[0], gridInfo.count[0]);
 	if (enabled)
 		paintCurve(vp);
 }
 
-void CurveEditor::paintCurve(TMmat4 &vp)
+void CurveEditor::paintCurve(Mat4 &vp)
 {
 	glDrawArrays(curveInfo.type, curveInfo.start[0], curveInfo.count[0]);
 	glDrawArrays(GL_LINES, controlInfo.start[0], controlInfo.count[0]);
 	glBindTexture(GL_TEXTURE_2D, shared->getTextureName(shared->DOT_TEX));
 	glUseProgram(shared->getProgramName(shared->POINT_SHADER));
-	glUniformMatrix4fv(0, 1, GL_FALSE, &vp.m[0][0]);
+	glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
 	glDrawArrays(GL_POINTS, controlInfo.start[0], controlInfo.count[0]);
 }
 
-void CurveEditor::setCurve(std::vector<TMvec3> controls, QString name)
+void CurveEditor::setCurve(std::vector<treemaker::Vec3> controls, QString name)
 {
 	parentWidget()->setWindowTitle(name + " Curve");
 	this->controls = controls;

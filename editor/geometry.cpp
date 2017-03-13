@@ -17,25 +17,26 @@
 
 #include "geometry.h"
 #include "curve.h"
-#include <math.h>
+#include <cmath>
 
 using std::vector;
 using namespace graphics;
+using namespace treemaker;
 
-void insertVec3(vector<float>::iterator &itr, TMvec3 a)
+void insertVec3(vector<float>::iterator &itr, Vec3 a)
 {
 	*(itr++) = a.x;
 	*(itr++) = a.y;
 	*(itr++) = a.z;
 }
 
-void insertPoint(vector<float>::iterator &itr, TMvec3 a, TMvec3 color)
+void insertPoint(vector<float>::iterator &itr, Vec3 a, Vec3 color)
 {
 	insertVec3(itr, a);
 	insertVec3(itr, color);
 }
 
-void insertLine(vector<float>::iterator &itr, TMvec3 a, TMvec3 b, TMvec3 color)
+void insertLine(vector<float>::iterator &itr, Vec3 a, Vec3 b, Vec3 color)
 {
 	insertVec3(itr, a);
 	insertVec3(itr, color);
@@ -60,7 +61,7 @@ Fragment Geometry::newFragment(int vsize, int isize, GLenum type)
 	return fragment;
 }
 
-Fragment Geometry::addGrid(int sections, TMvec3 primColor, TMvec3 secColor)
+Fragment Geometry::addGrid(int sections, Vec3 primColor, Vec3 secColor)
 {
 	const int SIZE = (8*sections+4)*6;
 	float bound = static_cast<float>(sections);
@@ -91,31 +92,7 @@ Fragment Geometry::addGrid(int sections, TMvec3 primColor, TMvec3 secColor)
 	return newFragment(SIZE, 0, GL_LINES);
 }
 
-Fragment Geometry::addBox(TMaabb &b, TMvec3 color)
-{
-	const int SIZE = 144;
-	vector<float>::iterator itr;
-
-	vertices.resize(vertices.size() + SIZE);
-	itr = vertices.end() - SIZE;
-
-	insertLine(itr, {b.x1, b.y1, b.z1}, {b.x2, b.y1, b.z1}, color);
-	insertLine(itr, {b.x1, b.y1, b.z1}, {b.x1, b.y2, b.z1}, color);
-	insertLine(itr, {b.x1, b.y1, b.z1}, {b.x1, b.y1, b.z2}, color);
-	insertLine(itr, {b.x2, b.y2, b.z2}, {b.x1, b.y2, b.z2}, color);
-	insertLine(itr, {b.x2, b.y2, b.z2}, {b.x2, b.y1, b.z2}, color);
-	insertLine(itr, {b.x2, b.y2, b.z2}, {b.x2, b.y2, b.z1}, color);
-	insertLine(itr, {b.x2, b.y1, b.z1}, {b.x2, b.y2, b.z1}, color);
-	insertLine(itr, {b.x2, b.y1, b.z1}, {b.x2, b.y1, b.z2}, color);
-	insertLine(itr, {b.x1, b.y2, b.z1}, {b.x2, b.y2, b.z1}, color);
-	insertLine(itr, {b.x1, b.y2, b.z1}, {b.x1, b.y2, b.z2}, color);
-	insertLine(itr, {b.x1, b.y1, b.z2}, {b.x2, b.y1, b.z2}, color);
-	insertLine(itr, {b.x1, b.y1, b.z2}, {b.x1, b.y2, b.z2}, color);
-
-	return newFragment(SIZE, 0, GL_LINES);
-}
-
-Fragment Geometry::addLine(vector<TMvec3> points, TMvec3 color)
+Fragment Geometry::addLine(vector<Vec3> points, Vec3 color)
 {
 	const int SIZE = points.size() * 6;
 	vector<float>::iterator itr;
@@ -131,7 +108,7 @@ Fragment Geometry::addLine(vector<TMvec3> points, TMvec3 color)
 	return newFragment(SIZE, 0, GL_LINE_STRIP);
 }
 
-Fragment Geometry::addBezier(vector<TMvec3> points, int divisions, TMvec3 color)
+Fragment Geometry::addBezier(vector<Vec3> points, int divisions, Vec3 color)
 {
 	const int SIZE = divisions * 6;
 	vector<float>::iterator itr;
@@ -141,14 +118,14 @@ Fragment Geometry::addBezier(vector<TMvec3> points, int divisions, TMvec3 color)
 
 	for (int i = 0; i < divisions; i++) {
 		float t = i/(float)(divisions-1);
-		insertVec3(itr, tmGetBezier(t, &points[0], points.size()));
+		insertVec3(itr, getBezier(t, &points[0], points.size()));
 		insertVec3(itr, color);
 	}
 
 	return newFragment(SIZE, 0, GL_LINE_STRIP);
 }
 
-Fragment Geometry::addBPath(vector<TMvec3> points, int divisions, TMvec3 color)
+Fragment Geometry::addBPath(vector<Vec3> points, int divisions, Vec3 color)
 {
 	const int CURVES = points.size() / 4;
 	const int SIZE = divisions * 6 * CURVES;
@@ -160,14 +137,14 @@ Fragment Geometry::addBPath(vector<TMvec3> points, int divisions, TMvec3 color)
 	for (int i = 0; i < CURVES; i++)
 		for (int j = 0; j < divisions; j++) {
 			float t = j/(float)(divisions-1);
-			insertVec3(itr, tmGetBezier(t, &points[i*4], 4));
+			insertVec3(itr, getBezier(t, &points[i*4], 4));
 			insertVec3(itr, color);
 		}
 
 	return newFragment(SIZE, 0, GL_LINE_STRIP);
 }
 
-Fragment Geometry::addPlane(TMvec3 a, TMvec3 b, TMvec3 c, TMvec3 color)
+Fragment Geometry::addPlane(Vec3 a, Vec3 b, Vec3 c, Vec3 color)
 {
 	const int SIZE = 36;
 	const int VERTEX_START = vertices.size()/6;
@@ -176,16 +153,14 @@ Fragment Geometry::addPlane(TMvec3 a, TMvec3 b, TMvec3 c, TMvec3 color)
 	vertices.resize(vertices.size() + SIZE);
 	itr = vertices.end() - SIZE;
 
-	TMvec3 d = tmAddVec3(&a, &b);
-
 	insertVec3(itr, c);
 	insertVec3(itr, color);
-	insertVec3(itr, tmAddVec3(&c, &a));
+	insertVec3(itr, c + a);
 	insertVec3(itr, color);
 
-	insertVec3(itr, tmAddVec3(&c, &b));
+	insertVec3(itr, c + b);
 	insertVec3(itr, color);
-	insertVec3(itr, tmAddVec3(&c, &d));
+	insertVec3(itr, c + a + b);
 	insertVec3(itr, color);
 
 	indices.push_back(VERTEX_START + 0);
@@ -199,7 +174,7 @@ Fragment Geometry::addPlane(TMvec3 a, TMvec3 b, TMvec3 c, TMvec3 color)
 }
 
 Fragment Geometry::addCone(float radius, float height, unsigned divisions,
-		TMvec3 color)
+		Vec3 color)
 {
 	const int SIZE = (divisions + 2)*6;
 	const int VERTEX_START = vertices.size()/6;
@@ -210,7 +185,8 @@ Fragment Geometry::addCone(float radius, float height, unsigned divisions,
 
 	for (unsigned i = 0; i < divisions; i++) {
 		float r = i*2.0f*M_PI/divisions;
-		insertPoint(itr, {cos(r)*radius, 0.0f, sin(r)*radius}, color);
+		Vec3 point = {std::cos(r)*radius, 0.0f, std::sin(r)*radius};
+		insertPoint(itr, point, color);
 		indices.push_back(VERTEX_START + i);
 		indices.push_back(VERTEX_START + divisions);
 		indices.push_back(VERTEX_START + (i == divisions-1 ? 0 : i+1));
@@ -226,13 +202,13 @@ Fragment Geometry::addCone(float radius, float height, unsigned divisions,
 	return newFragment(SIZE, 6*divisions, GL_TRIANGLES);
 }
 
-void Geometry::transform(int start, int count, TMmat4 m)
+void Geometry::transform(int start, int count, Mat4 m)
 {
 	int formatSize = graphics::getSize(VERTEX_COLOR);
 	const int LEN = (start + count) * formatSize;
 	for (int i = start * formatSize; i < LEN; i += formatSize) {
-		TMvec3 v = {vertices[i], vertices[i+1], vertices[i+2]};
-		tmTransform(&v, &m, 1.0f);
+		Vec3 v = {vertices[i], vertices[i+1], vertices[i+2]};
+		v = toVec3(m * toVec4(v, 1.0f));
 		vertices[i+0] = v.x;
 		vertices[i+1] = v.y;
 		vertices[i+2] = v.z;

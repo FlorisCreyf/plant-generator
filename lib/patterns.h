@@ -13,17 +13,27 @@
  * limitations under the License.
  */
 
-#ifndef TM_CURVE_H
-#define TM_CURVE_H
+#ifndef TM_PATTERNS_H
+#define TM_PATTERNS_H
 
 #include "math.h"
 #include <vector>
-#include <cstddef>
 
-namespace treemaker {
-
-	Vec3 getBezierPath(float t, Vec3 *points, size_t size);
-	Vec3 getBezier(float t, Vec3 *points, size_t size);
+std::vector<Vec3> getDefaultCurve(unsigned type)
+{
+	std::vector<Vec3> curve;
+	switch (type) {
+	case 0:
+		curve.push_back({0.0f, -0.3f, 1.0f});
+		curve.push_back({0.0f, -0.3f, 0.75f});
+		curve.push_back({0.05f, -0.3f, 0.75f});
+		curve.push_back({0.175f, -0.3f, 0.75f});
+		curve.push_back({0.175f, -0.3f, 0.75f});
+		curve.push_back({0.3f, -0.3f, 0.75f});
+		curve.push_back({0.75f, -0.3f, 0.25f});
+		curve.push_back({1.0f, -0.3f, 0.0f});
+	}
+	return curve;
 }
 
-#endif /* TM_CURVE_H */
+#endif /* TM_PATTERNS_H */

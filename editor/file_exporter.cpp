@@ -19,13 +19,13 @@
 #include <cstdio>
 
 /* Interleaved buffer */
-void FileExporter::setVertices(float *vertices, int size)
+void FileExporter::setVertices(const float *vertices, size_t size)
 {
 	this->vb = vertices;
 	this->vbSize = size;
 }
 
-void FileExporter::setTriangles(unsigned short *triangles, int size)
+void FileExporter::setTriangles(const unsigned *triangles, size_t size)
 {
 	this->eb = triangles;
 	this->ebSize = size;
@@ -34,13 +34,16 @@ void FileExporter::setTriangles(unsigned short *triangles, int size)
 void FileExporter::exportObj(const char *filename)
 {
 	FILE *f = fopen(filename, "w");
-
-	for (int i = 0; i < vbSize * 6; i += 6) {
+	
+	if (f == nullptr)
+		return;
+	
+	for (size_t i = 0; i < vbSize; i += 6) {
 		fprintf(f, "v %f %f %f\n", vb[i], vb[i+1], vb[i+2]);
 		fprintf(f, "vn %f %f %f\n", vb[i+3], vb[i+4], vb[i+5]);
 	}
 
-	for (int i = 0; i < ebSize; i += 3) {
+	for (size_t i = 0; i < ebSize; i += 3) {
 		fprintf(f, "f %d %d %d\n", eb[i]+1, eb[i+1]+1, eb[i+2]+1);
 	}
 

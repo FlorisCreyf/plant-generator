@@ -1,6 +1,9 @@
 *.mk
 *.obj
 *.mtl
-resources/
+*.stash
+*.a
 treemaker
+resources/
 build/
+nbproject/

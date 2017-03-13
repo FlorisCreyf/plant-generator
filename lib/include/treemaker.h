@@ -1,66 +1,93 @@
-/*
- * Copyright (C) 2016 Floris Creyf
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- */
-
 #ifndef TREEMAKER_H
 #define TREEMAKER_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <cstddef>
+#include "math.h"
+#include "intersection.h"
 
-#include "collision.h"
+namespace treemaker {
 
-typedef struct __TMtree *TMtree;
+	class TreeImpl;
 
-TMtree tmNewTree();
-void tmDeleteTree(TMtree tree);
+	class Tree {
+		TreeImpl *d;
 
-int tmGetBranchPathSize(TMtree tree, int branch);
-void tmGetBranchPath(TMtree, int branch, TMvec3 *data);
-TMvec3 tmGetBranchPoint(TMtree, int name, int index);
-void tmSetBranchPoint(TMtree tree, int name, TMvec3 point, int index);
+	public:
+		Tree();
+		~Tree();
 
-void tmSetRadius(TMtree tree, int id, float radius);
-float tmGetRadius(TMtree tree, int id);
+		void generateTree();
+		bool generateMesh();
 
-void tmSetRadiusCurve(TMtree tree, int id, TMvec3 *curve, int size);
-void tmGetRadiusCurve(TMtree tree, int id, TMvec3 **curve, int *size);
+		void setMaxStemDepth(unsigned depth);
+		unsigned getMaxStemDepth();
 
-void tmSetBranchCurve(TMtree tree, int id, TMvec3 *curve, int size);
-void tmGetBranchCurve(TMtree tree, int id, TMvec3 **curve, int *size);
+		void setCrownBaseHeight(float height);
+		float getCrownBaseHeight();
 
-void tmSetCrossSections(TMtree tree, int id, int sections);
-int tmGetCrossSections(TMtree tree, int id);
+		unsigned getStemName(size_t index);
+		
+		unsigned newStem(unsigned parent);
+		void deleteStem(unsigned stem);
+		bool moveStem(unsigned stem, unsigned parent);
 
-void tmSetResolution(TMtree tree, int id, int resolution);
-int tmGetResolution(TMtree tree, int id);
+		bool isLateral(unsigned stem);
+		
+		/** 
+		 * Positions can only be set for lateral stems. Positions are
+		 * distances along the path of the stem's parent.
+		 */
+		void setPosition(unsigned stem, float position);
+		float getPosition(unsigned stem);
+		/** 
+		 * Locations can only be set for non-lateral stems 
+		 * (e.g. trunks).
+		 */
+		void setLocation(unsigned stem, Vec3 location);
+		Vec3 getLocation(unsigned stem);
 
-void tmSetCrownBaseHeight(TMtree tree, float cbh);
-float tmGetCrownBaseHeight(TMtree tree);
+		void setRadius(unsigned stem, float radius);
+		float getRadius(unsigned stem);
 
-void tmSetBranchDensity(TMtree tree, int id, float density);
-float tmGetBranchDensity(TMtree, int id);
+		void setRadiusCurve(unsigned stem, Vec3 *curve, size_t size);
+		size_t getRadiusCurveSize(unsigned stem);
+		void getRadiusCurve(unsigned stem, Vec3 *curve);
 
-void tmSetMaxBranchDepth(TMtree tree, int depth);
-TMaabb tmGetBoundingBox(TMtree tree, int id);
-int tmIsTerminalBranch(TMtree tree, int id);
+		void setStemDensity(unsigned stem, float density);
+		float getStemDensity(unsigned stem);
 
-int tmGetIBOStart(TMtree tree, int id);
-int tmGetIBOEnd(TMtree tree, int id);
-int tmGetVBOSize(TMtree tree);
-int tmGetIBOSize(TMtree tree);
+		void setResolution(unsigned stem, int resolution);
+		int getResolution(unsigned stem);
 
-void tmGenerateStructure(TMtree tree);
-int tmGenerateMesh(TMtree tree, float *v, int vs, unsigned short *i, int is);
+		/** The first point of any path is always a zero vector. */
+		void setPath(unsigned stem, Vec3 *path, size_t size);
+		size_t getPathSize(unsigned stem);
+		void getPath(unsigned stem, Vec3 *path);
 
-#ifdef __cplusplus
+		size_t getGeneratedPathSize(unsigned stem);
+		/** 
+		 * The generated path will be a different shape depending on the
+		 * number of cross sections and represents the actual path the
+		 * stem will follow.
+		 */
+		void getGeneratedPath(unsigned stem, Vec3 *path);
+		void setGeneratedPathSize(unsigned stem, size_t count);
+
+		const float *getVertices();
+		size_t getVertexCount();
+		size_t getVertexCapacity();
+		const unsigned *getIndices();
+		size_t getIndexCount();
+		size_t getIndexCapacity();
+
+		struct Location {
+			size_t indexStart;
+			size_t indexCount;
+		};
+
+		Location getStemLocation(unsigned stem);
+		Aabb getBoundingBox(unsigned stem);
+	};
 }
-#endif
 
-#endif /* TREEMAKER_H  */
+#endif /* TREEMAKER_H */

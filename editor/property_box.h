@@ -32,13 +32,13 @@ public:
 	void bind(Editor *editor, CurveEditor *curveEditor);
 
 public slots:
-	void fill(TMtree tree, int branch);
-	void setCurve(vector<TMvec3> control, QString names);
+	void fill(treemaker::Tree &tree, int stem);
+	void setCurve(std::vector<treemaker::Vec3> control, QString names);
 	void toggleCurve(CurveButton *w);
 
 signals:
 	void isEnabled(bool enabled);
-	void radiusCurveChanged(vector<TMvec3>);
+	void radiusCurveChanged(std::vector<treemaker::Vec3>);
 
 private:
 	SharedResources *shared;
@@ -56,12 +56,12 @@ private:
 	CurveButton *radiusCB;
 	QSpinBox *resolution;
 	QSpinBox *sections;
-	QDoubleSpinBox *branches;
+	QDoubleSpinBox *stems;
 
 	void createGlobalBox(QVBoxLayout *layout);
 	void createLocalBox(QVBoxLayout *layout);
 	void bindCurveEditor();
-	void fillCurveButtons(TMtree tree, int branch);
+	void fillCurveButtons(treemaker::Tree &tree, int stem);
 	QWidget *createCenteredWidget(QWidget *);
 	void configureTable(QTableWidget *);
 };

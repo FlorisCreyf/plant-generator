@@ -25,6 +25,7 @@
 #include "treemaker.h"
 #include "shared_resources.h"
 #include "camera.h"
+#include "math.h"
 #include <QtGui/QOpenGLFunctions>
 #include <QOpenGLWidget>
 
@@ -33,7 +34,6 @@ class Editor : public QOpenGLWidget, protected QOpenGLFunctions {
 
 public:
 	Editor(SharedResources *shared, QWidget *parent = 0);
-	~Editor();
 
 	void exportObject(const char *filename);
 
@@ -41,12 +41,11 @@ public slots:
 	void changeResolution(int i);
 	void changeSections(int i);
 	void changeRadius(double d);
-	void changeRadiusCurve(std::vector<TMvec3> c);
-	void changeBranchCurve(std::vector<TMvec3> c);
-	void changeBranchDensity(double d);
+	void changeRadiusCurve(std::vector<treemaker::Vec3> c);
+	void changeStemDensity(double d);
 
 signals:
-	void selectionChanged(TMtree tree, int s);
+	void selectionChanged(treemaker::Tree &tree, int s);
 
 protected:
 	void initializeGL();
@@ -72,16 +71,13 @@ private:
 	graphics::Fragment selection;
 	Axis axis;
 
-	int selectedBranch = -1;
+	int selectedStem = -1;
 	int selectedPoint = -1;
-
-	std::vector<float> vertices;
-	std::vector<unsigned short> indices;
 
 	unsigned maxLines = 100;
 	unsigned minLines = 100;
 
-	TMtree tree;
+	treemaker::Tree tree;
 	SharedResources *shared;
 	Camera camera;
 
@@ -89,7 +85,7 @@ private:
 	void initializeGrid();
 	void intializeLines();
 	void updateLines(int branch);
-	void selectBranch(int x, int y);
+	void selectStem(int x, int y);
 	void selectPoint(int x, int y);
 	void selectAxis(int x, int y);
 	void movePoint(int x, int y);
