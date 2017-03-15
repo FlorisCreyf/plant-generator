@@ -55,73 +55,73 @@
 	border-top:3px solid #444;
 	margin-top:0;
 } QWidget {
-        color:#ddd;
-        border-image:none;
-        border:0px transparent black;
-        outline:0;
+	color:#ddd;
+	border-image:none;
+	border:0px transparent black;
+	outline:0;
 } QDockWidget {
+	font-size:14px;
 	background:#666;
-        titlebar-normal-icon:url(&quot;resources/popup.png&quot;);
+	titlebar-normal-icon:url(&quot;resources/popup.png&quot;);
 	titlebar-close-icon:url(&quot;resources/close.png&quot;);
 } QDockWidget::title {
 	background:#3d3d3d;
-        font-size:12px;
 	padding:4px 5px 0 5px;
 } QDockWidget::close-button, QDockWidget::float-button {
 	background:transparent;
 	border:solid 1px transparent;
 } QDockWidget::close-button:hover, QDockWidget::float-button:hover {
-        background:#333;
+	background:#333;
 } QDockWidget::close-button:pressed, QDockWidget::float-button:pressed {
-        background-color:#333;
+	background-color:#333;
 } QMainWindow::separator {
 	background-color:#666;
 } QDockWidget::close-button {
-        subcontrol-position:top right;
-        subcontrol-origin:margin;
-        position:absolute;
-        top:0px;
-        right:4px;
-        bottom:0px;
-        width:15px;
+	subcontrol-position:top right;
+	subcontrol-origin:margin;
+	position:absolute;
+	top:0px;
+	right:4px;
+	bottom:0px;
+	width:15px;
 } QDockWidget::float-button {
-        subcontrol-position:top right;
-        subcontrol-origin:margin;
-        position:absolute;
-        top:0px;
-        right:22px;
-        bottom:0px;
-        width:15px;
+	subcontrol-position:top right;
+	subcontrol-origin:margin;
+	position:absolute;
+	top:0px;
+	right:22px;
+	bottom:0px;
+	width:15px;
 } QLabel {
 	height:30px;
-        font-size:12px;
-        color:#eee;
+	font-size:12px;
+	color:#eee;
 } QSpinBox, QDoubleSpinBox {
-        font-size:12px;
+	font-size:12px;
 	padding-right:0px;
 	background:#555;
 	border:1px solid transparent;
 } QSpinBox::up-button, QDoubleSpinBox::up-button {
-        subcontrol-position:top right;
+	subcontrol-position:top right;
 	background-color:#4a4a4a;
 } QSpinBox::down-button, QDoubleSpinBox::down-button {
 	subcontrol-position:bottom right;
 	background-color:#4a4a4a;
 } QSpinBox::up-arrow, QDoubleSpinBox::up-arrow {
-        image:url(&quot;resources/uparrow.png&quot;);
-        width:7px;
-        height:6px;
+	image:url(&quot;resources/uparrow.png&quot;);
+	width:7px;
+	height:6px;
 } QSpinBox::down-arrow, QDoubleSpinBox::down-arrow {
-        image:url(&quot;resources/downarrow.png&quot;);
-        width:7px;
-        height:6px;
+	image:url(&quot;resources/downarrow.png&quot;);
+	width:7px;
+	height:6px;
 } QSpinBox:disabled, QDoubleSpinBox:disabled {
 	background:#5a5a5a;
 } QSpinBox::up-button:disabled, QSpinBox::down-button:disabled,
-                QDoubleSpinBox::up-button:disabled, QDoubleSpinBox::down-button:disabled {
+		QDoubleSpinBox::up-button:disabled, QDoubleSpinBox::down-button:disabled {
 	background:transparent;
 } QSpinBox::up-arrow:disabled, QSpinBox::down-arrow:disabled,
-                QDoubleSpinBox::up-arrow:disabled, QDoubleSpinBox::down-arrow:disabled {
+		QDoubleSpinBox::up-arrow:disabled, QDoubleSpinBox::down-arrow:disabled {
 	width:0;
 	height:0;
 } QMainWindow {
@@ -132,14 +132,15 @@
 } QTableView::item {
 	margin:1px 0;
 } QGroupBox {
-        padding-top:0px;
-        margin:0;
-        border-top:23px solid #4a4a4a;
+	padding-top:0px;
+	margin:0;
+	font-size:13px;
+	border-top:23px solid #4a4a4a;
 } QGroupBox::title {
-        font-size:12px;
-        background:transparent;
-        padding:3px 0 0 8px;
-        margin:0;
+	font-size:12px;
+	background:transparent;
+	padding:3px 0 0 8px;
+	margin:0;
 } QTableView {
 	background:transparent;
 } QTabBar {
@@ -148,7 +149,7 @@
 } QTabBar::tab {
 	background:#333;
 	color:#aaa;
-        top:0;
+	top:0;
 	padding:4px 10px;
 	margin:0;
 } QTabBar::tab:selected {
@@ -156,20 +157,20 @@
 } QWidget#CurveButtonWidget {
 	border:solid 1px #fff;
 } QScrollArea {
-        background:transparent;
+	background:transparent;
 } QScrollBar:vertical {
-        width:8px;
-        background:#666;
+	width:8px;
+	background:#666;
 } QScrollBar::handle:vertical {
-        background:#888;
-        border:0;
-        min-height:20px;
+	background:#888;
+	border:0;
+	min-height:20px;
 } QScrollBar::add-line:vertical {
-        border:0;
-        background:#666;
+	border:0;
+	background:#666;
 } QScrollBar::sub-line:vertical {
-        border:0;
-        background:#666;
+	border:0;
+	background:#666;
 }</string>
   </property>
   <property name="documentMode">

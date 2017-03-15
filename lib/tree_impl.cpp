@@ -14,6 +14,7 @@
  */
 
 #include "tree_impl.h"
+#include <limits>
 
 using namespace treemaker;
 
@@ -47,9 +48,12 @@ Stem *treemaker::TreeImpl::findStemByIndex(Stem *parent, size_t &index)
 		return parent;
 
 	for (size_t i = 0; i < parent->children.size(); i++) {
-		Stem *stem = findStemByIndex(&parent->children[i], index);
-		if (stem != nullptr)
-			return stem;
+		auto inf = std::numeric_limits<float>::infinity();
+		if (parent->children[i].getLocation().x != inf) {
+			Stem *s = findStemByIndex(&parent->children[i], index);
+			if (s != nullptr)
+				return s;
+		}
 	}
 
 	return nullptr;

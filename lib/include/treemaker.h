@@ -22,8 +22,8 @@ namespace treemaker {
 		void setMaxStemDepth(unsigned depth);
 		unsigned getMaxStemDepth();
 
-		void setCrownBaseHeight(float height);
-		float getCrownBaseHeight();
+		void setBaseLength(unsigned stem, float length);
+		float getBaseLength(unsigned stem);
 
 		unsigned getStemName(size_t index);
 		

@@ -99,7 +99,6 @@ void Editor::initializeTree()
 	tree.setResolution(0, 8);
 	tree.setGeneratedPathSize(0, 12);
 	tree.setMaxStemDepth(1);
-	tree.setCrownBaseHeight(2.0f);
 	tree.generateTree();
 
 	treeInfo.type = GL_TRIANGLES;
@@ -500,5 +499,11 @@ void Editor::changeRadiusCurve(std::vector<Vec3> c)
 void Editor::changeStemDensity(double d)
 {
 	tree.setStemDensity(selectedStem, d);
+	change();
+}
+
+void Editor::changeBaseLength(double d)
+{
+	tree.setBaseLength(selectedStem, d);
 	change();
 }

@@ -14,6 +14,7 @@
  */
 
 #include "path.h"
+#include <limits>
 
 using namespace treemaker;
 
@@ -144,7 +145,8 @@ Vec3 Path::getPoint(float distance)
 		total += length;
 	}
 	
-	Vec3 v = {};
+	float inf = std::numeric_limits<float>::infinity();
+	Vec3 v = {inf, inf, inf};
 	return v;
 }
 

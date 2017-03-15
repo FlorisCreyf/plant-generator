@@ -50,6 +50,7 @@ public:
 	float radius = 0.4f;
 	float minRadius = 0.01f;
 	float stemDensity = 0.0f;
+	float baseLength = 0.0f;
 
 	size_t vertexStart;
 	size_t vertexCount;

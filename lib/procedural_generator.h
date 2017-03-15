@@ -35,7 +35,8 @@ class ProcGenerator {
 
 public:
 	ProcGenerator(TreeImpl *tree);
-	void regenerate(Stem *stem);
+	void updateStemDensity(Stem *stem);
+	void updateBaseLength(Stem *stem);
 	void generateTree();
 };
 

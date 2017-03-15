@@ -43,6 +43,7 @@ public slots:
 	void changeRadius(double d);
 	void changeRadiusCurve(std::vector<treemaker::Vec3> c);
 	void changeStemDensity(double d);
+	void changeBaseLength(double d);
 
 signals:
 	void selectionChanged(treemaker::Tree &tree, int s);

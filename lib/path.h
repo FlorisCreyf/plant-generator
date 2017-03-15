@@ -40,6 +40,10 @@ public:
 	float getLength();
 	treemaker::Vec3 getDirection(int index);
 	treemaker::Vec3 getGeneratedPoint(int index);
+	/** 
+	 * Returns {inf, inf, inf} if the supplied distance is greater than the
+	 * length of the generated path.
+	 */
 	treemaker::Vec3 getPoint(float distance);
 	std::vector<treemaker::Vec3> getPath();
 

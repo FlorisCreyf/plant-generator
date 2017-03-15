@@ -36,9 +36,21 @@ unsigned treemaker::Tree::getMaxStemDepth()
 	return d->maxStemDepth;
 }
 
-void treemaker::Tree::setCrownBaseHeight(float height)
+void treemaker::Tree::setBaseLength(unsigned stem, float length)
 {
-	d->crownBaseHeight = height;
+	Stem *s = d->findStem(stem);
+	if (s != nullptr) {
+		s->baseLength = length;
+		d->procGenerator.updateBaseLength(s);
+	}
+}
+
+float treemaker::Tree::getBaseLength(unsigned stem)
+{
+	Stem *s = d->findStem(stem);
+	if (s != nullptr)
+		return s->baseLength;
+	return 0.0f;
 }
 
 unsigned treemaker::Tree::getStemName(size_t index)
@@ -48,11 +60,6 @@ unsigned treemaker::Tree::getStemName(size_t index)
 		return (unsigned) - 1;
 	else
 		return s->getName();
-}
-
-float treemaker::Tree::getCrownBaseHeight()
-{
-	return d->crownBaseHeight;
 }
 
 unsigned treemaker::Tree::newStem(unsigned parent)
@@ -162,7 +169,7 @@ void treemaker::Tree::setStemDensity(unsigned stem, float density)
 	Stem *s = d->findStem(stem);
 	if (s != nullptr && s->stemDensity != density) {
 		s->stemDensity = density;
-		d->procGenerator.regenerate(s);
+		d->procGenerator.updateStemDensity(s);
 	}
 }
 

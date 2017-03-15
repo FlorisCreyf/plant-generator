@@ -14,6 +14,7 @@
  */
 
 #include "stem.h"
+#include <limits>
 
 Stem::Stem(unsigned name, Stem *parent)
 {
@@ -71,8 +72,13 @@ void Stem::setPosition(float position)
 		return;
 		
 	Path parentPath = parent->getPath();
-	location = parent->getLocation() + parentPath.getPoint(position);
+	Vec3 point = parentPath.getPoint(position);
+	if (point.x == std::numeric_limits<float>::infinity())
+		location = point;
+	else	
+		location = parent->getLocation() + point;
 	this->position = position;
+	updatePositions(this);
 }
 
 void Stem::setLocation(Vec3 location)

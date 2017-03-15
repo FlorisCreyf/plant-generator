@@ -57,6 +57,7 @@ private:
 	QSpinBox *resolution;
 	QSpinBox *sections;
 	QDoubleSpinBox *stems;
+	QDoubleSpinBox *base;
 
 	void createGlobalBox(QVBoxLayout *layout);
 	void createLocalBox(QVBoxLayout *layout);

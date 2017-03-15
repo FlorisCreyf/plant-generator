@@ -13,8 +13,9 @@
  * limitations under the License.
  */
 
-#include <cmath>
 #include "mesh_generator.h"
+#include <cmath>
+#include <limits>
 
 MeshGenerator::MeshGenerator()
 {
@@ -339,6 +340,9 @@ void MeshGenerator::addDichotomousStems(Stem *parent, size_t crossSection)
 
 void MeshGenerator::addStem(Stem *stem, float offset)
 {
+	if (stem->getLocation().x == std::numeric_limits<float>::infinity())
+		return;
+	
 	stem->vertexStart = vbIndex;
 	stem->indexStart = ibIndex;
 

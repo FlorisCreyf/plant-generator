@@ -39,16 +39,8 @@ void PropertyBox::createGlobalBox(QVBoxLayout *layout)
 	QGroupBox *globalGroup = new QGroupBox(tr("Tree"));
 	QVBoxLayout *groupLayout = new QVBoxLayout(globalGroup);
 	global = new QTableWidget(this);
-	crownBaseHeight = new QDoubleSpinBox;
-	apicalDominance = new QDoubleSpinBox;
-	global->setRowCount(2);
+	global->setRowCount(0);
 	global->setColumnCount(2);
-	apicalDominance->setEnabled(false);
-	crownBaseHeight->setEnabled(false);
-	global->setCellWidget(0, 0, new QLabel(tr("Crown Base Height")));
-	global->setCellWidget(0, 1, crownBaseHeight);
-	global->setCellWidget(1, 0, new QLabel(tr("Apical Dominance")));
-	global->setCellWidget(1, 1, apicalDominance);
 	configureTable(global);
 	groupLayout->addStretch(1);
 	groupLayout->addWidget(global);
@@ -66,7 +58,8 @@ void PropertyBox::createLocalBox(QVBoxLayout *layout)
 	radiusCB = new CurveButton("Radius", shared, this);
 	sections = new QSpinBox;
 	stems = new QDoubleSpinBox;
-	local->setRowCount(4);
+	base = new QDoubleSpinBox;
+	local->setRowCount(5);
 	local->setColumnCount(3);
 	radius->setSingleStep(0.01);
 	sections->setMinimum(2);
@@ -80,6 +73,8 @@ void PropertyBox::createLocalBox(QVBoxLayout *layout)
 	local->setCellWidget(2, 1, sections);
 	local->setCellWidget(3, 0, new QLabel(tr("Stem Density")));
 	local->setCellWidget(3, 1, stems);
+	local->setCellWidget(4, 0, new QLabel(tr("Base Length")));
+	local->setCellWidget(4, 1, base);
 	configureTable(local);
 	groupLayout->addStretch(1);
 	groupLayout->addWidget(local);
@@ -141,8 +136,6 @@ void PropertyBox::toggleCurve(CurveButton *button)
 
 void PropertyBox::fill(treemaker::Tree &tree, int stem)
 {
-	crownBaseHeight->setValue(tree.getCrownBaseHeight());
-
 	if (stem < 0) {
 		localGroup->hide();
 		curveEditor->setEnabled(false);
@@ -156,6 +149,7 @@ void PropertyBox::fill(treemaker::Tree &tree, int stem)
 	sections->setValue(tree.getGeneratedPathSize(stem));
 	radius->setValue(tree.getRadius(stem));
 	stems->setValue(tree.getStemDensity(stem));
+	base->setValue(tree.getBaseLength(stem));
 	fillCurveButtons(tree, stem);
 
 	if (activeCurve)
@@ -184,6 +178,8 @@ void PropertyBox::bind(Editor *editor, CurveEditor *curveEditor)
 			SLOT(changeRadius(double)));
 	connect(stems, SIGNAL(valueChanged(double)), editor,
 			SLOT(changeStemDensity(double)));
+	connect(base, SIGNAL(valueChanged(double)), editor,
+			SLOT(changeBaseLength(double)));
 
 	bindCurveEditor();
 }
