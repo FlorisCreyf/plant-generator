@@ -15,23 +15,59 @@
 
 #include "stem.h"
 #include <limits>
+#include <random>
 
-Stem::Stem(unsigned name, Stem *parent)
+Stem::Stem(NameGenerator &nameGenerator, Stem *parent)
 {
-	this->name = name++;
+	this->name = nameGenerator.newName();
 	this->parent = parent;
 	if (parent == nullptr) {
+		std::random_device rd;
+		generator.seed(rd());
 		depth = 0;
 		position = 0.0f;
 		location = {0.0f, 0.0f, 0.0f};
 	} else {
 		depth = parent->depth + 1;
+		generator.seed(parent->generator());
 	}
 }
 
 unsigned Stem::getName()
 {
 	return name;
+}
+
+Stem *Stem::addLateralStem(NameGenerator &ng)
+{
+	Stem stem(ng, this);
+	children.push_back(stem);
+	return &children.back();
+}
+
+void Stem::removeLateralStem(size_t index)
+{
+	
+}
+
+void Stem::addDichotomousStems(NameGenerator &ng)
+{
+	Stem d1(ng, this);
+	Stem d2(ng, this);
+	float position = path.getLength();
+	d1.setPosition(position);
+	d2.setPosition(position);
+	children.insert(children.begin(), d2);
+	children.insert(children.begin(), d1);
+	hasDichotomous = true;
+}
+
+void Stem::removeDichotomousStems()
+{
+	auto start = children.begin();
+	auto end = children.begin() + 2;
+	children.erase(start, end);
+	hasDichotomous = false;
 }
 
 void Stem::modifyResolutions(Stem *stem, int resolution)
@@ -81,23 +117,6 @@ void Stem::setPosition(float position)
 	updatePositions(this);
 }
 
-void Stem::setLocation(Vec3 location)
-{
-	if (isLateral())
-		return;
-	
-	if (parent != nullptr && this->path.isGenerated()) {
-		auto c = parent->path.getControls();
-		c[c.size() - 1] = location - parent->location;
-		parent->path.setControls(c);
-		parent->path.generate();			
-		updatePositions(this->parent);
-	} else if (parent == nullptr) {
-		this->location = location;
-		updatePositions(this);
-	}
-}
-
 void Stem::setResolution(int resolution)
 {
 	if (parent != nullptr && !isLateral())
@@ -106,6 +125,37 @@ void Stem::setResolution(int resolution)
 		this->resolution = resolution;
 		modifyResolutions(this, resolution);
 	}
+}
+
+void Stem::setStemDensity(float density, NameGenerator &ng)
+{
+	stemDensity = density;
+	float length = path.getLength();
+	float distance = 1.0f / stemDensity;
+	float position = baseLength;
+
+	generator.seed(generator.default_seed);
+	
+	while (position < length) {
+		Stem *stem = addLateralStem(ng);
+		stem->setPosition(position);
+		position += distance;
+	}
+}
+
+void Stem::removeLateralStems()
+{
+	if (hasDichotomousStems() && children.size() >= 2) {
+		auto begin = children.begin() + 2;
+		auto end = children.end();
+		children.erase(begin, end);
+	} else
+		children.clear();
+}
+
+float Stem::getStemDensity()
+{
+	return stemDensity;
 }
 
 bool Stem::isDescendantOf(Stem *stem)

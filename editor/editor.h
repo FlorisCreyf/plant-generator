@@ -35,18 +35,14 @@ class Editor : public QOpenGLWidget, protected QOpenGLFunctions {
 public:
 	Editor(SharedResources *shared, QWidget *parent = 0);
 
+	treemaker::Tree *getTree();
+	int getSelectedStem();
 	void exportObject(const char *filename);
-
-public slots:
-	void changeResolution(int i);
-	void changeSections(int i);
-	void changeRadius(double d);
-	void changeRadiusCurve(std::vector<treemaker::Vec3> c);
-	void changeStemDensity(double d);
-	void changeBaseLength(double d);
+	void change();
 
 signals:
 	void selectionChanged(treemaker::Tree &tree, int s);
+	void pathChanged();
 
 protected:
 	void initializeGL();
@@ -97,7 +93,6 @@ private:
 	void expandBuffers();
 	void createBuffers();
 	void updateBuffers();
-	void change();
 };
 
 #endif /* SCENE_EDITOR_H */

@@ -13,31 +13,16 @@
  * limitations under the License.
  */
 
-#ifndef TM_PROC_GENERATOR_H
-#define TM_PROC_GENERATOR_H
+#ifndef TM_NAME_GENERATOR_H
+#define TM_NAME_GENERATOR_H
 
-#include "stem.h"
+class NameGenerator {
+	unsigned name = 0;
 
-namespace treemaker {
-	class TreeImpl;
-}
-
-using namespace treemaker;
-
-class ProcGenerator {
-	friend class StemModifier;
-	
-	TreeImpl *tree;
-	Vec3 getStemDirection(Stem *stem);
-	void getDichotomousDirections(Stem *parent, Vec3 directions[2]);
-	void setPath(Stem *stem, Vec3 direction);
-	void setRadiusCurve(Stem *stem);
-	void addLateralStems(Stem *parent, float position);
-	void addDichotomousStems(Stem *stem);
-
-public:	
-	ProcGenerator(TreeImpl *tree);
-	void generateTree();
+public:
+	NameGenerator();
+	unsigned newName();
 };
 
-#endif /* TM_PROC_GENERATOR_H */
+#endif /* TM_NAME_GENERATOR_H */
+

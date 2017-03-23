@@ -7,7 +7,6 @@ using namespace treemaker;
 
 treemaker::Tree::Tree()
 {
-	srand(time(0));
 	d = new TreeImpl();
 }
 
@@ -41,7 +40,8 @@ void treemaker::Tree::setBaseLength(unsigned stem, float length)
 	Stem *s = d->findStem(stem);
 	if (s != nullptr) {
 		s->baseLength = length;
-		d->procGenerator.updateBaseLength(s);
+		d->stemModifier.updateBaseLength(s);
+		d->changeMode(s);
 	}
 }
 
@@ -50,7 +50,8 @@ float treemaker::Tree::getBaseLength(unsigned stem)
 	Stem *s = d->findStem(stem);
 	if (s != nullptr)
 		return s->baseLength;
-	return 0.0f;
+	else
+		return 0.0f;
 }
 
 unsigned treemaker::Tree::getStemName(size_t index)
@@ -62,29 +63,50 @@ unsigned treemaker::Tree::getStemName(size_t index)
 		return s->getName();
 }
 
+void treemaker::Tree::setMode(unsigned stem, Flags mode)
+{
+	Stem *s = d->findStem(stem);
+	if (s != nullptr)
+		d->changeMode(s, mode);
+}
+
+Flags treemaker::Tree::getMode(unsigned stem)
+{
+	Stem *s = d->findStem(stem);
+	if (s != nullptr)
+		return s->mode;
+	else
+		return Flags::UNDEFINED;
+}
+
+void treemaker::Tree::setDistribution(unsigned stem, Flags distribution)
+{
+	Stem *s = d->findStem(stem);
+	if (s != nullptr)
+		s->distribution = distribution;
+}
+
+Flags treemaker::Tree::getDistribution(unsigned stem)
+{
+	Stem *s = d->findStem(stem);
+	if (s != nullptr)
+		return s->distribution;
+	else
+		return Flags::UNDEFINED;
+}
+
 unsigned treemaker::Tree::newStem(unsigned parent)
 {
 	Stem *s = d->findStem(parent);
 	if (s == nullptr)
 		return 0;
-	s = d->addStem(s);
+	s = s->addLateralStem(d->nameGenerator);
 	return s->getName();
 }
 
 void treemaker::Tree::deleteStem(unsigned stem)
 {
-	Stem *s = d->findStem(stem);
-	if (s != nullptr)
-		d->removeStem(s);
-}
 
-bool treemaker::Tree::moveStem(unsigned stem, unsigned parent)
-{
-	Stem *s = d->findStem(stem);
-	Stem *p = d->findStem(parent);
-	if (s == nullptr || p == nullptr)
-		return false;
-	return d->moveStem(s, p);
 }
 
 bool treemaker::Tree::isLateral(unsigned stem)
@@ -111,8 +133,16 @@ float treemaker::Tree::getPosition(unsigned stem)
 void treemaker::Tree::setLocation(unsigned stem, Vec3 location)
 {
 	Stem *s = d->findStem(stem);
-	if (s != nullptr)
-		s->setLocation(location);
+	if (s != nullptr && !s->isLateral()) {
+		Stem *parent = s->getParent();
+		if (parent != nullptr) {
+			auto p = parent->getPath();
+			auto c = s->getParent()->getPath().getControls();
+			c[c.size() - 1] = location - parent->getLocation();
+			setPath(parent->getName(), &c[0], c.size());
+			//d->stemModifier.updateStemDensity(parent);
+		}
+	}
 }
 
 Vec3 treemaker::Tree::getLocation(unsigned stem)
@@ -167,9 +197,10 @@ void treemaker::Tree::getRadiusCurve(unsigned stem, Vec3 *curve)
 void treemaker::Tree::setStemDensity(unsigned stem, float density)
 {
 	Stem *s = d->findStem(stem);
-	if (s != nullptr && s->stemDensity != density) {
-		s->stemDensity = density;
-		d->procGenerator.updateStemDensity(s);
+	if (s != nullptr && s->getStemDensity() != density) {
+		s->setStemDensity(density, d->nameGenerator);
+		d->stemModifier.updateStemDensity(s);
+		d->changeMode(s, ASSISTED);
 	}
 }
 
@@ -177,7 +208,7 @@ float treemaker::Tree::getStemDensity(unsigned stem)
 {
 	Stem *s = d->findStem(stem);
 	if (s != nullptr)
-		return s->stemDensity;
+		return s->getStemDensity();
 	return 0.0f;
 }
 
@@ -200,12 +231,17 @@ void treemaker::Tree::setPath(unsigned stem, Vec3 *path, size_t size)
 {
 	Stem *s = d->findStem(stem);
 	if (s != nullptr) {
+		float length = s->getPath().getLength() - s->baseLength;
 		auto p = s->getPath();
 		std::vector<Vec3> c(&path[0], &path[size]);
 		for (size_t i = 0; i < c.size(); i++)
 			c[i] = c[i] - s->getLocation();
 		p.setControls(c);
 		s->setPath(p);
+		d->stemModifier.updateStemDensity(s);
+		d->changeMode(s);
+		if (s->mode == MANUAL && s->distribution == DISTRIBUTED)
+			d->stemModifier.distribute(s, length);
 	}
 }
 

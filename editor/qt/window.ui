@@ -60,7 +60,7 @@
 	border:0px transparent black;
 	outline:0;
 } QDockWidget {
-	font-size:14px;
+	font-size:13px;
 	background:#666;
 	titlebar-normal-icon:url(&quot;resources/popup.png&quot;);
 	titlebar-close-icon:url(&quot;resources/close.png&quot;);
@@ -93,20 +93,21 @@
 	bottom:0px;
 	width:15px;
 } QLabel {
-	height:30px;
+	height:24px;
 	font-size:12px;
 	color:#eee;
 } QSpinBox, QDoubleSpinBox {
 	font-size:12px;
 	padding-right:0px;
 	background:#555;
-	border:1px solid transparent;
+	border:0px solid transparent;
+	height:24px;
 } QSpinBox::up-button, QDoubleSpinBox::up-button {
 	subcontrol-position:top right;
-	background-color:#4a4a4a;
+	background-color:#555;
 } QSpinBox::down-button, QDoubleSpinBox::down-button {
 	subcontrol-position:bottom right;
-	background-color:#4a4a4a;
+	background-color:#555;
 } QSpinBox::up-arrow, QDoubleSpinBox::up-arrow {
 	image:url(&quot;resources/uparrow.png&quot;);
 	width:7px;
@@ -117,20 +118,21 @@
 	height:6px;
 } QSpinBox:disabled, QDoubleSpinBox:disabled {
 	background:#5a5a5a;
-} QSpinBox::up-button:disabled, QSpinBox::down-button:disabled,
-		QDoubleSpinBox::up-button:disabled, QDoubleSpinBox::down-button:disabled {
+} QSpinBox::up-button:disabled, QSpinBox::down-button:disabled, QDoubleSpinBox::up-button:disabled, QDoubleSpinBox::down-button:disabled {
 	background:transparent;
-} QSpinBox::up-arrow:disabled, QSpinBox::down-arrow:disabled,
-		QDoubleSpinBox::up-arrow:disabled, QDoubleSpinBox::down-arrow:disabled {
+} QSpinBox::up-arrow:disabled, QSpinBox::down-arrow:disabled, QDoubleSpinBox::up-arrow:disabled, QDoubleSpinBox::down-arrow:disabled {
 	width:0;
 	height:0;
 } QMainWindow {
 	background:#666;
 } QLabel {
-	padding:0 2px 0 0;
-	qproperty-alignment:&quot;AlignRight|AlignVCenter&quot;;
+	padding:3px 2px 3px 0;
+	qproperty-alignment:&quot;AlignRight&quot;;
 } QTableView::item {
 	margin:1px 0;
+} QTableWidget {
+	font-size:12px;
+	line-height:24px;
 } QGroupBox {
 	padding-top:0px;
 	margin:0;
@@ -171,7 +173,40 @@
 } QScrollBar::sub-line:vertical {
 	border:0;
 	background:#666;
-}</string>
+} QComboBox {
+	font-size:12px;
+	border: 0;
+} QComboBox:editable {
+	background: #555;
+} QComboBox:!editable, QComboBox::drop-down:editable {
+	background: #444;
+} QComboBox:!editable:on, QComboBox::drop-down:editable:on {
+	background: #444;
+} QComboBox::drop-down {
+	subcontrol-origin: padding;
+	subcontrol-position: top right;
+	width:15px;
+	border:0;
+} QComboBox::down-arrow {
+	image:url(&quot;resources/downarrow.png&quot;);
+	width:7px;
+	height:6px;
+} QComboBox::down-arrow:on { /* shift the arrow when popup is open */
+	top: 1px;
+	left: 1px;
+} QComboBox QAbstractItemView {
+	background:#505050;
+} QRadioButton {
+	font-size:12px;
+} QRadioButton::indicator {
+	height:13px;
+	width:13px;
+} QRadioButton::indicator::unchecked {
+	image: url(&quot;resources/radiobutton_unchecked.png&quot;);
+} QRadioButton::indicator::checked {
+	image: url(&quot;resources/radiobutton_checked.png&quot;);
+}
+</string>
   </property>
   <property name="documentMode">
    <bool>false</bool>
@@ -181,8 +216,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1200</width>
-     <height>22</height>
+     <width>1400</width>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -349,26 +384,6 @@
    </property>
   </action>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>Editor</class>
-   <extends>QWidget</extends>
-   <header>../editor.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>PropertyBox</class>
-   <extends>QWidget</extends>
-   <header>../property_box.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>CurveEditor</class>
-   <extends>QWidget</extends>
-   <header>../curve_editor.h</header>
-   <container>1</container>
-  </customwidget>
- </customwidgets>
  <resources/>
  <connections>
   <connection>
@@ -432,38 +447,6 @@
     <hint type="destinationlabel">
      <x>20</x>
      <y>20</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>actionProperties</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>dockWidget</receiver>
-   <slot>show()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>29</x>
-     <y>312</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>actionProperties</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>dockWidget</receiver>
-   <slot>close()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>29</x>
-     <y>167</y>
     </hint>
    </hints>
   </connection>

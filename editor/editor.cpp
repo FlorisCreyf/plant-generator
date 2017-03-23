@@ -330,6 +330,7 @@ void Editor::movePoint(int x, int y)
 		loc = axis.move(axis.getSelected(), ray, direction, loc);
 		path[selectedPoint] = loc;
 		tree.setPath(selectedStem, &path[0], path.size());
+		emit pathChanged();
 	}
 	
 	{
@@ -472,38 +473,12 @@ void Editor::change()
 	update();
 }
 
-void Editor::changeResolution(int i)
+treemaker::Tree *Editor::getTree()
 {
-	tree.setResolution(selectedStem, i);
-	change();
+	return &tree;
 }
 
-void Editor::changeSections(int i)
+int Editor::getSelectedStem()
 {
-	tree.setGeneratedPathSize(selectedStem, i);
-	change();
-}
-
-void Editor::changeRadius(double d)
-{
-	tree.setRadius(selectedStem, d);
-	change();
-}
-
-void Editor::changeRadiusCurve(std::vector<Vec3> c)
-{
-	tree.setRadiusCurve(selectedStem, &c[0], c.size());
-	change();
-}
-
-void Editor::changeStemDensity(double d)
-{
-	tree.setStemDensity(selectedStem, d);
-	change();
-}
-
-void Editor::changeBaseLength(double d)
-{
-	tree.setBaseLength(selectedStem, d);
-	change();
+	return selectedStem;
 }

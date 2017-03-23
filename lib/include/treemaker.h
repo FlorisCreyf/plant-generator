@@ -4,6 +4,7 @@
 #include <cstddef>
 #include "math.h"
 #include "intersection.h"
+#include "types.h"
 
 namespace treemaker {
 
@@ -26,6 +27,12 @@ namespace treemaker {
 		float getBaseLength(unsigned stem);
 
 		unsigned getStemName(size_t index);
+
+		void setMode(unsigned stem, Flags mode);
+		Flags getMode(unsigned stem);
+		
+		void setDistribution(unsigned stem, Flags distribution);
+		Flags getDistribution(unsigned stem);
 		
 		unsigned newStem(unsigned parent);
 		void deleteStem(unsigned stem);

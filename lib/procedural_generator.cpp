@@ -30,16 +30,18 @@ ProcGenerator::ProcGenerator(TreeImpl *tree)
 Vec3 ProcGenerator::getStemDirection(Stem *stem)
 {
 	float ratio = stem->radius / stem->getParent()->radius;
-	float angleX = (float)rand() / RAND_MAX * ratio * 4.0f;
-	float angleY = (float)rand() / RAND_MAX;
+	std::uniform_real_distribution<float> dis(0.0f, 1.0f);
+	float angleX = dis(stem->generator) * ratio * 4.0f;
+	float angleY = dis(stem->generator);
 	Mat4 rot = rotateXY(M_PI * 0.1f + angleX, angleY * M_PI * 2.0f);
 	return toVec3(rot * toVec4({0.0f, 1.0f, 0.0f}, 1.0f));
 }
 
 void ProcGenerator::getDichotomousDirections(Stem *parent, Vec3 directions[2])
 {
-	float angleX = (float)rand() / RAND_MAX * 0.5f;
-	float angleY = (float)rand() / RAND_MAX + M_PI*0.25f;
+	std::uniform_real_distribution<float> dis(0.0f, 1.0f);
+	float angleX = dis(parent->generator) * 0.5f;
+	float angleY = dis(parent->generator) + M_PI*0.25f;
 
 	Path path = parent->getPath();
 	Vec3 normal = path.getDirection(path.getDivisions() - 1);
@@ -83,22 +85,17 @@ void ProcGenerator::setRadiusCurve(Stem *stem)
 
 void ProcGenerator::addLateralStems(Stem *parent, float position)
 {	
-	float length = parent->getPath().getLength();
-	float distance = 1.0f / parent->stemDensity;
-
-	while (position < length) {
-		Stem *stem = tree->addStem(parent);
+	for (size_t i = 0; i < parent->getChildCount(); i++) {
+		Stem *stem = parent->getChild(i);
 		stem->radius = parent->radius*0.5f;
-		stem->radius *= std::pow(2.0f, -position/5.0f);
+		stem->radius *= std::pow(2.0f, -stem->getPosition()/5.0f);
 		if (parent->getResolution() - 4 < 5)
 			stem->setResolution(5);
 		else
 			stem->setResolution(parent->getResolution() - 4);
 		setPath(stem, getStemDirection(stem));
-		stem->setPosition(position);
 		stem->baseLength = stem->getPath().getLength() / 5.0f;
 		setRadiusCurve(stem);
-		position += distance;
 	}
 }
 
@@ -106,7 +103,7 @@ void ProcGenerator::addDichotomousStems(Stem *parent)
 {
 	Vec3 directions[2];
 	getDichotomousDirections(parent, directions);
-	tree->addDichotomousStems(parent);
+	parent->addDichotomousStems(tree->nameGenerator);
 	for (int i = 0; i < 2; i++) {
 		Stem *stem = parent->getDichotomousStem(i);
 		stem->radius = parent->radius * 0.35f / std::pow(1.0f, 0.3f);
@@ -118,34 +115,13 @@ void ProcGenerator::addDichotomousStems(Stem *parent)
 	}
 }
 
-void ProcGenerator::updateStemDensity(Stem *stem)
-{
-	tree->removeLateralStems(stem);
-	if (stem->stemDensity > 0.0f)
-		addLateralStems(stem, stem->baseLength);
-}
-
-void ProcGenerator::updateBaseLength(Stem *stem)
-{
-	if (stem->stemDensity == 0.0f)
-		return;
-	
-	float distance = 1.0f / stem->stemDensity;
-	float position = stem->baseLength;
-	for (size_t i = 0; i < stem->getChildCount(); i++) {
-		Stem *child = stem->getChild(i);
-		child->setPosition(position);
-		position += distance;
-	}
-}
-
 void ProcGenerator::generateTree()
-{
+{	
 	Stem *root = tree->getRoot();
-	root->stemDensity = 2.0f;
 	root->setPosition(0.0f);
 	root->baseLength = 1.5f;
 	setPath(root, {0.0f, 1.0f, 0.0f});
+	root->setStemDensity(2.0f, tree->nameGenerator);
 	setRadiusCurve(root);
 	addLateralStems(root, root->baseLength);
 	addDichotomousStems(root);

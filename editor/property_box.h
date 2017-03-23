@@ -32,10 +32,23 @@ public:
 	void bind(Editor *editor, CurveEditor *curveEditor);
 
 public slots:
+	void changeResolution(int i);
+	void changeSections(int i);
+	void changeRadius(double d);
+	void changeRadiusCurve(std::vector<treemaker::Vec3> c);
+	void changeStemDensity(double d);
+	void changeBaseLength(double d);
+	
 	void fill(treemaker::Tree &tree, int stem);
 	void setCurve(std::vector<treemaker::Vec3> control, QString names);
 	void toggleCurve(CurveButton *w);
-
+	void updateMode();
+	void setAutomaticMode(bool toggled);
+	void setManualMode(bool toggled);
+	void setAssistedMode(bool toggled);
+	void setDistributeMode(bool toggled);
+	void setFixedMode(bool toggled);
+	
 signals:
 	void isEnabled(bool enabled);
 	void radiusCurveChanged(std::vector<treemaker::Vec3>);
@@ -50,14 +63,20 @@ private:
 	QDoubleSpinBox *crownBaseHeight;
 	QDoubleSpinBox *apicalDominance;
 
+	QRadioButton *modes[3];
+	QRadioButton *distribution[2];
+	
 	QTableWidget *local;
 	QGroupBox *localGroup;
+	QSpinBox *seed;
 	QDoubleSpinBox *radius;
 	CurveButton *radiusCB;
 	QSpinBox *resolution;
 	QSpinBox *sections;
 	QDoubleSpinBox *stems;
 	QDoubleSpinBox *base;
+	
+	bool initializingFields;
 
 	void createGlobalBox(QVBoxLayout *layout);
 	void createLocalBox(QVBoxLayout *layout);

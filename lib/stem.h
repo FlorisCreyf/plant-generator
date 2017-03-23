@@ -19,7 +19,10 @@
 #include "math.h"
 #include "curve.h"
 #include "path.h"
+#include "name_generator.h"
+#include "types.h"
 #include <vector>
+#include <random>
 
 namespace treemaker {
 	class TreeImpl;
@@ -35,21 +38,25 @@ class Stem {
 	bool procedural = true;
 	int depth;
 	int resolution = 10;
+	float stemDensity = 0.0f;
 	float position;
 	Vec3 location;
 	Path path;
 
 	friend class treemaker::TreeImpl;
 
-	Stem(unsigned name, Stem *parent);
+	Stem(NameGenerator &nameGenerator, Stem *parent);
 	void modifyResolutions(Stem *stem, int resolution);
 	void updatePositions(Stem *stem);
 
-public:
+public:	
+	std::mt19937 generator;
+	Flags mode = AUTOMATIC;
+	Flags distribution = DISTRIBUTED;
+	
 	std::vector<Vec3> radiusCurve;
 	float radius = 0.4f;
 	float minRadius = 0.01f;
-	float stemDensity = 0.0f;
 	float baseLength = 0.0f;
 
 	size_t vertexStart;
@@ -58,26 +65,37 @@ public:
 	size_t indexCount;
 
 	unsigned getName();
-
+	
 	void setPath(Path &path);
+	Path getPath();
+	
 	/** The position can only be set if the stem is lateral. */
 	void setPosition(float position);
-	/** The location can only be set if the stem isn't lateral. */
-	void setLocation(Vec3 location);
+	float getPosition();
+	Vec3 getLocation();
+	
 	void setResolution(int resolution);
-
-	bool isDescendantOf(Stem *stem);
+	int getResolution();
+	
+	void setStemDensity(float density, NameGenerator &ng);
+	float getStemDensity();
+	
+	Stem *addLateralStem(NameGenerator &ng);
+	void removeLateralStem(size_t index);
+	void removeLateralStems();
 	bool isLateral();
+	
+	void addDichotomousStems(NameGenerator &ng);
+	void removeDichotomousStems();
+	Stem *getDichotomousStem(size_t index);
+	bool hasDichotomousStems();
+	
 	Stem *getParent();
 	Stem *getChild(size_t index);
 	/** Excludes dichotomous stems */
 	size_t getChildCount();
-	Stem *getDichotomousStem(size_t index);
-	bool hasDichotomousStems();
-	Path getPath();
-	float getPosition();
-	Vec3 getLocation();
-	int getResolution();
+	
+	bool isDescendantOf(Stem *stem);
 	int getDepth();
 };
 

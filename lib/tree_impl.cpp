@@ -18,7 +18,8 @@
 
 using namespace treemaker;
 
-treemaker::TreeImpl::TreeImpl() : root(0, nullptr),  procGenerator(this)
+treemaker::TreeImpl::TreeImpl() : root(nameGenerator, nullptr), 
+		procGenerator(this), stemModifier(&procGenerator)
 {
 
 }
@@ -69,49 +70,50 @@ Stem *treemaker::TreeImpl::findStemByIndex(size_t index)
 	return findStemByIndex(&root, index);
 }
 
-Stem *treemaker::TreeImpl::addStem(Stem *parent)
+void downgradeMode(Stem *stem)
 {
-	Stem stem(name++, parent);
-	parent->children.push_back(stem);
-	return &parent->children.back();
+	Stem *parent = stem->getParent();
+	while (parent != nullptr) {
+		parent->mode = MANUAL;
+		parent = parent->getParent();
+	}
 }
 
-void treemaker::TreeImpl::addDichotomousStems(Stem *parent)
+void upgradeMode(Stem *stem)
 {
-	parent->hasDichotomous = true;
-	Stem d1(name++, parent);
-	Stem d2(name++, parent);
-	float position = parent->path.getLength();
-	d1.setPosition(position);
-	d2.setPosition(position);
-	parent->children.insert(parent->children.begin(), d2);
-	parent->children.insert(parent->children.begin(), d1);
+	if (stem == nullptr)
+		return;
+	
+	for (size_t i = 0; i < stem->getChildCount(); i++) {
+		Stem *child = stem->getChild(i);
+		child->mode = AUTOMATIC;
+		upgradeMode(stem->getChild(i));
+	}
 }
 
-void treemaker::TreeImpl::removeDichotomousStems(Stem *parent)
+void treemaker::TreeImpl::changeMode(Stem *stem, Flags mode)
 {
-	parent->hasDichotomous = false;
-	auto start = parent->children.begin();
-	auto end = parent->children.begin() + 2;
-	parent->children.erase(start, end);
-}
-
-Stem *treemaker::TreeImpl::moveStem(Stem *stem, Stem *parent)
-{
-	return nullptr;
-}
-
-void treemaker::TreeImpl::removeStem(Stem *stem)
-{
-
-}
-
-void treemaker::TreeImpl::removeLateralStems(Stem *parent)
-{
-	if (parent->hasDichotomousStems() && parent->children.size() >= 2) {
-		auto begin = parent->children.begin() + 2;
-		auto end = parent->children.end();
-		parent->children.erase(begin, end);
-	} else
-		parent->children.clear();
+	if (mode != AUTOMATIC) {
+		if (mode == Flags::UNDEFINED && stem->mode == Flags::AUTOMATIC)
+			mode = Flags::ASSISTED;
+		
+		switch (mode) {
+		case Flags::MANUAL:
+			stem->mode = Flags::MANUAL;
+			downgradeMode(stem);
+			break;
+		case Flags::ASSISTED:
+			stem->mode = Flags::ASSISTED;
+			upgradeMode(stem);
+			downgradeMode(stem);
+			stemModifier.updateStemDensity(stem);
+			break;
+		default:
+			break;
+		}
+	} else if (mode == AUTOMATIC) {
+		stem->mode = AUTOMATIC;
+		upgradeMode(stem);
+		stemModifier.updateStemDensity(stem);
+	}
 }

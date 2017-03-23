@@ -19,34 +19,33 @@
 #include "stem.h"
 #include "procedural_generator.h"
 #include "mesh_generator.h"
+#include "stem_modifier.h"
 #include <vector>
 
 namespace treemaker {
 
 	class TreeImpl {
+	public:
+		NameGenerator nameGenerator;
+	
+	private:
+		unsigned name = 0;
 		Stem root;
-                unsigned name = 1;
 
 		Stem *findStemByIndex(Stem *parent, size_t &index);
 		Stem *findStem(Stem *parent, unsigned name);
 
 	public:
 		unsigned maxStemDepth = 2;
-		float crownBaseHeight = 1.0f;
 		MeshGenerator meshGenerator;
 		ProcGenerator procGenerator;
+		StemModifier stemModifier;
 		
 		TreeImpl();
 		Stem *getRoot();
 		Stem *findStemByIndex(size_t index);
 		Stem *findStem(unsigned name);
-
-		Stem *addStem(Stem *parent);
-                void addDichotomousStems(Stem *parent);
-                void removeDichotomousStems(Stem *parent);
-		Stem *moveStem(Stem *stem, Stem *parent);
-		void removeStem(Stem *stem);
-		void removeLateralStems(Stem *parent);
+		void changeMode(Stem *stem, Flags mode = Flags::UNDEFINED);
 	};
 }
 

@@ -21,6 +21,7 @@
 #include "qt/ui_window.h"
 #include "shared_resources.h"
 #include "editor.h"
+#include "property_box.h"
 
 class Window : public QMainWindow {
 	Q_OBJECT
