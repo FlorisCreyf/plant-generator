@@ -37,6 +37,7 @@ class ProcGenerator {
 
 public:	
 	ProcGenerator(TreeImpl *tree);
+	void growLateralStem(Stem *stem, float position);
 	void generateTree();
 };
 

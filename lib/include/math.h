@@ -96,6 +96,8 @@ namespace treemaker {
 	Mat4 quatToMat4(const Quat &quat);
 	Quat slerp(const Quat &a, const Quat &b, float t);
 	Mat4 identity();
+	/** Projects a onto b and returns distance along b. */
+	float project(Vec3 &a, Vec3 &b);
 
 	inline Vec3 operator+(const Vec3 &a, const Vec3 &b)
 	{

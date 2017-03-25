@@ -89,6 +89,11 @@ Axis::Name Axis::pickClosest(float t[3])
 	return selected;
 }
 
+void Axis::pickCenter()
+{
+	lastSelected = CENTER;
+}
+
 Axis::Name Axis::pickAxis(Vec3 center, Ray ray)
 {
 	Aabb box;

@@ -100,21 +100,23 @@
 	font-size:12px;
 	padding-right:0px;
 	background:#555;
-	border:0px solid transparent;
+	border:1px solid #555;
 	height:24px;
 } QSpinBox::up-button, QDoubleSpinBox::up-button {
 	subcontrol-position:top right;
-	background-color:#555;
+	background-color:#4a4a4a;
+	width:16px;
 } QSpinBox::down-button, QDoubleSpinBox::down-button {
 	subcontrol-position:bottom right;
-	background-color:#555;
+	background-color:#4a4a4a;
+	width:16px;
 } QSpinBox::up-arrow, QDoubleSpinBox::up-arrow {
 	image:url(&quot;resources/uparrow.png&quot;);
-	width:7px;
+	width:6px;
 	height:6px;
 } QSpinBox::down-arrow, QDoubleSpinBox::down-arrow {
 	image:url(&quot;resources/downarrow.png&quot;);
-	width:7px;
+	width:6px;
 	height:6px;
 } QSpinBox:disabled, QDoubleSpinBox:disabled {
 	background:#5a5a5a;

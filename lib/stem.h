@@ -38,7 +38,6 @@ class Stem {
 	bool procedural = true;
 	int depth;
 	int resolution = 10;
-	float stemDensity = 0.0f;
 	float position;
 	Vec3 location;
 	Path path;
@@ -58,6 +57,7 @@ public:
 	float radius = 0.4f;
 	float minRadius = 0.01f;
 	float baseLength = 0.0f;
+	float stemDensity = 0.0f;
 
 	size_t vertexStart;
 	size_t vertexCount;
@@ -76,9 +76,6 @@ public:
 	
 	void setResolution(int resolution);
 	int getResolution();
-	
-	void setStemDensity(float density, NameGenerator &ng);
-	float getStemDensity();
 	
 	Stem *addLateralStem(NameGenerator &ng);
 	void removeLateralStem(size_t index);

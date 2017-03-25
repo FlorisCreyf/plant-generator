@@ -33,23 +33,23 @@ void StemModifier::distribute(Stem *stem, float length)
 
 void StemModifier::updateStemDensity(Stem *stem)
 {
-	if (stem->getStemDensity() > 0.0f && stem->mode == Flags::ASSISTED) {
-		float density = stem->getStemDensity();
+	if (stem->stemDensity > 0.0f && stem->mode == Flags::ASSISTED) {
+		float density = stem->stemDensity;
 		stem->removeLateralStems();
-		stem->setStemDensity(density, pg->tree->nameGenerator);
+		stem->stemDensity = density;
 		pg->addLateralStems(stem, stem->baseLength);
-	} else if (stem->getStemDensity() == 0.0f) {
+	} else if (stem->stemDensity == 0.0f) {
 		stem->removeLateralStems();
 	}
 }
 
 void StemModifier::updateBaseLength(Stem *stem)
 {
-	if (stem->getStemDensity() == 0.0f)
+	if (stem->stemDensity == 0.0f)
 		return;
 	
 	if (stem->mode == Flags::MANUAL) {
-		float distance = 1.0f / stem->getStemDensity();
+		float distance = 1.0f / stem->stemDensity;
 		float position = stem->baseLength;
 		for (size_t i = 0; i < stem->getChildCount(); i++) {
 			Stem *child = stem->getChild(i);

@@ -29,6 +29,7 @@ public:
 
         void create(Geometry &geom);
         void setScale(float height);
+	void pickCenter();
         Name pickAxis(Vec3 center, treemaker::Ray ray);
         treemaker::Mat4 getModelMatrix(Vec3 center, Vec3 position);
         graphics::Fragment getLineFragment();

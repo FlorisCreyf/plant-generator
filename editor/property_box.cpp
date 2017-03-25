@@ -16,7 +16,6 @@
  */
 
 #include "property_box.h"
-#include <stdio.h>
 
 PropertyBox::PropertyBox(SharedResources *shared, QWidget *parent) :
 		QWidget(parent)
@@ -280,9 +279,11 @@ void PropertyBox::setManualMode(bool toggled)
 		}
 		fill(*editor->getTree(), editor->getSelectedStem());
 		local->hideRow(5);
+		local->hideRow(7);
 		local->hideRow(1);
 	} else {
 		local->showRow(5);
+		local->showRow(7);
 		local->showRow(1);
 	}
 }
@@ -365,26 +366,39 @@ void PropertyBox::bind(Editor *editor, CurveEditor *curveEditor)
 	this->curveEditor = curveEditor;
 	this->editor = editor;
 
-	connect(modes[0], SIGNAL(toggled(bool)), this, SLOT(setAutomaticMode(bool)));
-	connect(modes[1], SIGNAL(toggled(bool)), this, SLOT(setAssistedMode(bool)));
-	connect(modes[2], SIGNAL(toggled(bool)), this, SLOT(setManualMode(bool)));
-	connect(distribution[0], SIGNAL(toggled(bool)), this, SLOT(setDistributeMode(bool)));
-	connect(distribution[1], SIGNAL(toggled(bool)), this, SLOT(setFixedMode(bool)));
+	connect(modes[0], SIGNAL(toggled(bool)), this,
+			SLOT(setAutomaticMode(bool)));
+	connect(modes[1], SIGNAL(toggled(bool)), this,
+			SLOT(setAssistedMode(bool)));
+	connect(modes[2], SIGNAL(toggled(bool)), this,
+			SLOT(setManualMode(bool)));
+	connect(distribution[0], SIGNAL(toggled(bool)), this,
+			SLOT(setDistributeMode(bool)));
+	connect(distribution[1], SIGNAL(toggled(bool)), this,
+			SLOT(setFixedMode(bool)));
 	
-	connect(editor, SIGNAL(pathChanged()), this, SLOT(updateMode()));
-	connect(editor, SIGNAL(selectionChanged(treemaker::Tree &, int)), this, SLOT(fill(treemaker::Tree &, int)));
+	connect(editor, SIGNAL(modeChanged()), this, SLOT(updateMode()));
+	connect(editor, SIGNAL(selectionChanged(treemaker::Tree &, int)), this,
+			SLOT(fill(treemaker::Tree &, int)));
 	
-	connect(resolution, SIGNAL(valueChanged(int)), this, SLOT(changeResolution(int)));
-	connect(sections, SIGNAL(valueChanged(int)), this, SLOT(changeSections(int)));
-	connect(radius, SIGNAL(valueChanged(double)), this, SLOT(changeRadius(double)));
-	connect(stems, SIGNAL(valueChanged(double)), this, SLOT(changeStemDensity(double)));
-	connect(base, SIGNAL(valueChanged(double)), this, SLOT(changeBaseLength(double)));
+	connect(resolution, SIGNAL(valueChanged(int)), this,
+			SLOT(changeResolution(int)));
+	connect(sections, SIGNAL(valueChanged(int)), this,
+			SLOT(changeSections(int)));
+	connect(radius, SIGNAL(valueChanged(double)), this,
+			SLOT(changeRadius(double)));
+	connect(stems, SIGNAL(valueChanged(double)), this,
+			SLOT(changeStemDensity(double)));
+	connect(base, SIGNAL(valueChanged(double)), this,
+			SLOT(changeBaseLength(double)));
 
 	bindCurveEditor();
 }
 
 void PropertyBox::bindCurveEditor()
 {
-	connect(curveEditor, SIGNAL(curveChanged(std::vector<treemaker::Vec3>, QString)), this, SLOT(setCurve(std::vector<treemaker::Vec3>, QString)));
-	connect(radiusCB, SIGNAL(selected(CurveButton *)), this, SLOT(toggleCurve(CurveButton *)));
+	connect(curveEditor, SIGNAL(curveChanged(std::vector<treemaker::Vec3>, QString)), 
+			this, SLOT(setCurve(std::vector<treemaker::Vec3>, QString)));
+	connect(radiusCB, SIGNAL(selected(CurveButton *)), this, 
+			SLOT(toggleCurve(CurveButton *)));
 }

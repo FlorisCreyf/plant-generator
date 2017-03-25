@@ -34,11 +34,14 @@ namespace treemaker {
 		void setDistribution(unsigned stem, Flags distribution);
 		Flags getDistribution(unsigned stem);
 		
-		unsigned newStem(unsigned parent);
+		/** Add a new stem along the parent stem at a distance "t." */
+		unsigned newStem(unsigned parent, float position);
 		void deleteStem(unsigned stem);
 		bool moveStem(unsigned stem, unsigned parent);
 
 		bool isLateral(unsigned stem);
+		
+		unsigned getParent(unsigned stem);
 		
 		/** 
 		 * Positions can only be set for lateral stems. Positions are

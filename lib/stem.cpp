@@ -127,22 +127,6 @@ void Stem::setResolution(int resolution)
 	}
 }
 
-void Stem::setStemDensity(float density, NameGenerator &ng)
-{
-	stemDensity = density;
-	float length = path.getLength();
-	float distance = 1.0f / stemDensity;
-	float position = baseLength;
-
-	generator.seed(generator.default_seed);
-	
-	while (position < length) {
-		Stem *stem = addLateralStem(ng);
-		stem->setPosition(position);
-		position += distance;
-	}
-}
-
 void Stem::removeLateralStems()
 {
 	if (hasDichotomousStems() && children.size() >= 2) {
@@ -151,11 +135,6 @@ void Stem::removeLateralStems()
 		children.erase(begin, end);
 	} else
 		children.clear();
-}
-
-float Stem::getStemDensity()
-{
-	return stemDensity;
 }
 
 bool Stem::isDescendantOf(Stem *stem)

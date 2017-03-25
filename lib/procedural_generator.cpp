@@ -58,10 +58,17 @@ void ProcGenerator::setPath(Stem *stem, Vec3 direction)
 	std::vector<Vec3> controls;
 	Vec3 control = {0.0f, 0.0f, 0.0f};
 	Vec3 variance = {0.02f, -0.05f, 0.01f};
-	int controlCount = 3;
+	int controlCount;
 	float length = 15.0f * stem->radius;
 
-	for (int i = 0; i <= controlCount; i++) {
+	if (stem->getParent() == nullptr)
+		controlCount = 4;
+	else if (stem->getParent()->mode == Flags::MANUAL)
+		controlCount = 2;
+	else
+		controlCount = 4;
+	
+	for (int i = 0; i < controlCount; i++) {
 		controls.push_back(control);
 		control = control + length * direction;
 		direction = direction + variance;
@@ -84,19 +91,32 @@ void ProcGenerator::setRadiusCurve(Stem *stem)
 }
 
 void ProcGenerator::addLateralStems(Stem *parent, float position)
-{	
-	for (size_t i = 0; i < parent->getChildCount(); i++) {
-		Stem *stem = parent->getChild(i);
-		stem->radius = parent->radius*0.5f;
-		stem->radius *= std::pow(2.0f, -stem->getPosition()/5.0f);
-		if (parent->getResolution() - 4 < 5)
-			stem->setResolution(5);
-		else
-			stem->setResolution(parent->getResolution() - 4);
-		setPath(stem, getStemDirection(stem));
-		stem->baseLength = stem->getPath().getLength() / 5.0f;
-		setRadiusCurve(stem);
+{
+	float length = parent->getPath().getLength();
+	float distance = 1.0f / parent->stemDensity;
+
+	parent->generator.seed(parent->generator.default_seed);
+	
+	while (position < length) {
+		Stem *stem = parent->addLateralStem(tree->nameGenerator);
+		growLateralStem(stem, position);
+		position += distance;
 	}
+}
+
+void ProcGenerator::growLateralStem(Stem *stem, float position)
+{
+	Stem *parent = stem->getParent();
+	stem->setPosition(position);
+	stem->radius = parent->radius*0.5f;
+	stem->radius *= std::pow(2.0f, -stem->getPosition()/5.0f);
+	if (parent->getResolution() - 4 < 5)
+		stem->setResolution(5);
+	else
+		stem->setResolution(parent->getResolution() - 4);
+	setPath(stem, getStemDirection(stem));
+	stem->baseLength = stem->getPath().getLength() / 5.0f;
+	setRadiusCurve(stem);
 }
 
 void ProcGenerator::addDichotomousStems(Stem *parent)
@@ -120,8 +140,8 @@ void ProcGenerator::generateTree()
 	Stem *root = tree->getRoot();
 	root->setPosition(0.0f);
 	root->baseLength = 1.5f;
+	root->stemDensity = 2.0f;
 	setPath(root, {0.0f, 1.0f, 0.0f});
-	root->setStemDensity(2.0f, tree->nameGenerator);
 	setRadiusCurve(root);
 	addLateralStems(root, root->baseLength);
 	addDichotomousStems(root);

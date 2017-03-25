@@ -95,18 +95,25 @@ Flags treemaker::Tree::getDistribution(unsigned stem)
 		return Flags::UNDEFINED;
 }
 
-unsigned treemaker::Tree::newStem(unsigned parent)
+unsigned treemaker::Tree::newStem(unsigned parent, float position)
 {
 	Stem *s = d->findStem(parent);
-	if (s == nullptr)
+	if (s != nullptr) {
+		d->changeMode(s, Flags::MANUAL);
+		s = s->addLateralStem(d->nameGenerator);
+		d->procGenerator.growLateralStem(s, position);
+		return s->getName();
+	} else
 		return 0;
-	s = s->addLateralStem(d->nameGenerator);
-	return s->getName();
 }
 
 void treemaker::Tree::deleteStem(unsigned stem)
 {
-
+	Stem *s = d->findStem(stem);
+	if (s != nullptr) {
+		d->deleteStem(s);
+		d->changeMode(s->getParent(), Flags::MANUAL);
+	}
 }
 
 bool treemaker::Tree::isLateral(unsigned stem)
@@ -114,14 +121,26 @@ bool treemaker::Tree::isLateral(unsigned stem)
 	Stem *s = d->findStem(stem);
 	if (s != nullptr)
 		return s->isLateral();
-	return false;
+	else
+		return false;
+}
+
+unsigned treemaker::Tree::getParent(unsigned stem)
+{
+	Stem *s = d->findStem(stem);
+	if (s != nullptr && s->getParent() != nullptr)
+		return s->getParent()->getName();
+	else
+		return 0;
 }
 
 void treemaker::Tree::setPosition(unsigned stem, float position)
 {
 	Stem *s = d->findStem(stem);
-	if (s != nullptr)
+	if (s != nullptr) {
 		s->setPosition(position);
+		d->changeMode(s->getParent(), Flags::MANUAL);
+	}
 }
 
 float treemaker::Tree::getPosition(unsigned stem)
@@ -140,7 +159,6 @@ void treemaker::Tree::setLocation(unsigned stem, Vec3 location)
 			auto c = s->getParent()->getPath().getControls();
 			c[c.size() - 1] = location - parent->getLocation();
 			setPath(parent->getName(), &c[0], c.size());
-			//d->stemModifier.updateStemDensity(parent);
 		}
 	}
 }
@@ -184,7 +202,8 @@ size_t treemaker::Tree::getRadiusCurveSize(unsigned stem)
 	Stem *s = d->findStem(stem);
 	if (s != nullptr)
 		return s->radiusCurve.size();
-	return 0;
+	else
+		return 0;
 }
 
 void treemaker::Tree::getRadiusCurve(unsigned stem, Vec3 *curve)
@@ -197,8 +216,8 @@ void treemaker::Tree::getRadiusCurve(unsigned stem, Vec3 *curve)
 void treemaker::Tree::setStemDensity(unsigned stem, float density)
 {
 	Stem *s = d->findStem(stem);
-	if (s != nullptr && s->getStemDensity() != density) {
-		s->setStemDensity(density, d->nameGenerator);
+	if (s != nullptr && s->stemDensity != density) {
+		s->stemDensity = density;
 		d->stemModifier.updateStemDensity(s);
 		d->changeMode(s, ASSISTED);
 	}
@@ -208,8 +227,9 @@ float treemaker::Tree::getStemDensity(unsigned stem)
 {
 	Stem *s = d->findStem(stem);
 	if (s != nullptr)
-		return s->getStemDensity();
-	return 0.0f;
+		return s->stemDensity;
+	else
+		return 0.0f;
 }
 
 void treemaker::Tree::setResolution(unsigned stem, int resolution)
@@ -224,7 +244,8 @@ int treemaker::Tree::getResolution(unsigned stem)
 	Stem *s = d->findStem(stem);
 	if (s != nullptr)
 		return s->getResolution();
-	return -1;
+	else
+		return -1;
 }
 
 void treemaker::Tree::setPath(unsigned stem, Vec3 *path, size_t size)
@@ -250,7 +271,8 @@ size_t treemaker::Tree::getPathSize(unsigned stem)
 	Stem *s = d->findStem(stem);
 	if (s != nullptr)
 		return s->getPath().getControls().size();
-	return 0;
+	else
+		return 0;
 }
 
 void treemaker::Tree::getPath(unsigned stem, Vec3 *path)
@@ -269,7 +291,8 @@ size_t treemaker::Tree::getGeneratedPathSize(unsigned stem)
 	Stem *s = d->findStem(stem);
 	if (s != nullptr)
 		return s->getPath().getDivisions();
-	return 0;
+	else
+		return 0;
 }
 
 void treemaker::Tree::getGeneratedPath(unsigned stem, Vec3 *path)
@@ -279,6 +302,8 @@ void treemaker::Tree::getGeneratedPath(unsigned stem, Vec3 *path)
 		auto p = s->getPath();
 		auto points = p.getPath();
 		std::copy(points.begin(), points.end(), path);
+		for (size_t i = 0; i < points.size(); i++)
+			path[i] = points[i] + s->getLocation();
 	}
 }
 

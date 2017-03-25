@@ -178,3 +178,9 @@ Mat4 treemaker::identity()
 	};
 	return m;
 }
+
+float treemaker::project(Vec3 &a, Vec3 &b)
+{
+	return dot(a, b) / dot(b, b);
+}
+

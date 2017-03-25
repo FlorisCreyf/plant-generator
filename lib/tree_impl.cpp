@@ -91,6 +91,21 @@ void upgradeMode(Stem *stem)
 	}
 }
 
+void treemaker::TreeImpl::deleteStem(Stem *stem)
+{
+	if (stem->getParent() == nullptr)
+		return;
+	
+	std::vector<Stem> &c = stem->getParent()->children;
+	std::vector<Stem>::size_type i = (stem - &c[0]);
+	
+	if (stem->parent->hasDichotomous && i < 2) {
+		stem->parent->hasDichotomous = false;
+		c.erase(c.begin(), c.begin() + 2);
+	} else
+		c.erase(c.begin() + i);
+}
+
 void treemaker::TreeImpl::changeMode(Stem *stem, Flags mode)
 {
 	if (mode != AUTOMATIC) {

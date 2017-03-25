@@ -45,6 +45,7 @@ namespace treemaker {
 		Stem *getRoot();
 		Stem *findStemByIndex(size_t index);
 		Stem *findStem(unsigned name);
+		void deleteStem(Stem *stem);
 		void changeMode(Stem *stem, Flags mode = Flags::UNDEFINED);
 	};
 }
