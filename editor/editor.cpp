@@ -200,6 +200,9 @@ void Editor::removePoint()
 
 void Editor::addStem()
 {
+	if (selectedStem < 0)
+		return;
+	
 	QPoint p = mapFromGlobal(QCursor::pos());
 	float t = closestDistance(selectedStem, p.x(), p.y());
 	tree.newStem(selectedStem, t);
