@@ -1,6 +1,5 @@
-#include "window.h"
+#include "widgets/window.h"
 #include <QApplication>
-#include <QtGui/QTabBar>
 
 int main(int argc, char *argv[])
 {
@@ -10,10 +9,11 @@ int main(int argc, char *argv[])
 	format.setProfile(QSurfaceFormat::CoreProfile);
 	format.setRenderableType(QSurfaceFormat::OpenGL);
 	format.setDepthBufferSize(24);
-        format.setStencilBufferSize(8);
+	format.setStencilBufferSize(8);
 	format.setAlphaBufferSize(8);
 	QSurfaceFormat::setDefaultFormat(format);
 
+	QApplication::setStyle(QStyleFactory::create("Fusion"));
 	QApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
 	QApplication app(argc, argv);
 

@@ -1,4 +1,4 @@
-/* TreeMaker: 3D tree model editor
+/* Plant Genererator
  * Copyright (C) 2016-2017  Floris Creyf
  *
  * TreeMaker is free software: you can redistribute it and/or modify
@@ -18,33 +18,33 @@
 #include "file_exporter.h"
 #include <cstdio>
 
-/* Interleaved buffer */
+/* interleaved buffer */
 void FileExporter::setVertices(const float *vertices, size_t size)
 {
 	this->vb = vertices;
 	this->vbSize = size;
 }
 
-void FileExporter::setTriangles(const unsigned *triangles, size_t size)
+void FileExporter::setIndices(const unsigned *indices, size_t size)
 {
-	this->eb = triangles;
-	this->ebSize = size;
+	this->ib = indices;
+	this->ibSize = size;
 }
 
 void FileExporter::exportObj(const char *filename)
 {
 	FILE *f = fopen(filename, "w");
-	
+
 	if (f == nullptr)
 		return;
-	
+
 	for (size_t i = 0; i < vbSize; i += 6) {
 		fprintf(f, "v %f %f %f\n", vb[i], vb[i+1], vb[i+2]);
 		fprintf(f, "vn %f %f %f\n", vb[i+3], vb[i+4], vb[i+5]);
 	}
 
-	for (size_t i = 0; i < ebSize; i += 3) {
-		fprintf(f, "f %d %d %d\n", eb[i]+1, eb[i+1]+1, eb[i+2]+1);
+	for (size_t i = 0; i < ibSize; i += 3) {
+		fprintf(f, "f %d %d %d\n", ib[i]+1, ib[i+1]+1, ib[i+2]+1);
 	}
 
 	fclose(f);

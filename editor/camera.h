@@ -1,4 +1,4 @@
-/* TreeMaker: 3D tree model editor
+/* Plant Genererator
  * Copyright (C) 2016-2017  Floris Creyf
  *
  * TreeMaker is free software: you can redistribute it and/or modify
@@ -18,29 +18,28 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
-#include "math.h"
+#include "plant_generator/math/math.h"
 
 class Camera {
 public:
-	typedef treemaker::Vec3 Vec3;
-	typedef treemaker::Mat4 Mat4;
-
 	enum Action {
-		ZOOM, ROTATE, PAN, NONE
-	} action;
+		Zoom, Rotate, Pan, None
+	};
 
 	Camera();
+	void setAction(Action action);
+	void executeAction(float x, float y);
 	void setStartCoordinates(float x, float y);
 	void setPan(float x, float y);
 	void setCoordinates(float x, float y);
 	void setPerspective(float fovy, float near, float far, float aspect);
 	void setWindowSize(int width, int height);
 	void zoom(float y);
-	Vec3 getPosition();
-	Vec3 getDirection();
-	Mat4 getVP();
-	Vec3 getRayDirection(int x, int y);
-	Vec3 toScreenSpace(Vec3 point);
+	pg::Vec3 getPosition();
+	pg::Vec3 getDirection();
+	pg::Mat4 getVP();
+	pg::Vec3 getRayDirection(int x, int y);
+	pg::Vec3 toScreenSpace(pg::Vec3 point);
 
 private:
 	struct Point {
@@ -51,22 +50,24 @@ private:
 	Point pos;
 	Point start;
 
-	Mat4 perspective;
-	Vec3 up;
-	Vec3 eye;
-	Vec3 feye;
-	Vec3 target;
-	Vec3 ftarget;
+	Action action;
+
+	pg::Mat4 perspective;
+	pg::Vec3 up;
+	pg::Vec3 eye;
+	pg::Vec3 feye;
+	pg::Vec3 target;
+	pg::Vec3 ftarget;
 	int winWidth;
 	int winHeight;
 	float distance;
 	float fdistance;
 
-	Vec3 getCameraPosition();
-	Mat4 getInverseVP();
-	Mat4 getInversePerspective();
-	Mat4 getInverseLookAt();
-	Mat4 getLookAtMatrix(Vec3 &eye, Vec3 &target, Vec3 &up);
+	pg::Vec3 getCameraPosition();
+	pg::Mat4 getInverseVP();
+	pg::Mat4 getInversePerspective();
+	pg::Mat4 getInverseLookAt();
+	pg::Mat4 getLookAtMatrix(pg::Vec3 &eye, pg::Vec3 &target, pg::Vec3 &up);
 };
 
 #endif /* CAMERA_H */

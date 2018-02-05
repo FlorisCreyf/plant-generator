@@ -3,7 +3,6 @@
 *.mtl
 *.stash
 *.a
-treemaker
+plant
 resources/
 build/
-nbproject/

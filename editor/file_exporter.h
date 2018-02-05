@@ -1,4 +1,4 @@
-/* TreeMaker: 3D tree model editor
+/* Plant Genererator
  * Copyright (C) 2016-2017  Floris Creyf
  *
  * TreeMaker is free software: you can redistribute it and/or modify
@@ -23,14 +23,14 @@
 class FileExporter {
 public:
 	void setVertices(const float *vertices, size_t size);
-	void setTriangles(const unsigned *triangles, size_t size);
+	void setIndices(const unsigned *indices, size_t size);
 	void exportObj(const char *filename);
 
 private:
 	const float *vb;
 	size_t vbSize;
-	const unsigned *eb;
-	size_t ebSize;
+	const unsigned *ib;
+	size_t ibSize;
 };
 
 #endif /* FILE_EXPORTER_H */

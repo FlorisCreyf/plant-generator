@@ -1,4 +1,4 @@
-/* TreeMaker: 3D tree model editor
+/* Plant Genererator
  * Copyright (C) 2016-2017  Floris Creyf
  *
  * TreeMaker is free software: you can redistribute it and/or modify
@@ -19,18 +19,40 @@
 #include <cmath>
 #include <stdio.h>
 
-using namespace treemaker;
-
-#define UNUSED(x) (void)(x)
+using pg::Vec3;
+using pg::Vec4;
+using pg::Mat4;
 
 Camera::Camera()
 {
-	action = NONE;
+	action = None;
 	up = {0.0f, 1.0f, 0.0f};
 	posDiff = {0.0f, 0.0f};
 	pos = {0.0f, 10.0f};
 	ftarget = target = {0.0f, 4.0f, 0.0f};
 	fdistance = distance = 15.0f;
+}
+
+void Camera::setAction(Action action)
+{
+	this->action = action;
+}
+
+void Camera::executeAction(float x, float y)
+{
+	switch (action) {
+	case Zoom:
+		zoom(y);
+		break;
+	case Rotate:
+		setCoordinates(x, y);
+		break;
+	case Pan:
+		setPan(x, y);
+		break;
+	default:
+		break;
+	}
 }
 
 void Camera::setStartCoordinates(float x, float y)
@@ -53,15 +75,15 @@ void Camera::setPan(float x, float y)
 {
 	Vec3 a, b;
 	Vec3 eye = getCameraPosition();
-	Vec3 dir = normalize(eye - target);
+	Vec3 dir = pg::normalize(eye - target);
 	float panSpeed = distance * 0.002f;
-	
-	a = cross(dir, up);
-	b = cross(dir, a);
-	
+
+	a = pg::cross(dir, up);
+	b = pg::cross(dir, a);
+
 	a = (x - start.x) * panSpeed * a;
 	b = (start.y - y) * panSpeed * b;
-	
+
 	target = a + b + ftarget;
 }
 
@@ -110,7 +132,7 @@ Vec3 Camera::getPosition()
 
 Vec3 Camera::getDirection()
 {
-	return normalize(eye - target);
+	return pg::normalize(eye - target);
 }
 
 Mat4 Camera::getVP()
@@ -132,13 +154,13 @@ Mat4 Camera::getLookAtMatrix(Vec3 &eye, Vec3 &center, Vec3 &up)
 	float x, y, z;
 	Vec3 a, b, c;
 
-	a = normalize(center - eye);
-	b = normalize(cross(a, up));
-	c = cross(b, a);
+	a = pg::normalize(center - eye);
+	b = pg::normalize(cross(a, up));
+	c = pg::cross(b, a);
 
-	x = -dot(b, eye);
-	y = -dot(c, eye);
-	z = dot(a, eye);
+	x = -pg::dot(b, eye);
+	y = -pg::dot(c, eye);
+	z = pg::dot(a, eye);
 
 	return (Mat4){
 		b.x, c.x, -a.x, 0.0f,
@@ -152,14 +174,14 @@ Mat4 Camera::getInverseLookAt()
 {
 	Vec3 eye = getCameraPosition();
 	Mat4 a = getLookAtMatrix(eye, target, up);
-	Mat4 b = identity();
+	Mat4 b = pg::identity();
 
 	for (int i = 0; i < 3;i++)
 		for (int j = 0; j < 3; j++)
 			b[i][j] = a[j][i];
 
 	Vec3 t = {a[3][0], a[3][1], a[3][2]};
-	t = toVec3(b * toVec4(t, 0.0f));
+	t = pg::toVec3(b * pg::toVec4(t, 0.0f));
 	b[3][0] = -t.x;
 	b[3][1] = -t.y;
 	b[3][2] = -t.z;
@@ -209,10 +231,10 @@ Vec3 Camera::getRayDirection(int x, int y)
 	p.x = 2.0f*x/(winWidth-1) - 1.0f;
 	p.y = 1.0f - 2.0f*y/(winHeight-1);
 	p.z = -1.0f;
-	p = toVec3(invP * toVec4(p, 1.0f));
+	p = pg::toVec3(invP * pg::toVec4(p, 1.0f));
 	p.z = -1.0f;
-	p = toVec3(invL * toVec4(p, 0.0f));
-	p = normalize(p);
+	p = pg::toVec3(invL * pg::toVec4(p, 0.0f));
+	p = pg::normalize(p);
 
 	return p;
 }
@@ -220,8 +242,8 @@ Vec3 Camera::getRayDirection(int x, int y)
 Vec3 Camera::toScreenSpace(Vec3 point)
 {
 	Mat4 vp = getVP();
-	Vec4 v = vp * toVec4(point, 1.0f);
-	point = toVec3(v);
+	Vec4 v = vp * pg::toVec4(point, 1.0f);
+	point = pg::toVec3(v);
 	point.x /= v.w;
 	point.y /= v.w;
 	point.x = (point.x + 1.0f) / 2.0f * winWidth;

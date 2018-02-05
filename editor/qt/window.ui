@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>TreeMaker</string>
+   <string>Plant</string>
   </property>
   <property name="windowIcon">
    <iconset>
@@ -21,13 +21,12 @@
    <string notr="true">QMenu {
 	background-color:#666;
 	border:1px solid #777;
-	font-family:&quot;arial&quot; ;
-	font-size:9pt;
+	font-size:11px;
 	color:#fff;
 } QMenu::item {
 	margin:0;
 	color:#eee;
-	padding:5px 20px 5px 30px;
+	padding:5px 100px 5px 30px;
 	background-color:transparent;
 } QMenu::item:disabled {
 	color:#aaa;
@@ -40,7 +39,7 @@
 	background-color:#777;
 	height:1px;
 } QMenuBar {
-	font-size:9pt;
+	font-size:11px;
 	margin:0;
 	spacing:0;
 	background-color:#666;
@@ -48,8 +47,7 @@
 	color:#ddd;
 	spacing:0;
 	background-color:transparent;
-	padding:2x 10px 5px 10px;
-	margin-top:3px;
+	padding:7px 10px 7px 10px;
 } QMenuBar::item:pressed {
 	background-color:#444;
 	border-top:3px solid #444;
@@ -59,14 +57,17 @@
 	border-image:none;
 	border:0px transparent black;
 	outline:0;
+} QFrame {
+	border:0;
 } QDockWidget {
-	font-size:13px;
+	font-size:11px;
 	background:#666;
 	titlebar-normal-icon:url(&quot;resources/popup.png&quot;);
 	titlebar-close-icon:url(&quot;resources/close.png&quot;);
 } QDockWidget::title {
+	font-size:11px;
 	background:#3d3d3d;
-	padding:4px 5px 0 5px;
+	padding:9px 5px 0 10px;
 } QDockWidget::close-button, QDockWidget::float-button {
 	background:transparent;
 	border:solid 1px transparent;
@@ -94,28 +95,26 @@
 	width:15px;
 } QLabel {
 	height:24px;
-	font-size:12px;
+	font-size:11px;
 	color:#eee;
 } QSpinBox, QDoubleSpinBox {
-	font-size:12px;
+	font-size:11px;
 	padding-right:0px;
 	background:#555;
 	border:1px solid #555;
 	height:24px;
 } QSpinBox::up-button, QDoubleSpinBox::up-button {
 	subcontrol-position:top right;
-	background-color:#4a4a4a;
+	background-color:#505152;
 	width:16px;
 } QSpinBox::down-button, QDoubleSpinBox::down-button {
 	subcontrol-position:bottom right;
 	background-color:#4a4a4a;
 	width:16px;
 } QSpinBox::up-arrow, QDoubleSpinBox::up-arrow {
-	image:url(&quot;resources/uparrow.png&quot;);
 	width:6px;
 	height:6px;
 } QSpinBox::down-arrow, QDoubleSpinBox::down-arrow {
-	image:url(&quot;resources/downarrow.png&quot;);
 	width:6px;
 	height:6px;
 } QSpinBox:disabled, QDoubleSpinBox:disabled {
@@ -133,17 +132,17 @@
 } QTableView::item {
 	margin:1px 0;
 } QTableWidget {
-	font-size:12px;
+	font-size:11px;
 	line-height:24px;
 } QGroupBox {
 	padding-top:0px;
 	margin:0;
-	font-size:13px;
+	font-size:11px;
 	border-top:23px solid #4a4a4a;
 } QGroupBox::title {
-	font-size:12px;
+	font-size:11px;
 	background:transparent;
-	padding:3px 0 0 8px;
+	padding:4px 0 0 8px;
 	margin:0;
 } QTableView {
 	background:transparent;
@@ -176,7 +175,7 @@
 	border:0;
 	background:#666;
 } QComboBox {
-	font-size:12px;
+	font-size:11px;
 	border: 0;
 } QComboBox:editable {
 	background: #555;
@@ -199,7 +198,7 @@
 } QComboBox QAbstractItemView {
 	background:#505050;
 } QRadioButton {
-	font-size:12px;
+	font-size:11px;
 } QRadioButton::indicator {
 	height:13px;
 	width:13px;
