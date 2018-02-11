@@ -1,12 +1,12 @@
 /* Plant Genererator
  * Copyright (C) 2018  Floris Creyf
  *
- * TreeMaker is free software: you can redistribute it and/or modify
+ * Plant Genererator is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * TreeMaker is distributed in the hope that it will be useful,
+ * Plant Genererator is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -44,6 +44,7 @@ public:
 	void addIndex(unsigned index);
 	void addPoint(pg::Vec3 point, pg::Vec3 color);
 	void addLine(pg::Vec3 line[2], pg::Vec3 color);
+	void addCircle(float radius, int points, pg::Vec3 color);
 	void addCurve(const pg::Spline &spline, pg::Vec3 color, int size);
 	void addPlane(pg::Vec3 a, pg::Vec3 b, pg::Vec3 c, pg::Vec3 color);
 	void addCone(float radius, float height, int points, pg::Vec3 color);

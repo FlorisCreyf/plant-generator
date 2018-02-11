@@ -1,4 +1,4 @@
-/* Copyright 2017 Floris Creyfyt
+/* Copyright 2017-2018 Floris Creyfyt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,8 @@ namespace pg {
 		/* Get the direction of a line segment of the path. */
 		Vec3 getDirection(size_t index) const;
 		Vec3 getIntermediateDirection(float t) const;
+		/* Get the distance along the path to a control point. */
+		float getDistance(int index) const;
 	};
 }
 

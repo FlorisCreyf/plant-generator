@@ -1,4 +1,4 @@
-/* Copyright 2017 Floris Creyf
+/* Copyright 2017-2018 Floris Creyf
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -207,7 +207,12 @@ Mat4 pg::identity()
 	return m;
 }
 
-float pg::project(Vec3 &a, Vec3 &b)
+float pg::project(const Vec3 &a, const Vec3 &b)
 {
 	return pg::dot(a, b) / pg::dot(b, b);
+}
+
+Vec3 pg::projectOntoPlane(Vec3 normal, Vec3 vector)
+{
+	return vector - project(vector, normal) * normal;
 }

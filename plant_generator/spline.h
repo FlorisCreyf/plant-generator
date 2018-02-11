@@ -1,4 +1,4 @@
-/* Copyright 2017 Floris Creyf
+/* Copyright 2017-2018 Floris Creyf
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ namespace pg {
 		int getDegree() const;
 		Vec3 getPoint(float t) const;
 		Vec3 getPoint(int curve, float t) const;
+		Vec3 getDirection(unsigned index);
 
 		int insert(unsigned index, Vec3 point);
 		void remove(unsigned index);

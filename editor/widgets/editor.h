@@ -1,12 +1,12 @@
 /* Plant Genererator
- * Copyright (C) 2016-2017  Floris Creyf
+ * Copyright (C) 2016-2018  Floris Creyf
  *
- * TreeMaker is free software: you can redistribute it and/or modify
+ * Plant Genererator is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * TreeMaker is distributed in the hope that it will be useful,
+ * Plant Genererator is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -20,8 +20,10 @@
 
 #define GL_GLEXT_PROTOTYPES
 
-#include "../geometry/axes.h"
+
 #include "../geometry/path.h"
+#include "../geometry/rotation_axes.h"
+#include "../geometry/translation_axes.h"
 #include "../graphics/buffer.h"
 #include "../graphics/shared_resources.h"
 #include "../plant.h"
@@ -64,13 +66,14 @@ private:
 	enum Mode {
 		None,
 		MovePoint,
-		AddStem
+		Rotate
 	} mode = None;
 	struct Scene {
 		Geometry::Segment grid;
 		Geometry::Segment axesLines;
 		Geometry::Segment axesArrows;
 		Geometry::Segment selection;
+		Geometry::Segment rotation;
 	} scene;
 	Buffer staticBuffer;
 	Buffer pathBuffer;
@@ -83,7 +86,8 @@ private:
 	int selectedPoint = -1;
 	SharedResources *shared;
 	Camera camera;
-	Axes axes;
+	TranslationAxes axes;
+	RotationAxes rotationAxes;
 
 	int clickOffset[2];
 	bool ctrl = false;
@@ -97,10 +101,12 @@ private:
 	void selectPoint(int x, int y);
 	void selectAxis(int x, int y);
 	void movePoint(int x, int y);
+	void rotateStem(int x, int y);
 	void setClickOffset(int x, int y, pg::Vec3 point);
 	void initializeGL();
 	void initializeBuffers();
 	void paintGL();
+	void paintAxes();
 	void resizeGL(int width, int height);
 };
 

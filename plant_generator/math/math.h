@@ -1,4 +1,4 @@
-/* Copyright 2017 Floris Creyf
+/* Copyright 2017-2018 Floris Creyf
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -164,7 +164,8 @@ namespace pg {
 	Quat slerp(const Quat &a, const Quat &b, float t);
 	Mat4 identity();
 	/** Projects a onto b and returns distance along b. */
-	float project(Vec3 &a, Vec3 &b);
+	float project(const Vec3 &a, const Vec3 &b);
+	Vec3 projectOntoPlane(Vec3 normal, Vec3 vector);
 
 	inline std::ostream &operator<<(std::ostream &stream, const Vec2 &v)
 	{
@@ -199,6 +200,16 @@ namespace pg {
 			std::setw(10) << m[3].w << "]\n";
 		stream << std::defaultfloat;
 		return stream;
+	}
+
+	inline bool operator==(const Vec3 &a, const Vec3 &b)
+	{
+		return a.x == b.x && a.y == b.y && a.z == b.z;
+	}
+
+	inline bool operator!=(const Vec3 &a, const Vec3 &b)
+	{
+		return !(a == b);
 	}
 
 	inline Vec2 operator+(const Vec2 &a, const Vec2 &b)

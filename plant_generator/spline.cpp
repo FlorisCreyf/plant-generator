@@ -1,4 +1,4 @@
-/* Copyright 2017 Floris Creyf
+/* Copyright 2017-2018 Floris Creyf
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,6 +63,13 @@ pg::Vec3 pg::Spline::getPoint(int curve, float t) const
 {
 	int index = degree * curve;
 	return getBezier(t, &controls[index], (degree + 1));
+}
+
+pg::Vec3 pg::Spline::getDirection(unsigned index) {
+	if (index == controls.size() - 1)
+		return pg::normalize(controls[index] - controls[index - 1]);
+	else
+		return pg::normalize(controls[index + 1] - controls[index]);
 }
 
 int pg::Spline::insert(unsigned index, pg::Vec3 point)

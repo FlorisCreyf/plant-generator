@@ -1,4 +1,4 @@
-/* Copyright 2017 Floris Creyf
+/* Copyright 2017-2018 Floris Creyf
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -127,7 +127,6 @@ pg::Vec3 pg::Path::getIntermediateDirection(float t) const
 {
 	pg::Vec3 direction;
 	float s = 0.0f;
-	// t *= getLength();
 	for (size_t i = 0; i < path.size() - 1; i++) {
 		s += magnitude(path[i+1] - path[i]);
 		if (s >= t) {
@@ -136,4 +135,17 @@ pg::Vec3 pg::Path::getIntermediateDirection(float t) const
 		}
 	}
 	return direction;
+}
+
+float pg::Path::getDistance(int index) const
+{
+	float distance = 0.0f;
+	std::vector<Vec3> controls = spline.getControls();
+	size_t j = 0;
+
+	for (int i = spline.getDegree(); i <= index; i += spline.getDegree())
+		for (; j < path.size() && path[j] != controls[i]; j++)
+			distance += pg::magnitude(path[j + 1] - path[j]);
+
+	return distance;
 }

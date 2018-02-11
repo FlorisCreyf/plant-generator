@@ -17,6 +17,8 @@ plant_generator/volumetric_path.cpp \
 editor/geometry/axes.cpp \
 editor/geometry/geometry.cpp \
 editor/geometry/path.cpp \
+editor/geometry/translation_axes.cpp \
+editor/geometry/rotation_axes.cpp \
 editor/graphics/buffer.cpp \
 editor/graphics/shared_resources.cpp \
 editor/widgets/curve_button.cpp \
@@ -45,6 +47,8 @@ plant_generator/volumetric_path.h \
 editor/geometry/axes.h \
 editor/geometry/geometry.h \
 editor/geometry/path.h \
+editor/geometry/translation_axes.h \
+editor/geometry/rotation_axes.h \
 editor/graphics/buffer.h \
 editor/graphics/shared_resources.h \
 editor/widgets/curve_button.h \

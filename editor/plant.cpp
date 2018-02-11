@@ -1,12 +1,12 @@
 /* Plant Genererator
  * Copyright (C) 2018  Floris Creyf
  *
- * TreeMaker is free software: you can redistribute it and/or modify
+ * Plant Genererator is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * TreeMaker is distributed in the hope that it will be useful,
+ * Plant Genererator is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -55,6 +55,56 @@ pg::Vec3 Plant::extrude(pg::Stem *stem, int *point)
 	path.setSpline(spline);
 	stem->setPath(path);
 	return spline.getControls()[*point];
+}
+
+void Plant::rotate(pg::Stem *stem, int point, pg::Mat4 t)
+{
+	pg::VolumetricPath path = stem->getPath();
+	pg::Spline spline = path.getSpline();
+	std::vector<pg::Vec3> controls = spline.getControls();
+
+	if (spline.getDegree() == 3 && point % 3 != 0)
+		return;
+
+	if (spline.getDegree() == 3 && point > 0) {
+		size_t i = point - 1;
+		pg::Vec3 p = controls[i] - controls[point];
+		controls[i] = toVec3(t * toVec4(p, 0.0f));
+		controls[i] += controls[point];
+	}
+
+	for (size_t i = point + 1; i < controls.size(); i++) {
+		pg::Vec3 p = controls[i] - controls[point];
+		controls[i] = toVec3(t * toVec4(p, 0.0f));
+		controls[i] += controls[point];
+	}
+
+	rotate(stem->getChild(), t, path.getDistance(point));
+
+	spline.setControls(controls);
+	path.setSpline(spline);
+	stem->setPath(path);
+}
+
+void Plant::rotate(pg::Stem *stem, pg::Mat4 t, float distance)
+{
+	while (stem) {
+		if (stem->getPosition() >= distance) {
+			pg::VolumetricPath path = stem->getPath();
+			pg::Spline spline = path.getSpline();
+			std::vector<pg::Vec3> controls = spline.getControls();
+			for (size_t i = 0; i < controls.size(); i++) {
+				pg::Vec4 a = pg::toVec4(controls[i], 0.0f);
+				controls[i] = pg::toVec3(t * a);
+			}
+			spline.setControls(controls);
+			path.setSpline(spline);
+			stem->setPath(path);
+			rotate(stem->getChild(), t, 0.0f);
+		}
+
+		stem = stem->getSibling();
+	}
 }
 
 pg::Stem *Plant::removePoint(pg::Stem *stem, int *point)

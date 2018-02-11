@@ -7,15 +7,16 @@ Plant Generator facilitates modeling trees by automatically generating geometry 
 ## Instructions
 
 __Mouse controls__
-- _Middle mouse button:_ rotate
-- _Middle mouse button + Shift:_ pan
-- _Middle mouse button + Ctrl:_ zoom
-- _Left mouse button:_ move items / add stem
-- _Right mouse button:_ select items
-- _Double left click (curve editor):_ add new control point
+- _Middle mouse button:_ Rotate the camera.
+- _Middle mouse button + Shift:_ Pan the camera.
+- _Middle mouse button + Ctrl:_ Zoom with the camera.
+- _Left mouse button:_ Move items or add stems when no points are selected.
+- _Right mouse button:_ Select items in the scene.
+- _Double left click (curve editor):_ Add new control points.
 
 __Key controls__
 - _E_ Extrude the active path from the selected point.
+- _R_ Rotate the path of stems.
 
 ## Installation
 

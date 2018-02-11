@@ -1,12 +1,12 @@
 /* Plant Genererator
  * Copyright (C) 2018  Floris Creyf
  *
- * TreeMaker is free software: you can redistribute it and/or modify
+ * Plant Genererator is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * TreeMaker is distributed in the hope that it will be useful,
+ * Plant Genererator is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -46,6 +46,18 @@ void Geometry::addLine(Vec3 line[2], Vec3 color)
 {
 	addPoint(line[0], color);
 	addPoint(line[1], color);
+}
+
+void Geometry::addCircle(float radius, int points, pg::Vec3 color)
+{
+	float angle = 0.0f;
+	float rotation = 2.0f * M_PI / points;
+	for (int i = 0; i < points; i++) {
+		pg::Vec3 v = {std::cos(angle), 0.0f, std::sin(angle)};
+		v *= radius;
+		addPoint(v, color);
+		angle += rotation;
+	}
 }
 
 void Geometry::addCurve(const pg::Spline &spline, pg::Vec3 color, int size)

@@ -15,37 +15,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef AXES_H
-#define AXES_H
+#ifndef TRANSLATION_AXES_H
+#define TRANSLATION_AXES_H
 
-#include "geometry.h"
-#include "plant_generator/math/math.h"
-#include "plant_generator/math/intersection.h"
+#include "axes.h"
 
-class Axes {
+class TranslationAxes : public Axes {
 public:
-	enum Axis {None, XAxis, YAxis, ZAxis, Center};
+	Geometry getLines();
+	Geometry getArrows();
 
-	/**
-	 * The size for the axes needs to remain constant. This method is used
-	 * to set what that size should be.
-	 */
-	void setScale(float scale);
-	void setPosition(pg::Vec3 position);
-	pg::Vec3 getPosition();
-	/**
-	 * The axes move along a plane parallel to the camera if the center is
-	 * selected.
-	 */
-	void selectCenter();
 	/** Selects an axis using intersection tests. */
-	Axis getSelection();
-	void clearSelection();
+	Axis selectAxis(pg::Ray ray);
+	/** Moves the axes and returns the new location. */
+	pg::Vec3 move(pg::Ray ray, pg::Vec3 cameraDirection);
+	/**
+	 * The position of the camera is needed to keep the size of the axes
+	 * the same.
+	 */
+	pg::Mat4 getTransformation(pg::Vec3 cameraPosition);
 
-protected:
-	float scale = 1.0f;
-	pg::Vec3 position = {0.0f, 0.0f, 0.0f};
-	Axis selection;
+private:
+	const float radius = 0.08f;
+	const float lineLength[2] = {0.3f, 1.0f};
+	const float coneLength[2] = {0.5f, 1.5f};
 };
 
-#endif /* AXES_H */
+#endif /* TRANSLATION_AXES_H */

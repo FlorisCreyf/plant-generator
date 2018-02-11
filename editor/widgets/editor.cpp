@@ -1,12 +1,12 @@
 /* Plant Genererator
- * Copyright (C) 2016-2017  Floris Creyf
+ * Copyright (C) 2016-2018  Floris Creyf
  *
- * TreeMaker is free software: you can redistribute it and/or modify
+ * Plant Genererator is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.,
  *
- * TreeMaker is distributed in the hope that it will be useful,
+ * Plant Genererator is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -60,10 +60,13 @@ void Editor::initializeBuffers()
 	Geometry geometry;
 	Geometry axesLines = axes.getLines();
 	Geometry axesArrows = axes.getArrows();
+	Geometry rotationLines = rotationAxes.getLines();
+
 	geometry.addGrid(5, {0.41, 0.41, 0.41}, {0.3, 0.3, 0.3});
 	scene.grid = geometry.getSegment();
 	scene.axesLines = geometry.append(axesLines);
 	scene.axesArrows = geometry.append(axesArrows);
+	scene.rotation = geometry.append(rotationLines);
 
 	staticBuffer.initialize(GL_STATIC_DRAW);
 	staticBuffer.load(geometry);
@@ -86,11 +89,39 @@ void Editor::keyPressEvent(QKeyEvent *event)
 	case Qt::Key_Shift:
 		shift = true;
 		break;
+	case Qt::Key_C:
+		if (mode == Rotate)
+			rotationAxes.selectAxis(Axes::Center);
+		break;
 	case Qt::Key_E:
 		if (mode == None || mode == MovePoint) {
 			mode = MovePoint;
 			extrude();
 		}
+		break;
+	case Qt::Key_R:
+
+		if (selectedStem && selectedPoint >= 0) {
+			int d = selectedStem->getPath().getSpline().getDegree();
+			if (d == 3 && selectedPoint % 3 == 0)
+				mode = Rotate;
+			else if (d == 1)
+				mode = Rotate;
+		}
+		setMouseTracking(true);
+		update();
+		break;
+	case Qt::Key_X:
+		if (mode == Rotate)
+			rotationAxes.selectAxis(Axes::XAxis);
+		break;
+	case Qt::Key_Y:
+		if (mode == Rotate)
+			rotationAxes.selectAxis(Axes::YAxis);
+		break;
+	case Qt::Key_Z:
+		if (mode == Rotate)
+			rotationAxes.selectAxis(Axes::ZAxis);
 		break;
 	case Qt::Key_Delete:
 		if (selectedStem) {
@@ -130,10 +161,13 @@ void Editor::mousePressEvent(QMouseEvent *event)
 	QPoint p = event->pos();
 	midButton = false;
 
-	if (event->button() == Qt::RightButton) {
-		if (mode == AddStem)
-			mode = None;
-		else if (mode == None || mode == MovePoint) {
+	if (mode == Rotate) {
+		mode = None;
+		rotationAxes.selectCenter();
+		setMouseTracking(false);
+		update();
+	} else if (event->button() == Qt::RightButton) {
+		if (mode == None || mode == MovePoint) {
 			mode = None;
 			pg::Stem *prevStem = selectedStem;
 
@@ -174,8 +208,10 @@ void Editor::mouseReleaseEvent(QMouseEvent *event)
 {
 	if (event->button() == Qt::MidButton)
 		camera.setAction(Camera::None);
-	if (event->button() == Qt::LeftButton)
+	if (mode == MovePoint && event->button() == Qt::LeftButton) {
 		axes.clearSelection();
+		mode = None;
+	}
 }
 
 void Editor::mouseMoveEvent(QMouseEvent *event)
@@ -185,7 +221,8 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
 
 	if (mode == MovePoint && axes.getSelection() != Axes::Axis::None)
 		movePoint(point.x(), point.y());
-
+	else if (mode == Rotate)
+		rotateStem(point.x(), point.y());
 	update();
 }
 
@@ -224,6 +261,8 @@ void Editor::addStem(int x, int y)
 		selectedStem = plant.addStem(selectedStem);
 		axes.setPosition(plant.initializeStem(selectedStem, ray,
 			camera.getDirection(), t, radius));
+		clickOffset[0] = 0;
+		clickOffset[1] = 0;
 		change();
 		update();
 	}
@@ -252,6 +291,7 @@ void Editor::selectPoint(int x, int y)
 	for (int i = 0; i < size; i++) {
 		Vec3 point = controls[i] + location;
 		axes.setPosition(point);
+		rotationAxes.setPosition(point);
 		point = camera.toScreenSpace(point);
 		float sx = std::pow(point.x - x, 2);
 		float sy = std::pow(point.y - y, 2);
@@ -305,6 +345,18 @@ void Editor::movePoint(int x, int y)
 		selectedStem->setPath(vpath);
 	}
 
+	change();
+}
+
+void Editor::rotateStem(int x, int y)
+{
+	pg::Vec3 cameraDirection = camera.getDirection();
+	pg::Ray ray = {camera.getPosition(), camera.getRayDirection(x, y)};
+	pg::VolumetricPath path = selectedStem->getPath();
+	pg::Spline spline = path.getSpline();
+	pg::Vec3 direction = spline.getDirection(selectedPoint);
+	pg::Mat4 t = rotationAxes.rotate(ray, cameraDirection, direction);
+	plant.rotate(selectedStem, selectedPoint, t);
 	change();
 }
 
@@ -409,26 +461,46 @@ void Editor::paintGL()
 			glDrawArrays(GL_POINTS, s.pstart, s.pcount);
 		}
 
-		if (selectedPoint >= 0) {
-			/* paint axes */
-			glClear(GL_DEPTH_BUFFER_BIT);
-			glDepthFunc(GL_LEQUAL);
-
-			vp = vp * axes.getTransformation(cp);
-			glUseProgram(shared->getShader(Shader::Flat));
-			glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
-			staticBuffer.use();
-			glDrawArrays(GL_LINES, scene.axesLines.pstart,
-				scene.axesLines.pcount);
-
-			GLvoid *s = (GLvoid *)((scene.axesArrows.istart) *
-				sizeof(unsigned));
-			GLsizei c = scene.axesArrows.icount;
-			glDrawElements(GL_TRIANGLES, c, GL_UNSIGNED_INT, s);
-		}
+		if (selectedPoint >= 0)
+			paintAxes();
 	}
 
 	glFlush();
+}
+
+void Editor::paintAxes()
+{
+	Mat4 vp = camera.getVP();
+	Vec3 cp = camera.getPosition();
+	GLvoid *s;
+	GLsizei c;
+
+	/* paint axes */
+	glClear(GL_DEPTH_BUFFER_BIT);
+	glDepthFunc(GL_LEQUAL);
+
+	glUseProgram(shared->getShader(Shader::Flat));
+	staticBuffer.use();
+
+	if (mode == Rotate) {
+		pg::Spline spline = selectedStem->getPath().getSpline();
+		pg::Vec3 d = spline.getDirection(selectedPoint);
+		pg::Mat4 m = vp * rotationAxes.getTransformation(cp, d);
+		glUniformMatrix4fv(0, 1, GL_FALSE, &m[0][0]);
+
+		s = (GLvoid *)((scene.rotation.istart) * sizeof(unsigned));
+		c = scene.rotation.icount;
+		glDrawElements(GL_LINE_STRIP, c, GL_UNSIGNED_INT, s);
+	} else {
+		pg::Mat4 m = vp * axes.getTransformation(cp);
+		glUniformMatrix4fv(0, 1, GL_FALSE, &m[0][0]);
+		glDrawArrays(GL_LINES, scene.axesLines.pstart,
+			scene.axesLines.pcount);
+
+		s = (GLvoid *)((scene.axesArrows.istart) * sizeof(unsigned));
+		c = scene.axesArrows.icount;
+		glDrawElements(GL_TRIANGLES, c, GL_UNSIGNED_INT, s);
+	}
 }
 
 void Editor::updateSelection()

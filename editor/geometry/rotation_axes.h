@@ -15,34 +15,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef ROTATION_AXES_H
+#define ROTATION_AXES_H
+
 #include "axes.h"
 
-void Axes::setScale(float scale)
-{
-	this->scale = scale;
-}
+class RotationAxes : public Axes {
+public:
+	Geometry getLines();
+	void selectAxis(Axis axis);
+	pg::Mat4 rotate(pg::Ray ray, pg::Vec3 cameraDirection,
+		pg::Vec3 direction);
+	pg::Mat4 getTransformation(pg::Vec3 cameraPosition, pg::Vec3 direction);
+};
 
-void Axes::setPosition(pg::Vec3 position)
-{
-	this->position = position;
-}
-
-pg::Vec3 Axes::getPosition()
-{
-	return position;
-}
-
-void Axes::selectCenter()
-{
-	selection = Center;
-}
-
-Axes::Axis Axes::getSelection()
-{
-	return selection;
-}
-
-void Axes::clearSelection()
-{
-	selection = None;
-}
+#endif /* ROTATION_AXES_H */
