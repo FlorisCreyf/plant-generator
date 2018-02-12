@@ -96,7 +96,7 @@ Mat4 pg::Mesh::getSectionTransform(Stem *stem, size_t section, float offset)
 {
 	Vec3 up = {0.0f, 1.0f, 0.0f};
 	Vec3 point = stem->getPath().get(section);
-	Vec3 direction = stem->getPath().getDirection(section);
+	Vec3 direction = stem->getPath().getAverageDirection(section);
 	Vec3 location = stem->getLocation() + point + offset * direction;
 	Mat4 rotation = pg::rotateIntoVec(up, direction);
 	Mat4 translation = pg::translate(location);

@@ -28,10 +28,11 @@ using pg::Mat4;
 using pg::Ray;
 
 Editor::Editor(SharedResources *shared, QWidget *parent) :
-	QOpenGLWidget(parent), mesh(&plant), generator(&plant)
+	QOpenGLWidget(parent), mesh(&plant), generator(&plant), history(&plant)
 {
 	this->shared = shared;
 	path.setColor({0.4f, 0.1f, 0.6f}, {0.1f, 0.4f, 0.6f});
+	setMouseTracking(true);
 	setFocus();
 }
 
@@ -58,8 +59,8 @@ void Editor::initializeGL()
 void Editor::initializeBuffers()
 {
 	Geometry geometry;
-	Geometry axesLines = axes.getLines();
-	Geometry axesArrows = axes.getArrows();
+	Geometry axesLines = translationAxes.getLines();
+	Geometry axesArrows = translationAxes.getArrows();
 	Geometry rotationLines = rotationAxes.getLines();
 
 	geometry.addGrid(5, {0.41, 0.41, 0.41}, {0.3, 0.3, 0.3});
@@ -83,32 +84,30 @@ void Editor::initializeBuffers()
 void Editor::keyPressEvent(QKeyEvent *event)
 {
 	switch (event->key()) {
-	case Qt::Key_Control:
-		ctrl = true;
-		break;
-	case Qt::Key_Shift:
-		shift = true;
-		break;
 	case Qt::Key_C:
 		if (mode == Rotate)
 			rotationAxes.selectAxis(Axes::Center);
 		break;
 	case Qt::Key_E:
 		if (mode == None || mode == MovePoint) {
-			mode = MovePoint;
-			extrude();
+			if (selectedStem && selectedPoint >= 0) {
+				mode = MovePoint;
+				history.add(selectedStem, selectedPoint);
+				extrude();
+			}
 		}
 		break;
 	case Qt::Key_R:
-
 		if (selectedStem && selectedPoint >= 0) {
 			int d = selectedStem->getPath().getSpline().getDegree();
-			if (d == 3 && selectedPoint % 3 == 0)
+			if (d == 3 && selectedPoint % 3 == 0) {
+				history.add(selectedStem, selectedPoint);
 				mode = Rotate;
-			else if (d == 1)
+			} else if (d == 1) {
+				history.add(selectedStem, selectedPoint);
 				mode = Rotate;
+			}
 		}
-		setMouseTracking(true);
 		update();
 		break;
 	case Qt::Key_X:
@@ -125,25 +124,14 @@ void Editor::keyPressEvent(QKeyEvent *event)
 		break;
 	case Qt::Key_Delete:
 		if (selectedStem) {
+			history.add(selectedStem, selectedPoint);
 			mode = None;
 			removePoint();
 		}
 		break;
 	}
-}
 
-void Editor::keyReleaseEvent(QKeyEvent *event)
-{
-	switch (event->key()) {
-	case Qt::Key_Control:
-		ctrl = false;
-		break;
-	case Qt::Key_Shift:
-		shift = false;
-		break;
-	case Qt::Key_Tab:
-		break;
-	}
+	QWidget::keyPressEvent(event);
 }
 
 bool Editor::event(QEvent *e)
@@ -159,12 +147,10 @@ bool Editor::event(QEvent *e)
 void Editor::mousePressEvent(QMouseEvent *event)
 {
 	QPoint p = event->pos();
-	midButton = false;
 
 	if (mode == Rotate) {
 		mode = None;
 		rotationAxes.selectCenter();
-		setMouseTracking(false);
 		update();
 	} else if (event->button() == Qt::RightButton) {
 		if (mode == None || mode == MovePoint) {
@@ -181,21 +167,22 @@ void Editor::mousePressEvent(QMouseEvent *event)
 			update();
 		}
 	} if (event->button() == Qt::MidButton) {
-		midButton = true;
 		camera.setStartCoordinates(p.x(), p.y());
-		if (ctrl && !shift)
+		if (event->modifiers() & Qt::ControlModifier)
 			camera.setAction(Camera::Zoom);
-		else if (shift && !ctrl)
+		else if (event->modifiers() & Qt::ShiftModifier)
 			camera.setAction(Camera::Pan);
 		else
 			camera.setAction(Camera::Rotate);
 	} else if (event->button() == Qt::LeftButton) {
-		if (selectedPoint >= 0 && selectedStem)
-			selectAxis(p.x(), p.y());
-		else if (selectedStem) {
+		if (selectedPoint >= 0 && selectedStem) {
+			if (mode == None)
+				selectAxis(p.x(), p.y());
+		} else if (selectedStem) {
 			selectedPoint = 1;
+			history.add(selectedStem, selectedPoint);
 			mode = MovePoint;
-			axes.selectCenter();
+			translationAxes.selectCenter();
 			addStem(p.x(), p.y());
 			emit selectionChanged();
 		}
@@ -209,7 +196,7 @@ void Editor::mouseReleaseEvent(QMouseEvent *event)
 	if (event->button() == Qt::MidButton)
 		camera.setAction(Camera::None);
 	if (mode == MovePoint && event->button() == Qt::LeftButton) {
-		axes.clearSelection();
+		translationAxes.clearSelection();
 		mode = None;
 	}
 }
@@ -219,11 +206,32 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
 	QPoint point = event->pos();
 	camera.executeAction(point.x(), point.y());
 
-	if (mode == MovePoint && axes.getSelection() != Axes::Axis::None)
+	if (mode == MovePoint && translationAxes.getSelection() != Axes::None)
 		movePoint(point.x(), point.y());
 	else if (mode == Rotate)
 		rotateStem(point.x(), point.y());
 	update();
+}
+
+History *Editor::getHistory()
+{
+	return &history;
+}
+
+void Editor::revert(History::Memento m)
+{
+	if (m.selectedStem) {
+		selectedPoint = m.selectedPoint;
+		selectedStem = m.selectedStem;
+		mode = None;
+		emit selectionChanged();
+		change();
+	}
+}
+
+bool Editor::isExecutingAction()
+{
+	return mode != None;
 }
 
 void Editor::extrude()
@@ -233,14 +241,14 @@ void Editor::extrude()
 	point = point + location;
 	QPoint p = mapFromGlobal(QCursor::pos());
 	setClickOffset(p.x(), p.y(), point);
-	axes.selectCenter();
-	setMouseTracking(true);
+	translationAxes.selectCenter();
 	emit selectionChanged();
 }
 
 void Editor::removePoint()
 {
-	if (selectedStem->getParent()) {
+	int size = selectedStem->getPath().getSpline().getControls().size();
+	if (selectedStem->getParent() || (size > 2 && selectedPoint > 0)) {
 		selectedStem = plant.removePoint(selectedStem, &selectedPoint);
 		emit selectionChanged();
 		change();
@@ -259,8 +267,8 @@ void Editor::addStem(int x, int y)
 		float t = closestDistance(path, camera, x, y);
 		float radius = selectedStem->getPath().getMaxRadius()/4;
 		selectedStem = plant.addStem(selectedStem);
-		axes.setPosition(plant.initializeStem(selectedStem, ray,
-			camera.getDirection(), t, radius));
+		pg::Vec3 direction = camera.getDirection();
+		plant.initializeStem(selectedStem, ray, direction, t, radius);
 		clickOffset[0] = 0;
 		clickOffset[1] = 0;
 		change();
@@ -275,7 +283,6 @@ void Editor::selectStem(int x, int y)
 	ray.origin = camera.getPosition();
 	selectedStem = plant.getStem(ray);
 	updateSelection();
-	setMouseTracking(false);
 	emit selectionChanged();
 }
 
@@ -290,8 +297,6 @@ void Editor::selectPoint(int x, int y)
 
 	for (int i = 0; i < size; i++) {
 		Vec3 point = controls[i] + location;
-		axes.setPosition(point);
-		rotationAxes.setPosition(point);
 		point = camera.toScreenSpace(point);
 		float sx = std::pow(point.x - x, 2);
 		float sy = std::pow(point.y - y, 2);
@@ -301,17 +306,20 @@ void Editor::selectPoint(int x, int y)
 			break;
 		}
 	}
-
-	setMouseTracking(false);
 }
 
 void Editor::selectAxis(int x, int y)
 {
 	Vec3 o = camera.getPosition();
 	Vec3 d = camera.getRayDirection(x, y);
-	setClickOffset(x, y, axes.getPosition());
-	axes.selectAxis({o, d});
-	mode = axes.getSelection() == Axes::Axis::None ? None : MovePoint;
+	setClickOffset(x, y, translationAxes.getPosition());
+	translationAxes.selectAxis({o, d});
+	if (translationAxes.getSelection() == Axes::Axis::None)
+		mode = None;
+	else {
+		history.add(selectedStem, selectedPoint);
+		mode = MovePoint;
+	}
 }
 
 void Editor::movePoint(int x, int y)
@@ -334,12 +342,12 @@ void Editor::movePoint(int x, int y)
 			path[i] = path[i] + parentStem->getLocation();
 		float t = closestDistance(path, camera, x, y);
 		selectedStem->setPosition(t);
-		axes.setPosition(selectedStem->getLocation());
+		translationAxes.setPosition(selectedStem->getLocation());
 	} else if (selectedPoint != 0) {
 		pg::Vec3 location = selectedStem->getLocation();
 		pg::VolumetricPath vpath = selectedStem->getPath();
 		pg::Spline spline = vpath.getSpline();
-		location = axes.move(ray, direction) - location;
+		location = translationAxes.move(ray, direction) - location;
 		spline.move(selectedPoint, location);
 		vpath.setSpline(spline);
 		selectedStem->setPath(vpath);
@@ -377,6 +385,22 @@ pg::Stem *Editor::getSelectedStem()
 	return selectedStem;
 }
 
+void Editor::setSelectedStem(pg::Stem *selection)
+{
+	selectedStem = selection;
+	emit selectionChanged();
+}
+
+int Editor::getSelectedPoint()
+{
+	return selectedPoint;
+}
+
+void Editor::setSelectedPoint(int selection)
+{
+	selectedPoint = selection;
+}
+
 const pg::Mesh *Editor::getMesh()
 {
 	return &mesh;
@@ -387,7 +411,7 @@ void Editor::resizeGL(int width, int height)
 	float ratio = static_cast<float>(width) / static_cast<float>(height);
 	camera.setWindowSize(width, height);
 	camera.setPerspective(45.0f, 0.1f, 100.0f, ratio);
-	axes.setScale(600.0f / height);
+	translationAxes.setScale(600.0f / height);
 	glViewport(0, 0, width, height);
 	paintGL();
 }
@@ -475,15 +499,19 @@ void Editor::paintAxes()
 	GLvoid *s;
 	GLsizei c;
 
-	/* paint axes */
 	glClear(GL_DEPTH_BUFFER_BIT);
 	glDepthFunc(GL_LEQUAL);
 
 	glUseProgram(shared->getShader(Shader::Flat));
 	staticBuffer.use();
 
+	pg::Spline spline = selectedStem->getPath().getSpline();
+	pg::Vec3 position = spline.getControls()[selectedPoint];
+	position += selectedStem->getLocation();
+	translationAxes.setPosition(position);
+	rotationAxes.setPosition(position);
+
 	if (mode == Rotate) {
-		pg::Spline spline = selectedStem->getPath().getSpline();
 		pg::Vec3 d = spline.getDirection(selectedPoint);
 		pg::Mat4 m = vp * rotationAxes.getTransformation(cp, d);
 		glUniformMatrix4fv(0, 1, GL_FALSE, &m[0][0]);
@@ -492,7 +520,7 @@ void Editor::paintAxes()
 		c = scene.rotation.icount;
 		glDrawElements(GL_LINE_STRIP, c, GL_UNSIGNED_INT, s);
 	} else {
-		pg::Mat4 m = vp * axes.getTransformation(cp);
+		pg::Mat4 m = vp * translationAxes.getTransformation(cp);
 		glUniformMatrix4fv(0, 1, GL_FALSE, &m[0][0]);
 		glDrawArrays(GL_LINES, scene.axesLines.pstart,
 			scene.axesLines.pcount);
@@ -536,54 +564,4 @@ void Editor::change()
 	plantBuffer.update(p->data(), p->size(), i->data(), i->size());
 	updateSelection();
 	update();
-}
-
-void Editor::changePathDegree(int i)
-{
-	int degree = i == 1 ? 3 : 1;
-	pg::VolumetricPath path = selectedStem->getPath();
-	pg::Spline spline = path.getSpline();
-	if (spline.getDegree() != degree) {
-		selectedPoint = spline.adjust(degree, selectedPoint);
-		pg::Vec3 p = spline.getControls()[selectedPoint];
-		p += selectedStem->getLocation();
-		axes.setPosition(p);
-	}
-	path.setSpline(spline);
-	selectedStem->setPath(path);
-	change();
-}
-
-void Editor::changeResolution(int i)
-{
-	pg::Stem *stem = getSelectedStem();
-	stem->setResolution(i);
-	change();
-}
-
-void Editor::changeDivisions(int i)
-{
-	pg::Stem *stem = getSelectedStem();
-	pg::VolumetricPath vpath = stem->getPath();
-	vpath.setResolution(i);
-	stem->setPath(vpath);
-	change();
-}
-
-void Editor::changeRadius(double d)
-{
-	pg::Stem *stem = getSelectedStem();
-	pg::VolumetricPath vpath = stem->getPath();
-	vpath.setMaxRadius(d);
-	stem->setPath(vpath);
-	change();
-}
-
-void Editor::changeRadiusCurve(pg::Spline &spline)
-{
-	pg::Stem *stem = getSelectedStem();
-	pg::VolumetricPath vp = stem->getPath();
-	vp.setRadius(spline);
-	stem->setPath(vp);
-	change();
 }

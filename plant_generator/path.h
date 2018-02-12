@@ -50,6 +50,7 @@ namespace pg {
 		float getLength() const;
 		/* Get the direction of a line segment of the path. */
 		Vec3 getDirection(size_t index) const;
+		Vec3 getAverageDirection(size_t index) const;
 		Vec3 getIntermediateDirection(float t) const;
 		/* Get the distance along the path to a control point. */
 		float getDistance(int index) const;

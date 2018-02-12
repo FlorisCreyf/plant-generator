@@ -21,13 +21,18 @@
 
 namespace pg {
 	class Plant {
-		Stem root;
+		Stem *root;
 
 	public:
 		Plant();
+		~Plant();
+
 		Stem *getRoot();
 		Stem *addStem(Stem *stem);
 		void removeStem(Stem *stem);
+		Stem *copy(Stem *stem, Stem *parent, Stem **ref = nullptr);
+		/** This does not delete the previous root. */
+		void setRoot(Stem *stem);
 	};
 }
 

@@ -15,17 +15,24 @@
 
 #include "plant.h"
 
-pg::Plant::Plant() : root(nullptr)
-{
+using pg::Stem;
 
+pg::Plant::Plant()
+{
+	root = new Stem(nullptr);
 }
 
-pg::Stem *pg::Plant::getRoot()
+pg::Plant::~Plant()
 {
-	return &root;
+	removeStem(root);
 }
 
-pg::Stem *pg::Plant::addStem(pg::Stem *stem)
+Stem *pg::Plant::getRoot()
+{
+	return root;
+}
+
+Stem *pg::Plant::addStem(Stem *stem)
 {
 	Stem *firstChild = stem->child;
 	stem->child = new Stem(stem);
@@ -36,7 +43,7 @@ pg::Stem *pg::Plant::addStem(pg::Stem *stem)
 	return stem->child;
 }
 
-void pg::Plant::removeStem(pg::Stem *stem)
+void pg::Plant::removeStem(Stem *stem)
 {
 	{
 		Stem *child = stem->child;
@@ -59,4 +66,37 @@ void pg::Plant::removeStem(pg::Stem *stem)
 	}
 
 	delete stem;
+}
+
+Stem *pg::Plant::copy(Stem *stem, Stem *parent, Stem **ref)
+{
+	Stem *c = new Stem(parent);
+	*c = *stem;
+
+	c->parent = parent;
+	c->child = nullptr;
+	c->nextSibling = nullptr;
+	c->prevSibling = nullptr;
+
+	Stem *sibling = stem->child;
+	while (sibling) {
+		Stem *cc = copy(sibling, c, ref);
+		if (c->child) {
+			c->child->prevSibling = cc;
+			cc->nextSibling = c->child;
+			c->child = cc;
+		} else
+			c->child = cc;
+		sibling = sibling->nextSibling;
+	}
+
+	if (ref != nullptr && *ref == stem)
+		*ref = c;
+
+	return c;
+}
+
+void pg::Plant::setRoot(Stem *stem)
+{
+	this->root = stem;
 }

@@ -123,6 +123,18 @@ pg::Vec3 pg::Path::getDirection(size_t index) const
 		return pg::normalize(path[index + 1] - path[index]);
 }
 
+pg::Vec3 pg::Path::getAverageDirection(size_t index) const
+{
+	Vec3 direction;
+	if (index == 0 || index == path.size() - 1)
+		direction = getDirection(index);
+	else {
+		direction = getDirection(index) + getDirection(index - 1);
+		direction = normalize(direction);
+	}
+	return direction;
+}
+
 pg::Vec3 pg::Path::getIntermediateDirection(float t) const
 {
 	pg::Vec3 direction;

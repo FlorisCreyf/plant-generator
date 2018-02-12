@@ -29,6 +29,7 @@ editor/widgets/window.cpp \
 editor/camera.cpp \
 editor/closest.cpp \
 editor/file_exporter.cpp \
+editor/history.cpp \
 editor/main.cpp \
 editor/plant.cpp
 
@@ -59,6 +60,7 @@ editor/widgets/window.h \
 editor/closest.h \
 editor/camera.h \
 editor/file_exporter.h \
+editor/history.h \
 editor/plant.h
 
 FORMS += editor/qt/window.ui

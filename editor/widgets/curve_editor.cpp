@@ -1,12 +1,12 @@
 /* Plant Genererator
  * Copyright (C) 2016-2017  Floris Creyf
  *
- * TreeMaker is free software: you can redistribute it and/or modify
+ * Plant Genererator is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * TreeMaker is distributed in the hope that it will be useful,
+ * Plant Genererator is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -47,6 +47,8 @@ CurveEditor::CurveEditor(SharedResources *shared, QWidget *parent) :
 	layout->addWidget(degree);
 	layout->addStretch(1);
 
+	setFocusPolicy(Qt::StrongFocus);
+
 	connect(degree, SIGNAL(currentIndexChanged(int)), this,
 		SLOT(setDegree(int)));
 }
@@ -78,6 +80,11 @@ void CurveEditor::initializeGL()
 	glPrimitiveRestartIndex(Geometry::primitiveReset);
 
 	createInterface();
+}
+
+void CurveEditor::focusOutEvent(QFocusEvent *event)
+{
+	emit editingFinished();
 }
 
 void CurveEditor::createInterface()
@@ -122,6 +129,12 @@ void CurveEditor::resizeGL(int width, int height)
 	glViewport(0, 0, width, height);
 	this->width = width;
 	this->height = height;
+}
+
+void CurveEditor::keyPressEvent(QKeyEvent *event)
+{
+	/* Only propagate event to the window if the editor is not in the middle
+	 * of an event. */
 }
 
 void CurveEditor::mousePressEvent(QMouseEvent *event)

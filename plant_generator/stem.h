@@ -40,8 +40,6 @@ namespace pg {
 	public:
 		Stem(Stem *parent);
 
-		void clone(Stem *stem);
-
 		void setResolution(int resolution);
 		int getResolution() const;
 		void setPath(VolumetricPath &path);

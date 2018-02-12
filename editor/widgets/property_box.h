@@ -1,12 +1,12 @@
 /* Plant Genererator
  * Copyright (C) 2016-2017  Floris Creyf
  *
- * TreeMaker is free software: you can redistribute it and/or modify
+ * Plant Genererator is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * TreeMaker is distributed in the hope that it will be useful,
+ * Plant Genererator is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -35,6 +35,12 @@ public slots:
 	void fill();
 	void setCurve(pg::Spline spline, QString names);
 	void toggleCurve(CurveButton *w);
+	void changePathDegree(int i);
+	void changeResolution(int i);
+	void changeDivisions(int i);
+	void changeRadius(double d);
+	void changeRadiusCurve(pg::Spline &spline);
+	void finishChanging();
 
 signals:
 	void isEnabled(bool enabled);
@@ -54,9 +60,10 @@ private:
 	QSpinBox *resolution;
 	QSpinBox *divisions;
 	QComboBox *degree;
+	bool changing = false;
 
+	void beginChanging(QWidget *widget);
 	void createLocalBox(QVBoxLayout *layout);
-	void bindCurveEditor();
 	QWidget *createCenteredWidget(QWidget *);
 	void configureTable(QTableWidget *);
 };

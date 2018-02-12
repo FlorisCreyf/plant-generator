@@ -1,12 +1,12 @@
 /* Plant Genererator
  * Copyright (C) 2016-2017  Floris Creyf
  *
- * TreeMaker is free software: you can redistribute it and/or modify
+ * Plant Genererator is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * TreeMaker is distributed in the hope that it will be useful,
+ * Plant Genererator is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -86,11 +86,13 @@ void PropertyBox::configureTable(QTableWidget *table)
 		auto l = table->cellWidget(i, 0);
 		const char *name = r->metaObject()->className();
 
-		if (strcmp(name, "QSpinBox") == 0 ||
-			strcmp(name, "QDoubleSpinBox") == 0)
+		bool spinBox = strcmp(name, "QSpinBox") == 0;
+		bool doubleSpinBox = strcmp(name, "QDoubleSpinBox") == 0;
+		if (spinBox || doubleSpinBox)
 			table->setRowHeight(i, 24);
 		else
 			table->resizeRowToContents(i);
+
 		if (l != nullptr)
 			l->setFixedHeight(24);
 	}
@@ -132,7 +134,7 @@ void PropertyBox::setCurve(pg::Spline spline, QString name)
 {
 	if (name == "Radius") {
 		radiusCB->setCurve(spline);
-		editor->changeRadiusCurve(spline);
+		changeRadiusCurve(spline);
 	}
 }
 
@@ -190,31 +192,109 @@ void PropertyBox::fill()
 	}
 }
 
+void PropertyBox::changePathDegree(int i)
+{
+	beginChanging(degree);
+	int degree = i == 1 ? 3 : 1;
+	pg::Stem *stem = editor->getSelectedStem();
+	pg::VolumetricPath path = stem->getPath();
+	pg::Spline spline = path.getSpline();
+	if (spline.getDegree() != degree) {
+		int selectedPoint = editor->getSelectedPoint();
+		selectedPoint = spline.adjust(degree, selectedPoint);
+		editor->setSelectedPoint(selectedPoint);
+		pg::Vec3 p = spline.getControls()[selectedPoint];
+		p += stem->getLocation();
+	}
+	path.setSpline(spline);
+	stem->setPath(path);
+	editor->change();
+	finishChanging();
+}
+
+void PropertyBox::changeResolution(int i)
+{
+	beginChanging(resolution);
+	pg::Stem *stem = editor->getSelectedStem();
+	stem->setResolution(i);
+	editor->change();
+}
+
+void PropertyBox::changeDivisions(int i)
+{
+	beginChanging(divisions);
+	pg::Stem *stem = editor->getSelectedStem();
+	pg::VolumetricPath vpath = stem->getPath();
+	vpath.setResolution(i);
+	stem->setPath(vpath);
+	editor->change();
+}
+
+void PropertyBox::changeRadius(double d)
+{
+	beginChanging(radius);
+	pg::Stem *stem = editor->getSelectedStem();
+	pg::VolumetricPath vpath = stem->getPath();
+	vpath.setMaxRadius(d);
+	stem->setPath(vpath);
+	editor->change();
+}
+
+void PropertyBox::changeRadiusCurve(pg::Spline &spline)
+{
+	beginChanging(curveEditor);
+	pg::Stem *stem = editor->getSelectedStem();
+	pg::VolumetricPath vp = stem->getPath();
+	vp.setRadius(spline);
+	stem->setPath(vp);
+	editor->change();
+}
+
+void PropertyBox::beginChanging(QWidget *widget)
+{
+	if (widget->hasFocus()) {
+		if (!changing) {
+			History *history = editor->getHistory();
+			pg::Stem *stem = editor->getSelectedStem();
+			int point = editor->getSelectedPoint();
+			history->add(stem, point);
+		}
+		changing = true;
+	}
+}
+
+void PropertyBox::finishChanging()
+{
+	changing = false;
+}
+
 void PropertyBox::bind(Editor *editor, CurveEditor *curveEditor)
 {
 	this->curveEditor = curveEditor;
 	this->editor = editor;
 
-	connect(editor, SIGNAL(selectionChanged()), this,
-		SLOT(fill()));
+	connect(editor, SIGNAL(selectionChanged()), this, SLOT(fill()));
 
-	connect(degree, SIGNAL(currentIndexChanged(int)), editor,
-		SLOT(changePathDegree(int)));
-	connect(resolution, SIGNAL(valueChanged(int)), editor,
-		SLOT(changeResolution(int)));
-	connect(divisions, SIGNAL(valueChanged(int)), editor,
-		SLOT(changeDivisions(int)));
-	connect(radius, SIGNAL(valueChanged(double)), editor,
-		SLOT(changeRadius(double)));
-
-	bindCurveEditor();
-}
-
-void PropertyBox::bindCurveEditor()
-{
-	connect(curveEditor,
-		SIGNAL(curveChanged(pg::Spline, QString)),
-		this, SLOT(setCurve(pg::Spline, QString)));
+	connect(curveEditor, SIGNAL(curveChanged(pg::Spline, QString)), this,
+		SLOT(setCurve(pg::Spline, QString)));
 	connect(radiusCB, SIGNAL(selected(CurveButton *)), this,
 		SLOT(toggleCurve(CurveButton *)));
+
+	connect(resolution, SIGNAL(editingFinished()), this,
+		SLOT(finishChanging()));
+	connect(divisions, SIGNAL(editingFinished()), this,
+		SLOT(finishChanging()));
+	connect(radius, SIGNAL(editingFinished()), this,
+		SLOT(finishChanging()));
+	connect(curveEditor, SIGNAL(editingFinished()), this,
+		SLOT(finishChanging()));
+
+	connect(degree, SIGNAL(currentIndexChanged(int)), this,
+		SLOT(changePathDegree(int)));
+	connect(resolution, SIGNAL(valueChanged(int)), this,
+		SLOT(changeResolution(int)));
+	connect(divisions, SIGNAL(valueChanged(int)), this,
+		SLOT(changeDivisions(int)));
+	connect(radius, SIGNAL(valueChanged(double)), this,
+		SLOT(changeRadius(double)));
 }

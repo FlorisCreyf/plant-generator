@@ -20,7 +20,6 @@
 
 #define GL_GLEXT_PROTOTYPES
 
-
 #include "../geometry/path.h"
 #include "../geometry/rotation_axes.h"
 #include "../geometry/translation_axes.h"
@@ -28,6 +27,7 @@
 #include "../graphics/shared_resources.h"
 #include "../plant.h"
 #include "../camera.h"
+#include "../history.h"
 #include <QtGui/QOpenGLFunctions>
 #include <QOpenGLWidget>
 
@@ -41,24 +41,21 @@ signals:
 public:
 	Editor(SharedResources *shared, QWidget *parent = 0);
 	void change();
-
 	pg::Plant *getPlant();
 	pg::Stem *getSelectedStem();
+	void setSelectedStem(pg::Stem *selection);
+	int getSelectedPoint();
+	void setSelectedPoint(int selection);
 	const pg::Mesh *getMesh();
-
-public slots:
-	void changePathDegree(int i);
-	void changeResolution(int i);
-	void changeDivisions(int i);
-	void changeRadius(double d);
-	void changeRadiusCurve(pg::Spline &spline);
+	History *getHistory();
+	void revert(History::Memento m);
+	bool isExecutingAction();
 
 protected:
 	void updateSelection();
 	void mousePressEvent(QMouseEvent *);
 	void mouseReleaseEvent(QMouseEvent *);
 	void keyPressEvent(QKeyEvent *);
-	void keyReleaseEvent(QKeyEvent *);
 	void mouseMoveEvent(QMouseEvent *);
 	bool event(QEvent *);
 
@@ -86,13 +83,10 @@ private:
 	int selectedPoint = -1;
 	SharedResources *shared;
 	Camera camera;
-	TranslationAxes axes;
+	TranslationAxes translationAxes;
 	RotationAxes rotationAxes;
-
+	History history;
 	int clickOffset[2];
-	bool ctrl = false;
-	bool shift = false;
-	bool midButton = false;
 
 	void extrude();
 	void removePoint();

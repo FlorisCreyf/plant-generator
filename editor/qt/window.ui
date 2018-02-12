@@ -241,10 +241,6 @@
     </property>
     <addaction name="actionUndo"/>
     <addaction name="actionRedo"/>
-    <addaction name="separator"/>
-    <addaction name="actionTranslate"/>
-    <addaction name="actionRotate"/>
-    <addaction name="actionScale"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -301,9 +297,6 @@
    </property>
   </action>
   <action name="actionUndo">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
    <property name="text">
     <string>&amp;Undo</string>
    </property>
@@ -312,38 +305,11 @@
    </property>
   </action>
   <action name="actionRedo">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
    <property name="text">
     <string>&amp;Redo</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Shift+Z</string>
-   </property>
-  </action>
-  <action name="actionTranslate">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>&amp;Translate</string>
-   </property>
-  </action>
-  <action name="actionRotate">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>R&amp;otate</string>
-   </property>
-  </action>
-  <action name="actionScale">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>&amp;Scale</string>
    </property>
   </action>
   <action name="actionAbout">
@@ -450,6 +416,18 @@
      <y>20</y>
     </hint>
    </hints>
+  </connection>
+  <connection>
+   <sender>actionUndo</sender>
+   <signal>triggered()</signal>
+   <receiver>Window</receiver>
+   <slot>undo()</slot>
+  </connection>
+  <connection>
+   <sender>actionRedo</sender>
+   <signal>triggered()</signal>
+   <receiver>Window</receiver>
+   <slot>redo()</slot>
   </connection>
  </connections>
 </ui>

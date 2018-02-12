@@ -31,12 +31,6 @@ pg::Stem::Stem(pg::Stem *parent)
 		depth = parent->depth + 1;
 }
 
-void pg::Stem::clone(pg::Stem *stem)
-{
-	*stem = *this;
-	stem->parent = nullptr;
-}
-
 void pg::Stem::setResolution(int resolution)
 {
 	this->resolution = resolution;
