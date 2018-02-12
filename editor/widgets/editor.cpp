@@ -220,7 +220,7 @@ History *Editor::getHistory()
 
 void Editor::revert(History::Memento m)
 {
-	if (m.selectedStem) {
+	if (m.stem) {
 		selectedPoint = m.selectedPoint;
 		selectedStem = m.selectedStem;
 		mode = None;
