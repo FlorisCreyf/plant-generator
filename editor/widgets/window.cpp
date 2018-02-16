@@ -1,12 +1,12 @@
 /* Plant Genererator
- * Copyright (C) 2016-2017  Floris Creyf
+ * Copyright (C) 2016-2018  Floris Creyf
  *
- * TreeMaker is free software: you can redistribute it and/or modify
+ * Plant Genererator is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * TreeMaker is distributed in the hope that it will be useful,
+ * Plant Genererator is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -17,6 +17,8 @@
 
 #include "window.h"
 #include "../file_exporter.h"
+#include <boost/archive/text_iarchive.hpp>
+#include <fstream>
 #include <QFileDialog>
 
 Window::Window()
@@ -82,18 +84,51 @@ void Window::keyPressEvent(QKeyEvent *event)
 	QWidget::keyPressEvent(event);
 }
 
+void Window::newFile()
+{
+	editor->load(nullptr);
+	this->setWindowTitle("Plant Generator");
+}
+
 void Window::openDialogBox()
 {
 	QString filename;
 	filename = QFileDialog::getOpenFileName(this, tr("Open File"), "",
-		tr("Plant (*.pg)"));
+		tr("Plant (*.plant)"));
+	if (!filename.isNull()) {
+		editor->load(filename.toLatin1());
+		this->filename = filename;
+		this->setWindowTitle(filename.prepend("Plant Generator — "));
+	}
+}
+
+void Window::saveAsDialogBox()
+{
+	QString filename;
+	filename = QFileDialog::getSaveFileName(this, tr("Save File"),
+		"saved/untitled.plant", tr("Plant (*.plant)"));
+	if (!filename.isNull()) {
+		std::ofstream stream(filename.toLatin1());
+		if (stream.good()) {
+			boost::archive::text_oarchive oa(stream);
+			oa << *(editor->getPlant());
+		}
+		stream.close();
+		this->filename = filename;
+		this->setWindowTitle(filename.prepend("Plant Generator — "));
+	}
 }
 
 void Window::saveDialogBox()
 {
-	QString filename;
-	filename = QFileDialog::getSaveFileName(this, tr("Save File"),
-		"saved/untitled.pg", tr("Plant (*.pg)"));
+	if (filename.isNull())
+		saveAsDialogBox();
+	else {
+		std::ofstream stream(filename.toLatin1());
+		boost::archive::text_oarchive oa(stream);
+		oa << *(editor->getPlant());
+		stream.close();
+	}
 }
 
 void Window::exportDialogBox()

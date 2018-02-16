@@ -18,6 +18,7 @@
 
 #include <iostream>
 #include <iomanip>
+#include <boost/archive/text_oarchive.hpp>
 
 namespace pg {
 	struct Vec2 {
@@ -73,6 +74,15 @@ namespace pg {
 			this->y *= n;
 			this->z *= n;
 			return *this;
+		}
+
+		template<class Archive>
+		void serialize(Archive &ar, const unsigned int version)
+		{
+			(void)version;
+			ar & x;
+			ar & y;
+			ar & z;
 		}
 	};
 

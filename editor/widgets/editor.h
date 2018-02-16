@@ -41,6 +41,7 @@ signals:
 public:
 	Editor(SharedResources *shared, QWidget *parent = 0);
 	void change();
+	void load(const char *filename);
 	pg::Plant *getPlant();
 	pg::Stem *getSelectedStem();
 	void setSelectedStem(pg::Stem *selection);

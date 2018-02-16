@@ -1,5 +1,5 @@
 /* Plant Genererator
- * Copyright (C) 2016-2017  Floris Creyf
+ * Copyright (C) 2016-2018  Floris Creyf
  *
  * Plant Genererator is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,8 +31,10 @@ public:
 	Window();
 
 public Q_SLOTS:
+	void newFile();
 	void openDialogBox();
 	void exportDialogBox();
+	void saveAsDialogBox();
 	void saveDialogBox();
 	void reportIssue();
 	void undo();
@@ -44,6 +46,7 @@ private:
 	Editor *editor;
 	PropertyBox *propertyBox;
 	CurveEditor *curveEditor;
+	QString filename;
 
 	void keyPressEvent(QKeyEvent *event);
 	void createPropertyBox();

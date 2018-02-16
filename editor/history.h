@@ -33,6 +33,7 @@ public:
 	void add(pg::Stem *selectedStem, int selectedPoint);
 	Memento undo(pg::Stem *selectedStem, int selectedPoint);
 	Memento redo(pg::Stem *selectedStem, int selectedPoint);
+	void clear();
 
 private:
 	pg::Plant *plant;

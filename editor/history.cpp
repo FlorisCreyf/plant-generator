@@ -66,3 +66,9 @@ History::Memento History::redo(pg::Stem *selectedStem, int selectedPoint)
 	}
 	return m;
 }
+
+void History::clear()
+{
+	future.clear();
+	past.clear();
+}

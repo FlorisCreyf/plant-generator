@@ -28,8 +28,6 @@ make all
 ```
 
 ## Todo
-- Implement serialization.
-- Implement an undo/redo system.
 - Improve seams for stems.
 - Implement an outline shader.
 - Implement a flare component for stems.

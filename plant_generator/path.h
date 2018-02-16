@@ -23,12 +23,24 @@
 namespace pg {
 	class Path {
 	protected:
+		friend class boost::serialization::access;
+
 		std::vector<Vec3> path;
 		Spline spline;
 		int resolution = 2;
 		int subdivisions = 0;
 
 		void generate();
+
+		template<class Archive>
+		void serialize(Archive &ar, const unsigned int version)
+		{
+			(void)version;
+			ar & path;
+			ar & spline;
+			ar & resolution;
+			ar & subdivisions;
+		}
 
 	public:
 		void setSpline(Spline &spline);

@@ -18,11 +18,23 @@
 
 #include "math/math.h"
 #include <vector>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/serialization/vector.hpp>
 
 namespace pg {
 	class Spline {
+		friend class boost::serialization::access;
+
 		std::vector<Vec3> controls;
 		int degree = 3;
+
+		template<class Archive>
+		void serialize(Archive &ar, const unsigned int version)
+		{
+			(void)version;
+			ar & controls;
+			ar & degree;
+		}
 
 	public:
 		void setControls(std::vector<Vec3> controls);

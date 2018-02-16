@@ -19,10 +19,12 @@
 #include "math/math.h"
 #include "math/curve.h"
 #include "volumetric_path.h"
+#include <boost/archive/text_oarchive.hpp>
 
 namespace pg {
 	class Stem {
 		friend class Plant;
+		friend class boost::serialization::access;
 
 		Stem *nextSibling;
 		Stem *prevSibling;
@@ -37,8 +39,23 @@ namespace pg {
 
 		void updatePositions(Stem *stem);
 
+		template<class Archive>
+		void serialize(Archive &ar, const unsigned int version)
+		{
+			(void)version;
+			ar & nextSibling;
+			ar & prevSibling;
+			ar & child;
+			ar & parent;
+			ar & depth;
+			ar & path;
+			ar & resolution;
+			ar & position;
+			ar & location;
+		}
+
 	public:
-		Stem(Stem *parent);
+		Stem(Stem *parent = nullptr);
 
 		void setResolution(int resolution);
 		int getResolution() const;

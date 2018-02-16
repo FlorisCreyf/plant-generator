@@ -96,6 +96,20 @@ Stem *pg::Plant::copy(Stem *stem, Stem *parent, Stem **ref)
 	return c;
 }
 
+void pg::Plant::removeRoot()
+{
+	if (root != nullptr) {
+		Stem *child = root->child;
+		while (child) {
+			Stem *next = child->nextSibling;
+			removeStem(child);
+			child = next;
+		}
+		delete root;
+	}
+	root = nullptr;
+}
+
 void pg::Plant::setRoot(Stem *stem)
 {
 	this->root = stem;

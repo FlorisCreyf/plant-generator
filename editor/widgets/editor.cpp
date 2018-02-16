@@ -22,6 +22,8 @@
 #include <QtOpenGL/QGLFormat>
 #include <QtGui/QKeyEvent>
 #include <QtGui/QMouseEvent>
+#include <fstream>
+#include <boost/archive/text_iarchive.hpp>
 
 using pg::Vec3;
 using pg::Mat4;
@@ -213,27 +215,6 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
 	update();
 }
 
-History *Editor::getHistory()
-{
-	return &history;
-}
-
-void Editor::revert(History::Memento m)
-{
-	if (m.stem) {
-		selectedPoint = m.selectedPoint;
-		selectedStem = m.selectedStem;
-		mode = None;
-		emit selectionChanged();
-		change();
-	}
-}
-
-bool Editor::isExecutingAction()
-{
-	return mode != None;
-}
-
 void Editor::extrude()
 {
 	pg::Vec3 location = selectedStem->getLocation();
@@ -373,37 +354,6 @@ void Editor::setClickOffset(int x, int y, Vec3 point)
 	Vec3 s = camera.toScreenSpace(point);
 	clickOffset[0] = s.x - x;
 	clickOffset[1] = s.y - y;
-}
-
-pg::Plant *Editor::getPlant()
-{
-	return &plant;
-}
-
-pg::Stem *Editor::getSelectedStem()
-{
-	return selectedStem;
-}
-
-void Editor::setSelectedStem(pg::Stem *selection)
-{
-	selectedStem = selection;
-	emit selectionChanged();
-}
-
-int Editor::getSelectedPoint()
-{
-	return selectedPoint;
-}
-
-void Editor::setSelectedPoint(int selection)
-{
-	selectedPoint = selection;
-}
-
-const pg::Mesh *Editor::getMesh()
-{
-	return &mesh;
 }
 
 void Editor::resizeGL(int width, int height)
@@ -564,4 +514,74 @@ void Editor::change()
 	plantBuffer.update(p->data(), p->size(), i->data(), i->size());
 	updateSelection();
 	update();
+}
+
+void Editor::load(const char *filename)
+{
+	if (filename == nullptr) {
+		generator.grow();
+		change();
+	} else {
+		plant.removeRoot();
+		std::ifstream stream(filename);
+		boost::archive::text_iarchive ia(stream);
+		ia >> plant;
+		stream.close();
+		selectedStem = nullptr;
+		selectedPoint = -1;
+		history.clear();
+		change();
+	}
+}
+
+pg::Plant *Editor::getPlant()
+{
+	return &plant;
+}
+
+pg::Stem *Editor::getSelectedStem()
+{
+	return selectedStem;
+}
+
+void Editor::setSelectedStem(pg::Stem *selection)
+{
+	selectedStem = selection;
+	emit selectionChanged();
+}
+
+int Editor::getSelectedPoint()
+{
+	return selectedPoint;
+}
+
+void Editor::setSelectedPoint(int selection)
+{
+	selectedPoint = selection;
+}
+
+const pg::Mesh *Editor::getMesh()
+{
+	return &mesh;
+}
+
+History *Editor::getHistory()
+{
+	return &history;
+}
+
+void Editor::revert(History::Memento m)
+{
+	if (m.stem) {
+		selectedPoint = m.selectedPoint;
+		selectedStem = m.selectedStem;
+		mode = None;
+		emit selectionChanged();
+		change();
+	}
+}
+
+bool Editor::isExecutingAction()
+{
+	return mode != None;
 }

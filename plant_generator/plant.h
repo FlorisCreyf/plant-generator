@@ -18,10 +18,20 @@
 
 #include "stem.h"
 #include <vector>
+#include <boost/archive/text_oarchive.hpp>
 
 namespace pg {
 	class Plant {
+		friend class boost::serialization::access;
+
 		Stem *root;
+
+		template<class Archive>
+		void serialize(Archive &ar, const unsigned int version)
+		{
+			(void)version;
+			ar & root;
+		}
 
 	public:
 		Plant();
@@ -31,6 +41,8 @@ namespace pg {
 		Stem *addStem(Stem *stem);
 		void removeStem(Stem *stem);
 		Stem *copy(Stem *stem, Stem *parent, Stem **ref = nullptr);
+		/** Removes the root and sets root to nullptr. */
+		void removeRoot();
 		/** This does not delete the previous root. */
 		void setRoot(Stem *stem);
 	};

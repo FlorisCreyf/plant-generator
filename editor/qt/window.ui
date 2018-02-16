@@ -11,31 +11,30 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Plant</string>
+   <string>Plant Generator</string>
   </property>
   <property name="windowIcon">
    <iconset>
     <normaloff>../logo.png</normaloff>../logo.png</iconset>
   </property>
   <property name="styleSheet">
-   <string notr="true">QMenu {
+   <string notr="true">
+QMenuBar QMenu {
 	background-color:#666;
 	border:1px solid #777;
 	font-size:11px;
 	color:#fff;
-} QMenu::item {
+} QMenuBar QMenu::item {
 	margin:0;
 	color:#eee;
 	padding:5px 100px 5px 30px;
 	background-color:transparent;
-} QMenu::item:disabled {
+} QMenuBar QMenu::item:disabled {
 	color:#aaa;
-} QMenu::item:selected {
+} QMenuBar QMenu::item:selected {
 	background:#5a5a5a;
-} QMenu::shortcut {
-	color:#eee;
-	padding-left:10px;
-} QMenu::separator {
+} QMenuBar QMenu::shortcut {
+} QMenuBar QMenu::separator {
 	background-color:#777;
 	height:1px;
 } QMenuBar {
@@ -52,15 +51,23 @@
 	background-color:#444;
 	border-top:3px solid #444;
 	margin-top:0;
-} QWidget {
+}
+
+QWidget {
+	font-size:12px;
+}
+
+QDockWidget QWidget {
 	color:#ddd;
+	font-size:11px;
 	border-image:none;
 	border:0px transparent black;
 	outline:0;
-} QFrame {
+} QDockWidget QFrame {
 	border:0;
 } QDockWidget {
 	font-size:11px;
+	color:#ddd;
 	background:#666;
 	titlebar-normal-icon:url(&quot;resources/popup.png&quot;);
 	titlebar-close-icon:url(&quot;resources/close.png&quot;);
@@ -93,118 +100,134 @@
 	right:22px;
 	bottom:0px;
 	width:15px;
-} QLabel {
+} QDockWidget QLabel {
 	height:24px;
 	font-size:11px;
 	color:#eee;
-} QSpinBox, QDoubleSpinBox {
+} QDockWidget QSpinBox, QDockWidget QDoubleSpinBox {
 	font-size:11px;
 	padding-right:0px;
 	background:#555;
 	border:1px solid #555;
 	height:24px;
-} QSpinBox::up-button, QDoubleSpinBox::up-button {
+} QDockWidget QSpinBox::up-button, QDockWidget QDoubleSpinBox::up-button {
 	subcontrol-position:top right;
 	background-color:#505152;
 	width:16px;
-} QSpinBox::down-button, QDoubleSpinBox::down-button {
+} QDockWidget QSpinBox::down-button, QDockWidget QDoubleSpinBox::down-button {
 	subcontrol-position:bottom right;
 	background-color:#4a4a4a;
 	width:16px;
-} QSpinBox::up-arrow, QDoubleSpinBox::up-arrow {
+} QDockWidget QSpinBox::up-arrow, QDockWidget QDoubleSpinBox::up-arrow {
 	width:6px;
 	height:6px;
-} QSpinBox::down-arrow, QDoubleSpinBox::down-arrow {
+} QDockWidget QSpinBox::down-arrow, QDockWidget QDoubleSpinBox::down-arrow {
 	width:6px;
 	height:6px;
-} QSpinBox:disabled, QDoubleSpinBox:disabled {
+} QDockWidget QSpinBox:disabled, QDockWidget QDoubleSpinBox:disabled {
 	background:#5a5a5a;
-} QSpinBox::up-button:disabled, QSpinBox::down-button:disabled, QDoubleSpinBox::up-button:disabled, QDoubleSpinBox::down-button:disabled {
+} QDockWidget QSpinBox::up-button:disabled, QDockWidget QSpinBox::down-button:disabled, QDockWidget QDoubleSpinBox::up-button:disabled, QDockWidget QDoubleSpinBox::down-button:disabled {
 	background:transparent;
-} QSpinBox::up-arrow:disabled, QSpinBox::down-arrow:disabled, QDoubleSpinBox::up-arrow:disabled, QDoubleSpinBox::down-arrow:disabled {
+} QDockWidget QSpinBox::up-arrow:disabled, QDockWidget QSpinBox::down-arrow:disabled, QDockWidget QDoubleSpinBox::up-arrow:disabled, QDockWidget QDoubleSpinBox::down-arrow:disabled {
 	width:0;
 	height:0;
 } QMainWindow {
 	background:#666;
-} QLabel {
+} QDockWidget QTableWidget QLabel {
 	padding:3px 2px 3px 0;
 	qproperty-alignment:&quot;AlignRight&quot;;
-} QTableView::item {
+} QDockWidget QTableView::item {
 	margin:1px 0;
-} QTableWidget {
+} QDockWidget QTableWidget {
 	font-size:11px;
 	line-height:24px;
-} QGroupBox {
+} QDockWidget QGroupBox {
 	padding-top:0px;
 	margin:0;
 	font-size:11px;
+
 	border-top:23px solid #4a4a4a;
-} QGroupBox::title {
+} QDockWidget QGroupBox::title {
 	font-size:11px;
+		color:#ddd;
 	background:transparent;
 	padding:4px 0 0 8px;
 	margin:0;
-} QTableView {
+} QDockWidget QTableView {
 	background:transparent;
-} QTabBar {
+} QDockWidget QTabBar {
 	background:#333;
 	qproperty-drawBase:0;
-} QTabBar::tab {
+} QDockWidget QTabBar::tab {
 	background:#333;
 	color:#aaa;
 	top:0;
 	padding:4px 10px;
 	margin:0;
-} QTabBar::tab:selected {
+} QDockWidget QTabBar::tab:selected {
 	background:#222;
 } QWidget#CurveButtonWidget {
 	border:solid 1px #fff;
-} QScrollArea {
+} QDockWidget QScrollArea {
 	background:transparent;
-} QScrollBar:vertical {
+} QDockWidget QScrollBar:vertical {
 	width:8px;
 	background:#666;
-} QScrollBar::handle:vertical {
+} QDockWidget QScrollBar::handle:vertical {
 	background:#888;
 	border:0;
 	min-height:20px;
-} QScrollBar::add-line:vertical {
+} QDockWidget QScrollBar::add-line:vertical {
 	border:0;
 	background:#666;
-} QScrollBar::sub-line:vertical {
+} QDockWidget QScrollBar::sub-line:vertical {
 	border:0;
 	background:#666;
-} QComboBox {
+} QDockWidget QScrollBar:horizontal {
+	height:8px;
+	background:#666;
+} QDockWidget QScrollBar::handle:horizontal {
+	background:#888;
+	border:0;
+	min-width:20px;
+} QDockWidget QScrollBar::add-line:horizontal {
+	border:0;
+	background:#666;
+} QDockWidget QScrollBar::sub-line:horizontal {
+	border:0;
+	background:#666;
+} QDockWidget QComboBox {
 	font-size:11px;
 	border: 0;
-} QComboBox:editable {
+} QDockWidget QComboBox:editable {
 	background: #555;
-} QComboBox:!editable, QComboBox::drop-down:editable {
+} QDockWidget QComboBox:!editable, QComboBox::drop-down:editable {
 	background: #444;
-} QComboBox:!editable:on, QComboBox::drop-down:editable:on {
+} QDockWidget QComboBox:!editable:on, QComboBox::drop-down:editable:on {
 	background: #444;
-} QComboBox::drop-down {
+} QDockWidget QComboBox::drop-down {
 	subcontrol-origin: padding;
 	subcontrol-position: top right;
 	width:15px;
 	border:0;
-} QComboBox::down-arrow {
+} QDockWidget QComboBox::down-arrow {
 	image:url(&quot;resources/downarrow.png&quot;);
 	width:7px;
 	height:6px;
-} QComboBox::down-arrow:on { /* shift the arrow when popup is open */
+} QDockWidget QComboBox::down-arrow:on { /* shift the arrow when popup is open */
 	top: 1px;
 	left: 1px;
-} QComboBox QAbstractItemView {
+} QDockWidget QComboBox QAbstractItemView {
 	background:#505050;
-} QRadioButton {
+	border:0;
+} QDockWidget QRadioButton {
 	font-size:11px;
-} QRadioButton::indicator {
+} QDockWidget QRadioButton::indicator {
 	height:13px;
 	width:13px;
-} QRadioButton::indicator::unchecked {
+} QDockWidget QRadioButton::indicator::unchecked {
 	image: url(&quot;resources/radiobutton_unchecked.png&quot;);
-} QRadioButton::indicator::checked {
+} QDockWidget QRadioButton::indicator::checked {
 	image: url(&quot;resources/radiobutton_checked.png&quot;);
 }
 </string>
@@ -254,9 +277,6 @@
    <addaction name="menuHelp"/>
   </widget>
   <action name="actionOpen">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
    <property name="text">
     <string>&amp;Open...</string>
    </property>
@@ -265,9 +285,6 @@
    </property>
   </action>
   <action name="actionSave">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
    <property name="text">
     <string>&amp;Save</string>
    </property>
@@ -276,9 +293,6 @@
    </property>
   </action>
   <action name="actionSaveAs">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
    <property name="text">
     <string>Save &amp;As...</string>
    </property>
@@ -329,9 +343,6 @@
    </property>
   </action>
   <action name="actionNew">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
    <property name="text">
     <string>&amp;New</string>
    </property>
@@ -370,6 +381,22 @@
    </hints>
   </connection>
   <connection>
+   <sender>actionNew</sender>
+   <signal>triggered()</signal>
+   <receiver>Window</receiver>
+   <slot>newFile()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
    <sender>actionOpen</sender>
    <signal>triggered()</signal>
    <receiver>Window</receiver>
@@ -386,10 +413,26 @@
    </hints>
   </connection>
   <connection>
-   <sender>actionSaveAs</sender>
+   <sender>actionSave</sender>
    <signal>triggered()</signal>
    <receiver>Window</receiver>
    <slot>saveDialogBox()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionSaveAs</sender>
+   <signal>triggered()</signal>
+   <receiver>Window</receiver>
+   <slot>saveAsDialogBox()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>-1</x>

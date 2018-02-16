@@ -1,5 +1,5 @@
 /* Plant Genererator
- * Copyright (C) 2016-2017  Floris Creyf
+ * Copyright (C) 2016-2018  Floris Creyf
  *
  * Plant Genererator is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -84,6 +84,7 @@ void CurveEditor::initializeGL()
 
 void CurveEditor::focusOutEvent(QFocusEvent *event)
 {
+	(void)event;
 	emit editingFinished();
 }
 
@@ -133,6 +134,7 @@ void CurveEditor::resizeGL(int width, int height)
 
 void CurveEditor::keyPressEvent(QKeyEvent *event)
 {
+	(void)event;
 	/* Only propagate event to the window if the editor is not in the middle
 	 * of an event. */
 }

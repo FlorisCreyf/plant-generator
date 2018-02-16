@@ -20,9 +20,21 @@
 
 namespace pg {
 	class VolumetricPath : public Path {
+		friend class boost::serialization::access;
+
 		Spline radius;
 		float minRadius = 0.02f;
 		float maxRadius = 0.2f;
+
+		template<class Archive>
+		void serialize(Archive &ar, const unsigned int version)
+		{
+			(void)version;
+			ar & radius;
+			ar & minRadius;
+			ar & maxRadius;
+			Path::serialize(ar, version);
+		}
 
 	public:
 		void setMaxRadius(float radius);

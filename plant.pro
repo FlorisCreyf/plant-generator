@@ -1,7 +1,8 @@
 TEMPLATE = app
-CONFIG += qt debug object_parallel_to_source
+CONFIG += qt debug object_parallel_to_source c++11
 TARGET = plant
 QT = core gui opengl
+LIBS += -L/usr/lib/x86_64-linux-gnu/ -lboost_serialization
 
 SOURCES += \
 plant_generator/math/curve.cpp \

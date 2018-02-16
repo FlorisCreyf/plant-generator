@@ -3,6 +3,8 @@
 *.mtl
 *.stash
 *.a
+*.plant
 plant
 resources/
 build/
+nbproject/
