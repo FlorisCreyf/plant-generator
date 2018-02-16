@@ -518,20 +518,19 @@ void Editor::change()
 
 void Editor::load(const char *filename)
 {
-	if (filename == nullptr) {
+	plant.removeRoot();
+	if (filename == nullptr)
 		generator.grow();
-		change();
-	} else {
-		plant.removeRoot();
+	else {
 		std::ifstream stream(filename);
 		boost::archive::text_iarchive ia(stream);
 		ia >> plant;
 		stream.close();
-		selectedStem = nullptr;
-		selectedPoint = -1;
-		history.clear();
-		change();
 	}
+	selectedStem = nullptr;
+	selectedPoint = -1;
+	history.clear();
+	change();
 }
 
 pg::Plant *Editor::getPlant()
