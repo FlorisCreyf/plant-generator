@@ -85,12 +85,18 @@ void pg::Generator::setPath(Stem *stem, Vec3 direction)
 	float radius = getRadius(stem);
 	float length = 15.0f * radius;
 	int divisions = stem->getDepth() == 0 ? 2 : 1;
+	int points = 4;
 
 	path.setMaxRadius(radius);
 	path.setRadius(getDefaultCurve(0));
 	path.setResolution(divisions);
 
-	for (int i = 0; i < 4; i++) {
+	for (int i = 0; i < points; i++) {
+		/* Thinner stems are more flexible and should bend more towards
+		 * the light source. */
+		if (i == points - 1)
+			control.y += 0.1f;
+
 		controls.push_back(control);
 		control = control + length * direction;
 		direction = direction + variance;
