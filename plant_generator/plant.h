@@ -33,18 +33,30 @@ namespace pg {
 			ar & root;
 		}
 
+		bool contains(pg::Stem *a, pg::Stem *b);
+		void removeFromTree(pg::Stem *stem);
+
 	public:
 		Plant();
 		~Plant();
 
+		/**
+		 * This method needs to be called some time after calling
+		 * release() to free up memory.
+		 */
+		static void deleteStem(pg::Stem *stem);
+
 		Stem *getRoot();
 		Stem *addStem(Stem *stem);
 		void removeStem(Stem *stem);
-		Stem *copy(Stem *stem, Stem *parent, Stem **ref = nullptr);
+		void insert(Stem *parent, Stem *child);
+		/** Remove without deletion.*/
+		void release(Stem *stem);
+		bool contains(pg::Stem *stem);
 		/** Removes the root and sets root to nullptr. */
 		void removeRoot();
 		/** This does not delete the previous root. */
-		void setRoot(Stem *stem);
+		void setRoot(Stem * stem);
 	};
 }
 

@@ -27,8 +27,6 @@ public:
 
 	/** Selects an axis using intersection tests. */
 	Axis selectAxis(pg::Ray ray);
-	/** Moves the axes and returns the new location. */
-	pg::Vec3 move(pg::Ray ray, pg::Vec3 cameraDirection);
 	/**
 	 * The position of the camera is needed to keep the size of the axes
 	 * the same.

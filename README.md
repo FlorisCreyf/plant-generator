@@ -17,6 +17,8 @@ __Mouse controls__
 __Key controls__
 - _E_ Extrude the active path from the selected point.
 - _R_ Rotate the path of stems.
+- _A_ Add a new stem.
+- _M_ Move stems along the parent path.
 
 ## Installation
 

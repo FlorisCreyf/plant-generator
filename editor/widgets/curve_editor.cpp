@@ -16,29 +16,31 @@
  */
 
 #include "curve_editor.h"
+#include "../commands/extrude_spline.h"
+#include "../commands/remove_spline.h"
 #include "../geometry/geometry.h"
+#include "../history/point_selection_state.h"
 #include "plant_generator/math/curve.h"
 #include "plant_generator/math/intersection.h"
 #include <QtGui/QMouseEvent>
 #include <QTabBar>
 #include <cmath>
-#include <limits>
 
 using pg::Vec3;
 using pg::Mat4;
 
 CurveEditor::CurveEditor(SharedResources *shared, QWidget *parent) :
-	QOpenGLWidget(parent)
+	QOpenGLWidget(parent),
+	selection(&camera),
+	moveSpline(&selection, &origSpline, &axes)
 {
 	this->shared = shared;
-	point = std::numeric_limits<size_t>::max();
 	enabled = false;
 
 	QVBoxLayout *layout = new QVBoxLayout(this);
 	layout->setSizeConstraint(QLayout::SetMinimumSize);
 	layout->setSpacing(0);
 	layout->setMargin(0);
-
 	degree = new QComboBox;
 	degree->addItem(QString("Linear"));
 	degree->addItem(QString("Cubic"));
@@ -46,9 +48,17 @@ CurveEditor::CurveEditor(SharedResources *shared, QWidget *parent) :
 	degree->setHidden(true);
 	layout->addWidget(degree);
 	layout->addStretch(1);
-
 	setFocusPolicy(Qt::StrongFocus);
+	setMouseTracking(true);
 
+	camera.setTarget({0.5f, 0.0f, 0.5f});
+	camera.setOrientation(180.0f, -180.0f);
+	camera.setDistance(0.65f);
+	camera.setPanSpeed(0.004f);
+	camera.setZoom(0.01f, 0.3f, 2.0f);
+
+	history.add(PointSelectionState(&selection));
+	
 	connect(degree, SIGNAL(currentIndexChanged(int)), this,
 		SLOT(setDegree(int)));
 }
@@ -76,7 +86,8 @@ void CurveEditor::initializeGL()
 	buffer.allocatePointMemory(1000);
 	buffer.allocateIndexMemory(1000);
 
-	path.setColor({0.5f, 0.5f, 0.5f}, {0.6f, 0.6f, 0.6f});
+	path.setColor({0.5f, 0.5f, 0.5f}, {0.6f, 0.6f, 0.6f},
+		{0.1f, 1.0f, 0.4f});
 	glPrimitiveRestartIndex(Geometry::primitiveReset);
 
 	createInterface();
@@ -93,7 +104,8 @@ void CurveEditor::createInterface()
 	Geometry geometry;
 
 	{
-		path.set(spline, 20);
+		path.set(spline, 20, {0.0f, 0.0f, 0.0f});
+		path.setSelectedPoints(selection);
 		geometry.append(*path.getGeometry());
 	}
 
@@ -102,7 +114,7 @@ void CurveEditor::createInterface()
 		Vec3 a = {1.0f, 0.0f, 0.0f};
 		Vec3 b = {0.0f, 0.0f, 1.0f};
 		Vec3 center = {0.0f, 0.2f, 0.0f};
-		Vec3 color = {0.33f, 0.335f, 0.34f};
+		Vec3 color = {0.34f, 0.34f, 0.34f};
 		plane.addPlane(a, b, center, color);
 		planeSegment = geometry.append(plane);
 	}
@@ -111,12 +123,12 @@ void CurveEditor::createInterface()
 		Geometry grid;
 		Vec3 color = {0.3f, 0.3f, 0.3f};
 		Mat4 t = {
-			1.0f/4.0f, 0.0f, 0.0f, 0.0f,
-			0.0f, 1.0f/4.0f, 0.0f, 0.0f,
-			0.0f, 0.0f, 1.0f/4.0f, 0.0f,
+			1.0f/6.0f, 0.0f, 0.0f, 0.0f,
+			0.0f, 1.0f/6.0f, 0.0f, 0.0f,
+			0.0f, 0.0f, 1.0f/6.0f, 0.0f,
 			0.5f, 0.0f, 0.5f, 1.0f
 		};
-		grid.addGrid(3, color, color);
+		grid.addGrid(20, color, color);
 		Geometry::Segment segment = grid.getSegment();
 		grid.transform(segment.pstart, segment.pcount, t);
 		gridSegment = geometry.append(grid);
@@ -127,361 +139,462 @@ void CurveEditor::createInterface()
 
 void CurveEditor::resizeGL(int width, int height)
 {
+	float ratio = static_cast<float>(width) / static_cast<float>(height);
+	camera.setWindowSize(width, height);
+	camera.setOrthographic({-ratio, -1.0f, 0.0f}, {ratio, 1.0f, 100.0f});
 	glViewport(0, 0, width, height);
-	this->width = width;
-	this->height = height;
 }
 
 void CurveEditor::keyPressEvent(QKeyEvent *event)
 {
-	(void)event;
-	/* Only propagate event to the window if the editor is not in the middle
-	 * of an event. */
+	switch (event->key()) {
+	case Qt::Key_1:
+		if (event->modifiers() & Qt::ControlModifier) {
+			selection.selectNext(spline.getSize());
+			history.add(PointSelectionState(&selection));
+			createInterface();
+			update();
+		}
+		break;
+	case Qt::Key_2:
+		if (event->modifiers() & Qt::ControlModifier) {
+			selection.selectPrevious();
+			history.add(PointSelectionState(&selection));
+			createInterface();
+			update();
+		}
+		break;
+	case Qt::Key_3:
+		if (event->modifiers() & Qt::ControlModifier) {
+			if (selection.getPoints().empty())
+				selection.selectAll(spline.getSize());
+			else
+				selection.clear();
+			history.add(PointSelectionState(&selection));
+			createInterface();
+			update();
+		}
+		break;
+	case Qt::Key_E:
+		{
+			/* The last point cannot be extruded. */
+			auto points = selection.getPoints();
+			int last = spline.getSize() - 1;
+			if (points.size() > 0 || (!points.empty() &&
+				*points.rbegin() != last)) {
+
+				points.erase(last);
+				selection.setPoints(points);
+
+				QPoint p = mapFromGlobal(QCursor::pos());
+				Vec3 avg = selection.getAveragePosition(spline,
+					pg::getZeroVec3());
+				axes.setPosition(avg);
+				setClickOffset(p.x(), p.y(), avg);
+				
+				origSpline = spline;
+				ExtrudeSpline c(&selection, &origSpline);
+				c.execute();
+				spline = origSpline;
+				extruding = true;
+				initiateMovePoint();
+				applyRestrictions();
+				createInterface();
+				update();
+				history.add(c, PointSelectionState(&selection));
+				emit curveChanged(spline, name);
+			}
+		}
+		break;
+	case Qt::Key_Z:
+		if (event->modifiers() & Qt::ControlModifier) {
+			if (event->modifiers() & Qt::ShiftModifier)
+				history.redo();
+			else
+				history.undo();
+			spline = origSpline;
+			applyRestrictions();
+			createInterface();
+			update();
+			emit curveChanged(spline, name);
+		}
+		break;
+	case Qt::Key_Delete:
+		if (!move) {
+			/* The first and last points cannot be removed. */
+			auto points = selection.getPoints();
+			int last = spline.getSize() - 1;
+			points.erase(last);
+			points.erase(0);
+			if (spline.getDegree() == 3) {
+				points.erase(last - 1);
+				points.erase(1);
+			}
+			selection.setPoints(points);
+
+			RemoveSpline c(&selection, &origSpline);
+			c.execute();
+			spline = origSpline;
+			createInterface();
+			update();
+			history.add(c, PointSelectionState(&selection));
+			emit curveChanged(spline, name);
+			emit editingFinished();
+		}
+		break;
+	default:
+		break;
+	}
 }
 
 void CurveEditor::mousePressEvent(QMouseEvent *event)
 {
-	std::vector<pg::Vec3> controls = spline.getControls();
-	if (!enabled || event->button() != Qt::LeftButton)
-		return;
-
 	QPoint p = event->pos();
-	for (size_t i = 0; i < controls.size(); i++) {
-		int w = width - margin;
-		int h = height - margin;
-		int x = (controls[i].x) * w + margin/2;
-		int y = (h - (controls[i].z) * (h - topMargin)) + margin/2;
-		float dx2 = std::pow(p.x() - x, 2);
-		float dy2 = std::pow(p.y() - y, 2);
+	move = false;
 
-		if (std::sqrt(dx2 + dy2) < 8) {
-			point = i;
-			insertIndex = std::numeric_limits<size_t>::max();
-			x = p.x();
-			y = p.y();
-			setTangentLength();
+	if (event->button() == Qt::MidButton) {
+		camera.setStartCoordinates(p.x(), p.y());
+		if (event->modifiers() & Qt::ControlModifier)
+			camera.setAction(Camera::Zoom);
+		else if (event->modifiers() & Qt::ShiftModifier)
+			camera.setAction(Camera::Pan);
+	} else if (enabled && event->button() == Qt::RightButton) {
+		Vec3 zero = pg::getZeroVec3();
+		selection.selectPoint(event, spline, zero);
+		history.add(PointSelectionState(&selection));
+		path.setSelectedPoints(selection);
+		axes.setPosition(selection.getAveragePosition(spline, zero));
+		createInterface();
+		update();
+	} else if (enabled && event->button() == Qt::LeftButton) {
+		if (!selection.getPoints().empty()) {
+			setClickOffset(p.x(), p.y(), axes.getPosition());
+			moveSpline = MoveSpline(&selection, &origSpline, &axes);
+			initiateMovePoint();
 		}
-	}
-}
-
-void CurveEditor::toDeviceCoordinates(float &x, float &y, int width, int height)
-{
-	x = (x - 10) / (width - 1 - margin);
-	y = (1.0f - (y - 10 - topMargin) / (height - 1 - margin - topMargin));
-}
-
-void CurveEditor::insertPoint(int i, float x, float y)
-{
-	std::vector<pg::Vec3> controls = spline.getControls();
-	if (x <= controls[i-1].x || x >= controls[i].x)
-		return;
-	if (y <= 0.0f || y >= 1.0f)
-		return;
-	spline.insert(i - 1, {x, -0.3f, y});
-	createInterface();
-	emit curveChanged(spline, name);
-	update();
-}
-
-void CurveEditor::insertCurve(int i, float x, float y)
-{
-	std::vector<pg::Vec3> controls = spline.getControls();
-	float len = 0.2f;
-	float minX = x - len > controls[i-3].x ? x - len : controls[i-3].x;
-	float maxX = x + len < controls[i].x ? x + len : controls[i].x;
-
-	if (x <= controls[i].x && x >= controls[i-1].x)
-		return;
-	if (x >= controls[i-3].x && x <= controls[i-2].x)
-		return;
-	if (y <= 0.0f || y >= 1.0f)
-		return;
-
-	pg::Vec3 curve[4];
-	curve[0] = {minX, -0.3f, y};
-	curve[1] = {x, -0.3f, y};
-	curve[2] = {maxX, -0.3f, y};
-	controls.insert(controls.begin()+i-1, curve, &curve[3]);
-
-	spline.setControls(controls);
-	createInterface();
-	emit curveChanged(spline, name);
-	update();
-}
-
-void CurveEditor::mouseDoubleClickEvent(QMouseEvent *event)
-{
-	if (enabled && event->button() == Qt::LeftButton) {
-		QPoint p = event->pos();
-		float x = p.x();
-		float y = p.y();
-		toDeviceCoordinates(x, y, width, height);
-
-		std::vector<pg::Vec3> controls = spline.getControls();
-		size_t increment = spline.getDegree() == 3 ? 3 : 1;
-		for (size_t i = increment; i < controls.size(); i += increment)
-			if (controls[i].x > x) {
-				if (spline.getDegree() == 3)
-					insertCurve(i, x, y);
-				else
-					insertPoint(i, x, y);
-				break;
-			}
 	}
 }
 
 void CurveEditor::mouseReleaseEvent(QMouseEvent *event)
 {
-	if (event->button() == Qt::LeftButton)
-		point = std::numeric_limits<size_t>::max();
+	if (event->button() == Qt::MidButton)
+		camera.setAction(Camera::None);
+	else if (move) {
+		if (!extruding) {
+			PointSelectionState m(&selection);
+			history.add(moveSpline, m);
+		} else
+			extruding = false;
+		move = false;
+	}
+	
+	axes.clearSelection();
+	emit editingFinished();
 }
 
 void CurveEditor::mouseMoveEvent(QMouseEvent *event)
 {
 	QPoint p = event->pos();
-	float x = p.x();
-	float y = p.y();
-	const size_t max = std::numeric_limits<size_t>::max();
-	bool removed = insertIndex != 0 && insertIndex != max;
-	toDeviceCoordinates(x, y, width, height);
+	float x = p.x() + clickOffset[0];
+	float y = p.y() + clickOffset[1];
 
-	if (point == std::numeric_limits<size_t>::max())
-		return;
-	if (removed && !reinsertCurve(x))
-		return;
+	camera.executeAction(p.x(), p.y());
 
-	if (spline.getDegree() == 1) {
-		if (!omitCurve(x))
-			moveControl(x, y);
-	} else if (point == 0)
-		moveTerminalControl(true, y);
-	else if (point == spline.getControls().size() - 1)
-		moveTerminalControl(false, y);
-	else if (point % 3 == 0) {
-		if (!omitCurve(x))
-			moveOuterControl(x, y);
-	} else
-		moveInnerControl(x, y);
+	if (move) {
+		ctrl = event->modifiers() & Qt::ControlModifier;
+		moveSpline.set(camera.getRay(x, y), camera.getDirection());
+		moveSpline.setParallelTangents(false);
+		moveSpline.execute();
+		spline = origSpline;
+		applyRestrictions();
+		createInterface();
+		emit curveChanged(spline, name);
+	}
 
-	createInterface();
-	emit curveChanged(spline, name);
 	update();
 }
 
-bool CurveEditor::reinsertCurve(float x)
+void CurveEditor::initiateMovePoint()
 {
-	std::vector<pg::Vec3> controls = spline.getControls();
-
-	if (spline.getDegree() == 1) {
-		if (x > controls[point-1].x && x < controls[point].x) {
-			auto index = controls.begin() + insertIndex;
-			controls.insert(index, hidden[0]);
-			createInterface();
-			insertIndex = std::numeric_limits<size_t>::max();
-			spline.setControls(controls);
-			return true;
-		}
-	} else if (x > controls[point-2].x && x < controls[point].x) {
-		auto index = controls.begin() + insertIndex;
-		controls.insert(index, &hidden[0], &hidden[3]);
-		createInterface();
-		insertIndex = std::numeric_limits<size_t>::max();
-		spline.setControls(controls);
-		return true;
-	}
-	return false;
+	move = true;
+	origSpline = spline;
+	/* Restrictions need to be applied from left to right or right to left
+	 * depending on the direction the points are dragged. */
+	origPoint = spline.getControls()[*selection.getPoints().begin()];
 }
 
-bool CurveEditor::omitCurve(float x)
+void CurveEditor::applyRestrictions()
 {
-	std::vector<pg::Vec3> controls = spline.getControls();
-	int i = spline.getDegree() == 1 ? 1 : 3;
-
- 	if (x < controls[point-i].x || x > controls[point+i].x) {
-		insertIndex = spline.getDegree() == 3 ? point - 1 : point;
-		auto start = controls.begin() + insertIndex;
-		auto end = controls.begin() + insertIndex + i;
-		memcpy(hidden, &controls[insertIndex], sizeof(Vec3)*i);
-		controls.erase(start, end);
+	auto controls = spline.getControls();
+	moveLeft = controls[*selection.getPoints().begin()].x < origPoint.x;
+	
+	if (spline.getDegree() == 1) {
+		restrictLinearControls();
+	} else if (spline.getDegree() == 3) {
+		restrictOuterCubicControls(controls);
+		restrictCubicControls(controls);
 		spline.setControls(controls);
+		if (!ctrl)
+			parallelizeTangents();
+		restrictOppositeCubicControls();
+	}
+}
+
+void CurveEditor::restrictLinearControls()
+{
+	auto points = selection.getPoints();
+	auto controls = spline.getControls();
+	int l = controls.size() - 1;
+	
+	controls[0].x = 0.0f;
+	controls[l].x = 1.0f;
+	
+	if (moveLeft)
+		for (auto it = points.begin(); it != points.end(); ++it)
+			restrictLinearControl(controls, *it);
+	else
+		for (auto it = points.rbegin(); it != points.rend(); ++it)
+			restrictLinearControl(controls, *it);
+			
+	spline.setControls(controls);
+}
+
+void CurveEditor::restrictLinearControl(std::vector<pg::Vec3>& controls, int i)
+{
+	int l = controls.size() - 1;
+	if (controls[i].z > 1.0f)
+			controls[i].z = 1.0f;
+	if (controls[i].z < 0.0f)
+		controls[i].z = 0.0f;
+
+	if (i != 0 && i != l) {
+		if (moveLeft) {
+			if (i < l && controls[i].x > controls[i+1].x)
+				controls[i].x = controls[i+1].x;
+			if (i > 0 && controls[i].x < controls[i-1].x)
+				controls[i].x = controls[i-1].x;
+		} else {
+			if (i > 0 && controls[i].x < controls[i-1].x)
+				controls[i].x = controls[i-1].x;
+			if (i < l && controls[i].x > controls[i+1].x)
+				controls[i].x = controls[i+1].x;
+		}
+	}
+}
+
+/**
+ * Restrict outer points and keep the tangents the same (the unrestricted 
+ * points are not bound to x = 0 or x = 1).
+ */
+void CurveEditor::restrictOuterCubicControls(std::vector<Vec3> &controls)
+{
+	auto last = controls.size() - 1;
+	if (controls[last].x != 1.0f) {
+		controls[last-1].x -= (controls[last].x - 1.0f);
+		controls[last].x = 1.0f;
+	}
+	if (controls[last].z > 1.0f) {
+		controls[last-1].z -= (controls[last].z - 1.0f);
+		controls[last].z = 1.0f;
+	} else if (controls[last].z < 0.0f) {
+		controls[last-1].z -= controls[last].z;
+		controls[last].z = 0.0f;
+	}
+
+	if (controls[0].x != 0.0f) {
+		controls[1].x -= controls[0].x;
+		controls[0].x = 0.0f;
+	}
+	if (controls[0].z > 1.0f) {
+		controls[1].z -= (controls[0].z - 1.0f);
+		controls[0].z = 1.0f;
+	} else if (controls[0].z < 0.0f) {
+		controls[1].z -= controls[0].z;
+		controls[0].z = 0.0f;
+	}
+}
+
+void CurveEditor::restrictCubicControls(std::vector<Vec3> &controls)
+{
+	auto points = selection.getPoints();
+	if (moveLeft)
+		for (auto it = points.begin(); it != points.end(); it++) {
+			int remainder = *it % 3;
+			bool a = it == points.begin();
+			bool b = it == --points.end();
+			if (remainder == 1 && (!a && *std::prev(it) == *it - 1))
+				continue;
+			if (remainder == 2 && (!b && *std::next(it) == *it + 1))
+				continue;
+			restrictCubicControl(controls, *it);
+		}
+	else
+		for (auto it = points.rbegin(); it != points.rend(); it++) {
+			int remainder = *it % 3;
+			bool a = it == points.rbegin();
+			bool b = it == --points.rend();
+			if (remainder == 1 && (!b && *std::prev(it) == *it - 1))
+				continue;
+			if (remainder == 2 && (!a && *std::next(it) == *it + 1))
+				continue;
+			restrictCubicControl(controls, *it);
+		}
+}
+
+void CurveEditor::restrictCubicControl(std::vector<Vec3> &controls, int i)
+{
+	int remainder = i % 3;
+
+	if (controls[i].z > 1.0f)
+		controls[i].z = 1.0f;
+	else if (controls[i].z < 0.0f)
+		controls[i].z = 0.0f;
+
+	if (i != 0 && i != (int)controls.size() - 1) {
+		if (remainder == 1) {
+			if (controls[i].x < controls[i-1].x)
+				controls[i].x = controls[i-1].x;
+			if (controls[i].x > controls[i+2].x)
+				controls[i].x = controls[i+2].x;
+		} else if (remainder == 2) {
+			if (controls[i].x < controls[i-2].x)
+				controls[i].x = controls[i-2].x;
+			if (controls[i].x > controls[i+1].x)
+				controls[i].x = controls[i+1].x;
+		} else {
+			int l = controls.size() - 1;
+			if (moveLeft) {
+				if (i < l && controls[i].x > controls[i+2].x)
+					controls[i].x = controls[i+2].x; 
+				if (i > 0 && controls[i].x < controls[i-2].x)
+					controls[i].x = controls[i-2].x;
+			} else {
+				if (i > 0 && controls[i].x < controls[i-2].x)
+					controls[i].x = controls[i-2].x;
+				if (i < l && controls[i].x > controls[i+2].x)
+					controls[i].x = controls[i+2].x; 
+			}
+
+			if (i != 0 && i != l) {
+				Vec3 orig = origSpline.getControls()[i];
+				Vec3 diff = controls[i] - orig;
+				controls[i+1] += diff;
+				controls[i-1] += diff;
+			}
+		}
+	}
+}
+
+bool CurveEditor::isCenterSelected(std::set<int>::iterator &it)
+{
+	auto points = selection.getPoints();
+	int point = *it;
+	int remainder = point % 3;
+	auto n = std::next(it);
+	auto p = std::prev(it);
+	auto e = --points.end();
+	auto b = points.begin();
+	if (remainder == 1 && it != b && *p == point - 1)
 		return true;
-	} else
+	else if (remainder == 2 && n != e && *n == point + 1)
+		return true;
+	else
 		return false;
 }
 
-void CurveEditor::moveControl(float x, float y)
+void CurveEditor::parallelizeTangents()
 {
-	std::vector<pg::Vec3> controls = spline.getControls();
-
-	if (point == 0)
-		x = 0.0f;
-	else if (point == controls.size() - 1)
-		x = 1.0f;
-	else {
-		if (x < controls[point-1].x)
-			x = controls[point-1].x;
-		else if (x > controls[point+1].x)
-			x = controls[point+1].x;
+	auto points = selection.getPoints();
+	for (auto it = points.begin(); it != points.end(); ++it) {
+		if (!isCenterSelected(it)) {
+			int point = *it;
+			int remainder = point % 3;
+			if (remainder == 1) {
+				if (points.find(point - 2) == points.end())
+					spline.parallelize(point);
+			} else if (remainder == 2) {
+				if (points.find(point + 2) == points.end())
+					spline.parallelize(point);
+			}
+		}
 	}
+}
 
-	if (y > 1.0f)
-		y = 1.0f;
-	else if (y < 0.0f)
-		y = 0.0f;
-
-	controls[point].x = x;
-	controls[point].z = y;
+void CurveEditor::restrictOppositeCubicControls()
+{
+	std::vector<Vec3> controls = spline.getControls();
+	auto points = selection.getPoints();
+	for (auto it = points.begin(); it != points.end(); ++it) {
+		int point = *it;
+		int remainder = point % 3;
+		if (remainder == 0) {
+			if (point > 0)
+				truncateCubicControl(controls, point - 1);
+			if (point < (int)controls.size() - 1)
+				truncateCubicControl(controls, point + 1);
+		} else {
+			int l = controls.size() - 2;
+			if (!isCenterSelected(it) && point != 1 && point != l) {
+				point += remainder == 1 ? -2 : 2;
+				truncateCubicControl(controls, point);
+			}
+		}
+	}
 	spline.setControls(controls);
 }
 
-void CurveEditor::moveOuterControl(float x, float y)
+void CurveEditor::truncateCubicControl(std::vector<Vec3> &controls, int i)
 {
-	std::vector<pg::Vec3> controls = spline.getControls();
-	float dx1 = controls[point-1].x - controls[point].x;
-	float dy1 = controls[point-1].z - controls[point].z;
-	float dx2 = controls[point+1].x - controls[point].x;
-	float dy2 = controls[point+1].z - controls[point].z;
-
-	if (x < controls[point-2].x)
-		x = controls[point-2].x;
-	if (x > controls[point+2].x)
-		x = controls[point+2].x;
-	if (x + dx1 < controls[point-3].x)
-		x = controls[point-3].x - dx1;
-	if (x + dx2 > controls[point+3].x)
-		x = controls[point+3].x - dx2;
-	if (y + dy1 > 1.0f)
-		y = 1.0f - dy1;
-	if (y + dy1 < 0.0f)
-		y = -dy1;
-	if (y + dy2 < 0.0f)
-		y = -dy2;
-	if (y + dy2 > 1.0f)
-		y = 1.0f - dy2;
-	if (y > 1.0f)
-		y = 1.0f;
-	if (y < 0.0f)
-		y = 0.0f;
-
-	controls[point+1].x = x + dx2;
-	controls[point+1].z = y + dy2;
-	controls[point+0].x = x;
-	controls[point+0].z = y;
-	controls[point-1].x = x + dx1;
-	controls[point-1].z = y + dy1;
-	spline.setControls(controls);
-}
-
-void CurveEditor::moveInnerControl(float x, float y)
-{
-	int l = point % 3 == 1 ? 1 : 0;
-
-	spline.move(point, {x, -0.3f, y});
-	std::vector<pg::Vec3> controls = spline.getControls();
-
-	if (controls[point].x < controls[point-2+l].x)
-		controls[point].x = controls[point-2+l].x;
-	else if (controls[point].x > controls[point+1+l].x)
-		controls[point].x = controls[point+1+l].x;
-
-	if (controls[point].z > 1.0f)
-		controls[point].z = 1.0f;
-	else if (controls[point].z < 0.0f)
-		controls[point].z = 0.0f;
-
-	spline.setControls(controls);
-	moveOppositeTangent();
-}
-
-/** Here we assume that tangentLength is set. */
-void CurveEditor::moveOppositeTangent()
-{
-	std::vector<pg::Vec3> controls = spline.getControls();
-	if (point != 1 && point != controls.size() - 2) {
-		int d = point % 3 == 1 ? -1 : 1;
+	int j;
+	int k;
+	if (i % 3 == 1) {
+		j = i - 1;
+		k = i + 2;
+	} else {
+		j = i + 1;
+		k = i - 2;
+	}
+	
+	Vec3 diff = controls[i] - controls[j];
+	if (!(diff.x == 0.0f && diff.z == 0.0f)) {
+		float length = pg::magnitude(diff);
 
 		pg::Ray2 tangent;
-		pg::Ray2 boundary;
-		int i = point+2*d;
-		int j = point+1*d;
 		tangent.origin = toVec2(controls[j]);
-		tangent.direction = toVec2(normalize(controls[i] -
-			controls[j]));
+		tangent.direction = pg::toVec2(pg::normalize(diff));
 
 		float t;
 		float r;
+		pg::Ray2 boundary;
 		boundary.origin = (pg::Vec2){0.0f, 1.0f};
 		boundary.direction = (pg::Vec2){1.0f, 0.0f};
 		t = intersectsLine(tangent, boundary);
+		/* Discard result if the direction is inward. */
+		if (tangent.direction.y < 0)
+			t = -1.0f;
+
 		boundary.origin = (pg::Vec2){0.0f, 0.0f};
 		boundary.direction = (pg::Vec2){1.0f, 0.0f};
 		r = intersectsLine(tangent, boundary);
+		/* Discard result if the direction is inward. */
+		if (tangent.direction.y > 0)
+			r = -1.0f;
 		if (t < 0 || (r < t && r >= 0))
 			t = r;
-		boundary.origin = (pg::Vec2){controls[point+4*d].x, 0.0f};
+
+		boundary.origin = (pg::Vec2){controls[k].x, 0.0f};
 		boundary.direction = (pg::Vec2){0.0f, 1.0f};
 		r = intersectsLine(tangent, boundary);
 		if (t < 0 || (r < t && r >= 0))
 			t = r;
 
-		if (t < 0 || tangentLength < t)
-			t = tangentLength;
-
-		pg::Vec2 p = t * normalize(tangent.direction) + tangent.origin;
-		controls[i].x = p.x;
-		controls[i].z = p.y;
-		spline.setControls(controls);
+		if (length > t) {
+			pg::Vec2 p = t * normalize(tangent.direction);
+			p += tangent.origin;
+			controls[i].x = p.x;
+			controls[i].z = p.y;
+		}
 	}
-}
-
-void CurveEditor::setTangentLength()
-{
-	std::vector<pg::Vec3> controls = spline.getControls();
-	int r = point % 3;
-	if (r != 0) {
-		r = r == 1 ? -1 : 1;
-		int a = point + 2 * r;
-		int b = point + 1 * r;
-		pg::Vec3 v = controls[a] - controls[b];
-		tangentLength = magnitude(v);
-	}
-}
-
-void CurveEditor::moveTerminalControl(bool first, float y)
-{
-	std::vector<pg::Vec3> controls = spline.getControls();
-	int adjacent = first ? 1 : -1;
-	float dy = controls[point + adjacent].z - controls[point].z;
-
-	if (y + dy > 1.0f)
-		y = 1.0f - dy;
-	else if (y + dy < 0.0f)
-		y = -dy;
-	if (y > 1.0f)
-		y = 1.0f;
-	else if (y < 0.0f)
-		y = 0.0f;
-
-	controls[point + adjacent].z = y + dy;
-	controls[point].z = y;
-	spline.setControls(controls);
-}
-
-pg::Mat4 CurveEditor::createVP()
-{
-	float w = QWidget::width();
-	float h = QWidget::height();
-	float marginWRatio = margin / w;
-	float marginHRatio = margin / h;
-	float planeWRatio = (w - margin) / w;
-	float planeHRatio = (h - (margin + topMargin)) / h;
-
-	return (Mat4){
-		2.0f * planeWRatio, 0.0f, 0.0f, 0.0f,
-		0.0f, 0.0f, 0.9f, 0.0f,
-		0.0f, 2.0f * planeHRatio, 0.0f, 0.0f,
-		-1.0f + marginWRatio, -1.0f + marginHRatio, 0.0f, 1.0f
-	};
 }
 
 void CurveEditor::paintGL()
@@ -490,29 +603,25 @@ void CurveEditor::paintGL()
 	glClearDepth(1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	if (QWidget::height() > margin * 2)
-	 	paintInterface();
-
-	glFlush();
-}
-
-void CurveEditor::paintInterface()
-{
-	Mat4 vp = createVP();
+	Mat4 vp = camera.getVP();
 	buffer.use();
 	glUseProgram(shared->getShader(Shader::Flat));
 	glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
 
 	{
-		GLvoid *start = (GLvoid *)(planeSegment.istart *
-			sizeof(unsigned));
+		auto size = sizeof(unsigned);
+		GLvoid *start = (GLvoid *)(planeSegment.istart * size);
 		GLsizei count = planeSegment.icount;
 		glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, start);
 	}
 
 	glDrawArrays(GL_LINES, gridSegment.pstart, gridSegment.pcount);
 
-	if (enabled) {
+	if (enabled && spline.getControls().size() > 0) {
+		glUseProgram(shared->getShader(Shader::Line));
+		glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
+		glUniform2f(1, QWidget::width(), QWidget::height());
+
 		Geometry::Segment s = path.getLineSegment();
 		GLvoid *start = (GLvoid *)(s.istart * sizeof(unsigned));
 		glDrawElements(GL_LINE_STRIP, s.icount, GL_UNSIGNED_INT, start);
@@ -524,6 +633,8 @@ void CurveEditor::paintInterface()
 		glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
 		glDrawArrays(GL_POINTS, s.pstart, s.pcount);
 	}
+
+	glFlush();
 }
 
 void CurveEditor::setCurve(pg::Spline spline, QString name)
@@ -544,6 +655,11 @@ void CurveEditor::setCurve(pg::Spline spline, QString name)
 
 	this->spline = spline;
 	this->name = name;
+	selection.clear();
+	
+	history.clear();
+	history.add(PointSelectionState(&selection));
+	
 	createInterface();
 	update();
 }
@@ -553,19 +669,9 @@ void CurveEditor::setDegree(int degree)
 	degree = degree == 1 ? 3 : 1;
 	if (degree != spline.getDegree()) {
 		spline.adjust(degree);
-		if (spline.getDegree() == 3) {
-			std::vector<pg::Vec3> controls = spline.getControls();
-			for (size_t i = 2; i < controls.size() - 2; i += 3) {
-				point = i;
-				setTangentLength();
-				moveOppositeTangent();
-				point += 2;
-				moveOppositeTangent();
-			}
-			point = std::numeric_limits<size_t>::max();
-		}
-
+		selection.clear();
 		createInterface();
+		history.clear();
 		update();
 		emit curveChanged(spline, name);
 	}
@@ -583,4 +689,11 @@ void CurveEditor::setEnabled(bool enabled)
 
 	this->enabled = enabled;
 	update();
+}
+
+void CurveEditor::setClickOffset(int x, int y, pg::Vec3 point)
+{
+	pg::Vec3 s = camera.toScreenSpace(point);
+	clickOffset[0] = s.x - x;
+	clickOffset[1] = s.y - y;
 }

@@ -10,7 +10,7 @@ int main(int argc, char *argv[])
 	format.setRenderableType(QSurfaceFormat::OpenGL);
 	format.setDepthBufferSize(24);
 	format.setStencilBufferSize(8);
-	format.setAlphaBufferSize(8);
+	format.setAlphaBufferSize(4);
 	QSurfaceFormat::setDefaultFormat(format);
 
 	QApplication::setStyle(QStyleFactory::create("Fusion"));

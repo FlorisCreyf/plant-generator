@@ -146,22 +146,18 @@ void Window::exportDialogBox()
 
 void Window::reportIssue()
 {
-	QString link = "https://github.com/FlorisCreyf/treemaker/issues";
+	QString link = "https://github.com/FlorisCreyf/plant-generator/issues";
 	QDesktopServices::openUrl(QUrl(link));
 }
 
 void Window::undo()
 {
-	History *history = editor->getHistory();
-	pg::Stem *stem = editor->getSelectedStem();
-	int point = editor->getSelectedPoint();
-	editor->revert(history->undo(stem, point));
+	if (!editor->isExecutingAction())
+		editor->undo();
 }
 
 void Window::redo()
 {
-	History *history = editor->getHistory();
-	pg::Stem *stem = editor->getSelectedStem();
-	int point = editor->getSelectedPoint();
-	editor->revert(history->redo(stem, point));
+	if (!editor->isExecutingAction())
+		editor->redo();
 }

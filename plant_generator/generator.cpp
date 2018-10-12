@@ -92,16 +92,15 @@ void pg::Generator::setPath(Stem *stem, Vec3 direction)
 	path.setResolution(divisions);
 
 	for (int i = 0; i < points; i++) {
-		/* Thinner stems are more flexible and should bend more towards
-		 * the light source. */
-		if (i == points - 1)
-			control.y += 0.1f;
-
 		controls.push_back(control);
 		control = control + length * direction;
 		direction = direction + variance;
 		direction = pg::normalize(direction);
 	}
+
+	/* Thinner stems are more flexible and should bend more towards
+	 * the light source. */
+	controls.back().y += 0.1f;
 
 	spline.setDegree(1);
 	spline.setControls(controls);

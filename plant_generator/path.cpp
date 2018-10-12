@@ -16,6 +16,20 @@
 #include "path.h"
 #include <limits>
 
+bool pg::Path::operator==(const Path &path) const
+{
+	return
+		this->path == path.path &&
+		spline == path.spline &&
+		resolution == path.resolution &&
+		subdivisions == path.subdivisions;
+}
+
+bool pg::Path::operator!=(const Path &path) const
+{
+	return !(*this == path);
+}
+
 void pg::Path::generate()
 {
 	size_t numControls = spline.getControls().size();
@@ -103,7 +117,6 @@ pg::Vec3 pg::Path::getIntermediate(float distance) const
 		}
 		total += length;
 	}
-
 	return point;
 }
 

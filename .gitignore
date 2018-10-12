@@ -4,7 +4,9 @@
 *.stash
 *.a
 *.plant
+.desktop
 plant
 resources/
 build/
 nbproject/
+saved/

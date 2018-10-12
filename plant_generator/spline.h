@@ -18,6 +18,7 @@
 
 #include "math/math.h"
 #include <vector>
+#include <set>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/vector.hpp>
 
@@ -28,6 +29,8 @@ namespace pg {
 		std::vector<Vec3> controls;
 		int degree = 3;
 
+		int insertCubic(int index, pg::Vec3 point);
+
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned int version)
 		{
@@ -37,8 +40,11 @@ namespace pg {
 		}
 
 	public:
+		bool operator==(const Spline &spline) const;
+		bool operator!=(const Spline &spline) const;
 		void setControls(std::vector<Vec3> controls);
 		std::vector<Vec3> getControls() const;
+		int getSize() const;
 		int getCurveCount() const;
 		/** 1 = linear, 2 = quadratic, 3 = cubic, . . . */
 		void setDegree(int degree);
@@ -46,12 +52,14 @@ namespace pg {
 		Vec3 getPoint(float t) const;
 		Vec3 getPoint(int curve, float t) const;
 		Vec3 getDirection(unsigned index);
-
+		/** Returns the index of the center point of the insertion */
 		int insert(unsigned index, Vec3 point);
 		void remove(unsigned index);
 		/* Changes the degree and modifies the spline. */
-		int adjust(int degree, int index = 0);
-		void move(unsigned index, pg::Vec3 location);
+		void adjust(int degree);
+		void move(unsigned index, pg::Vec3 location, bool parallel);
+		void parallelize(unsigned index);
+		void clear();
 	};
 }
 

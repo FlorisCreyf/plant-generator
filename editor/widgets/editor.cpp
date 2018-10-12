@@ -4,11 +4,11 @@
  * Plant Genererator is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.,
+ * (at your option) any later version.
  *
  * Plant Genererator is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  fSee the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
@@ -16,13 +16,19 @@
  */
 
 #include "editor.h"
-#include "../closest.h"
+#include "../commands/add_stem.h"
+#include "../commands/extrude_stem.h"
+#include "../commands/remove_stem.h"
 #include "../geometry/geometry.h"
+#include "../history/history.h"
+#include "../history/stem_selection_state.h"
+#include <algorithm>
 #include <cmath>
+#include <fstream>
+#include <iterator>
 #include <QtOpenGL/QGLFormat>
 #include <QtGui/QKeyEvent>
 #include <QtGui/QMouseEvent>
-#include <fstream>
 #include <boost/archive/text_iarchive.hpp>
 
 using pg::Vec3;
@@ -30,12 +36,23 @@ using pg::Mat4;
 using pg::Ray;
 
 Editor::Editor(SharedResources *shared, QWidget *parent) :
-	QOpenGLWidget(parent), mesh(&plant), generator(&plant), history(&plant)
+	QOpenGLWidget(parent),
+	mesh(&plant),
+	generator(&plant),
+	selection(&camera, &plant),
+	rotateStem(&selection, &rotationAxes),
+	moveStem(&selection, camera, 0, 0),
+	movePath(&selection, &translationAxes)
 {
 	this->shared = shared;
-	path.setColor({0.4f, 0.1f, 0.6f}, {0.1f, 0.4f, 0.6f});
+	Vec3 color1 = {0.4f, 0.1f, 0.6f};
+	Vec3 color2 = {0.4f, 0.1f, 0.6f};
+	Vec3 color3 = {0.1f, 1.0f, 0.4f};
+	path.setColor(color1, color2, color3);
 	setMouseTracking(true);
 	setFocus();
+	moveCommand = false;
+	history.add(StemSelectionState(&selection));
 }
 
 void Editor::initializeGL()
@@ -85,30 +102,98 @@ void Editor::initializeBuffers()
 
 void Editor::keyPressEvent(QKeyEvent *event)
 {
+	bool ctrl = event->modifiers() & Qt::ControlModifier;
 	switch (event->key()) {
+	case Qt::Key_1:
+		if (ctrl)
+			selection.selectNextPoints();
+		else
+			selection.selectChildren();
+		updateSelection();
+		update();
+		history.add(StemSelectionState(&selection));
+		break;
+	case Qt::Key_2:
+		if (ctrl)
+			selection.selectPreviousPoints();
+		else
+			selection.selectSiblings();
+		updateSelection();
+		update();
+		history.add(StemSelectionState(&selection));
+		break;
+	case Qt::Key_3:
+		if (ctrl)
+			selection.selectAllPoints();
+		else
+			selection.selectAll();
+		updateSelection();
+		update();
+		history.add(StemSelectionState(&selection));
+		break;
+	case Qt::Key_4:
+		if (!ctrl) {
+			selection.reduceToAncestors();
+			history.add(StemSelectionState(&selection));
+		}
+		updateSelection();
+		update();
+		break;
+	case Qt::Key_A:
+		if (mode == None) {
+			QPoint p = mapFromGlobal(QCursor::pos());
+			AddStem addStem(&selection, &translationAxes);
+			addStem.execute();
+			history.add(addStem, StemSelectionState(&selection));
+			
+			clickOffset[0] = clickOffset[1] = 0;
+			translationAxes.selectCenter();
+			mode = InitStem;
+			moveStem = MoveStem(&selection, camera, p.x(), p.y());
+			moveStem.snapToCursor(true);
+			moveStem.set(p.x(), p.y());
+			moveStem.execute();
+			
+			change();
+			update();
+			emit selectionChanged();
+		}
+		break;	
 	case Qt::Key_C:
 		if (mode == Rotate)
 			rotationAxes.selectAxis(Axes::Center);
 		break;
 	case Qt::Key_E:
-		if (mode == None || mode == MovePoint) {
-			if (selectedStem && selectedPoint >= 0) {
-				mode = MovePoint;
-				history.add(selectedStem, selectedPoint);
-				extrude();
-			}
+		if (mode == None && selection.hasPoints()) {
+			mode = MovePoint;
+			ExtrudeStem extrude(&selection);
+			extrude.execute();
+			history.add(extrude, StemSelectionState(&selection));
+			
+			QPoint p = mapFromGlobal(QCursor::pos());
+			pg::Vec3 avg = selection.getAveragePosition();
+			setClickOffset(p.x(), p.y(), avg);
+			translationAxes.selectCenter();
+			emit selectionChanged();
 		}
 		break;
+	case Qt::Key_M:
+		if (mode == None && selection.hasStems()) {
+			QPoint p = mapFromGlobal(QCursor::pos());
+			moveStem = MoveStem(&selection, camera, p.x(), p.y());
+			mode = PositionStem;
+		}
+		break;	
 	case Qt::Key_R:
-		if (selectedStem && selectedPoint >= 0) {
-			int d = selectedStem->getPath().getSpline().getDegree();
-			if (d == 3 && selectedPoint % 3 == 0) {
-				history.add(selectedStem, selectedPoint);
-				mode = Rotate;
-			} else if (d == 1) {
-				history.add(selectedStem, selectedPoint);
-				mode = Rotate;
-			}
+		if (selection.hasStems()) {
+			QPoint p = mapFromGlobal(QCursor::pos());
+			float x = p.x();
+			float y = p.y();
+			pg::Ray ray = camera.getRay(x, y);
+			pg::Vec3 normal = camera.getDirection();
+			rotateStem = RotateStem(&selection, &rotationAxes),
+			rotateStem.set(ray, normal);
+			mode = Rotate;
 		}
 		update();
 		break;
@@ -125,10 +210,15 @@ void Editor::keyPressEvent(QKeyEvent *event)
 			rotationAxes.selectAxis(Axes::ZAxis);
 		break;
 	case Qt::Key_Delete:
-		if (selectedStem) {
-			history.add(selectedStem, selectedPoint);
+		if (selection.hasStems()) {
 			mode = None;
-			removePoint();
+			RemoveStem removeStem(&selection);
+			removeStem.execute();
+			history.add(removeStem, StemSelectionState(&selection));
+			
+			emit selectionChanged();
+			updateSelection();
+			change();
 		}
 		break;
 	}
@@ -152,23 +242,19 @@ void Editor::mousePressEvent(QMouseEvent *event)
 
 	if (mode == Rotate) {
 		mode = None;
+		history.add(rotateStem, StemSelectionState(&selection));
 		rotationAxes.selectCenter();
 		update();
 	} else if (event->button() == Qt::RightButton) {
 		if (mode == None || mode == MovePoint) {
 			mode = None;
-			pg::Stem *prevStem = selectedStem;
-
-			if (selectedStem)
-				selectPoint(p.x(), p.y());
-			if (selectedPoint == -1)
-				selectStem(p.x(), p.y());
-			if (selectedStem != prevStem)
-				selectedPoint = -1;
-
+			selection.select(event);
+			history.add(StemSelectionState(&selection));
+			emit selectionChanged();
+			updateSelection();
 			update();
 		}
-	} if (event->button() == Qt::MidButton) {
+	} if (event->button() == Qt::MidButton && mode == None) {
 		camera.setStartCoordinates(p.x(), p.y());
 		if (event->modifiers() & Qt::ControlModifier)
 			camera.setAction(Camera::Zoom);
@@ -176,17 +262,19 @@ void Editor::mousePressEvent(QMouseEvent *event)
 			camera.setAction(Camera::Pan);
 		else
 			camera.setAction(Camera::Rotate);
-	} else if (event->button() == Qt::LeftButton) {
-		if (selectedPoint >= 0 && selectedStem) {
-			if (mode == None)
-				selectAxis(p.x(), p.y());
-		} else if (selectedStem) {
-			selectedPoint = 1;
-			history.add(selectedStem, selectedPoint);
+	} else if (event->button() == Qt::LeftButton) {		
+		if (selection.hasPoints() && mode == None) {
+			movePath = MovePath(&selection, &translationAxes);
+			moveCommand = true;
+			selectAxis(p.x(), p.y());
+		} else if (mode == PositionStem) {
+			mode = None;
+			history.add(moveStem, StemSelectionState(&selection));
+		} else if (mode == InitStem) {
 			mode = MovePoint;
-			translationAxes.selectCenter();
-			addStem(p.x(), p.y());
-			emit selectionChanged();
+			movePath.set(camera, p.x(), p.y());
+			movePath.execute();
+			change();
 		}
 	}
 
@@ -199,6 +287,10 @@ void Editor::mouseReleaseEvent(QMouseEvent *event)
 		camera.setAction(Camera::None);
 	if (mode == MovePoint && event->button() == Qt::LeftButton) {
 		translationAxes.clearSelection();
+		if (moveCommand) {
+			history.add(movePath, StemSelectionState(&selection));
+			moveCommand = false;
+		}
 		mode = None;
 	}
 }
@@ -206,147 +298,44 @@ void Editor::mouseReleaseEvent(QMouseEvent *event)
 void Editor::mouseMoveEvent(QMouseEvent *event)
 {
 	QPoint point = event->pos();
+	bool axisSelected = translationAxes.getSelection() != Axes::None;
+	
 	camera.executeAction(point.x(), point.y());
-
-	if (mode == MovePoint && translationAxes.getSelection() != Axes::None)
-		movePoint(point.x(), point.y());
-	else if (mode == Rotate)
-		rotateStem(point.x(), point.y());
+	
+	if (mode == PositionStem || mode == InitStem) {
+		moveStem.set(point.x(), point.y());
+		moveStem.execute();
+		change();
+	} else if (mode == MovePoint && axisSelected) {
+		bool ctrl = event->modifiers() & Qt::ControlModifier;
+		float x = point.x() + clickOffset[0];
+		float y = point.y() + clickOffset[1];
+		movePath.setParallelTangents(!ctrl);
+		movePath.set(camera, x, y);
+		movePath.execute();
+		change();
+	} else if (mode == Rotate) {
+		float x = point.x();
+		float y = point.y();
+		rotateStem.set(camera.getRay(x, y), camera.getDirection());
+		rotateStem.execute();
+		change();
+	}
+	
 	update();
-}
-
-void Editor::extrude()
-{
-	pg::Vec3 location = selectedStem->getLocation();
-	pg::Vec3 point = plant.extrude(selectedStem, &selectedPoint);
-	point = point + location;
-	QPoint p = mapFromGlobal(QCursor::pos());
-	setClickOffset(p.x(), p.y(), point);
-	translationAxes.selectCenter();
-	emit selectionChanged();
-}
-
-void Editor::removePoint()
-{
-	int size = selectedStem->getPath().getSpline().getControls().size();
-	if (selectedStem->getParent() || (size > 2 && selectedPoint > 0)) {
-		selectedStem = plant.removePoint(selectedStem, &selectedPoint);
-		emit selectionChanged();
-		change();
-	}
-}
-
-void Editor::addStem(int x, int y)
-{
-	if (selectedStem) {
-		pg::Ray ray;
-		ray.origin = camera.getPosition();
-		ray.direction = camera.getRayDirection(x, y);
-		std::vector<pg::Vec3> path = selectedStem->getPath().get();
-		for (size_t i = 0; i < path.size(); i++)
-			path[i] = path[i] + selectedStem->getLocation();
-		float t = closestDistance(path, camera, x, y);
-		float radius = selectedStem->getPath().getMaxRadius()/4;
-		selectedStem = plant.addStem(selectedStem);
-		pg::Vec3 direction = camera.getDirection();
-		plant.initializeStem(selectedStem, ray, direction, t, radius);
-		clickOffset[0] = 0;
-		clickOffset[1] = 0;
-		change();
-		update();
-	}
-}
-
-void Editor::selectStem(int x, int y)
-{
-	Ray ray;
-	ray.direction = camera.getRayDirection(x, y);
-	ray.origin = camera.getPosition();
-	selectedStem = plant.getStem(ray);
-	updateSelection();
-	emit selectionChanged();
-}
-
-void Editor::selectPoint(int x, int y)
-{
-	pg::Vec3 location = selectedStem->getLocation();
-	pg::Path path = selectedStem->getPath();
-	pg::Spline spline = path.getSpline();
-	auto controls = spline.getControls();
-	int size = controls.size();
-	selectedPoint = -1;
-
-	for (int i = 0; i < size; i++) {
-		Vec3 point = controls[i] + location;
-		point = camera.toScreenSpace(point);
-		float sx = std::pow(point.x - x, 2);
-		float sy = std::pow(point.y - y, 2);
-
-		if (std::sqrt(sx + sy) < 10) {
-			selectedPoint = i;
-			break;
-		}
-	}
 }
 
 void Editor::selectAxis(int x, int y)
 {
-	Vec3 o = camera.getPosition();
-	Vec3 d = camera.getRayDirection(x, y);
-	setClickOffset(x, y, translationAxes.getPosition());
-	translationAxes.selectAxis({o, d});
-	if (translationAxes.getSelection() == Axes::Axis::None)
-		mode = None;
-	else {
-		history.add(selectedStem, selectedPoint);
-		mode = MovePoint;
+	if (!selection.hasPoint(0)) {
+		pg::Ray ray = camera.getRay(x, y);
+		setClickOffset(x, y, translationAxes.getPosition());
+		translationAxes.selectAxis(ray);
+		if (translationAxes.getSelection() == Axes::Axis::None)
+			mode = None;
+		else
+			mode = MovePoint;
 	}
-}
-
-void Editor::movePoint(int x, int y)
-{
-	x += clickOffset[0];
-	y += clickOffset[1];
-
-	Vec3 direction = camera.getDirection();
-	Ray ray = {camera.getPosition(), camera.getRayDirection(x, y)};
-	pg::Stem *parentStem = nullptr;
-
-	if (selectedStem)
-		parentStem = selectedStem->getParent();
-
-	if (parentStem && selectedPoint == 0) {
-		/* Move stem along the parent path if the first point is
-		 * moved. */
-		std::vector<pg::Vec3> path = parentStem->getPath().get();
-		for (size_t i = 0; i < path.size(); i++)
-			path[i] = path[i] + parentStem->getLocation();
-		float t = closestDistance(path, camera, x, y);
-		selectedStem->setPosition(t);
-		translationAxes.setPosition(selectedStem->getLocation());
-	} else if (selectedPoint != 0) {
-		pg::Vec3 location = selectedStem->getLocation();
-		pg::VolumetricPath vpath = selectedStem->getPath();
-		pg::Spline spline = vpath.getSpline();
-		location = translationAxes.move(ray, direction) - location;
-		spline.move(selectedPoint, location);
-		vpath.setSpline(spline);
-		selectedStem->setPath(vpath);
-	}
-
-	change();
-}
-
-void Editor::rotateStem(int x, int y)
-{
-	pg::Vec3 cameraDirection = camera.getDirection();
-	pg::Ray ray = {camera.getPosition(), camera.getRayDirection(x, y)};
-	pg::VolumetricPath path = selectedStem->getPath();
-	pg::Spline spline = path.getSpline();
-	pg::Vec3 direction = spline.getDirection(selectedPoint);
-	pg::Mat4 t = rotationAxes.rotate(ray, cameraDirection, direction);
-	plant.rotate(selectedStem, selectedPoint, t);
-	change();
 }
 
 void Editor::setClickOffset(int x, int y, Vec3 point)
@@ -360,7 +349,8 @@ void Editor::resizeGL(int width, int height)
 {
 	float ratio = static_cast<float>(width) / static_cast<float>(height);
 	camera.setWindowSize(width, height);
-	camera.setPerspective(45.0f, 0.1f, 100.0f, ratio);
+	camera.setPerspective(45.0f, 0.1f, 200.0f, ratio);
+	// camera.setOrthographic({-ratio, -1.0f, 0.0f}, {ratio, 1.0f, 100.0f});
 	translationAxes.setScale(600.0f / height);
 	glViewport(0, 0, width, height);
 	paintGL();
@@ -398,16 +388,16 @@ void Editor::paintGL()
 	glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-	{
-		GLvoid *s = (GLvoid *)(scene.selection.istart *
+	for (unsigned i = 0; i < meshes.size(); i++) {
+		GLvoid *s = (GLvoid *)(meshes[i].indexStart *
 			sizeof(unsigned));
-		GLsizei c = scene.selection.icount;
+		GLsizei c = meshes[i].indexCount;
 		glDrawElements(GL_TRIANGLES, c, GL_UNSIGNED_INT, s);
 	}
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-	if (selectedStem) {
+	if (selection.hasStems()) {
 		/* paint path lines */
 		glDepthFunc(GL_ALWAYS);
 		glPointSize(8);
@@ -420,7 +410,7 @@ void Editor::paintGL()
 		{
 			Geometry::Segment segment = path.getLineSegment();
 			GLvoid *start = (GLvoid *)(segment.istart *
-				sizeof(unsigned));
+				sizeof(unsigned));	
 			glDrawElements(GL_LINE_STRIP, segment.icount,
 				GL_UNSIGNED_INT, start);
 		}
@@ -435,7 +425,7 @@ void Editor::paintGL()
 			glDrawArrays(GL_POINTS, s.pstart, s.pcount);
 		}
 
-		if (selectedPoint >= 0)
+		if (selection.hasPoints() || mode == Rotate)
 			paintAxes();
 	}
 
@@ -455,14 +445,10 @@ void Editor::paintAxes()
 	glUseProgram(shared->getShader(Shader::Flat));
 	staticBuffer.use();
 
-	pg::Spline spline = selectedStem->getPath().getSpline();
-	pg::Vec3 position = spline.getControls()[selectedPoint];
-	position += selectedStem->getLocation();
-	translationAxes.setPosition(position);
-	rotationAxes.setPosition(position);
+	translationAxes.setPosition(selection.getAveragePosition());
 
 	if (mode == Rotate) {
-		pg::Vec3 d = spline.getDirection(selectedPoint);
+		pg::Vec3 d = selection.getAverageDirectionFP();
 		pg::Mat4 m = vp * rotationAxes.getTransformation(cp, d);
 		glUniformMatrix4fv(0, 1, GL_FALSE, &m[0][0]);
 
@@ -481,26 +467,40 @@ void Editor::paintAxes()
 	}
 }
 
+/**
+ * The path buffer, geometry segments, etc. are updated whenever the selection
+ * changes.
+ */
 void Editor::updateSelection()
 {
-	pg::Segment selection = mesh.find(selectedStem);
-	scene.selection.pstart = selection.vertexStart;
-	scene.selection.pcount = selection.vertexCount;
-	scene.selection.istart = selection.indexStart;
-	scene.selection.icount = selection.indexCount;
+	meshes.clear();
+	auto instances = selection.getInstances();
+	for (auto &instance : instances)
+		meshes.push_back(mesh.find(instance.first));
 
-	if (selectedStem) {
-		pg::Vec3 location = selectedStem->getLocation();
-		pg::Path spath = selectedStem->getPath();
-		pg::Spline spline = spath.getSpline();
-		int degree = spline.getDegree();
-		std::vector<pg::Vec3> ppoints = spath.get();
-		std::vector<pg::Vec3> cpoints = spline.getControls();
-		for (size_t i = 0; i < ppoints.size(); i++)
-			ppoints[i] = ppoints[i] + location;
-		for (size_t i = 0; i < cpoints.size(); i++)
-			cpoints[i] = cpoints[i] + location;
-		path.set(ppoints, cpoints, degree);
+	if (!instances.empty()) {
+		std::vector<Path::Segment> segments;
+		for (auto &instance : instances) {
+			pg::Stem *stem = instance.first;
+			pg::Vec3 location = stem->getLocation();
+			pg::Path path = stem->getPath();
+			pg::Spline spline = path.getSpline();
+			
+			Path::Segment segment;
+			segment.spline = spline;
+			segment.resolution = path.getResolution();
+			segment.location = location;
+			segments.push_back(segment);
+		}
+		path.set(segments);
+		
+		{
+			int i = 0;
+			auto instances = selection.getInstances();
+			for (auto &instance : instances)
+				path.setSelectedPoints(instance.second, i++);
+		}
+		
 		const Geometry *geometry = path.getGeometry();
 		pathBuffer.update(*geometry);
 	}
@@ -527,9 +527,10 @@ void Editor::load(const char *filename)
 		ia >> plant;
 		stream.close();
 	}
-	selectedStem = nullptr;
-	selectedPoint = -1;
+	selection.clear();
 	history.clear();
+	history.add(StemSelectionState(&selection));
+	emit selectionChanged();
 	change();
 }
 
@@ -538,25 +539,9 @@ pg::Plant *Editor::getPlant()
 	return &plant;
 }
 
-pg::Stem *Editor::getSelectedStem()
+StemSelection *Editor::getSelection()
 {
-	return selectedStem;
-}
-
-void Editor::setSelectedStem(pg::Stem *selection)
-{
-	selectedStem = selection;
-	emit selectionChanged();
-}
-
-int Editor::getSelectedPoint()
-{
-	return selectedPoint;
-}
-
-void Editor::setSelectedPoint(int selection)
-{
-	selectedPoint = selection;
+	return &selection;
 }
 
 const pg::Mesh *Editor::getMesh()
@@ -569,15 +554,18 @@ History *Editor::getHistory()
 	return &history;
 }
 
-void Editor::revert(History::Memento m)
+void Editor::undo()
 {
-	if (m.stem) {
-		selectedPoint = m.selectedPoint;
-		selectedStem = m.selectedStem;
-		mode = None;
-		emit selectionChanged();
-		change();
-	}
+	history.undo();
+	change();
+	emit selectionChanged();
+}
+
+void Editor::redo()
+{
+	history.redo();
+	change();
+	emit selectionChanged();
 }
 
 bool Editor::isExecutingAction()

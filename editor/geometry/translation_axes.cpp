@@ -135,52 +135,6 @@ TranslationAxes::Axis TranslationAxes::selectAxis(pg::Ray ray)
 	return selection;
 }
 
-pg::Vec3 TranslationAxes::move(pg::Ray ray, pg::Vec3 cameraDirection)
-{
-	float distance;
-	pg::Plane plane = {position, cameraDirection};
-
-	switch (selection) {
-	case XAxis:
-		plane.normal.x = 0.0f;
-		break;
-	case YAxis:
-		plane.normal.y = 0.0f;
-		break;
-	case ZAxis:
-		plane.normal.z = 0.0f;
-		break;
-	default:
-		break;
-	}
-
-	plane.normal = pg::normalize(plane.normal);
-	plane.normal.x = -plane.normal.x;
-	plane.normal.y = -plane.normal.y;
-	plane.normal.z = -plane.normal.z;
-	distance = pg::intersectsPlane(ray, plane);
-	position = distance * ray.direction + ray.origin;
-
-	switch (selection) {
-	case XAxis:
-		position.y = plane.point.y;
-		position.z = plane.point.z;
-		break;
-	case YAxis:
-		position.x = plane.point.x;
-		position.z = plane.point.z;
-		break;
-	case ZAxis:
-		position.x = plane.point.x;
-		position.y = plane.point.y;
-		break;
-	default:
-		break;
-	}
-
-	return position;
-}
-
 pg::Mat4 TranslationAxes::getTransformation(pg::Vec3 cameraPosition)
 {
 	float m = pg::magnitude(cameraPosition - position) / 15.0f * scale;

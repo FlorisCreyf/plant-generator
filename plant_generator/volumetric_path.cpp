@@ -15,6 +15,19 @@
 
 #include "volumetric_path.h"
 
+bool pg::VolumetricPath::operator==(const pg::VolumetricPath &path) const
+{
+	return Path::operator==(path) &&
+		radius == path.radius &&
+		minRadius == path.minRadius &&
+		maxRadius == path.maxRadius;
+}
+
+bool pg::VolumetricPath::operator!=(const pg::VolumetricPath &path) const
+{
+	return !(*this == path);
+}
+
 void pg::VolumetricPath::setMaxRadius(float radius)
 {
 	maxRadius = radius;

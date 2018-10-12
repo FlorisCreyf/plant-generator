@@ -16,6 +16,7 @@
 #include "plant.h"
 
 using pg::Stem;
+using std::vector;
 
 pg::Plant::Plant()
 {
@@ -43,17 +44,8 @@ Stem *pg::Plant::addStem(Stem *stem)
 	return stem->child;
 }
 
-void pg::Plant::removeStem(Stem *stem)
+void pg::Plant::removeFromTree(pg::Stem *stem)
 {
-	{
-		Stem *child = stem->child;
-		while (child) {
-			Stem *next = child->nextSibling;
-			removeStem(child);
-			child = next;
-		}
-	}
-
 	if (stem->prevSibling)
 		stem->prevSibling->nextSibling = stem->nextSibling;
 	if (stem->nextSibling)
@@ -64,36 +56,62 @@ void pg::Plant::removeStem(Stem *stem)
 		else
 			stem->parent->child = stem->nextSibling;
 	}
+}
 
+void pg::Plant::deleteStem(Stem *stem)
+{
+	Stem *child = stem->child;
+	while (child) {
+		Stem *next = child->nextSibling;
+		deleteStem(child);
+		child = next;
+	}
 	delete stem;
 }
 
-Stem *pg::Plant::copy(Stem *stem, Stem *parent, Stem **ref)
+void pg::Plant::removeStem(Stem *stem)
 {
-	Stem *c = new Stem(parent);
-	*c = *stem;
+	if (stem->parent)
+		deleteStem(stem);
+}
 
-	c->parent = parent;
-	c->child = nullptr;
-	c->nextSibling = nullptr;
-	c->prevSibling = nullptr;
+void pg::Plant::insert(Stem *parent, Stem *child)
+{
+	Stem *firstChild = parent->child;
+	parent->child = child;
+	if (firstChild)
+		firstChild->prevSibling = parent->child;
+	parent->child->nextSibling = firstChild;
+	parent->child->prevSibling = nullptr;
+}
 
-	Stem *sibling = stem->child;
-	while (sibling) {
-		Stem *cc = copy(sibling, c, ref);
-		if (c->child) {
-			c->child->prevSibling = cc;
-			cc->nextSibling = c->child;
-			c->child = cc;
-		} else
-			c->child = cc;
-		sibling = sibling->nextSibling;
+void pg::Plant::release(Stem *stem)
+{
+	if (stem->parent)
+		removeFromTree(stem);
+}
+
+bool pg::Plant::contains(Stem *stem)
+{
+	return contains(stem, root);
+}
+
+bool pg::Plant::contains(Stem *a, Stem *b)
+{
+	if (a == b)
+		return true;
+	else if (b == nullptr)
+		return false;
+	else {
+		Stem *child = b->child;
+		while (child) {
+			Stem *next = child->nextSibling;
+			child = next;
+			if (contains(a, child))
+				return true;
+		}
+		return false;
 	}
-
-	if (ref != nullptr && *ref == stem)
-		*ref = c;
-
-	return c;
 }
 
 void pg::Plant::removeRoot()

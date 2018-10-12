@@ -145,7 +145,6 @@ QDockWidget QWidget {
 	padding-top:0px;
 	margin:0;
 	font-size:11px;
-
 	border-top:23px solid #4a4a4a;
 } QDockWidget QGroupBox::title {
 	font-size:11px;
@@ -210,13 +209,6 @@ QDockWidget QWidget {
 	subcontrol-position: top right;
 	width:15px;
 	border:0;
-} QDockWidget QComboBox::down-arrow {
-	image:url(&quot;resources/downarrow.png&quot;);
-	width:7px;
-	height:6px;
-} QDockWidget QComboBox::down-arrow:on { /* shift the arrow when popup is open */
-	top: 1px;
-	left: 1px;
 } QDockWidget QComboBox QAbstractItemView {
 	background:#505050;
 	border:0;
@@ -257,13 +249,6 @@ QDockWidget QWidget {
     <addaction name="actionExportMesh"/>
     <addaction name="separator"/>
     <addaction name="actionQuit"/>
-   </widget>
-   <widget class="QMenu" name="menuEdit">
-    <property name="title">
-     <string>Edit</string>
-    </property>
-    <addaction name="actionUndo"/>
-    <addaction name="actionRedo"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -308,22 +293,6 @@ QDockWidget QWidget {
    </property>
    <property name="shortcut">
     <string>Ctrl+Q</string>
-   </property>
-  </action>
-  <action name="actionUndo">
-   <property name="text">
-    <string>&amp;Undo</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+Z</string>
-   </property>
-  </action>
-  <action name="actionRedo">
-   <property name="text">
-    <string>&amp;Redo</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+Shift+Z</string>
    </property>
   </action>
   <action name="actionAbout">
@@ -459,18 +428,6 @@ QDockWidget QWidget {
      <y>20</y>
     </hint>
    </hints>
-  </connection>
-  <connection>
-   <sender>actionUndo</sender>
-   <signal>triggered()</signal>
-   <receiver>Window</receiver>
-   <slot>undo()</slot>
-  </connection>
-  <connection>
-   <sender>actionRedo</sender>
-   <signal>triggered()</signal>
-   <receiver>Window</receiver>
-   <slot>redo()</slot>
   </connection>
  </connections>
 </ui>

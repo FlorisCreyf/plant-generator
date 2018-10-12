@@ -37,6 +37,9 @@ namespace pg {
 		}
 
 	public:
+		bool operator==(const VolumetricPath &path) const;
+		bool operator!=(const VolumetricPath &path) const;
+		
 		void setMaxRadius(float radius);
 		float getMaxRadius();
 		void setMinRadius(float radius);

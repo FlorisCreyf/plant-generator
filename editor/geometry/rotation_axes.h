@@ -24,8 +24,6 @@ class RotationAxes : public Axes {
 public:
 	Geometry getLines();
 	void selectAxis(Axis axis);
-	pg::Mat4 rotate(pg::Ray ray, pg::Vec3 cameraDirection,
-		pg::Vec3 direction);
 	pg::Mat4 getTransformation(pg::Vec3 cameraPosition, pg::Vec3 direction);
 };
 

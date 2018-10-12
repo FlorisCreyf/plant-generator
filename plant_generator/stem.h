@@ -26,6 +26,7 @@ namespace pg {
 		friend class Plant;
 		friend class boost::serialization::access;
 
+		bool copy;
 		Stem *nextSibling;
 		Stem *prevSibling;
 		Stem *child;
@@ -56,6 +57,8 @@ namespace pg {
 
 	public:
 		Stem(Stem *parent = nullptr);
+		bool operator==(const Stem &stem) const;
+		bool operator!=(const Stem &stem) const;
 
 		void setResolution(int resolution);
 		int getResolution() const;

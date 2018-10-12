@@ -19,6 +19,7 @@
 
 pg::Stem::Stem(pg::Stem *parent)
 {
+	copy = false;
 	this->nextSibling = nullptr;
 	this->prevSibling = nullptr;
 	this->child = nullptr;
@@ -29,6 +30,25 @@ pg::Stem::Stem(pg::Stem *parent)
 		location = {0.0f, 0.0f, 0.0f};
 	} else
 		depth = parent->depth + 1;
+}
+
+bool pg::Stem::operator==(const pg::Stem &stem) const
+{
+	return
+		nextSibling == stem.nextSibling &&
+		prevSibling == stem.prevSibling &&
+		child == stem.child &&
+		parent == stem.parent &&
+		depth == stem.depth &&
+		path == stem.path &&
+		resolution == stem.resolution &&
+		position == stem.position &&
+		location == stem.location;
+}
+
+bool pg::Stem::operator!=(const pg::Stem &stem) const
+{
+	return !(*this == stem);
 }
 
 void pg::Stem::setResolution(int resolution)
@@ -104,10 +124,12 @@ pg::Stem *pg::Stem::getChild()
 bool pg::Stem::isDescendantOf(pg::Stem *stem) const
 {
 	const Stem *descendant = this;
-	while (descendant != nullptr) {
-		if (stem == descendant->parent)
-			return true;
-		descendant = stem->parent;
+	if (depth > stem->getDepth()) {
+		while (descendant != nullptr) {
+			if (stem == descendant->parent)
+				return true;
+			descendant = descendant->parent;
+		}
 	}
 	return false;
 }

@@ -50,12 +50,15 @@ public:
 	void addCone(float radius, float height, int points, pg::Vec3 color);
 	void addGrid(int size, pg::Vec3 pcolor, pg::Vec3 scolor);
 	void transform(size_t start, size_t count, const pg::Mat4 &transform);
+	void changeColor(size_t start, pg::Vec3 color);
 
 	Segment getSegment() const;
 	Segment append(const Geometry &geometry);
 
 	const std::vector<float> *getPoints() const;
 	const std::vector<unsigned> *getIndices() const;
+
+	int getPointSize() const;
 };
 
 #endif /* GEOMETRY_H */

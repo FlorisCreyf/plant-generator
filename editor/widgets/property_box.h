@@ -21,7 +21,9 @@
 #include "editor.h"
 #include "curve_button.h"
 #include "curve_editor.h"
+#include "../commands/memorize_stem.h"
 #include <QtWidgets>
+#include <memory>
 
 class PropertyBox : public QWidget {
 	Q_OBJECT
@@ -33,14 +35,14 @@ public:
 
 public slots:
 	void fill();
-	void setCurve(pg::Spline spline, QString names);
-	void toggleCurve(CurveButton *w);
 	void changePathDegree(int i);
-	void changeResolution(int i);
+	void changeResolution(int i );
 	void changeDivisions(int i);
 	void changeRadius(double d);
 	void changeRadiusCurve(pg::Spline &spline);
 	void finishChanging();
+	void setCurve(pg::Spline spline, QString names);
+	void toggleCurve(CurveButton *w);
 
 signals:
 	void isEnabled(bool enabled);
@@ -48,22 +50,34 @@ signals:
 
 private:
 	SharedResources *shared;
-	CurveButton *activeCurve;
-	CurveEditor *curveEditor;
 	Editor *editor;
+	MemorizeStem memorize;
+	CurveEditor *curveEditor;
+	CurveButton *selectedCurve;
 
-	QTableWidget *global;
-	QTableWidget *local;
-	QGroupBox *localGroup;
-	QDoubleSpinBox *radius;
-	CurveButton *radiusCB;
-	QSpinBox *resolution;
-	QSpinBox *divisions;
-	QComboBox *degree;
+	QGroupBox *stemG;
+	QTableWidget *stemT;
+
+	QLabel *radiusL;
+	QDoubleSpinBox *radiusV;
+	CurveButton *radiusB;
+
+	QLabel *resolutionL;
+	QSpinBox *resolutionV;
+
+	QLabel *divisionL;
+	QSpinBox *divisionV;
+
+	QLabel *degreeL;
+	QComboBox *degreeV;
+
 	bool changing = false;
-
+	
+	void initProperties();
+	void createStemBox(QVBoxLayout *layout);
 	void beginChanging(QWidget *widget);
-	void createLocalBox(QVBoxLayout *layout);
+	void indicateDifferences(QWidget *widget);
+	void indicateSimilarities(QWidget *widget);
 	QWidget *createCenteredWidget(QWidget *);
 	void configureTable(QTableWidget *);
 };

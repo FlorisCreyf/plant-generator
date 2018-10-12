@@ -87,7 +87,7 @@ void Geometry::addPlane(Vec3 a, Vec3 b, Vec3 c, Vec3 color)
 
 void Geometry::addCone(float radius, float height, int points, Vec3 color)
 {
-	unsigned pointStart = this->points.size()/6;
+	unsigned pointStart = this->points.size() / getPointSize();
 
 	for (int i = 0; i < points; i++) {
 		float r = i * 2.0f * M_PI / points;
@@ -139,7 +139,7 @@ void Geometry::addGrid(int size, pg::Vec3 pcolor, pg::Vec3 scolor)
 
 void Geometry::transform(size_t start, size_t count, const Mat4 &transform)
 {
-	const int vertexSize = 6;
+	const int vertexSize = getPointSize();
 	const int length = (start + count) * vertexSize;
 	for (int i = start * vertexSize; i < length; i += vertexSize) {
 		Vec3 v = {points[i], points[i+1], points[i+2]};
@@ -150,11 +150,18 @@ void Geometry::transform(size_t start, size_t count, const Mat4 &transform)
 	}
 }
 
+void Geometry::changeColor(size_t start, Vec3 color)
+{
+	points[start+3] = color.x;
+	points[start+4] = color.y;
+	points[start+5] = color.z;
+}
+
 Geometry::Segment Geometry::getSegment() const
 {
 	Segment s;
 	s.pstart = 0;
-	s.pcount = points.size()/6;
+	s.pcount = points.size() / getPointSize();
 	s.istart = 0;
 	s.icount = indices.size();
 	return s;
@@ -165,8 +172,8 @@ Geometry::Segment Geometry::append(const Geometry &geometry)
 	auto ps = geometry.points;
 	auto is = geometry.indices;
 	Segment s = geometry.getSegment();
-	s.pstart = points.size()/6;
-	s.pcount = ps.size()/6;
+	s.pstart = points.size() / getPointSize();
+	s.pcount = ps.size() /  getPointSize();
 	s.istart = indices.size();
 	s.icount = is.size();
 	for (size_t i = 0; i < is.size(); i++)
@@ -177,7 +184,6 @@ Geometry::Segment Geometry::append(const Geometry &geometry)
 	return s;
 }
 
-
 const std::vector<float> *Geometry::getPoints() const
 {
 	return &points;
@@ -186,4 +192,9 @@ const std::vector<float> *Geometry::getPoints() const
 const std::vector<unsigned> *Geometry::getIndices() const
 {
 	return &indices;
+}
+
+int Geometry::getPointSize() const
+{
+	return 6;
 }

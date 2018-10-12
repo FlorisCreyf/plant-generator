@@ -27,10 +27,10 @@ namespace pg {
 
 		switch (type) {
 		case 0:
-			controls.push_back({0.0f, -0.3f, 1.0f});
-			controls.push_back({0.0f, -0.3f, 0.25f});
-			controls.push_back({1.0f, -0.3f, 0.5f});
-			controls.push_back({1.0f, -0.3f, 0.0f});
+			controls.push_back({0.0f, 0.3f, 1.0f});
+			controls.push_back({0.0f, 0.3f, 0.25f});
+			controls.push_back({1.0f, 0.3f, 0.5f});
+			controls.push_back({1.0f, 0.3f, 0.0f});
 
 			spline.setControls(controls);
 			spline.setDegree(3);

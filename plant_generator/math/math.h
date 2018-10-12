@@ -51,7 +51,7 @@ namespace pg {
 		float x;
 		float y;
 		float z;
-
+		
 		Vec3 &operator +=(const Vec3 &b)
 		{
 			this->x += b.x;
@@ -73,6 +73,14 @@ namespace pg {
 			this->x *= n;
 			this->y *= n;
 			this->z *= n;
+			return *this;
+		}
+
+		Vec3 &operator /=(float n)
+		{
+			this->x /= n;
+			this->y /= n;
+			this->z /= n;
 			return *this;
 		}
 
@@ -152,6 +160,13 @@ namespace pg {
 	inline bool isZero(const Vec3 &vec)
 	{
 		return vec.x == 0 && vec.y == 0 && vec.z == 0;
+	}
+	
+	inline pg::Vec3 getZeroVec3()
+	{
+		pg::Vec3 v;
+		v.x = v.y = v.z = 0.0f;
+		return v;
 	}
 
 	float abs(float value);

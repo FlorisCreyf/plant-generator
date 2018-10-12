@@ -20,16 +20,23 @@
 
 #define GL_GLEXT_PROTOTYPES
 
+#include "../camera.h"
+#include "../stem_selection.h"
+#include "../commands/move_stem.h"
+#include "../commands/move_path.h"
+#include "../commands/rotate_stem.h"
 #include "../geometry/path.h"
 #include "../geometry/rotation_axes.h"
 #include "../geometry/translation_axes.h"
 #include "../graphics/buffer.h"
 #include "../graphics/shared_resources.h"
-#include "../plant.h"
-#include "../camera.h"
-#include "../history.h"
+#include "../history/history.h"
+#include "plant_generator/plant.h"
+#include "plant_generator/mesh.h"
+#include "plant_generator/generator.h"
 #include <QtGui/QOpenGLFunctions>
 #include <QOpenGLWidget>
+#include <set>
 
 class Editor : public QOpenGLWidget, protected QOpenGLFunctions {
 	Q_OBJECT
@@ -43,13 +50,11 @@ public:
 	void change();
 	void load(const char *filename);
 	pg::Plant *getPlant();
-	pg::Stem *getSelectedStem();
-	void setSelectedStem(pg::Stem *selection);
-	int getSelectedPoint();
-	void setSelectedPoint(int selection);
+	StemSelection *getSelection();
 	const pg::Mesh *getMesh();
 	History *getHistory();
-	void revert(History::Memento m);
+	void undo();
+	void redo();
 	bool isExecutingAction();
 
 protected:
@@ -61,9 +66,12 @@ protected:
 	bool event(QEvent *);
 
 private:
+	pg::Plant plant;
 	enum Mode {
 		None,
 		MovePoint,
+		PositionStem,
+		InitStem,
 		Rotate
 	} mode = None;
 	struct Scene {
@@ -73,30 +81,33 @@ private:
 		Geometry::Segment selection;
 		Geometry::Segment rotation;
 	} scene;
+	SharedResources *shared;
 	Buffer staticBuffer;
 	Buffer pathBuffer;
 	Buffer plantBuffer;
-	Plant plant;
-	pg::Mesh mesh;
-	pg::Generator generator;
 	Path path;
-	pg::Stem *selectedStem = nullptr;
-	int selectedPoint = -1;
-	SharedResources *shared;
+	pg::Mesh mesh;
+	std::vector<pg::Segment> meshes;
+	pg::Generator generator;
+
 	Camera camera;
 	TranslationAxes translationAxes;
 	RotationAxes rotationAxes;
+
+	StemSelection selection;
+	bool moveCommand;
+	RotateStem rotateStem;
+	MoveStem moveStem;
+	MovePath movePath;
 	History history;
+	
+	/* An offset is needed because the cursor is not necessarily at the
+	 * center of the selection. */
 	int clickOffset[2];
 
-	void extrude();
-	void removePoint();
-	void addStem(int x, int y);
-	void selectStem(int x, int y);
-	void selectPoint(int x, int y);
+	void selectStem(QMouseEvent *event);
+	void selectPoint(QMouseEvent *event);
 	void selectAxis(int x, int y);
-	void movePoint(int x, int y);
-	void rotateStem(int x, int y);
 	void setClickOffset(int x, int y, pg::Vec3 point);
 	void initializeGL();
 	void initializeBuffers();

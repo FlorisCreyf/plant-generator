@@ -1,12 +1,12 @@
 /* Plant Genererator
  * Copyright (C) 2017  Floris Creyf
  *
- * TreeMaker is free software: you can redistribute it and/or modify
+ * Plant Genererator is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * TreeMaker is distributed in the hope that it will be useful,
+ * Plant Genererator is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -32,20 +32,20 @@ enum Shader {
 
 class SharedResources : protected QOpenGLFunctions {
 public:
-        enum Texture {
-                DotTexture
-        };
+	enum Texture {
+		DotTexture
+	};
 
-        void initialize();
-        GLuint getShader(Shader shader);
-        GLuint getTexture(Texture texture);
+	void initialize();
+	GLuint getShader(Shader shader);
+	GLuint getTexture(Texture texture);
 
 private:
-        GLuint programs[5];
-        GLuint textures[1];
+	GLuint programs[5];
+	GLuint textures[1];
 
-        void createPrograms();
-        void createTextures();
+	void createPrograms();
+	void createTextures();
 
 	bool isCompiled(GLuint name, const char *filename);
 	bool openFile(const char *filename, GLchar *&buffer, int &size);

@@ -43,6 +43,9 @@ namespace pg {
 		}
 
 	public:
+		bool operator==(const Path &path) const;
+		bool operator!=(const Path &path) const;
+		
 		void setSpline(Spline &spline);
 		Spline getSpline();
 		/** Sets the divisions for each curve in the path. */

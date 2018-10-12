@@ -18,9 +18,14 @@
 #ifndef CURVE_EDITOR_H
 #define CURVE_EDITOR_H
 
+#include "../camera.h"
+#include "../point_selection.h"
+#include "../commands/move_spline.h"
 #include "../geometry/path.h"
 #include "../graphics/buffer.h"
 #include "../graphics/shared_resources.h"
+#include "../geometry/translation_axes.h"
+#include "../history/history.h"
 #include "plant_generator/math/math.h"
 #include "plant_generator/path.h"
 #include <QOpenGLFunctions>
@@ -48,56 +53,52 @@ protected:
 	void paintGL();
 	void resizeGL(int width, int height);
 	void mousePressEvent(QMouseEvent *);
-	void mouseDoubleClickEvent(QMouseEvent *);
 	void mouseReleaseEvent(QMouseEvent *);
 	void mouseMoveEvent(QMouseEvent *);
 	void keyPressEvent(QKeyEvent *event);
 
 private:
 	SharedResources *shared;
+	PointSelection selection;
+	Camera camera;
+	History history;
 	Buffer buffer;
 	Path path;
 	pg::Spline spline;
-	pg::Vec3 hidden[4];
+	pg::Spline origSpline; /* The original spline without restrictions. */
+	TranslationAxes axes;
+	MoveSpline moveSpline;
 	Geometry::Segment gridSegment;
 	Geometry::Segment planeSegment;
 	Geometry::Segment controlSegment;
 	Geometry::Segment curveSegment;
-	size_t insertIndex;
-	size_t point;
+
 	QString name;
 	bool enabled;
-	int height;
-	int width;
-	int margin = 20;
-	int topMargin = 22;
-	float tangentLength;
+	bool ctrl;
+	bool move = false;
+	bool extruding = false;
+	bool moveLeft;
+	pg::Vec3 origPoint;
+	int clickOffset[2];
 
 	QComboBox *degree;
 
+	void initiateMovePoint();
+	void applyRestrictions();
+	void restrictLinearControls();
+	void restrictLinearControl(std::vector<pg::Vec3> &controls, int i);
+	void restrictOuterCubicControls(std::vector<pg::Vec3> &controls);
+	void restrictCubicControls(std::vector<pg::Vec3> &controls);
+	void restrictCubicControl(std::vector<pg::Vec3> &controls, int i);
+	bool isCenterSelected(std::set<int>::iterator &it);
+	void parallelizeTangents();
+	void restrictOppositeCubicControls();
+	void truncateCubicControl(std::vector<pg::Vec3> &controls, int i);
 	void focusOutEvent(QFocusEvent *event);
 	void createInterface();
-	void updateCurve();
-	/** Inserts a point into a linear spline. */
-	void insertPoint(int, float, float);
-	/** Inserts three points into a cubic spline. */
-	void insertCurve(int, float, float);
-	bool reinsertCurve(float);
-	bool omitCurve(float);
-	/** Move the control point of a linear curve. */
-	void moveControl(float, float);
-	/** Move the outer control point of a cubic bezier curve. */
-	void moveOuterControl(float, float);
-	/** Move the inner control point of a cubic bezier curve. */
-	void moveInnerControl(float, float);
-	void moveOppositeTangent();
-	void setTangentLength();
-	/** Move the first and last control points of a cubic spline. */
-	void moveTerminalControl(bool, float);
-	void toDeviceCoordinates(float &x, float &y, int width, int height);
-	void paintInterface();
 	void paintCurve(pg::Mat4 &vp);
-	pg::Mat4 createVP();
+	void setClickOffset(int x, int y, pg::Vec3 point);
 };
 
 #endif /* CURVE_EDITOR_H */

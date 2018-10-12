@@ -4,7 +4,7 @@
  * Plant Genererator is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.,
+ * (at your option) any later version.
  *
  * Plant Genererator is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,30 +15,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HISTORY_H
-#define HISTORY_H
+#ifndef ADD_STEM_H
+#define ADD_STEM_H
 
-#include "plant_generator/plant.h"
-#include <vector>
+#include "command.h"
+#include "../stem_selection.h"
+#include "../geometry/translation_axes.h"
 
-class History {
+class AddStem : public Command {
+	StemSelection *selection;
+	TranslationAxes *axes;
+	pg::Stem *stem;
+	bool undone;
+
+	void create();
+
 public:
-	struct Memento {
-		pg::Stem *stem = nullptr;
-		pg::Stem *selectedStem = nullptr;
-		int selectedPoint = -1;
-	};
-
-	History(pg::Plant *plant);
-	void add(pg::Stem *selectedStem, int selectedPoint);
-	Memento undo(pg::Stem *selectedStem, int selectedPoint);
-	Memento redo(pg::Stem *selectedStem, int selectedPoint);
-	void clear();
-
-private:
-	pg::Plant *plant;
-	std::vector<Memento> past;
-	std::vector<Memento> future;
+	AddStem(StemSelection *selection, TranslationAxes *axes);
+	~AddStem();
+	void execute();
+	void undo();
+	AddStem *clone();
 };
 
-#endif /* HISTORY_H */
+#endif /* ADD_STEM_H */
