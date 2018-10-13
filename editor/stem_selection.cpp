@@ -315,7 +315,7 @@ pg::Vec3 StemSelection::getAveragePosition() const
 			pg::Spline spline = stem->getPath().getSpline();
 			pg::Vec3 l = stem->getLocation();
 			position += ps.getAveragePosition(spline, l);
-			++count;
+			count++;
 		}
 	}
 	position /= count;
@@ -334,10 +334,10 @@ pg::Vec3 StemSelection::getAveragePositionFP() const
 			pg::Spline spline = stem->getPath().getSpline();
 			pg::Vec3 l = stem->getLocation();
 			position += l + spline.getControls()[point];
-			++count;
+			count++;
 		} else {
 			position += stem->getLocation();
-			++count;
+			count++;
 		}
 	}
 	position /= count;
@@ -355,10 +355,10 @@ pg::Vec3 StemSelection::getAverageDirectionFP() const
 		if (size > 0) {
 			int point = *ps.getPoints().begin();
 			direction += stem->getPath().getDirection(point);
-			++count;
+			count++;
 		} else {
 			direction += stem->getPath().getDirection(0);
-			++count;
+			count++;
 		}
 	}
 	direction /= count;

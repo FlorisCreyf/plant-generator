@@ -5,6 +5,9 @@ all:
 	${QMAKE} -o qt.mk plant.pro; \
 	make -f qt.mk;
 
+install:
+	git submodule update --init --recursive;
+
 clean:
 	make -f qt.mk clean; \
 	rm -rf lib/build plant_generator/libplantgenerator.a qt.mk build;

@@ -55,7 +55,6 @@ public:
 	History *getHistory();
 	void undo();
 	void redo();
-	bool isExecutingAction();
 
 protected:
 	void updateSelection();
@@ -100,7 +99,7 @@ private:
 	MoveStem moveStem;
 	MovePath movePath;
 	History history;
-	
+
 	/* An offset is needed because the cursor is not necessarily at the
 	 * center of the selection. */
 	int clickOffset[2];

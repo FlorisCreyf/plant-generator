@@ -8,7 +8,7 @@
  *
  * Plant Genererator is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  fSee the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
@@ -142,10 +142,10 @@ void Editor::keyPressEvent(QKeyEvent *event)
 	case Qt::Key_A:
 		if (mode == None) {
 			QPoint p = mapFromGlobal(QCursor::pos());
-			AddStem addStem(&selection, &translationAxes);
+			AddStem addStem(&selection);
 			addStem.execute();
 			history.add(addStem, StemSelectionState(&selection));
-			
+
 			clickOffset[0] = clickOffset[1] = 0;
 			translationAxes.selectCenter();
 			mode = InitStem;
@@ -153,12 +153,12 @@ void Editor::keyPressEvent(QKeyEvent *event)
 			moveStem.snapToCursor(true);
 			moveStem.set(p.x(), p.y());
 			moveStem.execute();
-			
+
 			change();
 			update();
 			emit selectionChanged();
 		}
-		break;	
+		break;
 	case Qt::Key_C:
 		if (mode == Rotate)
 			rotationAxes.selectAxis(Axes::Center);
@@ -169,7 +169,7 @@ void Editor::keyPressEvent(QKeyEvent *event)
 			ExtrudeStem extrude(&selection);
 			extrude.execute();
 			history.add(extrude, StemSelectionState(&selection));
-			
+
 			QPoint p = mapFromGlobal(QCursor::pos());
 			pg::Vec3 avg = selection.getAveragePosition();
 			setClickOffset(p.x(), p.y(), avg);
@@ -183,7 +183,7 @@ void Editor::keyPressEvent(QKeyEvent *event)
 			moveStem = MoveStem(&selection, camera, p.x(), p.y());
 			mode = PositionStem;
 		}
-		break;	
+		break;
 	case Qt::Key_R:
 		if (selection.hasStems()) {
 			QPoint p = mapFromGlobal(QCursor::pos());
@@ -215,7 +215,7 @@ void Editor::keyPressEvent(QKeyEvent *event)
 			RemoveStem removeStem(&selection);
 			removeStem.execute();
 			history.add(removeStem, StemSelectionState(&selection));
-			
+
 			emit selectionChanged();
 			updateSelection();
 			change();
@@ -262,7 +262,7 @@ void Editor::mousePressEvent(QMouseEvent *event)
 			camera.setAction(Camera::Pan);
 		else
 			camera.setAction(Camera::Rotate);
-	} else if (event->button() == Qt::LeftButton) {		
+	} else if (event->button() == Qt::LeftButton) {
 		if (selection.hasPoints() && mode == None) {
 			movePath = MovePath(&selection, &translationAxes);
 			moveCommand = true;
@@ -299,9 +299,9 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
 {
 	QPoint point = event->pos();
 	bool axisSelected = translationAxes.getSelection() != Axes::None;
-	
+
 	camera.executeAction(point.x(), point.y());
-	
+
 	if (mode == PositionStem || mode == InitStem) {
 		moveStem.set(point.x(), point.y());
 		moveStem.execute();
@@ -321,7 +321,7 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
 		rotateStem.execute();
 		change();
 	}
-	
+
 	update();
 }
 
@@ -410,7 +410,7 @@ void Editor::paintGL()
 		{
 			Geometry::Segment segment = path.getLineSegment();
 			GLvoid *start = (GLvoid *)(segment.istart *
-				sizeof(unsigned));	
+				sizeof(unsigned));
 			glDrawElements(GL_LINE_STRIP, segment.icount,
 				GL_UNSIGNED_INT, start);
 		}
@@ -485,7 +485,7 @@ void Editor::updateSelection()
 			pg::Vec3 location = stem->getLocation();
 			pg::Path path = stem->getPath();
 			pg::Spline spline = path.getSpline();
-			
+
 			Path::Segment segment;
 			segment.spline = spline;
 			segment.resolution = path.getResolution();
@@ -493,14 +493,14 @@ void Editor::updateSelection()
 			segments.push_back(segment);
 		}
 		path.set(segments);
-		
+
 		{
 			int i = 0;
 			auto instances = selection.getInstances();
 			for (auto &instance : instances)
 				path.setSelectedPoints(instance.second, i++);
 		}
-		
+
 		const Geometry *geometry = path.getGeometry();
 		pathBuffer.update(*geometry);
 	}
@@ -556,19 +556,18 @@ History *Editor::getHistory()
 
 void Editor::undo()
 {
-	history.undo();
-	change();
-	emit selectionChanged();
+	if (mode == None) {
+		history.undo();
+		change();
+		emit selectionChanged();
+	}
 }
 
 void Editor::redo()
 {
-	history.redo();
-	change();
-	emit selectionChanged();
-}
-
-bool Editor::isExecutingAction()
-{
-	return mode != None;
+	if (mode == None) {
+		history.redo();
+		change();
+		emit selectionChanged();
+	}
 }

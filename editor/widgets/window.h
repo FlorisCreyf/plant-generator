@@ -37,9 +37,7 @@ public Q_SLOTS:
 	void saveAsDialogBox();
 	void saveDialogBox();
 	void reportIssue();
-	void undo();
-	void redo();
-
+	
 private:
 	Ui::Window widget;
 	SharedResources shared;

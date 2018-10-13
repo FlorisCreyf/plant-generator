@@ -64,21 +64,19 @@ void Window::createCurveEditor()
 
 void Window::keyPressEvent(QKeyEvent *event)
 {
-	if (!editor->isExecutingAction()) {
-		switch (event->key()) {
-		case Qt::Key_Z:
-			if (event->modifiers() & Qt::ControlModifier) {
-				if (event->modifiers() & Qt::ShiftModifier)
-					redo();
-				else
-					undo();
-			}
-			break;
-		case Qt::Key_Y:
-			if (event->modifiers() & Qt::ControlModifier)
-				redo();
-			break;
+	switch (event->key()) {
+	case Qt::Key_Z:
+		if (event->modifiers() & Qt::ControlModifier) {
+			if (event->modifiers() & Qt::ShiftModifier)
+				editor->redo();
+			else
+				editor->undo();
 		}
+		break;
+	case Qt::Key_Y:
+		if (event->modifiers() & Qt::ControlModifier)
+			editor->redo();
+		break;
 	}
 
 	QWidget::keyPressEvent(event);
@@ -148,16 +146,4 @@ void Window::reportIssue()
 {
 	QString link = "https://github.com/FlorisCreyf/plant-generator/issues";
 	QDesktopServices::openUrl(QUrl(link));
-}
-
-void Window::undo()
-{
-	if (!editor->isExecutingAction())
-		editor->undo();
-}
-
-void Window::redo()
-{
-	if (!editor->isExecutingAction())
-		editor->redo();
 }

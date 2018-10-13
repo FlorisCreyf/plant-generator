@@ -25,21 +25,21 @@ namespace pg {
 		float x;
 		float y;
 
-		Vec2 &operator +=(const Vec2 &b)
+		Vec2 &operator+=(const Vec2 &b)
 		{
 			this->x += b.x;
 			this->y += b.y;
 			return *this;
 		}
 
-		Vec2 &operator -=(const Vec2 &b)
+		Vec2 &operator-=(const Vec2 &b)
 		{
 			this->x -= b.x;
 			this->y -= b.y;
 			return *this;
 		}
 
-		Vec2 &operator *=(float n)
+		Vec2 &operator*=(float n)
 		{
 			this->x *= n;
 			this->y *= n;
@@ -52,7 +52,7 @@ namespace pg {
 		float y;
 		float z;
 		
-		Vec3 &operator +=(const Vec3 &b)
+		Vec3 &operator+=(const Vec3 &b)
 		{
 			this->x += b.x;
 			this->y += b.y;
@@ -60,7 +60,7 @@ namespace pg {
 			return *this;
 		}
 
-		Vec3 &operator -=(const Vec3 &b)
+		Vec3 &operator-=(const Vec3 &b)
 		{
 			this->x -= b.x;
 			this->y -= b.y;
@@ -68,7 +68,7 @@ namespace pg {
 			return *this;
 		}
 
-		Vec3 &operator *=(float n)
+		Vec3 &operator*=(float n)
 		{
 			this->x *= n;
 			this->y *= n;
@@ -76,7 +76,7 @@ namespace pg {
 			return *this;
 		}
 
-		Vec3 &operator /=(float n)
+		Vec3 &operator/=(float n)
 		{
 			this->x /= n;
 			this->y /= n;

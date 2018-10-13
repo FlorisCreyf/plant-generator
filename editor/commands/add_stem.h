@@ -24,14 +24,13 @@
 
 class AddStem : public Command {
 	StemSelection *selection;
-	TranslationAxes *axes;
 	pg::Stem *stem;
 	bool undone;
 
 	void create();
 
 public:
-	AddStem(StemSelection *selection, TranslationAxes *axes);
+	AddStem(StemSelection *selection);
 	~AddStem();
 	void execute();
 	void undo();

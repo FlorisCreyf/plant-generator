@@ -88,7 +88,7 @@ int PointSelection::selectPoint(QMouseEvent *event, const Spline &spline,
 	} else if (!ctrl)
 		/* Remove the entire selection if nothing was clicked on. */
 		points.clear();
-	
+
 	return selectedPoint;
 }
 
@@ -139,14 +139,14 @@ void PointSelection::selectNext(int max)
 void PointSelection::selectPrevious()
 {
 	if (!points.empty()) {
-		for (int i = *points.begin() - 1; i >= 0; --i)
+		for (int i = *points.begin() - 1; i >= 0; i--)
 			points.insert(i);
 	}
 }
 
 void PointSelection::selectAll(int max)
 {
-	for (int i = 0; i < max; ++i)
+	for (int i = 0; i < max; i++)
 		points.insert(i);
 }
 

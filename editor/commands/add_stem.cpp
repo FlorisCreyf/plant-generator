@@ -17,12 +17,11 @@
 
 #include "add_stem.h"
 #include "../commands/move_stem.h"
-#include "../../plant_generator/patterns.h"
+#include "plant_generator/patterns.h"
 
-AddStem::AddStem(StemSelection *selection, TranslationAxes *axes)
+AddStem::AddStem(StemSelection *selection)
 {
 	this->selection = selection;
-	this->axes = axes;
 	undone = false;
 }
 

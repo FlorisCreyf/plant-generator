@@ -21,7 +21,7 @@
 #include "command.h"
 #include "../stem_selection.h"
 #include "../geometry/rotation_axes.h"
-#include "../../plant_generator/plant.h"
+#include "plant_generator/plant.h"
 
 class RotateStem : public Command {
 	StemSelection *selection;
