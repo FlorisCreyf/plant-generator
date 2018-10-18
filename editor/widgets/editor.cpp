@@ -112,6 +112,7 @@ void Editor::keyPressEvent(QKeyEvent *event)
 		updateSelection();
 		update();
 		history.add(StemSelectionState(&selection));
+		emit selectionChanged();
 		break;
 	case Qt::Key_2:
 		if (ctrl)
@@ -121,6 +122,7 @@ void Editor::keyPressEvent(QKeyEvent *event)
 		updateSelection();
 		update();
 		history.add(StemSelectionState(&selection));
+		emit selectionChanged();
 		break;
 	case Qt::Key_3:
 		if (ctrl)
@@ -130,17 +132,19 @@ void Editor::keyPressEvent(QKeyEvent *event)
 		updateSelection();
 		update();
 		history.add(StemSelectionState(&selection));
+		emit selectionChanged();
 		break;
 	case Qt::Key_4:
 		if (!ctrl) {
 			selection.reduceToAncestors();
 			history.add(StemSelectionState(&selection));
+			emit selectionChanged();
+			updateSelection();
+			update();
 		}
-		updateSelection();
-		update();
 		break;
 	case Qt::Key_A:
-		if (mode == None) {
+		if (mode == None && selection.hasStems()) {
 			QPoint p = mapFromGlobal(QCursor::pos());
 			AddStem addStem(&selection);
 			addStem.execute();
