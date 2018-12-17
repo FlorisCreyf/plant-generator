@@ -25,7 +25,7 @@
 
 class RemoveSpline : public Command {
 	PointSelection *selection;
-	std::shared_ptr<PointSelection> prevSelection;
+	PointSelection prevSelection;
 	pg::Spline *spline;
 	pg::Spline prevSpline;
 	bool clearable;

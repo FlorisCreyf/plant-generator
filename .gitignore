@@ -4,6 +4,12 @@
 *.stash
 *.a
 *.plant
+*.aux
+*.log
+*.pdf
+*.gz
+*.pdf
+*.toc
 .desktop
 plant
 resources/

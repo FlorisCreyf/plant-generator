@@ -42,10 +42,10 @@ void MovePath::execute()
 		pg::Stem *stem = instance.first;
 		PointSelection &ps = instance.second;
 		auto points = ps.getPoints();
-		
+
 		if (points.empty())
 			continue;
-		
+
 		pg::VolumetricPath path = stem->getPath();
 		pg::Spline spline = path.getSpline();
 		moveSpline.setSelection(&instance.second);
@@ -70,4 +70,3 @@ MovePath *MovePath::clone()
 {
 	return new MovePath(*this);
 }
-

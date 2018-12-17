@@ -29,20 +29,19 @@ class StemSelection {
 	Camera *camera;
 	pg::Plant *plant;
 	std::map<pg::Stem *, PointSelection> selection;
-	
+
 	pg::Stem *getStem(pg::Ray ray);
 	std::pair<float, pg::Stem *> getStem(pg::Ray &ray, pg::Stem *stem);
 	void selectAll(pg::Stem *stem);
-	
+
 public:
 	StemSelection(Camera *camera, pg::Plant *plant);
 	bool operator==(const StemSelection &obj) const;
 	bool operator!=(const StemSelection &obj) const;
-	StemSelection *clone();
 
 	void removeStem(pg::Stem *stem);
 	void addStem(pg::Stem *stem);
-	
+
 	void select(QMouseEvent *event);
 	void selectStem(QMouseEvent *event);
 	void setInstances(std::map<pg::Stem *, PointSelection> instances);
@@ -54,10 +53,10 @@ public:
 	void selectChildren();
 	void selectAll();
 	void reduceToAncestors();
-	
+
 	bool hasStems() const;
 	bool contains(pg::Stem *stem) const;
-	
+
 	void clearPoints();
 	void selectNextPoints();
 	void selectPreviousPoints();
@@ -68,12 +67,12 @@ public:
 	bool hasPoint(int point) const;
 
 	pg::Vec3 getAveragePosition() const;
-	/** 
+	/**
 	 * The average position of the first selected points of each stem. The
 	 * location of a selected stem is included if no points are selected.
 	 */
 	pg::Vec3 getAveragePositionFP() const;
-	/** 
+	/**
 	 * The average direction of the first selected points of each stem. The
 	 * direction of a selected stem is included if no points are selected.
 	 */

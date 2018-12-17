@@ -15,16 +15,33 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SELECTION_STATE_H
-#define SELECTION_STATE_H
+#ifndef SAVE_STEM_H
+#define SAVE_STEM_H
 
-class SelectionState {
+#include "command.h"
+#include "../stem_selection.h"
+#include <map>
+
+class SaveStem : public Command {
+	StemSelection *selection;
+	StemSelection before;
+	StemSelection after;
+	std::map<pg::Stem *, pg::Stem> stems;
+	bool undone;
+
+	void swap();
+
 public:
-	virtual void replaceSelection() = 0;
-	virtual void swapSelection() = 0;
-	virtual SelectionState *clone() const = 0;
-	virtual bool hasChanged() const = 0;
+	SaveStem(StemSelection *selection);
+	/**
+	 * Determine if the saved stems are the same as the stems in the current
+	 * selection.
+	 */
+	bool isSameAsCurrent();
+	void setNewSelection();
+	void execute();
+	void undo();
+	SaveStem *clone();
 };
 
-#endif /* SELECTION_STATE_H */
-
+#endif /* SAVE_STEM_H */

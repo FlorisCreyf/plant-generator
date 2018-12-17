@@ -16,7 +16,6 @@
  */
 
 #include "property_box.h"
-#include "../history/stem_selection_state.h"
 #include <iterator>
 
 using pg::VolumetricPath;
@@ -25,11 +24,12 @@ using std::next;
 using std::prev;
 
 PropertyBox::PropertyBox(SharedResources *shared, QWidget *parent) :
-	QWidget(parent), memorize(nullptr)
+	QWidget(parent), saveStem(nullptr)
 {
 	this->shared = shared;
 	curveEditor = nullptr;
 	selectedCurve = nullptr;
+	changing = false;
 
 	QVBoxLayout *layout = new QVBoxLayout(this);
 	layout->setSizeConstraint(QLayout::SetMinimumSize);
@@ -101,21 +101,21 @@ void PropertyBox::createStemBox(QVBoxLayout *layout)
 void PropertyBox::fill()
 {
 	auto instances = editor->getSelection()->getInstances();
-	
+
 	if (instances.empty()) {
 		stemG->hide();
 		curveEditor->setEnabled(false);
 	} else {
 		pg::Stem *lastStem = instances.rbegin()->first;
 		auto nextIt = next(instances.begin());
-		
+
 		/* TODO make curve bold if radius curves are different. */
 		radiusB->blockSignals(true);
 		radiusB->setCurve(lastStem->getPath().getRadius());
 		radiusB->blockSignals(false);
 
 		indicateSimilarities(resolutionL);
-		
+
 		for (auto it = nextIt; it != instances.end(); ++it) {
 			pg::Stem *a = prev(it)->first;
 			pg::Stem *b = it->first;
@@ -124,7 +124,7 @@ void PropertyBox::fill()
 				break;
 			}
 		}
-		
+
 		resolutionV->blockSignals(true);
 		resolutionV->setValue(lastStem->getResolution());
 		resolutionV->blockSignals(false);
@@ -186,7 +186,7 @@ void PropertyBox::fill()
 
 void PropertyBox::changePathDegree(int i)
 {
-	beginChanging(degreeV);
+	beginChanging();
 	indicateSimilarities(degreeL);
 	int degree = i == 1 ? 3 : 1;
 	auto instances = editor->getSelection()->getInstances();
@@ -207,7 +207,7 @@ void PropertyBox::changePathDegree(int i)
 
 void PropertyBox::changeResolution(int i)
 {
-	beginChanging(resolutionV);
+	beginChanging();
 	indicateSimilarities(resolutionL);
 	auto instances = editor->getSelection()->getInstances();
 	for (auto &instance : instances)
@@ -217,7 +217,7 @@ void PropertyBox::changeResolution(int i)
 
 void PropertyBox::changeDivisions(int i)
 {
-	beginChanging(divisionV);
+	beginChanging();
 	indicateSimilarities(divisionL);
 	auto instances = editor->getSelection()->getInstances();
 	for (auto &instance : instances) {
@@ -230,7 +230,7 @@ void PropertyBox::changeDivisions(int i)
 
 void PropertyBox::changeRadius(double d)
 {
-	beginChanging(radiusV);
+	beginChanging();
 	indicateSimilarities(radiusL);
 	auto instances = editor->getSelection()->getInstances();
 	for (auto &instance : instances) {
@@ -243,7 +243,7 @@ void PropertyBox::changeRadius(double d)
 
 void PropertyBox::changeRadiusCurve(pg::Spline &spline)
 {
-	beginChanging(curveEditor);
+	beginChanging();
 	auto instances = editor->getSelection()->getInstances();
 	for (auto &instance : instances) {
 		VolumetricPath vp = instance.first->getPath();
@@ -253,24 +253,21 @@ void PropertyBox::changeRadiusCurve(pg::Spline &spline)
 	editor->change();
 }
 
-void PropertyBox::beginChanging(QWidget *widget)
+void PropertyBox::beginChanging()
 {
-	if (widget->hasFocus()) {
-		if (!changing) {
-			StemSelection *selection = editor->getSelection();
-			memorize = MemorizeStem(selection);
-			memorize.execute();
-		}
-		changing = true;
+	if (!changing) {
+		StemSelection *selection = editor->getSelection();
+		saveStem = SaveStem(selection);
+		saveStem.execute();
 	}
+	changing = true;
 }
 
 void PropertyBox::finishChanging()
 {
-	if (changing && !memorize.isSameAsCurrent()) {
-		History *history = editor->getHistory();
-		StemSelection *selection = editor->getSelection();
-		history->add(memorize, StemSelectionState(selection));
+	if (changing && !saveStem.isSameAsCurrent()) {
+		saveStem.setNewSelection();
+		editor->add(saveStem);
 	}
 	changing = false;
 }

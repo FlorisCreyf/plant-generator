@@ -21,16 +21,18 @@
 #define GL_GLEXT_PROTOTYPES
 
 #include "../camera.h"
+#include "../history.h"
 #include "../stem_selection.h"
+#include "../commands/add_stem.h"
 #include "../commands/move_stem.h"
 #include "../commands/move_path.h"
 #include "../commands/rotate_stem.h"
+#include "../commands/save_stem_selection.h"
 #include "../geometry/path.h"
 #include "../geometry/rotation_axes.h"
 #include "../geometry/translation_axes.h"
 #include "../graphics/buffer.h"
 #include "../graphics/shared_resources.h"
-#include "../history/history.h"
 #include "plant_generator/plant.h"
 #include "plant_generator/mesh.h"
 #include "plant_generator/generator.h"
@@ -52,7 +54,7 @@ public:
 	pg::Plant *getPlant();
 	StemSelection *getSelection();
 	const pg::Mesh *getMesh();
-	History *getHistory();
+	void add(Command &);
 	void undo();
 	void redo();
 
@@ -70,7 +72,6 @@ private:
 		None,
 		MovePoint,
 		PositionStem,
-		InitStem,
 		Rotate
 	} mode = None;
 	struct Scene {
@@ -94,10 +95,12 @@ private:
 	RotationAxes rotationAxes;
 
 	StemSelection selection;
-	bool moveCommand;
 	RotateStem rotateStem;
 	MoveStem moveStem;
 	MovePath movePath;
+	bool extrudeCommand;
+	bool addCommand;
+	AddStem addStem;
 	History history;
 
 	/* An offset is needed because the cursor is not necessarily at the

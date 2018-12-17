@@ -19,7 +19,7 @@
 #include "remove_spline.h"
 
 RemoveStem::RemoveStem(StemSelection *selection) :
-	prevSelection(selection->clone())
+	prevSelection(*selection)
 {
 	this->selection = selection;
 	cloned = false;
@@ -39,9 +39,9 @@ RemoveStem::~RemoveStem()
 	if (!cloned && !removals.empty()) {
 		/* Adjust the selection so that descendants are not deleted
 		 * after ancestors have been deleted. */
-		prevSelection->reduceToAncestors();
+		prevSelection.reduceToAncestors();
 		for (auto stem : removals)
-			if (prevSelection->contains(stem))
+			if (prevSelection.contains(stem))
 				pg::Plant::deleteStem(stem);
 	}
 }
@@ -96,7 +96,7 @@ void RemoveStem::undo()
 		} else
 			plant->insert(stem->getParent(), stem);
 	}
-	*selection = *prevSelection;
+	*selection = prevSelection;
 }
 
 RemoveStem *RemoveStem::clone()

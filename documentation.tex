@@ -1,0 +1,126 @@
+\documentclass[11pt,letterpaper]{article}
+\title{Plant Generator}
+\date{\today}
+\usepackage[margin=1in]{geometry}
+\usepackage{float}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta}
+\tikzset{
+>={Latex[width=2mm,length=2mm]},
+	box1/.style={
+		rectangle, 
+		sharp corners, 
+		fill=black!0,
+		draw=black, very thick,
+		text width=10em, 
+		minimum height=3em, 
+		text centered},
+	box2/.style={
+		rectangle, 
+		sharp corners, 
+		fill=black!0,
+		draw=black, very thick,
+		text width=3em, 
+		minimum height=3em, 
+		text centered}
+}
+
+\makeatletter
+\begin{document}
+\begin{center}
+	\begin{huge} \@title \end{huge} \\
+	\vspace{1em}
+	\begin{LARGE} Design \end{LARGE} \\
+	\vspace{1em}
+	\@date
+\end{center}
+\tableofcontents
+\pagebreak
+
+\section{Introduction}
+
+The project is split in two parts. The editor component handles all user input and provides realtime feedback. The generator component defines and generates the plant structure, which is used to create a plant mesh. It is intended that the generator is removable from the editor so that it can be used as a library instead. Plants are generated preferably from environmental input if the generator is used as a library.
+
+\vspace{2em}
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+[node distance=2cm]
+\node[box1] (main) {Main};	
+\node[box1, below of=main, xshift=0cm] (window) {Window};
+\node[box1, right of=window, xshift=3cm] (editor) {(Viewport) Editor};
+\node[box1, above of=editor, xshift=0cm] (propeditor) {Property Editors};
+\node[box1, below of=editor, xshift=0cm] (structgen) {Structure Generator};
+\node[box1, right of=structgen, xshift=3cm] (meshgen) {Mesh Generator};
+\draw[->] (main) -- (window);
+\draw[->] (window) -- (editor);
+\draw[->] (propeditor) -- (editor);
+\draw[->] (editor) -- (structgen);
+\draw[->] (structgen) -- (meshgen);
+\draw[->] (meshgen) |- (editor);
+\end{tikzpicture}
+\caption{Program Layout}
+\end{figure}
+
+\section{Editor}
+
+\subsection{Camera}
+
+The camera produces matrices for transforming the world space into the screen space. Points can be transformed so that a perspective or orthographic view is created. The camera also produces inverse matrices so that the screen space can be transformed back into the world space. This is useful for object selection.
+
+The variables listed below determine the positioning and orientation of the camera.
+\begin{itemize}
+\item \texttt{Vec3 target} -- The point the camera is pointed at.
+\item \texttt{float distance} -- The distance the camera is from the target.
+\item \texttt{float x} -- A rotation around the x-axis.
+\item \texttt{float y} -- A rotation around the y-axis.
+\end{itemize}
+
+The \texttt{x} and \texttt{y} rotations are used to calculate a point on a sphere. The location of the camera is then: (\textit{location on sphere}) (\textit{distance}) +  \textit{target}. The \texttt{x} and \texttt{y} rotations are also used to maintain the orientation of the camera even when the direction and up vectors are parallel.
+
+\subsection{History}
+\subsubsection{Current Design}
+
+The history maintains a list of past and future commands. Selection information is also stored within commands, and changing the selection will clear the future list.
+
+\subsubsection{Alternative Design}
+
+This history object keeps track of commands and selections. Selection changes that occur between commands are removed for brevity. In other words, the history object only keeps track of all selections after the last command.
+
+\vspace{2em}
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+[node distance=2.5cm, every node/.style={fill=white}, align=center]]
+\node[box1] (init) {Initial Selection};	
+\node[box1, below of=init] (a) {Command + Selection};	
+\node[box1, below of=a] (b) {Command + Selection};
+\node[box1, below of=b] (c) {Selection};
+\node[box1, below of=c] (d) {Selection};	
+\draw[->] (init) -- (a);
+\draw[->] (a) -- node{...} (b);
+\draw[->] (b) -- (c);
+\draw[->] (c) -- node{...} (d);
+\end{tikzpicture}
+\caption{History Structure}
+\end{figure}
+
+The structure stores the initial selection and the selection that was used to invoke each command. Each command is expected to update the selection for both \texttt{execute()} and \texttt{undo()} methods, and therefore only one selection needs to be stored per command. Sometimes the selection does not change between commands and only the most recent command needs to store a selection.
+
+Let \texttt{can\_undo} and \texttt{can\_undo} be booleans that determine if the selection needs to be changed before a command can be undone or redone.
+\begin{enumerate}
+\item \textbf{(add)} If a selection is added, then \texttt{can\_undo = false} and \texttt{can\_redo = false}.
+
+\item \textbf{(add)} If a command is added, then \texttt{can\_undo = true} and \texttt{can\_redo = false}. If no selection has been added since the last command, then remove the selection of the last command.
+
+\item \textbf{(undo)} If \texttt{can\_undo == true}, then \texttt{past.last().command.undo()}. Move the command to the future and set \texttt{can\_undo = !past.last().hasSelection()} and \texttt{can\_redo = true}. If \texttt{can\_undo == true}, then move the current selection to the last memento in \texttt{past}.
+
+\item \textbf{(undo)} If \texttt{can\_undo == false}, then undo the selection. If the new selection has a command, then \texttt{current = true}. Set \texttt{can\_redo = false}.
+
+\item \textbf{(redo)} \ldots
+
+\end{enumerate}
+
+\section{Generator}
+
+\end{document}

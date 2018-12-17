@@ -25,8 +25,8 @@
 
 class ExtrudeSpline : public Command {
 	PointSelection *selection;
-	std::shared_ptr<PointSelection> prevSelection;
-	std::shared_ptr<PointSelection> newSelection;
+	PointSelection prevSelection;
+	PointSelection newSelection;
 	pg::Spline *spline;
 	pg::Spline prevSpline;
 

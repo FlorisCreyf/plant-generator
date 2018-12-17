@@ -4,7 +4,7 @@
  * Plant Genererator is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.,
+ * (at your option) any later version.
  *
  * Plant Genererator is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,27 +15,40 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef MEMORIZE_STEM_H
-#define MEMORIZE_STEM_H
+ #include "save_point_selection.h"
 
-#include "command.h"
-#include "../stem_selection.h"
-#include <map>
+ SavePointSelection::SavePointSelection(PointSelection *selection) :
+ 	after(*selection), before(*selection)
+ {
+ 	this->selection = selection;
+ }
 
-class MemorizeStem : public Command {
-	StemSelection *selection;
-	std::map<pg::Stem *, pg::Stem> stems;
-	bool undone;
-	
-	void swap();
-	
-public:
-	MemorizeStem(StemSelection *selection);
-	bool isSameAsCurrent();
-	void execute();
-	void undo();
-	MemorizeStem *clone();
-};
+ bool SavePointSelection::hasChanged() const
+ {
+ 	return *selection != before;
+ }
 
-#endif /* MEMORIZE_STEM_H */
+ void SavePointSelection::setBefore()
+ {
+ 	before = *selection;
+ }
 
+ void SavePointSelection::setAfter()
+ {
+ 	after = *selection;
+ }
+
+ void SavePointSelection::execute()
+ {
+ 	*selection = after;
+ }
+
+ void SavePointSelection::undo()
+ {
+ 	*selection = before;
+ }
+
+ SavePointSelection *SavePointSelection::clone()
+ {
+ 	return new SavePointSelection(*this);
+ }

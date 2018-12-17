@@ -27,13 +27,12 @@ class PointSelection {
 	Camera *camera;
 	std::set<int> points;
 	pg::Vec3 location;
-	
+
 public:
 	PointSelection(Camera *camera);
 	bool operator==(const PointSelection &obj) const;
 	bool operator!=(const PointSelection &obj) const;
-	PointSelection *clone();
-	
+
 	/** Returns the index of the point that was clicked on. */
 	int selectPoint(QMouseEvent *event, const pg::Spline &spline,
 		pg::Vec3 location);
@@ -41,8 +40,8 @@ public:
 	std::set<int> getPoints() const;
 	bool hasPoints() const;
 	bool contains(int point) const;
-	
-	pg::Vec3 getAveragePosition(const pg::Spline &spline, 
+
+	pg::Vec3 getAveragePosition(const pg::Spline &spline,
 		pg::Vec3 location) const;
 
 	void clear();

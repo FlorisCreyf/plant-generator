@@ -19,13 +19,13 @@
 #define CURVE_EDITOR_H
 
 #include "../camera.h"
+#include "../history.h"
 #include "../point_selection.h"
 #include "../commands/move_spline.h"
 #include "../geometry/path.h"
 #include "../graphics/buffer.h"
 #include "../graphics/shared_resources.h"
 #include "../geometry/translation_axes.h"
-#include "../history/history.h"
 #include "plant_generator/math/math.h"
 #include "plant_generator/path.h"
 #include <QOpenGLFunctions>

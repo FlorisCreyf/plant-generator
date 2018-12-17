@@ -15,30 +15,40 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "stem_selection_state.h"
+#include "save_stem_selection.h"
 
-StemSelectionState::StemSelectionState(StemSelection *selection) :
-	copy(selection->clone())
+SaveStemSelection::SaveStemSelection(StemSelection *selection) :
+	after(*selection), before(*selection)
 {
 	this->selection = selection;
 }
 
-void StemSelectionState::replaceSelection()
+bool SaveStemSelection::hasChanged() const
 {
-	*selection = *copy;
+	return *selection != before;
 }
 
-void StemSelectionState::swapSelection()
+void SaveStemSelection::setBefore()
 {
-	*copy = *selection;
+	before = *selection;
 }
 
-StemSelectionState *StemSelectionState::clone() const
+void SaveStemSelection::setAfter()
 {
-	return new StemSelectionState(*this);
+	after = *selection;
 }
 
-bool StemSelectionState::hasChanged() const
+void SaveStemSelection::execute()
 {
-	return *selection != *copy;
+	*selection = after;
+}
+
+void SaveStemSelection::undo()
+{
+	*selection = before;
+}
+
+SaveStemSelection *SaveStemSelection::clone()
+{
+	return new SaveStemSelection(*this);
 }

@@ -19,7 +19,7 @@
 #include "../commands/move_stem.h"
 #include "plant_generator/patterns.h"
 
-AddStem::AddStem(StemSelection *selection)
+AddStem::AddStem(StemSelection *selection) : prevSelection(*selection)
 {
 	this->selection = selection;
 	undone = false;
@@ -64,17 +64,22 @@ void AddStem::execute()
 	if (undone) {
 		pg::Plant *plant = selection->getPlant();
 		plant->insert(stem->getParent(), stem);
-		undone = false;
-	} else
+		selection->clear();
+		selection->addStem(stem);
+		selection->selectLastPoints();
+	} else {
+		prevSelection = *selection;
 		create();
+	}
 }
 
 void AddStem::undo()
 {
 	pg::Plant *plant = selection->getPlant();
 	plant->release(stem);
-	selection->clear();
-	selection->addStem(stem->getParent());
+	*selection = prevSelection;
+	// selection->clear();
+	// selection->addStem(stem->getParent());
 	undone = true;
 }
 

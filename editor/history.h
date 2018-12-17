@@ -18,32 +18,16 @@
 #ifndef HISTORY_H
 #define HISTORY_H
 
-#include "selection_state.h"
-#include "editor/commands/command.h"
+#include "commands/command.h"
 #include <vector>
 #include <memory>
 
 class History {
-	struct Memento {
-		Memento(Command &command, const SelectionState &selection) :
-			command(command.clone()),
-			selection(selection.clone())
-		{
-		
-		}
-		std::shared_ptr<Command> command;
-		std::shared_ptr<SelectionState> selection;
-	};
-	std::vector<std::shared_ptr<SelectionState>> pastSelections;
-	std::vector<std::shared_ptr<SelectionState>> futureSelections;
-	std::shared_ptr<SelectionState> currentSelection;
-	std::vector<Memento> past;
-	std::vector<Memento> future;
-	
+	std::vector<std::shared_ptr<Command>> past;
+	std::vector<std::shared_ptr<Command>> future;
+
 public:
-	History();
-	void add(Command &command, const SelectionState &selection);
-	void add(const SelectionState &selection);
+	void add(Command &command);
 	void undo();
 	void redo();
 	void clear();

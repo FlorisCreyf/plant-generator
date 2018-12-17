@@ -15,23 +15,37 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef STEM_SELECTION_STATE_H
-#define STEM_SELECTION_STATE_H
+#include "history.h"
 
-#include "selection_state.h"
-#include "editor/stem_selection.h"
+using std::vector;
 
-class StemSelectionState : public SelectionState {
-	StemSelection *selection;
-	std::shared_ptr<StemSelection> copy;
-	
-public:
-	StemSelectionState(StemSelection *selection);
-	void replaceSelection();
-	void swapSelection();
-	StemSelectionState *clone() const;
-	bool hasChanged() const;
-};
+void History::add(Command &command)
+{
+	future.clear();
+	std::shared_ptr<Command> cmd(command.clone());
+	past.push_back(std::move(cmd));
+}
 
-#endif /* STEM_SELECTION_STATE_H */
+void History::undo()
+{
+	if (!past.empty()) {
+		past.back()->undo();
+		future.push_back(past.back());
+		past.pop_back();
+	}
+}
 
+void History::redo()
+{
+	if (!future.empty()) {
+		future.back()->execute();
+		past.push_back(future.back());
+		future.pop_back();
+	}
+}
+
+void History::clear()
+{
+	future.clear();
+	past.clear();
+}

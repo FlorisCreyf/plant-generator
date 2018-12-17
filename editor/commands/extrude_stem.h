@@ -23,8 +23,8 @@
 
 class ExtrudeStem : public Command {
 	StemSelection *selection;
-	std::shared_ptr<StemSelection> prevSelection;
-	std::shared_ptr<StemSelection> newSelection;
+	StemSelection prevSelection;
+	StemSelection newSelection;
 	std::map<pg::Stem *, pg::Spline> prevSplines;
 
 	void extrude();

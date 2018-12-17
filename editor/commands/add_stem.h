@@ -24,6 +24,7 @@
 
 class AddStem : public Command {
 	StemSelection *selection;
+	StemSelection prevSelection;
 	pg::Stem *stem;
 	bool undone;
 

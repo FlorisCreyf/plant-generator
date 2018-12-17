@@ -15,15 +15,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "memorize_stem.h"
+#include "save_stem.h"
 
-MemorizeStem::MemorizeStem(StemSelection *selection)
+SaveStem::SaveStem(StemSelection *selection) :
+	before(nullptr, nullptr), after(nullptr, nullptr)
 {
 	this->selection = selection;
 	undone = false;
 }
 
-bool MemorizeStem::isSameAsCurrent()
+bool SaveStem::isSameAsCurrent()
 {
 	if (selection) {
 		auto instances = selection->getInstances();
@@ -37,11 +38,18 @@ bool MemorizeStem::isSameAsCurrent()
 	return true;
 }
 
-void MemorizeStem::execute()
+void SaveStem::setNewSelection()
 {
-	if (undone)
+	after = *selection;
+}
+
+void SaveStem::execute()
+{
+	if (undone) {
 		swap();
-	else {
+		*selection = after;
+	} else {
+		before = *selection;
 		auto instances = selection->getInstances();
 		for (auto &instance : instances) {
 			stems.emplace(instance.first, *instance.first);
@@ -50,27 +58,28 @@ void MemorizeStem::execute()
 	}
 }
 
-void MemorizeStem::undo()
+void SaveStem::undo()
 {
 	swap();
+	*selection = before;
 	undone = true;
 }
 
-void MemorizeStem::swap()
+void SaveStem::swap()
 {
 	auto instances = selection->getInstances();
 	for (auto instance : instances) {
 		pg::Stem *stem = instance.first;
 		auto it = stems.find(stem);
 		if (it != stems.end()) {
-			pg::Stem temp = *stem;
+			pg::Stem s = *stem;
 			*stem = it->second;
-			it->second = temp;
+			it->second = s;
 		}
 	}
 }
 
-MemorizeStem *MemorizeStem::clone()
+SaveStem *SaveStem::clone()
 {
-	return new MemorizeStem(*this);
+	return new SaveStem(*this);
 }

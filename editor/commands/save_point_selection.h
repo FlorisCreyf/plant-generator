@@ -15,23 +15,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef POINT_SELECTION_STATE_H
-#define POINT_SELECTION_STATE_H
+#ifndef SAVE_POINT_SELECTION_H
+#define SAVE_POINT_SELECTION_H
 
-#include "selection_state.h"
-#include "editor/point_selection.h"
-#include <memory>
+#include "command.h"
+#include "../point_selection.h"
 
-class PointSelectionState : public SelectionState {
+class SavePointSelection : public Command {
 	PointSelection *selection;
-	std::shared_ptr<PointSelection> copy;
+	PointSelection after;
+	PointSelection before;
 
 public:
-	PointSelectionState(PointSelection *selection);
-	void replaceSelection();
-	void swapSelection();
-	PointSelectionState *clone() const;
+	SavePointSelection(PointSelection *selection);
 	bool hasChanged() const;
+	void setBefore();
+	void setAfter();
+	void execute();
+	void undo();
+	SavePointSelection *clone();
 };
 
-#endif /* POINT_SELECTION_STATE_H */
+#endif /* SAVE_POINT_SELECTION_H */

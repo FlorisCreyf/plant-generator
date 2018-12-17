@@ -20,7 +20,7 @@
 #include <iterator>
 
 ExtrudeSpline::ExtrudeSpline(PointSelection *selection, pg::Spline *spline) :
-	prevSelection(selection->clone())
+	prevSelection(*selection), newSelection(*selection)
 {
 	this->selection = selection;
 	this->spline = spline;
@@ -30,14 +30,14 @@ void ExtrudeSpline::execute()
 {
 	if (prevSpline.getSize() > 0) {
 		*spline = prevSpline;
-		*selection = *newSelection;
+		*selection = newSelection;
 	} else {
 		std::set<int> points = selection->getPoints();
 		std::set<int> newPoints;
 		int o = 0;
 
 		for (auto it = points.begin(); it != points.end(); ++it) {
-			int p = *it;		
+			int p = *it;
 			p = spline->insert(p + o, spline->getControls()[p + o]);
 			newPoints.insert(p);
 			o += spline->getDegree();
@@ -49,17 +49,14 @@ void ExtrudeSpline::execute()
 
 void ExtrudeSpline::undo()
 {
-	newSelection.reset(selection->clone());
+	newSelection = *selection;
 	prevSpline = *spline;
 	RemoveSpline remove(selection, spline);
 	remove.execute();
-	*selection = *prevSelection;
+	*selection = prevSelection;
 }
 
 ExtrudeSpline *ExtrudeSpline::clone()
 {
 	return new ExtrudeSpline(*this);
 }
-
-
-

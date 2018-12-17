@@ -21,7 +21,7 @@
 #include "editor.h"
 #include "curve_button.h"
 #include "curve_editor.h"
-#include "../commands/memorize_stem.h"
+#include "../commands/save_stem.h"
 #include <QtWidgets>
 #include <memory>
 
@@ -51,7 +51,7 @@ signals:
 private:
 	SharedResources *shared;
 	Editor *editor;
-	MemorizeStem memorize;
+	SaveStem saveStem;
 	CurveEditor *curveEditor;
 	CurveButton *selectedCurve;
 
@@ -72,10 +72,10 @@ private:
 	QComboBox *degreeV;
 
 	bool changing = false;
-	
+
 	void initProperties();
 	void createStemBox(QVBoxLayout *layout);
-	void beginChanging(QWidget *widget);
+	void beginChanging();
 	void indicateDifferences(QWidget *widget);
 	void indicateSimilarities(QWidget *widget);
 	QWidget *createCenteredWidget(QWidget *);

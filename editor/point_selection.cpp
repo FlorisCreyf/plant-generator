@@ -37,11 +37,6 @@ bool PointSelection::operator!=(const PointSelection &obj) const
 	return !(*this == obj);
 }
 
-PointSelection *PointSelection::clone()
-{
-	return new PointSelection(*this);
-}
-
 int PointSelection::selectPoint(QMouseEvent *event, const Spline &spline,
 	pg::Vec3 location)
 {

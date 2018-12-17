@@ -28,11 +28,6 @@ StemSelection::StemSelection(Camera *camera, pg::Plant *plant)
 	this->plant = plant;
 }
 
-StemSelection *StemSelection::clone()
-{
-	return new StemSelection(*this);
-}
-
 bool StemSelection::operator==(const StemSelection &obj) const
 {
 	for (auto &instance : selection) {
@@ -65,7 +60,7 @@ void StemSelection::addStem(pg::Stem *stem)
 void StemSelection::select(QMouseEvent *event)
 {
 	int point = -1;
-	
+
 	for (auto &instance : selection) {
 		Stem *stem = instance.first;
 		PointSelection &ps = instance.second;
@@ -82,7 +77,7 @@ void StemSelection::select(QMouseEvent *event)
 		}
 	}
 
-	if (point < 0) 
+	if (point < 0)
 		selectStem(event);
 }
 
@@ -95,7 +90,7 @@ void StemSelection::selectStem(QMouseEvent *event)
 	/* Remove previous selections if no modifier key is pressed. */
 	if (!(event->modifiers() & Qt::ControlModifier))
 		selection.clear();
-	
+
 	if (stem) {
 		/* Remove the stem from the selection if it is already
 		 * selected. */

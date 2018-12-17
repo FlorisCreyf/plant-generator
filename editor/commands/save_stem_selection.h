@@ -15,30 +15,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "point_selection_state.h"
+#ifndef SAVE_STEM_SELECTION_H
+#define SAVE_STEM_SELECTION_H
 
-PointSelectionState::PointSelectionState(PointSelection *selection) :
-	copy(selection->clone())
-{
-	this->selection = selection;
-}
+#include "command.h"
+#include "../stem_selection.h"
 
-void PointSelectionState::replaceSelection()
-{
-	*selection = *copy;
-}
+class SaveStemSelection : public Command {
+	StemSelection *selection;
+	StemSelection after;
+	StemSelection before;
 
-void PointSelectionState::swapSelection()
-{
-	*copy = *selection;
-}
+public:
+	SaveStemSelection(StemSelection *selection);
+	bool hasChanged() const;
+	void setBefore();
+	void setAfter();
+	void execute();
+	void undo();
+	SaveStemSelection *clone();
+};
 
-PointSelectionState *PointSelectionState::clone() const
-{
-	return new PointSelectionState(*this);
-}
-
-bool PointSelectionState::hasChanged() const
-{
-	return *selection != *copy;
-}
+#endif /* SAVE_STEM_SELECTION_H */

@@ -16,12 +16,9 @@
  */
 
 #include "editor.h"
-#include "../commands/add_stem.h"
 #include "../commands/extrude_stem.h"
 #include "../commands/remove_stem.h"
 #include "../geometry/geometry.h"
-#include "../history/history.h"
-#include "../history/stem_selection_state.h"
 #include <algorithm>
 #include <cmath>
 #include <fstream>
@@ -42,7 +39,8 @@ Editor::Editor(SharedResources *shared, QWidget *parent) :
 	selection(&camera, &plant),
 	rotateStem(&selection, &rotationAxes),
 	moveStem(&selection, camera, 0, 0),
-	movePath(&selection, &translationAxes)
+	movePath(&selection, &translationAxes),
+	addStem(&selection)
 {
 	this->shared = shared;
 	Vec3 color1 = {0.4f, 0.1f, 0.6f};
@@ -51,8 +49,9 @@ Editor::Editor(SharedResources *shared, QWidget *parent) :
 	path.setColor(color1, color2, color3);
 	setMouseTracking(true);
 	setFocus();
-	moveCommand = false;
-	history.add(StemSelectionState(&selection));
+
+	extrudeCommand = false;
+	addCommand = false;
 }
 
 void Editor::initializeGL()
@@ -105,59 +104,78 @@ void Editor::keyPressEvent(QKeyEvent *event)
 	bool ctrl = event->modifiers() & Qt::ControlModifier;
 	switch (event->key()) {
 	case Qt::Key_1:
-		if (ctrl)
-			selection.selectNextPoints();
-		else
-			selection.selectChildren();
-		updateSelection();
-		update();
-		history.add(StemSelectionState(&selection));
-		emit selectionChanged();
+		{
+			SaveStemSelection selectionCopy(&selection);
+			if (ctrl)
+				selection.selectNextPoints();
+			else
+				selection.selectChildren();
+			if (selectionCopy.hasChanged()) {
+				selectionCopy.setAfter();
+				history.add(selectionCopy);
+				updateSelection();
+				update();
+				emit selectionChanged();
+			}
+		}
 		break;
 	case Qt::Key_2:
-		if (ctrl)
-			selection.selectPreviousPoints();
-		else
-			selection.selectSiblings();
-		updateSelection();
-		update();
-		history.add(StemSelectionState(&selection));
-		emit selectionChanged();
+		{
+			SaveStemSelection selectionCopy(&selection);
+			if (ctrl)
+				selection.selectPreviousPoints();
+			else
+				selection.selectSiblings();
+			if (selectionCopy.hasChanged()) {
+				selectionCopy.setAfter();
+				history.add(selectionCopy);
+				updateSelection();
+				update();
+				emit selectionChanged();
+			}
+		}
 		break;
 	case Qt::Key_3:
-		if (ctrl)
-			selection.selectAllPoints();
-		else
-			selection.selectAll();
-		updateSelection();
-		update();
-		history.add(StemSelectionState(&selection));
-		emit selectionChanged();
+		{
+			SaveStemSelection selectionCopy(&selection);
+			if (ctrl)
+				selection.selectAllPoints();
+			else
+				selection.selectAll();
+			if (selectionCopy.hasChanged()) {
+				selectionCopy.setAfter();
+				history.add(selectionCopy);
+				updateSelection();
+				update();
+				emit selectionChanged();
+			}
+		}
 		break;
 	case Qt::Key_4:
 		if (!ctrl) {
+			SaveStemSelection selectionCopy(&selection);
 			selection.reduceToAncestors();
-			history.add(StemSelectionState(&selection));
-			emit selectionChanged();
-			updateSelection();
-			update();
+			if (selectionCopy.hasChanged()) {
+				selectionCopy.setAfter();
+				history.add(selectionCopy);
+				emit selectionChanged();
+				updateSelection();
+				update();
+			}
 		}
 		break;
 	case Qt::Key_A:
 		if (mode == None && selection.hasStems()) {
 			QPoint p = mapFromGlobal(QCursor::pos());
-			AddStem addStem(&selection);
 			addStem.execute();
-			history.add(addStem, StemSelectionState(&selection));
-
 			clickOffset[0] = clickOffset[1] = 0;
 			translationAxes.selectCenter();
-			mode = InitStem;
+			mode = PositionStem;
+			addCommand = true;
 			moveStem = MoveStem(&selection, camera, p.x(), p.y());
 			moveStem.snapToCursor(true);
 			moveStem.set(p.x(), p.y());
 			moveStem.execute();
-
 			change();
 			update();
 			emit selectionChanged();
@@ -172,8 +190,8 @@ void Editor::keyPressEvent(QKeyEvent *event)
 			mode = MovePoint;
 			ExtrudeStem extrude(&selection);
 			extrude.execute();
-			history.add(extrude, StemSelectionState(&selection));
-
+			history.add(extrude);
+			extrudeCommand = true;
 			QPoint p = mapFromGlobal(QCursor::pos());
 			pg::Vec3 avg = selection.getAveragePosition();
 			setClickOffset(p.x(), p.y(), avg);
@@ -218,8 +236,7 @@ void Editor::keyPressEvent(QKeyEvent *event)
 			mode = None;
 			RemoveStem removeStem(&selection);
 			removeStem.execute();
-			history.add(removeStem, StemSelectionState(&selection));
-
+			history.add(removeStem);
 			emit selectionChanged();
 			updateSelection();
 			change();
@@ -246,17 +263,21 @@ void Editor::mousePressEvent(QMouseEvent *event)
 
 	if (mode == Rotate) {
 		mode = None;
-		history.add(rotateStem, StemSelectionState(&selection));
+		history.add(rotateStem);
 		rotationAxes.selectCenter();
 		update();
 	} else if (event->button() == Qt::RightButton) {
 		if (mode == None || mode == MovePoint) {
+			SaveStemSelection selectionCopy(&selection);
 			mode = None;
 			selection.select(event);
-			history.add(StemSelectionState(&selection));
-			emit selectionChanged();
-			updateSelection();
-			update();
+			if (selectionCopy.hasChanged()) {
+				selectionCopy.setAfter();
+				history.add(selectionCopy);
+				emit selectionChanged();
+				updateSelection();
+				update();
+			}
 		}
 	} if (event->button() == Qt::MidButton && mode == None) {
 		camera.setStartCoordinates(p.x(), p.y());
@@ -269,16 +290,17 @@ void Editor::mousePressEvent(QMouseEvent *event)
 	} else if (event->button() == Qt::LeftButton) {
 		if (selection.hasPoints() && mode == None) {
 			movePath = MovePath(&selection, &translationAxes);
-			moveCommand = true;
 			selectAxis(p.x(), p.y());
 		} else if (mode == PositionStem) {
-			mode = None;
-			history.add(moveStem, StemSelectionState(&selection));
-		} else if (mode == InitStem) {
-			mode = MovePoint;
-			movePath.set(camera, p.x(), p.y());
-			movePath.execute();
-			change();
+			if (addCommand) {
+				mode = MovePoint;
+				movePath.set(camera, p.x(), p.y());
+				movePath.execute();
+				change();
+			} else {
+				mode = None;
+				history.add(moveStem);
+			}
 		}
 	}
 
@@ -291,10 +313,13 @@ void Editor::mouseReleaseEvent(QMouseEvent *event)
 		camera.setAction(Camera::None);
 	if (mode == MovePoint && event->button() == Qt::LeftButton) {
 		translationAxes.clearSelection();
-		if (moveCommand) {
-			history.add(movePath, StemSelectionState(&selection));
-			moveCommand = false;
+		if (addCommand) {
+			history.add(addStem);
+			addCommand = false;
+		} else if (!extrudeCommand) {
+			history.add(movePath);
 		}
+		extrudeCommand = false;
 		mode = None;
 	}
 }
@@ -306,7 +331,7 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
 
 	camera.executeAction(point.x(), point.y());
 
-	if (mode == PositionStem || mode == InitStem) {
+	if (mode == PositionStem) {
 		moveStem.set(point.x(), point.y());
 		moveStem.execute();
 		change();
@@ -533,7 +558,6 @@ void Editor::load(const char *filename)
 	}
 	selection.clear();
 	history.clear();
-	history.add(StemSelectionState(&selection));
 	emit selectionChanged();
 	change();
 }
@@ -553,9 +577,9 @@ const pg::Mesh *Editor::getMesh()
 	return &mesh;
 }
 
-History *Editor::getHistory()
+void Editor::add(Command &cmd)
 {
-	return &history;
+	history.add(cmd);
 }
 
 void Editor::undo()

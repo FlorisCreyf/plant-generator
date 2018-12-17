@@ -24,9 +24,9 @@
 
 class RemoveStem : public Command {
 	StemSelection *selection;
+	StemSelection prevSelection;
 	std::map<pg::Stem *, pg::Spline> splines;
 	std::vector<pg::Stem *> removals;
-	std::shared_ptr<StemSelection> prevSelection;
 	bool cloned;
 
 public:

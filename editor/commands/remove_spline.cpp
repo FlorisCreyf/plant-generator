@@ -18,7 +18,7 @@
 #include "remove_spline.h"
 
 RemoveSpline::RemoveSpline(PointSelection *selection, pg::Spline *spline) :
-	prevSelection(selection->clone())
+	prevSelection(*selection)
 {
 	this->selection = selection;
 	this->spline = spline;
@@ -77,7 +77,7 @@ void RemoveSpline::execute()
 
 void RemoveSpline::undo()
 {
-	*selection = *prevSelection;
+	*selection = prevSelection;
 	*spline = prevSpline;
 }
 

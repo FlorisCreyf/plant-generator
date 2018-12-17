@@ -19,7 +19,7 @@
 #include "remove_stem.h"
 
 ExtrudeStem::ExtrudeStem(StemSelection *selection) :
-	prevSelection(selection->clone())
+	prevSelection(*selection), newSelection(*selection)
 {
 	this->selection = selection;
 }
@@ -57,7 +57,7 @@ void ExtrudeStem::redo()
 		path.setSpline(item.second);
 		stem->setPath(path);
 	}
-	*selection = *newSelection;
+	*selection = newSelection;
 }
 
 void ExtrudeStem::execute()
@@ -71,7 +71,7 @@ void ExtrudeStem::execute()
 void ExtrudeStem::undo()
 {
 	/* Memorize state before undoing. */
-	newSelection.reset(selection->clone());
+	newSelection = *selection;
 	prevSplines.clear();
 	auto instances = selection->getInstances();
 	for (auto &instance : instances) {
@@ -83,7 +83,7 @@ void ExtrudeStem::undo()
 
 	RemoveStem remove(selection);
 	remove.execute();
-	*selection = *prevSelection;
+	*selection = prevSelection;
 }
 
 ExtrudeStem *ExtrudeStem::clone()
