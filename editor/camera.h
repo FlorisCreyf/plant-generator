@@ -61,7 +61,6 @@ private:
 	Action action;
 
 	pg::Mat4 projection;
-	pg::Vec3 up;
 	pg::Vec3 eye;
 	pg::Vec3 feye;
 	pg::Vec3 target;

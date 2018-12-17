@@ -26,7 +26,6 @@ using pg::Mat4;
 Camera::Camera()
 {
 	action = None;
-	up = {0.0f, 1.0f, 0.0f};
 	posDiff = {0.0f, 0.0f};
 	pos = {0.0f, 30.0f};
 	ftarget = target = {0.0f, 4.0f, 0.0f};
@@ -151,15 +150,6 @@ Vec3 Camera::getCameraPosition()
 	if (!perspective)
 		initOrthographic(near, far);
 
-	if (std::abs(y) < M_PI*0.5f)
-		up = {0.0f, 1.0f, 0.0f};
-	else if (std::abs(y) < M_PI*1.5f)
-		up = {0.0f, -1.0f, 0.0f};
-	else if (std::abs(y) >= M_PI*1.5f)
-		up = {0.0f, 1.0f, 0.0f};
-	else if (std::abs(y) >= M_PI*0.5f)
-		up = {0.0f, -1.0f, 0.0f};
-
 	return eye;
 }
 
@@ -195,9 +185,9 @@ Mat4 Camera::getInverseVP()
 Mat4 Camera::getLookAtMatrix(Vec3 &eye, Vec3 &center)
 {
 	float x, y, z;
-	float xx = (pos.x - posDiff.x) * M_PI / 360.0f;
+	float rot = (pos.x - posDiff.x) * M_PI / 360.0f;
 	Vec3 a = pg::normalize(center - eye);
-	Vec3 b = {std::sin(xx), 0.0f, -std::cos(xx)};
+	Vec3 b = {std::sin(rot), 0.0f, -std::cos(rot)};
 	Vec3 c = pg::cross(b, a);
 	x = -pg::dot(b, eye);
 	y = -pg::dot(c, eye);
