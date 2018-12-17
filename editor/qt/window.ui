@@ -19,22 +19,22 @@
   </property>
   <property name="styleSheet">
    <string notr="true">
-QMenuBar QMenu {
+ QMenu {
 	background-color:#666;
 	border:1px solid #777;
 	font-size:11px;
 	color:#fff;
-} QMenuBar QMenu::item {
+} QMenu::item {
 	margin:0;
 	color:#eee;
 	padding:5px 100px 5px 30px;
 	background-color:transparent;
-} QMenuBar QMenu::item:disabled {
+} QMenu::item:disabled {
 	color:#aaa;
-} QMenuBar QMenu::item:selected {
+} QMenu::item:selected {
 	background:#5a5a5a;
-} QMenuBar QMenu::shortcut {
-} QMenuBar QMenu::separator {
+} QMenu::shortcut {
+} QMenu::separator {
 	background-color:#777;
 	height:1px;
 } QMenuBar {
@@ -152,18 +152,18 @@ QDockWidget QWidget {
 	background:transparent;
 	padding:4px 0 0 8px;
 	margin:0;
-} QDockWidget QTableView {
+} QTableView {
 	background:transparent;
-} QDockWidget QTabBar {
+} QTabBar {
 	background:#333;
 	qproperty-drawBase:0;
-} QDockWidget QTabBar::tab {
+}  QTabBar::tab {
 	background:#333;
 	color:#aaa;
 	top:0;
-	padding:4px 10px;
+	padding:6px 10px;
 	margin:0;
-} QDockWidget QTabBar::tab:selected {
+} QTabBar::tab:selected {
 	background:#222;
 } QWidget#CurveButtonWidget {
 	border:solid 1px #fff;
