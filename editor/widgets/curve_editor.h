@@ -98,6 +98,7 @@ private:
 	void focusOutEvent(QFocusEvent *event);
 	void createInterface();
 	void paintCurve(pg::Mat4 &vp);
+	void extrude();
 	void setClickOffset(int x, int y, pg::Vec3 point);
 };
 

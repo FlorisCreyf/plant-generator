@@ -186,35 +186,7 @@ void CurveEditor::keyPressEvent(QKeyEvent *event)
 		}
 		break;
 	case Qt::Key_E:
-		{
-			/* The last point cannot be extruded. */
-			auto points = selection.getPoints();
-			int last = spline.getSize() - 1;
-			if (points.size() > 0 || (!points.empty() &&
-				*points.rbegin() != last)) {
-
-				points.erase(last);
-				selection.setPoints(points);
-
-				QPoint p = mapFromGlobal(QCursor::pos());
-				Vec3 avg = selection.getAveragePosition(spline,
-					pg::getZeroVec3());
-				axes.setPosition(avg);
-				setClickOffset(p.x(), p.y(), avg);
-
-				origSpline = spline;
-				ExtrudeSpline cmd(&selection, &origSpline);
-				cmd.execute();
-				spline = origSpline;
-				extruding = true;
-				initiateMovePoint();
-				applyRestrictions();
-				createInterface();
-				update();
-				history.add(cmd);
-				emit curveChanged(spline, name);
-			}
-		}
+		extrude();
 		break;
 	case Qt::Key_Z:
 		if (event->modifiers() & Qt::ControlModifier) {
@@ -249,12 +221,56 @@ void CurveEditor::keyPressEvent(QKeyEvent *event)
 			update();
 			history.add(cmd);
 			emit curveChanged(spline, name);
-			// emit editingFinished();
 		}
 		break;
 	default:
 		break;
 	}
+}
+
+void CurveEditor::extrude()
+{
+	auto points = selection.getPoints();
+	int last = spline.getSize() - 1;
+
+	/* The last point cannot be extruded. */
+	points.erase(last);
+
+	/* Extrusion should fail if tangents overlap. */
+	if (spline.getDegree() == 3) {
+		auto controls = spline.getControls();
+		for (auto s : points) {
+			if (s % 3 == 1 && controls[s+1].x < controls[s].x)
+				points.erase(s);
+			if (s % 3 == 0 && controls[s+2].x < controls[s+1].x)
+				points.erase(s);
+			if (s % 3 == 2 && controls[s-1].x > controls[s].x)
+				points.erase(s);
+		}
+	}
+
+	if (points.empty())
+		return;
+
+	selection.setPoints(points);
+
+	QPoint p = mapFromGlobal(QCursor::pos());
+	Vec3 avg = pg::getZeroVec3();
+	avg = selection.getAveragePosition(spline, avg);
+	axes.setPosition(avg);
+	setClickOffset(p.x(), p.y(), avg);
+
+	origSpline = spline;
+	ExtrudeSpline cmd(&selection, &origSpline);
+	cmd.execute();
+	spline = origSpline;
+	extruding = true;
+	initiateMovePoint();
+	applyRestrictions();
+	createInterface();
+	update();
+	history.add(cmd);
+	emit curveChanged(spline, name);
 }
 
 void CurveEditor::mousePressEvent(QMouseEvent *event)
