@@ -45,13 +45,21 @@ namespace pg {
 			this->y *= n;
 			return *this;
 		}
+
+		template<class Archive>
+		void serialize(Archive &ar, const unsigned int version)
+		{
+			(void)version;
+			ar & x;
+			ar & y;
+		}
 	};
 
 	struct Vec3 {
 		float x;
 		float y;
 		float z;
-		
+
 		Vec3 &operator+=(const Vec3 &b)
 		{
 			this->x += b.x;
@@ -161,7 +169,7 @@ namespace pg {
 	{
 		return vec.x == 0 && vec.y == 0 && vec.z == 0;
 	}
-	
+
 	inline pg::Vec3 getZeroVec3()
 	{
 		pg::Vec3 v;

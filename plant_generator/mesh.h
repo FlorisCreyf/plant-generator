@@ -62,6 +62,11 @@ namespace pg {
 		void capStem(Stem *stem, size_t section);
 		/** Stems at the end of the parent stem need a small offset. */
 		void addStem(Stem *stem, float offset = 0.0f);
+		void addLeaves(Stem *stem);
+		void rotateSideLeaf(Vec3 (&p)[4], Vec3 &normal, Vec3 direction);
+		void rotateEndLeaf(Vec3 (&p)[4], Vec3 &normal, Vec3 direction);
+		void addPoint(pg::Vec3 point, pg::Vec3 normal);
+		void addTriangle(int a, int b, int c);
 
 	public:
 		Mesh(Plant *plant);

@@ -17,9 +17,11 @@
 #include <limits>
 #include <cmath>
 
+static unsigned long idCounter = 1;
+
 pg::Stem::Stem(pg::Stem *parent)
 {
-	copy = false;
+	id = idCounter++;
 	this->nextSibling = nullptr;
 	this->prevSibling = nullptr;
 	this->child = nullptr;
@@ -49,6 +51,27 @@ bool pg::Stem::operator==(const pg::Stem &stem) const
 bool pg::Stem::operator!=(const pg::Stem &stem) const
 {
 	return !(*this == stem);
+}
+
+int pg::Stem::addLeaf(const Leaf &leaf)
+{
+	leaves.push_back(leaf);
+	return leaves.size() - 1;
+}
+
+int pg::Stem::getLeafCount()
+{
+	return leaves.size();
+}
+
+pg::Leaf *pg::Stem::getLeaf(int index)
+{
+	return &leaves[index];
+}
+
+void pg::Stem::removeLeaf(int index)
+{
+	leaves.erase(leaves.begin() + index);
 }
 
 void pg::Stem::setResolution(int resolution)

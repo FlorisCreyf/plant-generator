@@ -13,50 +13,41 @@
  * limitations under the License.
  */
 
-#ifndef PG_PLANT_H
-#define PG_PLANT_H
+#ifndef PG_LEAF_H
+#define PG_LEAF_H
 
-#include "stem.h"
+#include "math/math.h"
 #include <boost/archive/text_oarchive.hpp>
 
 namespace pg {
-	class Plant {
+	class Leaf {
 		friend class boost::serialization::access;
 
-		Stem *root;
+		float position;
+		float tilt;
+		Vec2 scale;
 
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned int version)
 		{
 			(void)version;
-			ar & root;
+			ar & position;
+			ar & tilt;
+			ar & scale;
 		}
 
-		bool contains(pg::Stem *a, pg::Stem *b);
-		void removeFromTree(pg::Stem *stem);
-
 	public:
-		Plant();
-		~Plant();
+		Leaf();
+		bool operator==(const Leaf &leaf) const;
+		bool operator!=(const Leaf &leaf) const;
 
-		/**
-		 * This method needs to be called some time after calling
-		 * release() to free up memory.
-		 */
-		static void deleteStem(pg::Stem *stem);
-
-		Stem *getRoot();
-		Stem *addStem(Stem *stem);
-		void removeStem(Stem *stem);
-		void insert(Stem *parent, Stem *child);
-		/** Remove without deletion.*/
-		void release(Stem *stem);
-		bool contains(pg::Stem *stem);
-		/** Removes the root and sets root to nullptr. */
-		void removeRoot();
-		/** This does not delete the previous root. */
-		void setRoot(Stem * stem);
+		void setPosition(float position);
+		float getPosition() const;
+		void setTilt(float tilt);
+		float getTilt() const;
+		void setScale(Vec2 scale);
+		Vec2 getScale() const;
 	};
 }
 
-#endif /* PG_PLANT_H */
+#endif /* PG_LEAF_H */

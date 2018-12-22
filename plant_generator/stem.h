@@ -16,23 +16,25 @@
 #ifndef PG_STEM_H
 #define PG_STEM_H
 
+#include "leaf.h"
 #include "math/math.h"
 #include "math/curve.h"
 #include "volumetric_path.h"
 #include <boost/archive/text_oarchive.hpp>
+#include <vector>
 
 namespace pg {
 	class Stem {
 		friend class Plant;
 		friend class boost::serialization::access;
 
-		bool copy;
+		unsigned long id;
 		Stem *nextSibling;
 		Stem *prevSibling;
 		Stem *child;
 		Stem *parent;
 		int depth;
-
+		std::vector<Leaf> leaves;
 		VolumetricPath path;
 		int resolution = 10;
 		float position;
@@ -49,6 +51,7 @@ namespace pg {
 			ar & child;
 			ar & parent;
 			ar & depth;
+			ar & leaves;
 			ar & path;
 			ar & resolution;
 			ar & position;
@@ -59,6 +62,11 @@ namespace pg {
 		Stem(Stem *parent = nullptr);
 		bool operator==(const Stem &stem) const;
 		bool operator!=(const Stem &stem) const;
+
+		int addLeaf(const Leaf &leaf);
+		int getLeafCount();
+		Leaf *getLeaf(int index);
+		void removeLeaf(int index);
 
 		void setResolution(int resolution);
 		int getResolution() const;

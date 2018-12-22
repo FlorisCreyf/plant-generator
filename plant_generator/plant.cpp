@@ -16,7 +16,6 @@
 #include "plant.h"
 
 using pg::Stem;
-using std::vector;
 
 pg::Plant::Plant()
 {

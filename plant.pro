@@ -10,6 +10,7 @@ plant_generator/math/curve.cpp \
 plant_generator/math/intersection.cpp \
 plant_generator/math/math.cpp \
 plant_generator/generator.cpp \
+plant_generator/leaf.cpp \
 plant_generator/mesh.cpp \
 plant_generator/path.cpp \
 plant_generator/plant.cpp \
@@ -52,6 +53,7 @@ plant_generator/math/curve.h \
 plant_generator/math/intersection.h \
 plant_generator/math/math.h \
 plant_generator/generator.h \
+plant_generator/leaf.h \
 plant_generator/mesh.h \
 plant_generator/path.h \
 plant_generator/patterns.h \
