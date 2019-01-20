@@ -45,13 +45,6 @@ void CurveButton::initializeGL()
 	setCurve(spline);
 }
 
-void CurveButton::resizeGL(int width, int height)
-{
-	glViewport(0, 0, width, height);
-	paintGL();
-	update();
-}
-
 void CurveButton::setCurve(const pg::Spline &spline)
 {
 	this->spline = spline;

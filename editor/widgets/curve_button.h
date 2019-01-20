@@ -52,7 +52,6 @@ protected:
 	void mousePressEvent(QMouseEvent *);
 	void initializeGL();
 	void paintGL();
-	void resizeGL(int width, int height);
 };
 
 #endif /* CURVE_BUTTON_H */

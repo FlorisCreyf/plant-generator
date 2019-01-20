@@ -31,7 +31,7 @@ MaterialViewer::MaterialViewer(SharedResources *shared, QWidget *parent)
 
 	camera.setTarget({0.5f, 0.0f, 0.5f});
 	camera.setOrientation(180.0f, -180.0f);
-	camera.setDistance(0.65f);
+	camera.setDistance(1.0f);
 	camera.setPanSpeed(0.004f);
 	camera.setZoom(0.01f, 0.3f, 2.0f);
 }
@@ -114,7 +114,6 @@ void MaterialViewer::resizeGL(int width, int height)
 	float ratio = static_cast<float>(width) / static_cast<float>(height);
 	camera.setWindowSize(width, height);
 	camera.setOrthographic({-ratio, -1.0f, 0.0f}, {ratio, 1.0f, 100.0f});
-	glViewport(0, 0, width, height);
 }
 
 void MaterialViewer::mousePressEvent(QMouseEvent *event)

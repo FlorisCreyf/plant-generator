@@ -140,7 +140,6 @@ void CurveEditor::resizeGL(int width, int height)
 	float ratio = static_cast<float>(width) / static_cast<float>(height);
 	camera.setWindowSize(width, height);
 	camera.setOrthographic({-ratio, -1.0f, 0.0f}, {ratio, 1.0f, 100.0f});
-	glViewport(0, 0, width, height);
 }
 
 void CurveEditor::keyPressEvent(QKeyEvent *event)
@@ -320,7 +319,6 @@ void CurveEditor::mouseReleaseEvent(QMouseEvent *event)
 	}
 
 	axes.clearSelection();
-	// emit editingFinished();
 }
 
 void CurveEditor::mouseMoveEvent(QMouseEvent *event)
@@ -630,6 +628,7 @@ void CurveEditor::truncateCubicControl(std::vector<Vec3> &controls, int i)
 
 void CurveEditor::paintGL()
 {
+	glViewport(0, 0, width(), height()-22);
 	glClearColor(0.32f, 0.32f, 0.32f, 1.0);
 	glClearDepth(1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

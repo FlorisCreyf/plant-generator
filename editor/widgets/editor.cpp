@@ -412,8 +412,6 @@ void Editor::resizeGL(int width, int height)
 {
 	updateCamera(width, height);
 	translationAxes.setScale(600.0f / height);
-	glViewport(0, 0, width, height);
-	paintGL();
 }
 
 void Editor::updateCamera(int width, int height)
