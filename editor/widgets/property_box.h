@@ -39,6 +39,7 @@ public slots:
 	void changeResolution(int i );
 	void changeDivisions(int i);
 	void changeRadius(double d);
+	void changeMinRadius(double d);
 	void changeRadiusCurve(pg::Spline &spline);
 	void changeStemMaterial();
 	void changeCapMaterial();
@@ -63,6 +64,8 @@ private:
 	QGroupBox *stemG;
 	QLabel *radiusL;
 	QDoubleSpinBox *radiusV;
+	QLabel *minRadiusL;
+	QDoubleSpinBox *minRadiusV;
 	CurveButton *radiusB;
 	QLabel *resolutionL;
 	QSpinBox *resolutionV;

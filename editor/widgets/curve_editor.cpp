@@ -45,7 +45,7 @@ CurveEditor::CurveEditor(SharedResources *shared, QWidget *parent) :
 	degree->addItem(QString("Linear"));
 	degree->addItem(QString("Cubic"));
 	degree->setFixedHeight(22);
-	degree->setHidden(true);
+	degree->setEnabled(false);
 	layout->addWidget(degree);
 	layout->addStretch(1);
 	setFocusPolicy(Qt::StrongFocus);
@@ -53,7 +53,7 @@ CurveEditor::CurveEditor(SharedResources *shared, QWidget *parent) :
 
 	camera.setTarget({0.5f, 0.0f, 0.5f});
 	camera.setOrientation(180.0f, -180.0f);
-	camera.setDistance(0.65f);
+	camera.setDistance(1.0f);
 	camera.setPanSpeed(0.004f);
 	camera.setZoom(0.01f, 0.3f, 2.0f);
 
@@ -681,7 +681,7 @@ void CurveEditor::setCurve(pg::Spline spline, QString name)
 		degree->setCurrentIndex(1);
 		break;
 	}
-	degree->setHidden(false);
+	degree->setEnabled(true);
 	degree->blockSignals(false);
 
 	this->spline = spline;
@@ -711,10 +711,10 @@ void CurveEditor::setDegree(int degree)
 void CurveEditor::setEnabled(bool enabled)
 {
 	if (enabled && name.size() > 0) {
-		degree->setHidden(false);
+		degree->setEnabled(true);
 		parentWidget()->setWindowTitle(name + " Curve Editor");
 	} else {
-		degree->setHidden(true);
+		degree->setEnabled(false);
 		parentWidget()->setWindowTitle("Curve Editor");
 	}
 

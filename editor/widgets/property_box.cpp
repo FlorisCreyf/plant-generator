@@ -69,6 +69,12 @@ void PropertyBox::createStemBox(QVBoxLayout *layout)
 		form->addRow(radiusL, line);
 	}
 
+	minRadiusL = new QLabel(tr("Min Radius"));
+	minRadiusV = new QDoubleSpinBox;
+	minRadiusV->setSingleStep(0.001);
+	minRadiusV->setDecimals(3);
+	form->addRow(minRadiusL, minRadiusV);
+
 	divisionL = new QLabel(tr("Divisions"));
 	divisionV = new QSpinBox;
 	divisionV->setMinimum(1);
@@ -107,6 +113,10 @@ void PropertyBox::createStemBox(QVBoxLayout *layout)
 		SLOT(finishChanging()));
 	connect(radiusV, SIGNAL(valueChanged(double)), this,
 		SLOT(changeRadius(double)));
+	connect(minRadiusV, SIGNAL(editingFinished()), this,
+		SLOT(finishChanging()));
+	connect(minRadiusV, SIGNAL(valueChanged(double)), this,
+		SLOT(changeMinRadius(double)));
 	connect(radiusB, SIGNAL(selected(CurveButton *)), this,
 		SLOT(toggleCurve(CurveButton *)));
 
@@ -207,6 +217,19 @@ void PropertyBox::fill()
 		radiusB->blockSignals(true);
 		radiusB->setCurve(stem->getPath().getRadius());
 		radiusB->blockSignals(false);
+
+		indicateSimilarities(minRadiusL);
+		for (auto it = nextIt; it != instances.end(); ++it) {
+			VolumetricPath a = prev(it)->first->getPath();
+			VolumetricPath b = it->first->getPath();
+			if (a.getMinRadius() != b.getMinRadius()) {
+				indicateDifferences(minRadiusL);
+				break;
+			}
+		}
+		minRadiusV->blockSignals(true);
+		minRadiusV->setValue(stem->getPath().getMinRadius());
+		minRadiusV->blockSignals(false);
 
 		indicateSimilarities(degreeL);
 		for (auto it = nextIt; it != instances.end(); ++it) {
@@ -371,6 +394,19 @@ void PropertyBox::changeRadius(double d)
 	editor->change();
 }
 
+void PropertyBox::changeMinRadius(double d)
+{
+	beginChanging();
+	indicateSimilarities(minRadiusL);
+	auto instances = editor->getSelection()->getInstances();
+	for (auto &instance : instances) {
+		VolumetricPath vpath = instance.first->getPath();
+		vpath.setMinRadius(d);
+		instance.first->setPath(vpath);
+	}
+	editor->change();
+}
+
 void PropertyBox::changeRadiusCurve(pg::Spline &spline)
 {
 	beginChanging();
@@ -430,6 +466,7 @@ void PropertyBox::enable(bool enable)
 {
 	if (!enable) {
 		indicateSimilarities(radiusL);
+		indicateSimilarities(minRadiusL);
 		indicateSimilarities(resolutionL);
 		indicateSimilarities(divisionL);
 		indicateSimilarities(degreeL);
@@ -438,6 +475,7 @@ void PropertyBox::enable(bool enable)
 	}
 	radiusV->setEnabled(enable);
 	radiusB->setEnabled(enable);
+	minRadiusV->setEnabled(enable);
 	resolutionV->setEnabled(enable);
 	divisionV->setEnabled(enable);
 	degreeV->setEnabled(enable);
