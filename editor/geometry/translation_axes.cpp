@@ -95,10 +95,10 @@ int getClosest(float t[3])
 	return selected;
 }
 
-TranslationAxes::Axis TranslationAxes::selectAxis(pg::Ray ray)
+TranslationAxes::Axis TranslationAxes::selectAxis(pg::Ray ray, float distance)
 {
 	pg::Aabb box;
-	float scale = pg::magnitude(ray.origin - position)/15.0f * this->scale;
+	float scale = distance / 15.0f * this->scale;
 	float t[3];
 
 	if (pg::intersectsSphere(ray, position, 0.5f * scale) > 0.0f) {
@@ -135,9 +135,11 @@ TranslationAxes::Axis TranslationAxes::selectAxis(pg::Ray ray)
 	return selection;
 }
 
-pg::Mat4 TranslationAxes::getTransformation(pg::Vec3 cameraPosition)
+pg::Mat4 TranslationAxes::getTransformation(float distance)
 {
-	float m = pg::magnitude(cameraPosition - position) / 15.0f * scale;
+	float m = 1.0f;
+	if (scalable)
+		m = distance / 15.0f * scale;
 	pg::Mat4 transform = {
 		m, 0.0f, 0.0f, 0.0f,
 		0.0f, m, 0.0f, 0.0f,

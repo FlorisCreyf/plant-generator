@@ -1,11 +1,12 @@
 #version 430 core
 
-layout(location = 0) in vec4 vPosition;
+layout(location = 0) in vec4 point;
 layout(location = 0) uniform mat4 vp;
-out vec4 iColor;
+layout(location = 1) uniform vec4 color;
+out vec4 vertexColor;
 
 void main()
 {
-	iColor = vec4(0.0f, 0.26f, 0.4f, 1.0f);
-	gl_Position = vp * vPosition;
+	vertexColor = color;
+	gl_Position = vp * point;
 }

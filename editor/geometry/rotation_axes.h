@@ -24,7 +24,7 @@ class RotationAxes : public Axes {
 public:
 	Geometry getLines();
 	void selectAxis(Axis axis);
-	pg::Mat4 getTransformation(pg::Vec3 cameraPosition, pg::Vec3 direction);
+	pg::Mat4 getTransformation(float distance, pg::Vec3 direction);
 };
 
 #endif /* ROTATION_AXES_H */

@@ -23,6 +23,9 @@
 #include <cmath>
 #include <fstream>
 #include <iterator>
+#include <QVBoxLayout>
+#include <QMenu>
+#include <QScrollArea>
 #include <QtOpenGL/QGLFormat>
 #include <QtGui/QKeyEvent>
 #include <QtGui/QMouseEvent>
@@ -43,8 +46,8 @@ Editor::Editor(SharedResources *shared, QWidget *parent) :
 	addStem(&selection)
 {
 	this->shared = shared;
-	Vec3 color1 = {0.4f, 0.1f, 0.6f};
-	Vec3 color2 = {0.4f, 0.1f, 0.6f};
+	Vec3 color1 = {0.102f, 0.212f, 0.6f};
+	Vec3 color2 = {0.102f, 0.212f, 0.6f};
 	Vec3 color3 = {0.1f, 1.0f, 0.4f};
 	path.setColor(color1, color2, color3);
 	setMouseTracking(true);
@@ -52,6 +55,29 @@ Editor::Editor(SharedResources *shared, QWidget *parent) :
 
 	extrudeCommand = false;
 	addCommand = false;
+
+	QHBoxLayout *layout = new QHBoxLayout(this);
+	layout->setMargin(0);
+	layout->setAlignment(Qt::AlignBottom);
+	QToolBar *toolbar = new QToolBar(this);
+	connect(toolbar, SIGNAL(actionTriggered(QAction *)), this,
+		SLOT(change(QAction *)));
+	perspectiveAction = toolbar->addAction(tr("Perspective"));
+	orthographicAction = toolbar->addAction(tr("Orthographic"));
+	wireframeAction = toolbar->addAction(tr("Wireframe"));
+	solidAction = toolbar->addAction(tr("Solid"));
+	materialAction = toolbar->addAction(tr("Material"));
+	perspectiveAction->setCheckable(true);
+	orthographicAction->setCheckable(true);
+	wireframeAction->setCheckable(true);
+	solidAction->setCheckable(true);
+	materialAction->setCheckable(true);
+	perspectiveAction->toggle();
+	solidAction->toggle();
+	layout->addWidget(toolbar);
+
+	perspective = true;
+	shader = Model;
 }
 
 void Editor::initializeGL()
@@ -69,8 +95,8 @@ void Editor::initializeGL()
 	glPrimitiveRestartIndex(Geometry::primitiveReset);
 
 	shared->initialize();
-	initializeBuffers();
 	generator.grow();
+	initializeBuffers();
 	change();
 }
 
@@ -91,8 +117,8 @@ void Editor::initializeBuffers()
 	staticBuffer.load(geometry);
 
 	plantBuffer.initialize(GL_DYNAMIC_DRAW);
-	plantBuffer.allocatePointMemory(65536);
-	plantBuffer.allocateIndexMemory(65536);
+	plantBuffer.allocatePointMemory(10);
+	plantBuffer.allocateIndexMemory(10);
 
 	pathBuffer.initialize(GL_DYNAMIC_DRAW);
 	pathBuffer.allocatePointMemory(100);
@@ -358,8 +384,16 @@ void Editor::selectAxis(int x, int y)
 {
 	if (!selection.hasPoint(0)) {
 		pg::Ray ray = camera.getRay(x, y);
+		float d;
+		if (camera.isPerspective())
+			d = pg::magnitude(camera.getPosition() -
+				translationAxes.getPosition());
+		else {
+			d = pg::magnitude(camera.getFar() - camera.getNear());
+			d /= 80.0f;
+		}
 		setClickOffset(x, y, translationAxes.getPosition());
-		translationAxes.selectAxis(ray);
+		translationAxes.selectAxis(ray, d);
 		if (translationAxes.getSelection() == Axes::Axis::None)
 			mode = None;
 		else
@@ -376,22 +410,35 @@ void Editor::setClickOffset(int x, int y, Vec3 point)
 
 void Editor::resizeGL(int width, int height)
 {
-	float ratio = static_cast<float>(width) / static_cast<float>(height);
-	camera.setWindowSize(width, height);
-	camera.setPerspective(45.0f, 0.1f, 200.0f, ratio);
-	// camera.setOrthographic({-ratio, -1.0f, 0.0f}, {ratio, 1.0f, 100.0f});
+	updateCamera(width, height);
 	translationAxes.setScale(600.0f / height);
 	glViewport(0, 0, width, height);
 	paintGL();
+}
+
+void Editor::updateCamera(int width, int height)
+{
+	float ratio = static_cast<float>(width) / static_cast<float>(height);
+	camera.setWindowSize(width, height);
+	if (perspective)
+		camera.setPerspective(45.0f, 0.1f, 200.0f, ratio);
+	else {
+		ratio /= 2.0f;
+		Vec3 a = {-ratio, -0.5f, 0.0f};
+		Vec3 b = {ratio, 0.5f, 100.0f};
+		camera.setOrthographic(a, b);
+	}
 }
 
 void Editor::paintGL()
 {
 	Mat4 vp = camera.getVP();
 	Vec3 cp = camera.getPosition();
+	GLsizei c = 0;
+	GLvoid *s = 0;
 
 	glDepthFunc(GL_LEQUAL);
-	glClearColor(0.2f, 0.2f, 0.2f, 1.0);
+	glClearColor(0.22f, 0.22f, 0.22f, 1.0);
 	glClearDepth(1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -403,31 +450,62 @@ void Editor::paintGL()
 
 	/* paint plant */
 	plantBuffer.use();
-	glUseProgram(shared->getShader(Shader::Model));
-	glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
-	glUniform4f(1, cp.x, cp.y, cp.z, 0.0f);
-
-	{
-		GLvoid *start = 0;
-		GLsizei count = plantBuffer.getSize(Buffer::Indices);
-		glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, start);
+	if (shader == Shader::Model) {
+		size_t start = 0;
+		glUseProgram(shared->getShader(Shader::Model));
+		glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
+		glUniform4f(1, cp.x, cp.y, cp.z, 0.0f);
+		for (int i = 0; i < mesh.getMeshCount(); i++) {
+			c = mesh.getIndices(i)->size();
+			s = (GLvoid *)start;
+			start += mesh.getIndices(i)->size() * sizeof(unsigned);
+			glDrawElements(GL_TRIANGLES, c, GL_UNSIGNED_INT, s);
+		}
+	} else if (shader == Shader::Wire) {
+		size_t start = 0;
+		glUseProgram(shared->getShader(Shader::Wire));
+		glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
+		glUniform4f(1, 0.13f, 0.13f, 0.13f, 1.0f);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		for (int i = 0; i < mesh.getMeshCount(); i++) {
+			c = mesh.getIndices(i)->size();
+			s = (GLvoid *)start;
+			start += mesh.getIndices(i)->size() * sizeof(unsigned);
+			glDrawElements(GL_TRIANGLES, c, GL_UNSIGNED_INT, s);
+		}
+	} else if (shader == Shader::Material) {
+		size_t start = 0;
+		glUseProgram(shared->getShader(Shader::Material));
+		glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
+		for (int i = 0; i < mesh.getMeshCount(); i++) {
+			int materialId = mesh.getMaterialId(i);
+			ShaderParams params = shared->getMaterial(materialId);
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, params.getTexture(0));
+			c = mesh.getIndices(i)->size();
+			s = (GLvoid *)start;
+			start += mesh.getIndices(i)->size() * sizeof(unsigned);
+			glDrawElements(GL_TRIANGLES, c, GL_UNSIGNED_INT, s);
+		}
 	}
 
-	glUseProgram(shared->getShader(Shader::Wire));
-	glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	if (shader != Shader::Wire) {
+		glUseProgram(shared->getShader(Shader::Wire));
+		glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		glUniform4f(1, 0.3f, 0.3f, 0.3f, 1.0f);
+	} else
+		glUniform4f(1, 0.13f, 0.13f, 0.13f, 1.0f);
 
 	for (unsigned i = 0; i < meshes.size(); i++) {
-		GLvoid *s = (GLvoid *)(meshes[i].indexStart *
-			sizeof(unsigned));
-		GLsizei c = meshes[i].indexCount;
+		s = (GLvoid *)(meshes[i].indexStart * sizeof(unsigned));
+		c = meshes[i].indexCount;
 		glDrawElements(GL_TRIANGLES, c, GL_UNSIGNED_INT, s);
 	}
-
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
+	/* Paint path lines */
 	if (selection.hasStems()) {
-		/* paint path lines */
 		glDepthFunc(GL_ALWAYS);
 		glPointSize(8);
 
@@ -438,10 +516,9 @@ void Editor::paintGL()
 
 		{
 			Geometry::Segment segment = path.getLineSegment();
-			GLvoid *start = (GLvoid *)(segment.istart *
-				sizeof(unsigned));
+			s = (GLvoid *)(segment.istart * sizeof(unsigned));
 			glDrawElements(GL_LINE_STRIP, segment.icount,
-				GL_UNSIGNED_INT, start);
+				GL_UNSIGNED_INT, s);
 		}
 
 		auto texture = shared->getTexture(shared->DotTexture);
@@ -476,20 +553,27 @@ void Editor::paintAxes()
 
 	translationAxes.setPosition(selection.getAveragePosition());
 
-	if (mode == Rotate) {
-		pg::Vec3 d = selection.getAverageDirectionFP();
-		pg::Mat4 m = vp * rotationAxes.getTransformation(cp, d);
-		glUniformMatrix4fv(0, 1, GL_FALSE, &m[0][0]);
+	float dist;
+	if (camera.isPerspective())
+		/* Both axes have the same position. */
+		dist = pg::magnitude(cp - translationAxes.getPosition());
+	else {
+		dist = pg::magnitude(camera.getFar() - camera.getNear());
+		dist /= 80.0f;
+	}
 
+	if (mode == Rotate) {
+		pg::Vec3 dir = selection.getAverageDirectionFP();
+		pg::Mat4 m = vp * rotationAxes.getTransformation(dist, dir);
+		glUniformMatrix4fv(0, 1, GL_FALSE, &m[0][0]);
 		s = (GLvoid *)((scene.rotation.istart) * sizeof(unsigned));
 		c = scene.rotation.icount;
 		glDrawElements(GL_LINE_STRIP, c, GL_UNSIGNED_INT, s);
 	} else {
-		pg::Mat4 m = vp * translationAxes.getTransformation(cp);
+		pg::Mat4 m = vp * translationAxes.getTransformation(dist);
 		glUniformMatrix4fv(0, 1, GL_FALSE, &m[0][0]);
 		glDrawArrays(GL_LINES, scene.axesLines.pstart,
 			scene.axesLines.pcount);
-
 		s = (GLvoid *)((scene.axesArrows.istart) * sizeof(unsigned));
 		c = scene.axesArrows.icount;
 		glDrawElements(GL_TRIANGLES, c, GL_UNSIGNED_INT, s);
@@ -537,10 +621,33 @@ void Editor::updateSelection()
 
 void Editor::change()
 {
+	if (!isValid())
+	 	return;
+
 	mesh.generate();
-	const std::vector<float> *p = mesh.getVertices();
-	const std::vector<unsigned> *i = mesh.getIndices();
-	plantBuffer.update(p->data(), p->size(), i->data(), i->size());
+	plantBuffer.use();
+	if (mesh.getVertexCount() > plantBuffer.getCapacity(Buffer::Points))
+		plantBuffer.allocatePointMemory(mesh.getVertexCount() * 2);
+	if (mesh.getIndexCount() > plantBuffer.getCapacity(Buffer::Indices))
+		plantBuffer.allocateIndexMemory(mesh.getIndexCount() * 2);
+
+	int pointOffset = 0;
+	int indexOffset = 0;
+	for (int m = 0; m < mesh.getMeshCount(); m++) {
+		const std::vector<float> *v = mesh.getVertices(m);
+		const std::vector<unsigned> *i = mesh.getIndices(m);
+		if (!plantBuffer.update(v->data(), pointOffset, v->size())) {
+			assert("Failed to update vertices.");
+			exit(0);
+		}
+		if (!plantBuffer.update(i->data(), indexOffset, i->size())) {
+			assert("Failed to update indices.");
+			exit(0);
+		}
+		pointOffset += v->size();
+		indexOffset += i->size();
+	}
+
 	updateSelection();
 	update();
 }
@@ -560,6 +667,43 @@ void Editor::load(const char *filename)
 	history.clear();
 	emit selectionChanged();
 	change();
+}
+
+void Editor::change(QAction *action)
+{
+	QString text = action->text();
+	if (text == "Perspective") {
+		perspective = true;
+		orthographicAction->setChecked(false);
+		perspectiveAction->setChecked(true);
+		updateCamera(width(), height());
+	} else if (text == "Orthographic") {
+		perspective = false;
+		orthographicAction->setChecked(true);
+		perspectiveAction->setChecked(false);
+		updateCamera(width(), height());
+	} else if (text == "Wireframe") {
+		shader = Wire;
+		wireframeAction->setChecked(true);
+		solidAction->setChecked(false);
+		materialAction->setChecked(false);
+	} else if (text == "Solid") {
+		shader= Model;
+		wireframeAction->setChecked(false);
+		solidAction->setChecked(true);
+		materialAction->setChecked(false);
+	} else if (text == "Material") {
+		shader = Material;
+		wireframeAction->setChecked(false);
+		solidAction->setChecked(false);
+		materialAction->setChecked(true);
+	}
+	update();
+}
+
+void Editor::updateMaterial(ShaderParams params)
+{
+	plant.addMaterial(params.getMaterial());
 }
 
 pg::Plant *Editor::getPlant()

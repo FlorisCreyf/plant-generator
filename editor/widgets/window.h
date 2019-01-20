@@ -22,6 +22,7 @@
 #include "../graphics/shared_resources.h"
 #include "editor.h"
 #include "curve_editor.h"
+#include "material_editor.h"
 #include "property_box.h"
 
 class Window : public QMainWindow {
@@ -37,18 +38,19 @@ public Q_SLOTS:
 	void saveAsDialogBox();
 	void saveDialogBox();
 	void reportIssue();
-	
+
 private:
 	Ui::Window widget;
 	SharedResources shared;
 	Editor *editor;
 	PropertyBox *propertyBox;
 	CurveEditor *curveEditor;
+	MaterialEditor *materialEditor;
 	QString filename;
 
 	void keyPressEvent(QKeyEvent *event);
 	void createPropertyBox();
-	void createCurveEditor();
+	void createEditors();
 };
 
 #endif /* WINDOW_H */

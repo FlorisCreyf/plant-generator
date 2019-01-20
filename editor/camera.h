@@ -48,6 +48,9 @@ public:
 	pg::Mat4 getVP();
 	pg::Vec3 toScreenSpace(pg::Vec3 point);
 	pg::Ray getRay(int x, int y);
+	pg::Vec3 getFar();
+	pg::Vec3 getNear();
+	bool isPerspective();
 
 private:
 	struct Point {

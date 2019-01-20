@@ -18,6 +18,7 @@
 #include "geometry.h"
 #include <cmath>
 
+using pg::Vec2;
 using pg::Vec3;
 using pg::Mat4;
 
@@ -32,7 +33,7 @@ void Geometry::addIndex(unsigned index)
 	indices.push_back(index);
 }
 
-void Geometry::addPoint(Vec3 point, Vec3 color)
+void Geometry::addPoint(Vec3 point, Vec3 color, Vec2 texture)
 {
 	points.push_back(point.x);
 	points.push_back(point.y);
@@ -40,6 +41,8 @@ void Geometry::addPoint(Vec3 point, Vec3 color)
 	points.push_back(color.x);
 	points.push_back(color.y);
 	points.push_back(color.z);
+	points.push_back(texture.x);
+	points.push_back(texture.y);
 }
 
 void Geometry::addLine(Vec3 line[2], Vec3 color)
@@ -72,10 +75,10 @@ void Geometry::addCurve(const pg::Spline &spline, pg::Vec3 color, int size)
 
 void Geometry::addPlane(Vec3 a, Vec3 b, Vec3 c, Vec3 color)
 {
-	addPoint(c, color);
-	addPoint(c + a, color);
-	addPoint(c + b, color);
-	addPoint(c + a + b, color);
+	addPoint(c, color, {0.0f, 1.0f});
+	addPoint(c + a, color, {1.0f, 1.0f});
+	addPoint(c + b, color, {0.0f, 0.0f});
+	addPoint(c + a + b, color, {1.0f, 0.0f});
 
 	indices.push_back(0);
 	indices.push_back(1);
@@ -196,5 +199,5 @@ const std::vector<unsigned> *Geometry::getIndices() const
 
 int Geometry::getPointSize() const
 {
-	return 6;
+	return 8;
 }

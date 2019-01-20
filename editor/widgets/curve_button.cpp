@@ -27,20 +27,29 @@ CurveButton::CurveButton(QString name, SharedResources *shared, QWidget *parent)
 	setCursor(Qt::PointingHandCursor);
 	this->name = name;
 	this->shared = shared;
+	this->enabled = true;
+}
+
+void CurveButton::setEnabled(bool enabled)
+{
+	this->enabled = enabled;
+	QWidget::setEnabled(enabled);
+	update();
 }
 
 void CurveButton::initializeGL()
 {
 	initializeOpenGLFunctions();
 	buffer.initialize(GL_DYNAMIC_DRAW);
-	buffer.allocatePointMemory(1000);
-	glViewport(0, 0, 26, 18);
+	buffer.allocatePointMemory(100);
 	setCurve(spline);
 }
 
-QSize CurveButton::sizeHint() const
+void CurveButton::resizeGL(int width, int height)
 {
-	return QSize(26, 18);
+	glViewport(0, 0, width, height);
+	paintGL();
+	update();
 }
 
 void CurveButton::setCurve(const pg::Spline &spline)
@@ -58,20 +67,22 @@ void CurveButton::setCurve(const pg::Spline &spline)
 void CurveButton::paintGL()
 {
 	Mat4 vp = {
-		1.8f, 0.0f, 0.0f, 0.0f,
-		0.0f, 0.0f, 0.9f, 0.0f,
-		0.0f, 1.8f, 0.0f, 0.0f,
-		-0.9f, -0.9f, 0.0f, 1.0f
+		1.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 1.0f, 0.0f,
+		0.0f, 1.0f, 0.0f, 0.0f,
+		-0.5f, -0.5f, 0.0f, 1.0f
 	};
 
-	glClearColor(0.33f, 0.33f, 0.33f, 1.0);
+	glClearColor(0.2666f, 0.2666f, 0.2666f, 1.0);
 	glClearDepth(1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	buffer.use();
-	glUseProgram(shared->getShader(Shader::Flat));
-	glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
-	glDrawArrays(GL_LINE_STRIP, segment.pstart, segment.pcount);
+	if (enabled) {
+		buffer.use();
+		glUseProgram(shared->getShader(Shader::Flat));
+		glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
+		glDrawArrays(GL_LINE_STRIP, segment.pstart, segment.pcount);
+	}
 
 	glFlush();
 }

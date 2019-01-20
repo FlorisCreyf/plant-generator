@@ -38,6 +38,10 @@
 #include "plant_generator/generator.h"
 #include <QtGui/QOpenGLFunctions>
 #include <QOpenGLWidget>
+#include <QToolBar>
+#include <QToolButton>
+#include <QWidgetAction>
+#include <QComboBox>
 #include <set>
 
 class Editor : public QOpenGLWidget, protected QOpenGLFunctions {
@@ -46,6 +50,10 @@ class Editor : public QOpenGLWidget, protected QOpenGLFunctions {
 signals:
 	void selectionChanged();
 	void modeChanged();
+
+public slots:
+	void change(QAction *action);
+	void updateMaterial(ShaderParams params);
 
 public:
 	Editor(SharedResources *shared, QWidget *parent = 0);
@@ -67,6 +75,18 @@ protected:
 	bool event(QEvent *);
 
 private:
+	QToolBar *toolbar;
+	QComboBox *projectionBox;
+	QComboBox *shaderBox;
+	QAction *perspectiveAction;
+	QAction *orthographicAction;
+	QAction *wireframeAction;
+	QAction *solidAction;
+	QAction *materialAction;
+
+	bool perspective;
+	Shader shader;
+
 	pg::Plant plant;
 	enum Mode {
 		None,
@@ -116,6 +136,7 @@ private:
 	void paintGL();
 	void paintAxes();
 	void resizeGL(int width, int height);
+	void updateCamera(int width, int height);
 };
 
 #endif /* EDITOR_H */

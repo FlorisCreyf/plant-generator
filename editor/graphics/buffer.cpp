@@ -82,13 +82,14 @@ void Buffer::update(const float *points, int psize, const unsigned *indices,
 	use();
 	size[Points] = psize;
 	size[Indices] = isize;
-	psize *= sizeof(float);
-	isize *= sizeof(unsigned);
 
 	if (psize > capacity[Points])
 		allocatePointMemory(psize * 2);
 	else
 		glBindBuffer(GL_ARRAY_BUFFER, buffers[Points]);
+
+	psize *= sizeof(float);
+	isize *= sizeof(unsigned);
 
 	glBufferSubData(GL_ARRAY_BUFFER, 0, psize, points);
 
@@ -102,15 +103,48 @@ void Buffer::update(const float *points, int psize, const unsigned *indices,
 	}
 }
 
+bool Buffer::update(const float *points, int start, int size)
+{
+	int newSize = start + size;
+	if (newSize <= capacity[Points])
+		this->size[Points] = newSize;
+	else
+		return false;
+
+	size *= sizeof(float);
+	start *= sizeof(float);
+	glBindBuffer(GL_ARRAY_BUFFER, buffers[Points]);
+	glBufferSubData(GL_ARRAY_BUFFER, start, size, points);
+	return true;
+}
+
+bool Buffer::update(const unsigned *indices, int start, int size)
+{
+	int newSize = start + size;
+	if (newSize <= capacity[Indices])
+		this->size[Indices] = newSize;
+	else
+		return false;
+
+	size *= sizeof(unsigned);
+	start *= sizeof(unsigned);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffers[Indices]);
+	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, start, size, indices);
+	return true;
+}
+
 void Buffer::setVertexFormat()
 {
-	GLsizei stride = sizeof(float) * 6;
+	GLsizei stride = sizeof(float) * 8;
 	GLvoid *ptr = (GLvoid *)(0);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, ptr);
 	glEnableVertexAttribArray(0);
 	ptr = (GLvoid *)(sizeof(float) * 3);
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, ptr);
 	glEnableVertexAttribArray(1);
+	ptr = (GLvoid *)(sizeof(float) * 6);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, ptr);
+	glEnableVertexAttribArray(2);
 }
 
 void Buffer::use()
@@ -118,7 +152,12 @@ void Buffer::use()
 	glBindVertexArray(vao);
 }
 
-int Buffer::getSize(int type)
+int Buffer::getSize(int type) const
 {
 	return size[type];
+}
+
+int Buffer::getCapacity(int type) const
+{
+	return capacity[type];
 }

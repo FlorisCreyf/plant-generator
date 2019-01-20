@@ -22,31 +22,44 @@
 
 void SharedResources::initialize()
 {
-	initializeOpenGLFunctions();
-	createPrograms();
-	createTextures();
+	if (!initialized) {
+		initializeOpenGLFunctions();
+		createPrograms();
+
+		QImage image1("resources/dot.png");
+		textures[DotTexture] = addTexture(image1);
+		QImage image2("resources/default.png");
+		textures[DefaultTexture] = addTexture(image2);
+
+		defaultMaterial.setDefaultTexture(0, textures[DefaultTexture]);
+		materials[0] = defaultMaterial;
+
+		initialized = true;
+	}
 }
 
 void SharedResources::createPrograms()
 {
 	GLuint vertModel = buildShader(GL_VERTEX_SHADER,
-			"shaders/basic.vert");
+		"shaders/basic.vert");
 	GLuint fragModel = buildShader(GL_FRAGMENT_SHADER,
-			"shaders/basic.frag");
+		"shaders/basic.frag");
 	GLuint vertFlat = buildShader(GL_VERTEX_SHADER,
-			"shaders/flat.vert");
+		"shaders/flat.vert");
 	GLuint fragFlat = buildShader(GL_FRAGMENT_SHADER,
-			"shaders/flat.frag");
+		"shaders/flat.frag");
 	GLuint vertWireframe = buildShader(GL_VERTEX_SHADER,
-			"shaders/solid.vert");
+		"shaders/solid.vert");
 	GLuint fragPoint = buildShader(GL_FRAGMENT_SHADER,
-			"shaders/point.frag");
+		"shaders/point.frag");
 	GLuint vertLine = buildShader(GL_VERTEX_SHADER,
-			"shaders/line.vert");
+		"shaders/line.vert");
 	GLuint geomLine = buildShader(GL_GEOMETRY_SHADER,
-			"shaders/line.geom");
+		"shaders/line.geom");
 	GLuint fragLine = buildShader(GL_FRAGMENT_SHADER,
-			"shaders/line.frag");
+		"shaders/line.frag");
+	GLuint fragMaterial = buildShader(GL_FRAGMENT_SHADER,
+		"shaders/material.frag");
 
 	GLuint shaders[3];
 	GLuint program;
@@ -76,26 +89,33 @@ void SharedResources::createPrograms()
 	shaders[2] = fragLine;
 	program = buildProgram(shaders, 3);
 	programs[Shader::Line] = program;
+
+	shaders[0] = vertFlat;
+	shaders[1] = fragMaterial;
+	program = buildProgram(shaders, 2);
+	programs[Shader::Material] = program;
 }
 
-void SharedResources::createTextures()
+GLuint SharedResources::addTexture(const QImage &image)
 {
-	QImage image("resources/dot.png");
+	GLuint name;
 	GLsizei width = image.width();
 	GLsizei height = image.height();
 
-	glGenTextures(1, &textures[DotTexture]);
+	glGenTextures(1, &name);
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, textures[DotTexture]);
+	glBindTexture(GL_TEXTURE_2D, name);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
 	glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, width, height);
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_BGRA,
-			GL_UNSIGNED_BYTE, image.bits());
+		GL_UNSIGNED_BYTE, image.bits());
+
+	return name;
 }
 
 GLuint SharedResources::getShader(Shader shader)
@@ -187,4 +207,45 @@ GLuint SharedResources::buildProgram(GLuint *shaders, int size)
 
 	glLinkProgram(program);
 	return program;
+}
+
+void SharedResources::addMaterial(ShaderParams params)
+{
+	auto it = materials.find(params.getId());
+	if (it != materials.end()) {
+		QString before = QString::fromStdString(it->second.getName());
+		QString after = QString::fromStdString(params.getName());
+		materials[params.getId()] = params;
+		if (before != after)
+			emit materialRenamed(before, after);
+		emit materialModified(params);
+	} else
+		materials[params.getId()] = params;
+
+	emit materialAdded(params);
+}
+
+void SharedResources::removeMaterial(int id)
+{
+	auto it = materials.find(id);
+	QString name = QString::fromStdString(it->second.getName());
+	it->second.clearTextures();
+	materials.erase(it);
+	emit materialRemoved(name);
+}
+
+void SharedResources::clearMaterials()
+{
+	for (auto it = materials.begin(); it != materials.end(); it++) {
+		QString name = QString::fromStdString(it->second.getName());
+		it->second.clearTextures();
+		emit materialRemoved(name);
+	}
+	materials.clear();
+	materials[0] = defaultMaterial;
+}
+
+ShaderParams SharedResources::getMaterial(int id)
+{
+	return materials[id];
 }

@@ -64,10 +64,11 @@ void RotationAxes::selectAxis(Axis axis)
 	this->selection = axis;
 }
 
-pg::Mat4 RotationAxes::getTransformation(pg::Vec3 cameraPosition,
-	pg::Vec3 direction)
+pg::Mat4 RotationAxes::getTransformation(float distance, pg::Vec3 direction)
 {
-	float m = pg::magnitude(cameraPosition - position) / 15.0f * scale;
+	float m = 1.0f;
+	if (scalable)
+		m = distance / 15.0f * scale;
 	pg::Mat4 transform = {
 		m, 0.0f, 0.0f, 0.0f,
 		0.0f, m, 0.0f, 0.0f,

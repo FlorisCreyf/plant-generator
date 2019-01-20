@@ -40,9 +40,14 @@ public slots:
 	void changeDivisions(int i);
 	void changeRadius(double d);
 	void changeRadiusCurve(pg::Spline &spline);
+	void changeStemMaterial();
+	void changeCapMaterial();
 	void finishChanging();
 	void setCurve(pg::Spline spline, QString names);
 	void toggleCurve(CurveButton *w);
+	void addMaterial(ShaderParams params);
+	void renameMaterial(QString before, QString after);
+	void removeMaterial(QString name);
 
 signals:
 	void isEnabled(bool enabled);
@@ -56,30 +61,36 @@ private:
 	CurveButton *selectedCurve;
 
 	QGroupBox *stemG;
-	QTableWidget *stemT;
-
 	QLabel *radiusL;
 	QDoubleSpinBox *radiusV;
 	CurveButton *radiusB;
-
 	QLabel *resolutionL;
 	QSpinBox *resolutionV;
-
 	QLabel *divisionL;
 	QSpinBox *divisionV;
-
 	QLabel *degreeL;
 	QComboBox *degreeV;
+	QLabel *stemMaterialL;
+	QComboBox *stemMaterialV;
+
+	QGroupBox *capG;
+	QLabel *capMaterialL;
+	QComboBox *capMaterialV;
+
+	QGroupBox *leafG;
+	QLabel *leafMaterialL;
+	QComboBox *leafMaterialV;
 
 	bool changing = false;
 
 	void initProperties();
 	void createStemBox(QVBoxLayout *layout);
+	void createLeafBox(QVBoxLayout *layout);
+	void createCapBox(QVBoxLayout *layout);
 	void beginChanging();
 	void indicateDifferences(QWidget *widget);
 	void indicateSimilarities(QWidget *widget);
-	QWidget *createCenteredWidget(QWidget *);
-	void configureTable(QTableWidget *);
+	void enable(bool enable);
 };
 
 #endif /* PROPERTY_BOX */

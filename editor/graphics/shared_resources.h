@@ -20,33 +20,54 @@
 
 #define GL_GLEXT_PROTOTYPES
 
+#include "shader_params.h"
+#include "plant_generator/material.h"
 #include <QOpenGLFunctions>
+#include <QObject>
+#include <map>
 
 enum Shader {
 	Model = 0,
 	Point = 1,
 	Wire = 2,
 	Line = 3,
-	Flat = 4
+	Flat = 4,
+	Material = 5,
 };
 
-class SharedResources : protected QOpenGLFunctions {
+class SharedResources : public QObject, protected QOpenGLFunctions {
+	Q_OBJECT
+
 public:
 	enum Texture {
-		DotTexture
+		DotTexture,
+		DefaultTexture
 	};
 
 	void initialize();
 	GLuint getShader(Shader shader);
 	GLuint getTexture(Texture texture);
+	GLuint addTexture(const QImage &image);
+	void removeTexture(GLuint texture);
+	void addMaterial(ShaderParams params);
+	void removeMaterial(int id);
+	void clearMaterials();
+	ShaderParams getMaterial(int id);
+
+signals:
+	void materialAdded(ShaderParams params);
+	void materialRenamed(QString before, QString after);
+	void materialModified(ShaderParams params);
+	void materialRemoved(QString name);
 
 private:
-	GLuint programs[5];
-	GLuint textures[1];
+	GLuint programs[6];
+	GLuint textures[2];
+	bool initialized = false;
+	ShaderParams defaultMaterial;
+	std::map<unsigned, ShaderParams> materials;
 
 	void createPrograms();
-	void createTextures();
-
 	bool isCompiled(GLuint name, const char *filename);
 	bool openFile(const char *filename, GLchar *&buffer, int &size);
 	GLuint buildShader(GLenum type, const char *filename);

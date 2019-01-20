@@ -17,11 +17,11 @@
 #include <limits>
 #include <cmath>
 
-static unsigned long idCounter = 1;
+unsigned pg::Stem::counter = 1;
 
 pg::Stem::Stem(pg::Stem *parent)
 {
-	id = idCounter++;
+	id = counter++;
 	this->nextSibling = nullptr;
 	this->prevSibling = nullptr;
 	this->child = nullptr;
@@ -45,7 +45,9 @@ bool pg::Stem::operator==(const pg::Stem &stem) const
 		path == stem.path &&
 		resolution == stem.resolution &&
 		position == stem.position &&
-		location == stem.location;
+		location == stem.location &&
+		material[0] == stem.material[0] &&
+		material[1] == stem.material[1];
 }
 
 bool pg::Stem::operator!=(const pg::Stem &stem) const
@@ -127,6 +129,16 @@ float pg::Stem::getPosition() const
 pg::Vec3 pg::Stem::getLocation() const
 {
 	return location;
+}
+
+void pg::Stem::setMaterial(int feature, unsigned material)
+{
+	this->material[feature] = material;
+}
+
+unsigned pg::Stem::getMaterial(int feature) const
+{
+	return material[feature];
 }
 
 pg::Stem *pg::Stem::getParent()

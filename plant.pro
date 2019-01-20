@@ -11,6 +11,7 @@ plant_generator/math/intersection.cpp \
 plant_generator/math/math.cpp \
 plant_generator/generator.cpp \
 plant_generator/leaf.cpp \
+plant_generator/material.cpp \
 plant_generator/mesh.cpp \
 plant_generator/path.cpp \
 plant_generator/plant.cpp \
@@ -35,10 +36,13 @@ editor/geometry/path.cpp \
 editor/geometry/translation_axes.cpp \
 editor/geometry/rotation_axes.cpp \
 editor/graphics/buffer.cpp \
+editor/graphics/shader_params.cpp \
 editor/graphics/shared_resources.cpp \
 editor/widgets/curve_button.cpp \
 editor/widgets/curve_editor.cpp \
 editor/widgets/editor.cpp \
+editor/widgets/material_editor.cpp \
+editor/widgets/material_viewer.cpp \
 editor/widgets/property_box.cpp \
 editor/widgets/window.cpp \
 editor/camera.cpp \
@@ -54,6 +58,7 @@ plant_generator/math/intersection.h \
 plant_generator/math/math.h \
 plant_generator/generator.h \
 plant_generator/leaf.h \
+plant_generator/material.h \
 plant_generator/mesh.h \
 plant_generator/path.h \
 plant_generator/patterns.h \
@@ -80,11 +85,14 @@ editor/geometry/path.h \
 editor/geometry/translation_axes.h \
 editor/geometry/rotation_axes.h \
 editor/graphics/buffer.h \
+editor/graphics/shader_params.h \
 editor/graphics/shared_resources.h \
 editor/widgets/curve_button.h \
 editor/widgets/curve_editor.h \
-editor/widgets/property_box.h \
 editor/widgets/editor.h \
+editor/widgets/material_editor.h \
+editor/widgets/material_viewer.h \
+editor/widgets/property_box.h \
 editor/widgets/window.h \
 editor/camera.h \
 editor/file_exporter.h \

@@ -1,5 +1,5 @@
 /* Plant Genererator
- * Copyright (C) 2016-2018  Floris Creyf
+ * Copyright (C) 2019  Floris Creyf
  *
  * Plant Genererator is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,44 +15,46 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef CURVE_BUTTON_H
-#define CURVE_BUTTON_H
+#ifndef MATERIAL_VIEWER_H
+#define MATERIAL_VIEWER_H
 
+#include "../camera.h"
 #include "../geometry/geometry.h"
 #include "../graphics/buffer.h"
 #include "../graphics/shared_resources.h"
-#include "plant_generator/math/math.h"
-#include "plant_generator/spline.h"
-#include <QtGui/QOpenGLFunctions>
+#include "plant_generator/material.h"
+#include <QOpenGLFunctions>
 #include <QOpenGLWidget>
 #include <QtWidgets>
 
-class CurveButton : public QOpenGLWidget, protected QOpenGLFunctions {
+class MaterialViewer : public QOpenGLWidget, protected QOpenGLFunctions {
 	Q_OBJECT
 
 	SharedResources *shared;
-	pg::Spline spline;
-	Geometry geometry;
+	Camera camera;
 	Buffer buffer;
-	Geometry::Segment segment;
-	QString name;
-	bool enabled;
+	Geometry::Segment planeSegment;
+	ShaderParams params;
 
-public:
-	CurveButton(QString name, SharedResources *shared, QWidget *parent = 0);
-	void setCurve(const pg::Spline &spline);
-	QString getName();
-	void select();
-	void setEnabled(bool enabled);
-
-signals:
-	void selected(CurveButton *);
+	void createInterface();
 
 protected:
-	void mousePressEvent(QMouseEvent *);
 	void initializeGL();
 	void paintGL();
 	void resizeGL(int width, int height);
+	void mousePressEvent(QMouseEvent *event);
+	void mouseReleaseEvent(QMouseEvent *event);
+	void mouseMoveEvent(QMouseEvent *event);
+
+public:
+	MaterialViewer(SharedResources *shared, QWidget *parent);
+	QSize sizeHint() const;
+
+public slots:
+	void updateMaterial(ShaderParams params);
+
+signals:
+	void ready();
 };
 
-#endif /* CURVE_BUTTON_H */
+#endif /* MATERIAL_VIEWER_H */

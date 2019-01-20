@@ -45,7 +45,7 @@ namespace pg {
 	public:
 		bool operator==(const Path &path) const;
 		bool operator!=(const Path &path) const;
-		
+
 		void setSpline(Spline &spline);
 		Spline getSpline();
 		/** Sets the divisions for each curve in the path. */
@@ -69,6 +69,8 @@ namespace pg {
 		Vec3 getIntermediateDirection(float t) const;
 		/* Get the distance along the path to a control point. */
 		float getDistance(int index) const;
+		/* Get the distance between control points. */
+		float getIntermediateDistance(int index) const;
 	};
 }
 

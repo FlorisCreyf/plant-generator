@@ -18,34 +18,40 @@
 #include "file_exporter.h"
 #include <cstdio>
 
-/* interleaved buffer */
-void FileExporter::setVertices(const float *vertices, size_t size)
-{
-	this->vb = vertices;
-	this->vbSize = size;
-}
-
-void FileExporter::setIndices(const unsigned *indices, size_t size)
-{
-	this->ib = indices;
-	this->ibSize = size;
-}
-
-void FileExporter::exportObj(const char *filename)
+void FileExporter::exportObj(const char *filename,
+	const std::vector<float> &vertices,
+	const std::vector<unsigned> &indices)
 {
 	FILE *f = fopen(filename, "w");
 
 	if (f == nullptr)
 		return;
 
-	for (size_t i = 0; i < vbSize; i += 6) {
-		fprintf(f, "v %f %f %f\n", vb[i], vb[i+1], vb[i+2]);
-		fprintf(f, "vn %f %f %f\n", vb[i+3], vb[i+4], vb[i+5]);
+	for (unsigned i = 0; i < vertices.size(); i += 8) {
+		float x = vertices[i];
+		float y = vertices[i+1];
+		float z = vertices[i+2];
+		fprintf(f, "v %f %f %f\n", x, y, z);
 	}
 
-	for (size_t i = 0; i < ibSize; i += 3) {
-		fprintf(f, "f %d %d %d\n", ib[i]+1, ib[i+1]+1, ib[i+2]+1);
+	for (unsigned i = 0; i < vertices.size(); i += 8) {
+		float u = vertices[i+6];
+		float v = vertices[i+7];
+		fprintf(f, "vt %f %f\n", u, v);
 	}
+
+	for (unsigned i = 0; i < vertices.size(); i += 8) {
+		float x = vertices[i+3];
+		float y = vertices[i+4];
+		float z = vertices[i+5];
+		fprintf(f, "vn %f %f %f\n", x, y, z);
+	}
+
+	for (size_t i = 0; i < indices.size(); i += 3)
+		fprintf(f, "f %d/%d/%d %d/%d/%d %d/%d/%d\n",
+			indices[i]+1, indices[i]+1, indices[i]+1,
+			indices[i+1]+1, indices[i+1]+1, indices[i+1]+1,
+			indices[i+2]+1, indices[i+2]+1, indices[i+2]+1);
 
 	fclose(f);
 }

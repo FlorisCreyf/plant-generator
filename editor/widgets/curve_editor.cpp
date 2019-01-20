@@ -41,7 +41,7 @@ CurveEditor::CurveEditor(SharedResources *shared, QWidget *parent) :
 	layout->setSizeConstraint(QLayout::SetMinimumSize);
 	layout->setSpacing(0);
 	layout->setMargin(0);
-	degree = new QComboBox;
+	degree = new QComboBox(this);
 	degree->addItem(QString("Linear"));
 	degree->addItem(QString("Cubic"));
 	degree->setFixedHeight(22);
@@ -670,7 +670,7 @@ void CurveEditor::paintGL()
 
 void CurveEditor::setCurve(pg::Spline spline, QString name)
 {
-	parentWidget()->setWindowTitle(name + " Curve");
+	parentWidget()->setWindowTitle(name + " Curve Editor");
 
 	degree->blockSignals(true);
 	switch(spline.getDegree()) {
@@ -712,10 +712,10 @@ void CurveEditor::setEnabled(bool enabled)
 {
 	if (enabled && name.size() > 0) {
 		degree->setHidden(false);
-		parentWidget()->setWindowTitle(name + " Curve");
+		parentWidget()->setWindowTitle(name + " Curve Editor");
 	} else {
 		degree->setHidden(true);
-		parentWidget()->setWindowTitle("Curve");
+		parentWidget()->setWindowTitle("Curve Editor");
 	}
 
 	this->enabled = enabled;

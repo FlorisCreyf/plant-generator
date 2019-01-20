@@ -85,7 +85,7 @@ void pg::Generator::setPath(Stem *stem, Vec3 direction)
 	float radius = getRadius(stem);
 	float length = 15.0f * radius;
 	int divisions = stem->getDepth() == 0 ? 2 : 1;
-	int points = 4;
+	int points = stem->getParent() ? 3 : 4;
 
 	path.setMaxRadius(radius);
 	path.setRadius(getDefaultCurve(0));

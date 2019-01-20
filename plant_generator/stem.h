@@ -28,7 +28,9 @@ namespace pg {
 		friend class Plant;
 		friend class boost::serialization::access;
 
-		unsigned long id;
+		static unsigned counter;
+		unsigned id;
+
 		Stem *nextSibling;
 		Stem *prevSibling;
 		Stem *child;
@@ -39,6 +41,7 @@ namespace pg {
 		int resolution = 10;
 		float position;
 		Vec3 location;
+		unsigned material[2] = {0};
 
 		void updatePositions(Stem *stem);
 
@@ -46,6 +49,8 @@ namespace pg {
 		void serialize(Archive &ar, const unsigned int version)
 		{
 			(void)version;
+			ar & counter;
+			ar & id;
 			ar & nextSibling;
 			ar & prevSibling;
 			ar & child;
@@ -56,9 +61,12 @@ namespace pg {
 			ar & resolution;
 			ar & position;
 			ar & location;
+			ar & material;
 		}
 
 	public:
+		enum {Outer, Inner};
+
 		Stem(Stem *parent = nullptr);
 		bool operator==(const Stem &stem) const;
 		bool operator!=(const Stem &stem) const;
@@ -75,6 +83,8 @@ namespace pg {
 		void setPosition(float position);
 		float getPosition() const;
 		Vec3 getLocation() const;
+		void setMaterial(int feature, unsigned material);
+		unsigned getMaterial(int feature) const;
 
 		Stem *getParent();
 		Stem *getSibling();

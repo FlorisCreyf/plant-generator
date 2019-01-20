@@ -26,7 +26,7 @@ Window::Window()
 	editor = new Editor(&shared, this);
 	this->setCentralWidget(editor);
 	createPropertyBox();
-	createCurveEditor();
+	createEditors();
 	propertyBox->bind(editor, curveEditor);
 	widget.setupUi(this);
 
@@ -35,31 +35,50 @@ Window::Window()
 	menuBar()->insertMenu(widget.menuHelp->menuAction(), menu);
 	connect(widget.actionReportIssue, SIGNAL(triggered()), this,
 		SLOT(reportIssue()));
+	connect(&shared, SIGNAL(materialModified(ShaderParams)), editor,
+		SLOT(updateMaterial(ShaderParams)));
 }
 
 void Window::createPropertyBox()
 {
 	auto areas = Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea;
 	QScrollArea *scrollArea = new QScrollArea();
-	QDockWidget *dockWidget = new QDockWidget(tr("Properties"), this);
+	QDockWidget *dockWidget = new QDockWidget(tr("Property Editor"), this);
 	propertyBox = new PropertyBox(&shared, this);
 	dockWidget->setAllowedAreas(areas);
         dockWidget->setWidget(scrollArea);
-	dockWidget->setMinimumWidth(200);
+	dockWidget->setMinimumWidth(350);
 	scrollArea->setWidget(propertyBox);
 	scrollArea->setWidgetResizable(true);
 	scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 	this->addDockWidget(static_cast<Qt::DockWidgetArea>(1), dockWidget);
+
+	connect(&shared, SIGNAL(materialAdded(ShaderParams)), propertyBox,
+		SLOT(addMaterial(ShaderParams)));
+	connect(&shared, SIGNAL(materialRenamed(QString, QString)), propertyBox,
+		SLOT(renameMaterial(QString, QString)));
+	connect(&shared, SIGNAL(materialRemoved(QString)), propertyBox,
+		SLOT(removeMaterial(QString)));
 }
 
-void Window::createCurveEditor()
+void Window::createEditors()
 {
-	auto areas = Qt::LeftDockWidgetArea|Qt::RightDockWidgetArea;
-	QDockWidget *dockWidget = new QDockWidget(tr("Curve"), this);
+	auto areas = Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea;
+	QDockWidget *dockWidget[2];
+
+	dockWidget[0] = new QDockWidget(tr("Curve Editor"), this);
 	curveEditor = new CurveEditor(&shared, this);
-	dockWidget->setAllowedAreas(areas);
-	dockWidget->setWidget(curveEditor);
-	this->addDockWidget(static_cast<Qt::DockWidgetArea>(1), dockWidget);
+	dockWidget[0]->setAllowedAreas(areas);
+	dockWidget[0]->setWidget(curveEditor);
+	this->addDockWidget(static_cast<Qt::DockWidgetArea>(1), dockWidget[0]);
+
+	dockWidget[1] = new QDockWidget(tr("Material Editor"), this);
+	materialEditor = new MaterialEditor(&shared, this);
+	dockWidget[1]->setAllowedAreas(areas);
+	dockWidget[1]->setWidget(materialEditor);
+	this->addDockWidget(static_cast<Qt::DockWidgetArea>(1), dockWidget[1]);
+
+	tabifyDockWidget(dockWidget[0], dockWidget[1]);
 }
 
 void Window::keyPressEvent(QKeyEvent *event)
@@ -85,6 +104,8 @@ void Window::keyPressEvent(QKeyEvent *event)
 void Window::newFile()
 {
 	editor->load(nullptr);
+	materialEditor->clear();
+	materialEditor->addMaterial();
 	this->setWindowTitle("Plant Generator");
 }
 
@@ -94,7 +115,11 @@ void Window::openDialogBox()
 	filename = QFileDialog::getOpenFileName(this, tr("Open File"), "",
 		tr("Plant (*.plant)"));
 	if (!filename.isNull()) {
+		materialEditor->clear();
 		editor->load(filename.toLatin1());
+		auto materials = editor->getPlant()->getMaterials();
+		for (auto &material : materials)
+			materialEditor->addMaterial(material.second);
 		this->filename = filename;
 		this->setWindowTitle(filename.prepend("Plant Generator — "));
 	}
@@ -131,15 +156,17 @@ void Window::saveDialogBox()
 
 void Window::exportDialogBox()
 {
+	FileExporter f;
+	const pg::Mesh *mesh = editor->getMesh();
+
 	QString filename;
 	filename = QFileDialog::getSaveFileName(this, tr("Export File"),
 		"saved/plant.obj", tr("Wavefront (*.obj)"));
 
-	const pg::Mesh *mesh = editor->getMesh();
-	FileExporter f;
-	f.setVertices(mesh->getVertices()->data(), mesh->getVertices()->size());
-	f.setIndices(mesh->getIndices()->data(), mesh->getIndices()->size());
-	f.exportObj(filename.toLatin1());
+	if (!filename.isEmpty()) {
+		QByteArray b = filename.toLatin1();
+		f.exportObj(b.data(), mesh->getVertices(), mesh->getIndices());
+	}
 }
 
 void Window::reportIssue()

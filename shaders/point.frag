@@ -2,10 +2,10 @@
 
 layout(location = 1) uniform sampler2D tex;
 
-out vec4 fColor;
-in vec4 iColor;
+out vec4 fragmentColor;
+in vec4 vertexColor;
 
 void main()
 {
-	fColor = texture(tex, gl_PointCoord) * iColor;
+	fragmentColor = texture(tex, gl_PointCoord) * vertexColor;
 }

@@ -51,10 +51,8 @@ void SaveStem::execute()
 	} else {
 		before = *selection;
 		auto instances = selection->getInstances();
-		for (auto &instance : instances) {
+		for (auto &instance : instances)
 			stems.emplace(instance.first, *instance.first);
-			break;
-		}
 	}
 }
 

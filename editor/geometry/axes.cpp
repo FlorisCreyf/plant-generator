@@ -46,3 +46,8 @@ void Axes::clearSelection()
 {
 	selection = None;
 }
+
+void Axes::setScalable(bool scalable)
+{
+	this->scalable = scalable;
+}

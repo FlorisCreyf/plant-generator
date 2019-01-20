@@ -19,18 +19,12 @@
 #define FILE_EXPORTER_H
 
 #include <cstddef>
+#include <vector>
 
 class FileExporter {
 public:
-	void setVertices(const float *vertices, size_t size);
-	void setIndices(const unsigned *indices, size_t size);
-	void exportObj(const char *filename);
-
-private:
-	const float *vb;
-	size_t vbSize;
-	const unsigned *ib;
-	size_t ibSize;
+	void exportObj(const char *filename, const std::vector<float> &vertices,
+		const std::vector<unsigned> &indices);
 };
 
 #endif /* FILE_EXPORTER_H */

@@ -131,3 +131,41 @@ void pg::Plant::setRoot(Stem *stem)
 {
 	this->root = stem;
 }
+
+void pg::Plant::addMaterial(pg::Material material)
+{
+	materials[material.getId()] = material;
+}
+
+void pg::Plant::removeMaterial(unsigned id)
+{
+	if (root->getMaterial(Stem::Outer) == id)
+		root->setMaterial(Stem::Outer, 0);
+	if (root->getMaterial(Stem::Inner) == id)
+		root->setMaterial(Stem::Inner, 0);
+	removeMaterial(root, id);
+	materials.erase(id);
+}
+
+void pg::Plant::removeMaterial(Stem *stem, unsigned id)
+{
+	Stem *child = stem->child;
+	while (child) {
+		if (child->getMaterial(Stem::Outer) == id)
+			child->setMaterial(Stem::Outer, 0);
+		if (child->getMaterial(Stem::Inner) == id)
+			child->setMaterial(Stem::Inner, 0);
+		removeMaterial(child, id);
+		child = child->nextSibling;
+	}
+}
+
+pg::Material pg::Plant::getMaterial(unsigned id)
+{
+	return materials[id];
+}
+
+std::map<unsigned, pg::Material> pg::Plant::getMaterials()
+{
+	return materials;
+}

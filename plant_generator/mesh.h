@@ -19,6 +19,7 @@
 #include "stem.h"
 #include "plant.h"
 #include <vector>
+#include <map>
 
 namespace pg {
 	struct Segment {
@@ -31,50 +32,48 @@ namespace pg {
 
 	class Mesh {
 		Plant *plant;
-		const int vertexSize = 6;
-		std::vector<float> vertices;
-		std::vector<unsigned> indices;
-		std::vector<Segment> segments;
+		const int vertexSize = 8;
 
-		void addSectionPoints(Mat4 t, float radius, int count);
+		int mesh;
+		std::map<unsigned, unsigned> meshes;
+		std::vector<unsigned> materials;
+		std::vector<std::vector<float>> vertices;
+		std::vector<std::vector<unsigned>> indices;
+		std::vector<std::vector<Segment>> segments;
+
 		Mat4 getSectionTransform(Stem *stem, size_t section,
 			float offset);
 		void addSection(Stem *stem, size_t section,
-			float offset = 0.0f);
+			float &textureOffset, float pathOffset = 0.0f);
 		/* Create a rectangle between cross sections a and b. */
 		void addRectangle(size_t *s1, size_t *s2);
 		void addLastRectangle(size_t a, size_t b, size_t ia, size_t ib);
 		void addTriangleRing(size_t s1, size_t s2, int divisions);
 		void addRectangles(size_t s1, size_t s2, int start, int end,
 			int divisions);
-		Vec3 getCrossSectionNormal(size_t index);
-		/** Angle of stem on cross section plane. */
-		float getStemAngle(size_t index, Vec3 direction);
-		/** Determine what vertices connect the stem to the parent. */
-		void getBounds(Vec3 direction, int divisions, size_t index,
-			int *lowerBound, int *upperBound, float *angle);
-		/** This limits the number of vertices per section to 180. */
-		bool isDichotomousTwisted(float angle, int divisions);
-		/** Connects three cross sections labeled a, b, and c. */
-		void connectDichotomous(size_t a, size_t b, size_t c,
-			int divisions, Vec3 direction);
-		void addDichotomousStems(Stem *parent, size_t section);
-		void capStem(Stem *stem, size_t section);
+		void capStem(Stem *stem, int stemMesh, size_t section);
 		/** Stems at the end of the parent stem need a small offset. */
-		void addStem(Stem *stem, float offset = 0.0f);
+		void addStem(Stem *stem, int mesh, float offset = 0.0f);
 		void addLeaves(Stem *stem);
 		void rotateSideLeaf(Vec3 (&p)[4], Vec3 &normal, Vec3 direction);
 		void rotateEndLeaf(Vec3 (&p)[4], Vec3 &normal, Vec3 direction);
-		void addPoint(pg::Vec3 point, pg::Vec3 normal);
+		void addPoint(Vec3 point, Vec3 normal, Vec2 texture);
 		void addTriangle(int a, int b, int c);
+		int selectBuffer(int material, int mesh);
 
 	public:
 		Mesh(Plant *plant);
-		bool generate();
-		const std::vector<float> *getVertices() const;
-		const std::vector<unsigned> *getIndices() const;
-		const std::vector<Segment> *getSegments() const;
+		void generate();
+		std::vector<float> getVertices() const;
+		std::vector<unsigned> getIndices() const;
+		const std::vector<float> *getVertices(int mesh) const;
+		const std::vector<unsigned> *getIndices(int mesh) const;
+		const std::vector<Segment> *getSegments(int mesh) const;
 		Segment find(Stem *stem) const;
+		int getVertexCount() const;
+		int getIndexCount() const;
+		int getMeshCount() const;
+		unsigned getMaterialId(int mesh);
 	};
 }
 

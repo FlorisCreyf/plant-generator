@@ -174,3 +174,11 @@ float pg::Path::getDistance(int index) const
 
 	return distance;
 }
+
+float pg::Path::getIntermediateDistance(int index) const
+{
+	if (index == 0)
+		return 0.0f;
+	else
+		return pg::magnitude(path[index] - path[index-1]);
+}

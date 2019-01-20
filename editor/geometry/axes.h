@@ -41,11 +41,13 @@ public:
 	/** Selects an axis using intersection tests. */
 	Axis getSelection();
 	void clearSelection();
+	void setScalable(bool scalable);
 
 protected:
 	float scale = 1.0f;
 	pg::Vec3 position = {0.0f, 0.0f, 0.0f};
 	Axis selection;
+	bool scalable = true;
 };
 
 #endif /* AXES_H */

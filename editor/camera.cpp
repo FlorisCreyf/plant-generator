@@ -364,3 +364,18 @@ pg::Ray Camera::getPerspectiveRay(int x, int y)
 	ray.origin = eye;
 	return ray;
 }
+
+pg::Vec3 Camera::getFar()
+{
+	return distance * far;
+}
+
+pg::Vec3 Camera::getNear()
+{
+	return distance * near;
+}
+
+bool Camera::isPerspective()
+{
+	return perspective;
+}

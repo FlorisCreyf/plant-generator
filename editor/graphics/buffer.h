@@ -43,9 +43,20 @@ public:
 	void update(const Geometry &geometry);
 	void update(const float *points, int psize, const unsigned *indices,
 		int isize);
-	/** Call before drawing. */
+	/**
+	 * The buffer should be bound prior to calling update. The method
+	 * returns false if the buffer is too small.
+	 */
+	bool update(const float *points, int start, int size);
+	/**
+	 * The buffer should be bound prior to calling update. The method
+	 * returns false if the buffer is too small.
+	 */
+	bool update(const unsigned *indices, int start, int size);
+	/** The buffer needs to be bound before drawing from it. */
 	void use();
-	int getSize(int type);
+	int getSize(int type) const;
+	int getCapacity(int type) const;
 
 private:
 	GLuint vao;

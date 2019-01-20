@@ -17,6 +17,8 @@
 #define PG_PLANT_H
 
 #include "stem.h"
+#include "material.h"
+#include <boost/serialization/map.hpp>
 #include <boost/archive/text_oarchive.hpp>
 
 namespace pg {
@@ -24,16 +26,19 @@ namespace pg {
 		friend class boost::serialization::access;
 
 		Stem *root;
+		std::map<unsigned, Material> materials;
 
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned int version)
 		{
 			(void)version;
 			ar & root;
+			ar & materials;
 		}
 
-		bool contains(pg::Stem *a, pg::Stem *b);
-		void removeFromTree(pg::Stem *stem);
+		bool contains(Stem *a, Stem *b);
+		void removeFromTree(Stem *stem);
+		void removeMaterial(Stem *stem, unsigned id);
 
 	public:
 		Plant();
@@ -43,7 +48,7 @@ namespace pg {
 		 * This method needs to be called some time after calling
 		 * release() to free up memory.
 		 */
-		static void deleteStem(pg::Stem *stem);
+		static void deleteStem(Stem *stem);
 
 		Stem *getRoot();
 		Stem *addStem(Stem *stem);
@@ -51,11 +56,15 @@ namespace pg {
 		void insert(Stem *parent, Stem *child);
 		/** Remove without deletion.*/
 		void release(Stem *stem);
-		bool contains(pg::Stem *stem);
+		bool contains(Stem *stem);
 		/** Removes the root and sets root to nullptr. */
 		void removeRoot();
 		/** This does not delete the previous root. */
-		void setRoot(Stem * stem);
+		void setRoot(Stem *stem);
+		void addMaterial(Material material);
+		void removeMaterial(unsigned id);
+		Material getMaterial(unsigned id);
+		std::map<unsigned, Material> getMaterials();
 	};
 }
 

@@ -19,13 +19,14 @@
   </property>
   <property name="styleSheet">
    <string notr="true">
- QMenu {
+QMenu {
 	background-color:#666;
-	border:1px solid #777;
+	border:0px solid #555;
 	font-size:11px;
-	color:#fff;
+	color:#ddd;
 } QMenu::item {
 	margin:0;
+	font-size:11px;
 	color:#eee;
 	padding:5px 100px 5px 30px;
 	background-color:transparent;
@@ -35,7 +36,7 @@
 	background:#5a5a5a;
 } QMenu::shortcut {
 } QMenu::separator {
-	background-color:#777;
+	background-color:#555;
 	height:1px;
 } QMenuBar {
 	font-size:11px;
@@ -55,6 +56,7 @@
 
 QWidget {
 	font-size:12px;
+	color:#ddd;
 }
 
 QDockWidget QWidget {
@@ -109,28 +111,40 @@ QDockWidget QWidget {
 	padding-right:0px;
 	background:#555;
 	border:1px solid #555;
-	height:24px;
-} QDockWidget QSpinBox::up-button, QDockWidget QDoubleSpinBox::up-button {
+	height:20px;
+} QDockWidget QSpinBox::up-button,
+  QDockWidget QDoubleSpinBox::up-button {
 	subcontrol-position:top right;
-	background-color:#505152;
-	width:16px;
-} QDockWidget QSpinBox::down-button, QDockWidget QDoubleSpinBox::down-button {
+	background-color:#555;
+	width:20px;
+} QDockWidget QSpinBox::down-button,
+  QDockWidget QDoubleSpinBox::down-button {
 	subcontrol-position:bottom right;
-	background-color:#4a4a4a;
-	width:16px;
-} QDockWidget QSpinBox::up-arrow, QDockWidget QDoubleSpinBox::up-arrow {
+	background-color:#555;
+	width:20px;
+} QDockWidget QSpinBox::up-arrow,
+  QDockWidget QDoubleSpinBox::up-arrow {
 	width:6px;
 	height:6px;
-} QDockWidget QSpinBox::down-arrow, QDockWidget QDoubleSpinBox::down-arrow {
+	image:url(&quot;resources/uparrow.png&quot;);
+} QDockWidget QSpinBox::down-arrow,
+  QDockWidget QDoubleSpinBox::down-arrow {
 	width:6px;
 	height:6px;
-} QDockWidget QSpinBox:disabled, QDockWidget QDoubleSpinBox:disabled {
-	background:#5a5a5a;
-} QDockWidget QSpinBox::up-button:disabled, QDockWidget QSpinBox::down-button:disabled, QDockWidget QDoubleSpinBox::up-button:disabled, QDockWidget QDoubleSpinBox::down-button:disabled {
-	background:transparent;
-} QDockWidget QSpinBox::up-arrow:disabled, QDockWidget QSpinBox::down-arrow:disabled, QDockWidget QDoubleSpinBox::up-arrow:disabled, QDockWidget QDoubleSpinBox::down-arrow:disabled {
-	width:0;
-	height:0;
+	image:url(&quot;resources/downarrow.png&quot;);
+} QSpinBox::up-arrow:disabled,
+  QSpinBox::up-arrow:off,
+  QDoubleSpinBox::up-arrow:disabled,
+  QDoubleSpinBox::up-arrow:off {
+	image:none;
+} QSpinBox::down-arrow:disabled,
+  QSpinBox::down-arrow:off,
+  QDoubleSpinBox::down-arrow:disabled,
+  QDoubleSpinBox::down-arrow:off {
+	image:none;
+} QDockWidget QSpinBox:disabled,
+  QDockWidget QDoubleSpinBox:disabled {
+	color:#555;
 } QMainWindow {
 	background:#666;
 } QDockWidget QTableWidget QLabel {
@@ -148,32 +162,33 @@ QDockWidget QWidget {
 	border-top:23px solid #4a4a4a;
 } QDockWidget QGroupBox::title {
 	font-size:11px;
-		color:#ddd;
+	color:#ddd;
 	background:transparent;
 	padding:4px 0 0 8px;
 	margin:0;
 } QTableView {
 	background:transparent;
 } QTabBar {
-	background:#333;
+	background:#3d3d3d;
 	qproperty-drawBase:0;
-}  QTabBar::tab {
-	background:#333;
+} QTabBar::tab {
+	background:#3d3d3d;
 	color:#aaa;
 	top:0;
 	padding:6px 10px;
 	margin:0;
 } QTabBar::tab:selected {
-	background:#222;
+	background:#303030;
 } QWidget#CurveButtonWidget {
 	border:solid 1px #fff;
 } QDockWidget QScrollArea {
 	background:transparent;
 } QDockWidget QScrollBar:vertical {
-	width:8px;
+	width:20px;
+	margin:5px;
 	background:#666;
 } QDockWidget QScrollBar::handle:vertical {
-	background:#888;
+	background:#4a4a4a;
 	border:0;
 	min-height:20px;
 } QDockWidget QScrollBar::add-line:vertical {
@@ -183,10 +198,10 @@ QDockWidget QWidget {
 	border:0;
 	background:#666;
 } QDockWidget QScrollBar:horizontal {
-	height:8px;
+	height:10px;
 	background:#666;
 } QDockWidget QScrollBar::handle:horizontal {
-	background:#888;
+	background:#4a4a4a;
 	border:0;
 	min-width:20px;
 } QDockWidget QScrollBar::add-line:horizontal {
@@ -195,32 +210,132 @@ QDockWidget QWidget {
 } QDockWidget QScrollBar::sub-line:horizontal {
 	border:0;
 	background:#666;
-} QDockWidget QComboBox {
-	font-size:11px;
-	border: 0;
-} QDockWidget QComboBox:editable {
-	background: #555;
-} QDockWidget QComboBox:!editable, QComboBox::drop-down:editable {
-	background: #444;
-} QDockWidget QComboBox:!editable:on, QComboBox::drop-down:editable:on {
-	background: #444;
-} QDockWidget QComboBox::drop-down {
-	subcontrol-origin: padding;
-	subcontrol-position: top right;
-	width:15px;
-	border:0;
-} QDockWidget QComboBox QAbstractItemView {
-	background:#505050;
-	border:0;
-} QDockWidget QRadioButton {
+}
+
+QDockWidget QRadioButton {
 	font-size:11px;
 } QDockWidget QRadioButton::indicator {
 	height:13px;
 	width:13px;
 } QDockWidget QRadioButton::indicator::unchecked {
-	image: url(&quot;resources/radiobutton_unchecked.png&quot;);
+	image:url(&quot;resources/radiobutton_unchecked.png&quot;);
 } QDockWidget QRadioButton::indicator::checked {
-	image: url(&quot;resources/radiobutton_checked.png&quot;);
+	image:url(&quot;resources/radiobutton_checked.png&quot;);
+} QDockWidget QPushButton {
+	background-color:#444;
+	color:#fff;
+} QDockWidget QPushButton:hover {
+	background-color:#404040;
+} QDockWidget QPushButton:pressed {
+	background-color:#333;
+} QDockWidget QPushButton::menu-indicator {
+	image:none;
+	margin:0;
+	padding:0;
+	spacing:0;
+	width:0;
+	height:0;
+} QDockWidget QLineEdit {
+	background-color:#555;
+	padding-left:4px;
+	padding-right:4px;
+	color:#ddd;
+} QDockWidget QToolButton {
+	background-color:#444;
+	padding-right:8px;
+	padding-left:4px;
+	border-image:none;
+} QToolButton::menu-indicator {
+	image:none;
+} QDockWidget QMenu {
+	background-color:#505050;
+	border:0;
+} QDockWidget QMenu::item {
+	border:0;
+	padding-left:8px;
+} QDockWidget QMenu::item:disabled {
+	color:#aaa;
+} QDockWidget QMenu::item:selected {
+	border:1px solid #404040;
+	background-color:#444;
+	padding-left:7px;
+}
+
+QToolBar {
+	background-color:#3d3d3d;
+	padding:0;
+	margin:0;
+	spacing:0;
+} QToolButton {
+	color:#aaa;
+	background-color:#3d3d3d;
+	padding:4px;
+	border:0;
+} QToolButton:checked {
+	background:#303030;
+} QToolButton:pressed {
+	border:0;
+}
+
+QComboBox {
+	font-size:11px;
+	border:0;
+	padding-left:4px;
+	padding-right:15px;
+	height:22px;
+} QComboBox:editable {
+	background:#555;
+} QComboBox:!editable, QComboBox::drop-down:editable {
+	background:#444;
+} QComboBox:!editable:on, QComboBox::drop-down:editable:on {
+	background:#444;
+} QComboBox::drop-down {
+	subcontrol-origin:padding;
+	subcontrol-position:bottom right;
+	width:20px;
+	border:0;
+} QComboBox::down-arrow {
+	image:url(&quot;resources/singledownarrow.png&quot;);
+	width:6px;
+	height:6px;
+} QComboBox QAbstractItemView {
+	background:#505050;
+	border:0;
+} QComboBox QAbstractItemView::item:selected {
+	border:1px solid #404040;
+	padding-left:3px;
+	padding-right:3px;
+	background-color:#444;
+} QComboBox QAbstractItemView::item {
+	border:0;
+	padding-left:4px;
+	padding-right:4px;
+} QComboBox QListView {
+	background-color:#505050;
+	border:0;
+	selection-color:#ddd;
+	selection-background-color:#404040;
+} QComboBox::item {
+	padding-left:4px;
+	padding-right:4px;
+	height:22px;
+} QComboBox::item:alternate {
+	background:#555;
+} QComboBox::item:selected {
+	border:1px solid #404040;
+	background-color:#444;
+	padding-left:3px;
+	padding-right:3px;
+} QComboBox::indicator {
+	image:none;
+} QComboBox:disabled {
+	color:#444;
+} QComboBox::down-arrow:disabled {
+	image:none;
+}
+
+QLabel {
+	padding-right:4px;
 }
 </string>
   </property>
@@ -242,12 +357,9 @@ QDockWidget QWidget {
     </property>
     <addaction name="actionNew"/>
     <addaction name="actionOpen"/>
-    <addaction name="separator"/>
     <addaction name="actionSave"/>
     <addaction name="actionSaveAs"/>
-    <addaction name="separator"/>
     <addaction name="actionExportMesh"/>
-    <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>
    <widget class="QMenu" name="menuHelp">

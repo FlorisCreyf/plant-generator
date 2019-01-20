@@ -42,7 +42,8 @@ public:
 	void clear();
 	/** Used in conjunction with addPoint for line strips. */
 	void addIndex(unsigned index);
-	void addPoint(pg::Vec3 point, pg::Vec3 color);
+	void addPoint(pg::Vec3 point, pg::Vec3 color,
+		pg::Vec2 texture = {0.0f, 0.0f});
 	void addLine(pg::Vec3 line[2], pg::Vec3 color);
 	void addCircle(float radius, int points, pg::Vec3 color);
 	void addCurve(const pg::Spline &spline, pg::Vec3 color, int size);

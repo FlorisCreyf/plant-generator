@@ -22,6 +22,7 @@ using pg::VolumetricPath;
 using pg::Spline;
 using std::next;
 using std::prev;
+using std::string;
 
 PropertyBox::PropertyBox(SharedResources *shared, QWidget *parent) :
 	QWidget(parent), saveStem(nullptr)
@@ -36,6 +37,10 @@ PropertyBox::PropertyBox(SharedResources *shared, QWidget *parent) :
 	layout->setSpacing(0);
 	layout->setMargin(0);
 	createStemBox(layout);
+	createCapBox(layout);
+	createLeafBox(layout);
+	enable(false);
+	leafMaterialV->setEnabled(false);
 	layout->addStretch(1);
 }
 
@@ -45,52 +50,103 @@ PropertyBox::PropertyBox(SharedResources *shared, QWidget *parent) :
 void PropertyBox::createStemBox(QVBoxLayout *layout)
 {
 	stemG = new QGroupBox(tr("Stem"));
-	QVBoxLayout *groupLayout = new QVBoxLayout(stemG);
+	QFormLayout *form = new QFormLayout(stemG);
+	form->setSpacing(3);
+	form->setMargin(10);
 
-	stemT = new QTableWidget(this);
-	stemT->setRowCount(4);
-	stemT->setColumnCount(3);
-
-	radiusL = new QLabel(tr("Radius"));
-	radiusV = new QDoubleSpinBox;
-	radiusB = new CurveButton("Radius", shared, this);
-	radiusV->setSingleStep(0.001);
-	radiusV->setDecimals(3);
+	{
+		QHBoxLayout *line = new QHBoxLayout();
+		radiusL = new QLabel(tr("Radius"));
+		radiusV = new QDoubleSpinBox;
+		radiusB = new CurveButton("Radius", shared, this);
+		radiusB->setFixedWidth(22);
+		radiusB->setFixedHeight(22);
+		radiusV->setSingleStep(0.001);
+		radiusV->setDecimals(3);
+		line->addWidget(radiusV);
+		line->addWidget(radiusB);
+		line->setSpacing(0);
+		form->addRow(radiusL, line);
+	}
 
 	divisionL = new QLabel(tr("Divisions"));
 	divisionV = new QSpinBox;
 	divisionV->setMinimum(1);
+	form->addRow(divisionL, divisionV);
 
 	resolutionL = new QLabel(tr("Resolution"));
 	resolutionV = new QSpinBox;
 	resolutionV->setMinimum(5);
+	form->addRow(resolutionL, resolutionV);
 
 	degreeL = new QLabel(tr("Degree"));
 	degreeV = new QComboBox;
 	degreeV->addItem(QString("Linear"));
 	degreeV->addItem(QString("Cubic"));
+	form->addRow(degreeL, degreeV);
 
-	{
-		int row = 0;
-		stemT->setCellWidget(row, 0, radiusL);
-		stemT->setCellWidget(row, 1, radiusV);
-		stemT->setCellWidget(row, 2, createCenteredWidget(radiusB));
-		stemT->setCellWidget(++row, 0, resolutionL);
-		stemT->setCellWidget(row, 1, resolutionV);
-		stemT->setCellWidget(++row, 0, divisionL);
-		stemT->setCellWidget(row, 1, divisionV);
-		stemT->setCellWidget(++row, 0, degreeL);
-		stemT->setCellWidget(row, 1, degreeV);
-	}
+	stemMaterialL = new QLabel(tr("Material"));
+	stemMaterialV = new QComboBox;
+	stemMaterialV->addItem(tr(""), QVariant(0));
+	form->addRow(stemMaterialL, stemMaterialV);
 
-	configureTable(stemT);
-	groupLayout->addWidget(stemT);
-	/* Show and hide methods are neeeded for hidden opengl widgets to
-	 * initialize properly. */
-	stemG->show();
-	stemG->hide();
 	stemG->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
 	layout->addWidget(stemG);
+
+	connect(degreeV, SIGNAL(currentIndexChanged(int)), this,
+		SLOT(changePathDegree(int)));
+	connect(resolutionV, SIGNAL(editingFinished()), this,
+		SLOT(finishChanging()));
+	connect(resolutionV, SIGNAL(valueChanged(int)), this,
+		SLOT(changeResolution(int)));
+	connect(divisionV, SIGNAL(editingFinished()), this,
+		SLOT(finishChanging()));
+	connect(divisionV, SIGNAL(valueChanged(int)), this,
+		SLOT(changeDivisions(int)));
+	connect(radiusV, SIGNAL(editingFinished()), this,
+		SLOT(finishChanging()));
+	connect(radiusV, SIGNAL(valueChanged(double)), this,
+		SLOT(changeRadius(double)));
+	connect(radiusB, SIGNAL(selected(CurveButton *)), this,
+		SLOT(toggleCurve(CurveButton *)));
+
+	connect(stemMaterialV, SIGNAL(currentIndexChanged(int)), this,
+		SLOT(changeStemMaterial()));
+}
+
+void PropertyBox::createCapBox(QVBoxLayout *layout)
+{
+	capG = new QGroupBox(tr("Cap"));
+	QFormLayout *form = new QFormLayout(capG);
+	form->setSpacing(3);
+	form->setMargin(10);
+
+	capMaterialL = new QLabel(tr("Material"));
+	capMaterialV = new QComboBox;
+	capMaterialV->addItem(tr(""), QVariant(0));
+	form->addRow(capMaterialL, capMaterialV);
+
+	capG->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
+	layout->addWidget(capG);
+
+	connect(capMaterialV, SIGNAL(currentIndexChanged(int)), this,
+		SLOT(changeCapMaterial()));
+}
+
+void PropertyBox::createLeafBox(QVBoxLayout *layout)
+{
+	leafG = new QGroupBox(tr("Leaf"));
+	QFormLayout *form = new QFormLayout(leafG);
+	form->setSpacing(3);
+	form->setMargin(10);
+
+	leafMaterialL = new QLabel(tr("Material"));
+	leafMaterialV = new QComboBox;
+	leafMaterialV->addItem(tr(""), QVariant(0));
+	form->addRow(leafMaterialL, leafMaterialV);
+
+	leafG->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
+	layout->addWidget(leafG);
 }
 
 /**
@@ -103,19 +159,13 @@ void PropertyBox::fill()
 	auto instances = editor->getSelection()->getInstances();
 
 	if (instances.empty()) {
-		stemG->hide();
+		enable(false);
 		curveEditor->setEnabled(false);
 	} else {
-		pg::Stem *lastStem = instances.rbegin()->first;
+		pg::Stem *stem = instances.rbegin()->first;
 		auto nextIt = next(instances.begin());
 
-		/* TODO make curve bold if radius curves are different. */
-		radiusB->blockSignals(true);
-		radiusB->setCurve(lastStem->getPath().getRadius());
-		radiusB->blockSignals(false);
-
 		indicateSimilarities(resolutionL);
-
 		for (auto it = nextIt; it != instances.end(); ++it) {
 			pg::Stem *a = prev(it)->first;
 			pg::Stem *b = it->first;
@@ -124,9 +174,8 @@ void PropertyBox::fill()
 				break;
 			}
 		}
-
 		resolutionV->blockSignals(true);
-		resolutionV->setValue(lastStem->getResolution());
+		resolutionV->setValue(stem->getResolution());
 		resolutionV->blockSignals(false);
 
 		indicateSimilarities(divisionL);
@@ -139,7 +188,7 @@ void PropertyBox::fill()
 			}
 		}
 		divisionV->blockSignals(true);
-		divisionV->setValue(lastStem->getPath().getResolution());
+		divisionV->setValue(stem->getPath().getResolution());
 		divisionV->blockSignals(false);
 
 		indicateSimilarities(radiusL);
@@ -152,8 +201,12 @@ void PropertyBox::fill()
 			}
 		}
 		radiusV->blockSignals(true);
-		radiusV->setValue(lastStem->getPath().getMaxRadius());
+		radiusV->setValue(stem->getPath().getMaxRadius());
 		radiusV->blockSignals(false);
+		/* TODO make curve bold if radius curves are different. */
+		radiusB->blockSignals(true);
+		radiusB->setCurve(stem->getPath().getRadius());
+		radiusB->blockSignals(false);
 
 		indicateSimilarities(degreeL);
 		for (auto it = nextIt; it != instances.end(); ++it) {
@@ -165,7 +218,7 @@ void PropertyBox::fill()
 			}
 		}
 		degreeV->blockSignals(true);
-		switch(lastStem->getPath().getSpline().getDegree()) {
+		switch (stem->getPath().getSpline().getDegree()) {
 		case 1:
 			degreeV->setCurrentIndex(0);
 			break;
@@ -175,13 +228,90 @@ void PropertyBox::fill()
 		}
 		degreeV->blockSignals(false);
 
+		indicateSimilarities(stemMaterialL);
+		for (auto it = nextIt; it != instances.end(); ++it) {
+			int a = prev(it)->first->getMaterial(pg::Stem::Outer);
+			int b = it->first->getMaterial(pg::Stem::Outer);
+			if (a != b) {
+				indicateDifferences(stemMaterialL);
+				break;
+			}
+		}
+		stemMaterialV->blockSignals(true);
+		{
+			int id = stem->getMaterial(pg::Stem::Outer);
+			string s = shared->getMaterial(id).getName();
+			QString qs = QString::fromStdString(s);
+			stemMaterialV->setCurrentText(qs);
+		}
+		stemMaterialV->blockSignals(false);
+
+		indicateSimilarities(capMaterialL);
+		for (auto it = nextIt; it != instances.end(); ++it) {
+			int a = prev(it)->first->getMaterial(pg::Stem::Inner);
+			int b = it->first->getMaterial(pg::Stem::Inner);
+			if (a != b) {
+				indicateDifferences(capMaterialL);
+				break;
+			}
+		}
+		capMaterialV->blockSignals(true);
+		{
+			int id = stem->getMaterial(pg::Stem::Inner);
+			string s = shared->getMaterial(id).getName();
+			QString qs = QString::fromStdString(s);
+			capMaterialV->setCurrentText(qs);
+		}
+		capMaterialV->blockSignals(false);
+
 		if (selectedCurve)
 			selectedCurve->select();
 
+		enable(true);
 		curveEditor->setEnabled(true);
-		stemG->show();
 		stemG->blockSignals(false);
 	}
+}
+
+void PropertyBox::addMaterial(ShaderParams params)
+{
+	QString name;
+	name = QString::fromStdString(params.getName());
+	if (stemMaterialV->findText(name) < 0) {
+		stemMaterialV->addItem(name, QVariant(params.getId()));
+		capMaterialV->addItem(name, QVariant(params.getId()));
+		leafMaterialV->addItem(name, QVariant(params.getId()));
+		editor->getPlant()->addMaterial(params.getMaterial());
+	}
+	editor->change();
+}
+
+void PropertyBox::removeMaterial(QString name)
+{
+	int index;
+	int id;
+	index = stemMaterialV->findText(name);
+	if (index != 0) {
+		id = stemMaterialV->itemData(index).toInt();
+		editor->getPlant()->removeMaterial(id);
+		stemMaterialV->removeItem(index);
+		index = capMaterialV->findText(name);
+		capMaterialV->removeItem(index);
+		index = leafMaterialV->findText(name);
+		leafMaterialV->removeItem(index);
+		editor->change();
+	}
+}
+
+void PropertyBox::renameMaterial(QString before, QString after)
+{
+	int index;
+	index = stemMaterialV->findText(before);
+	stemMaterialV->setItemText(index, after);
+	index = capMaterialV->findText(before);
+	capMaterialV->setItemText(index, after);
+	index = leafMaterialV->findText(before);
+	leafMaterialV->setItemText(index, after);
 }
 
 void PropertyBox::changePathDegree(int i)
@@ -253,6 +383,30 @@ void PropertyBox::changeRadiusCurve(pg::Spline &spline)
 	editor->change();
 }
 
+void PropertyBox::changeStemMaterial()
+{
+	beginChanging();
+	indicateSimilarities(stemMaterialL);
+	int id = stemMaterialV->currentData().toInt();
+	auto instances = editor->getSelection()->getInstances();
+	for (auto &instance : instances)
+		instance.first->setMaterial(pg::Stem::Outer, id);
+	editor->change();
+	finishChanging();
+}
+
+void PropertyBox::changeCapMaterial()
+{
+	beginChanging();
+	indicateSimilarities(capMaterialL);
+	int id = capMaterialV->currentData().toInt();
+	auto instances = editor->getSelection()->getInstances();
+	for (auto &instance : instances)
+		instance.first->setMaterial(pg::Stem::Inner, id);
+	editor->change();
+	finishChanging();
+}
+
 void PropertyBox::beginChanging()
 {
 	if (!changing) {
@@ -272,6 +426,25 @@ void PropertyBox::finishChanging()
 	changing = false;
 }
 
+void PropertyBox::enable(bool enable)
+{
+	if (!enable) {
+		indicateSimilarities(radiusL);
+		indicateSimilarities(resolutionL);
+		indicateSimilarities(divisionL);
+		indicateSimilarities(degreeL);
+		indicateSimilarities(stemMaterialL);
+		indicateSimilarities(capMaterialL);
+	}
+	radiusV->setEnabled(enable);
+	radiusB->setEnabled(enable);
+	resolutionV->setEnabled(enable);
+	divisionV->setEnabled(enable);
+	degreeV->setEnabled(enable);
+	stemMaterialV->setEnabled(enable);
+	capMaterialV->setEnabled(enable);
+}
+
 void PropertyBox::indicateDifferences(QWidget *widget)
 {
 	widget->setStyleSheet("font-weight:bold;");
@@ -284,97 +457,19 @@ void PropertyBox::indicateSimilarities(QWidget *widget)
 
 void PropertyBox::bind(Editor *editor, CurveEditor *curveEditor)
 {
-	this->curveEditor = curveEditor;
 	this->editor = editor;
-
+	this->curveEditor = curveEditor;
 	connect(editor, SIGNAL(selectionChanged()), this,
 		SLOT(fill()));
-
 	connect(curveEditor, SIGNAL(curveChanged(pg::Spline, QString)), this,
 		SLOT(setCurve(pg::Spline, QString)));
-	connect(radiusB, SIGNAL(selected(CurveButton *)), this,
-		SLOT(toggleCurve(CurveButton *)));
-
-	connect(resolutionV, SIGNAL(editingFinished()), this,
-		SLOT(finishChanging()));
-	connect(divisionV, SIGNAL(editingFinished()), this,
-		SLOT(finishChanging()));
-	connect(radiusV, SIGNAL(editingFinished()), this,
-		SLOT(finishChanging()));
 	connect(curveEditor, SIGNAL(editingFinished()), this,
 		SLOT(finishChanging()));
-
-	connect(degreeV, SIGNAL(currentIndexChanged(int)), this,
-		SLOT(changePathDegree(int)));
-	connect(resolutionV, SIGNAL(valueChanged(int)), this,
-		SLOT(changeResolution(int)));
-	connect(divisionV, SIGNAL(valueChanged(int)), this,
-		SLOT(changeDivisions(int)));
-	connect(radiusV, SIGNAL(valueChanged(double)), this,
-		SLOT(changeRadius(double)));
-}
-
-/**
- * Determine the width of each column and what the height of the table is.
- * Since the table height is fixed, hiding rows requires setting a new
- * fixed height.
- */
-void PropertyBox::configureTable(QTableWidget *table)
-{
-	table->horizontalHeader()->hide();
-	table->verticalHeader()->hide();
-	table->setShowGrid(false);
-	table->setFocusPolicy(Qt::NoFocus);
-	table->setEditTriggers(QAbstractItemView::NoEditTriggers);
-	table->setSelectionMode(QAbstractItemView::NoSelection);
-
-	for (int row = 0; row < table->rowCount(); row++) {
-		auto rightCell = table->cellWidget(row, 1);
-		auto leftCell = table->cellWidget(row, 0);
-		const char *name = rightCell->metaObject()->className();
-
-		bool spinBox = strcmp(name, "QSpinBox") == 0;
-		bool doubleSpinBox = strcmp(name, "QDoubleSpinBox") == 0;
-		if (spinBox || doubleSpinBox)
-			table->setRowHeight(row, 24);
-		else
-			table->resizeRowToContents(row);
-
-		if (leftCell != nullptr)
-			leftCell->setFixedHeight(24);
-	}
-
-	{
-		QHeaderView *header = table->horizontalHeader();
-		if (table->columnCount() == 3)
-			header->setSectionResizeMode(2, QHeaderView::Fixed);
-		header->setSectionResizeMode(1, QHeaderView::Stretch);
-		header->setSectionResizeMode(0, QHeaderView::Fixed);
-		header->resizeSection(2, 30);
-	}
-
-	{
-		int height = 0;
-		for (int i = 0; i < table->rowCount(); i++)
-			height += table->rowHeight(i);
-		table->setFixedHeight(height);
-		table->resizeColumnToContents(0);
-	}
-}
-
-QWidget *PropertyBox::createCenteredWidget(QWidget *widget)
-{
-	QWidget *w = new QWidget(this);
-	QHBoxLayout *b = new QHBoxLayout(w);
-	b->setAlignment(Qt::AlignVCenter | Qt::AlignRight);
-	b->setMargin(0);
-	b->addWidget(widget);
-	return w;
 }
 
 QSize PropertyBox::sizeHint() const
 {
-	return QSize(300, 0);
+	return QSize(400, 200);
 }
 
 void PropertyBox::setCurve(pg::Spline spline, QString name)
@@ -390,7 +485,9 @@ void PropertyBox::toggleCurve(CurveButton *button)
 	selectedCurve = button;
 	auto instances = editor->getSelection()->getInstances();
 	pg::Stem *stem = nullptr;
-	if (!instances.empty())
+	if (!instances.empty()) {
 		stem = instances.rbegin()->first;
-	curveEditor->setCurve(stem->getPath().getRadius(), button->getName());
+		QString name = button->getName();
+		curveEditor->setCurve(stem->getPath().getRadius(), name);
+	}
 }
