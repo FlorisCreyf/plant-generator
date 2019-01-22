@@ -81,6 +81,7 @@ private:
 	bool moveLeft;
 	pg::Vec3 origPoint;
 	int clickOffset[2];
+	int toolBarHeight = 22;
 
 	QComboBox *degree;
 

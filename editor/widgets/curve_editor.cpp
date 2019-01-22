@@ -137,6 +137,7 @@ void CurveEditor::createInterface()
 
 void CurveEditor::resizeGL(int width, int height)
 {
+	height -= toolBarHeight;
 	float ratio = static_cast<float>(width) / static_cast<float>(height);
 	camera.setWindowSize(width, height);
 	camera.setOrthographic({-ratio, -1.0f, 0.0f}, {ratio, 1.0f, 100.0f});
@@ -257,7 +258,7 @@ void CurveEditor::extrude()
 	Vec3 avg = pg::getZeroVec3();
 	avg = selection.getAveragePosition(spline, avg);
 	axes.setPosition(avg);
-	setClickOffset(p.x(), p.y(), avg);
+	setClickOffset(p.x(), p.y() - toolBarHeight, avg);
 
 	origSpline = spline;
 	ExtrudeSpline cmd(&selection, &origSpline);
@@ -278,7 +279,7 @@ void CurveEditor::mousePressEvent(QMouseEvent *event)
 	move = false;
 
 	if (event->button() == Qt::MidButton) {
-		camera.setStartCoordinates(p.x(), p.y());
+		camera.setStartCoordinates(p.x(), p.y() - toolBarHeight);
 		if (event->modifiers() & Qt::ControlModifier)
 			camera.setAction(Camera::Zoom);
 		else if (event->modifiers() & Qt::ShiftModifier)
@@ -286,11 +287,13 @@ void CurveEditor::mousePressEvent(QMouseEvent *event)
 	} else if (enabled && event->button() == Qt::RightButton) {
 		SavePointSelection selectionCopy(&selection);
 		Vec3 zero = pg::getZeroVec3();
-		selection.selectPoint(event, spline, zero);
+		QMouseEvent modifiedEvent((QEvent::MouseMove), QPoint(p.x(),
+			p.y() - toolBarHeight), event->button(),
+			event->buttons(), event->modifiers());
+		selection.selectPoint(&modifiedEvent, spline, zero);
 		if (selectionCopy.hasChanged()) {
 			selectionCopy.setAfter();
 			history.add(selectionCopy);
-
 			Vec3 avg = selection.getAveragePosition(spline, zero);
 			path.setSelectedPoints(selection);
 			axes.setPosition(avg);
@@ -299,7 +302,8 @@ void CurveEditor::mousePressEvent(QMouseEvent *event)
 		}
 	} else if (enabled && event->button() == Qt::LeftButton) {
 		if (!selection.getPoints().empty()) {
-			setClickOffset(p.x(), p.y(), axes.getPosition());
+			int y = p.y() - toolBarHeight;
+			setClickOffset(p.x(), y, axes.getPosition());
 			moveSpline = MoveSpline(&selection, &origSpline, &axes);
 			initiateMovePoint();
 		}
@@ -325,9 +329,9 @@ void CurveEditor::mouseMoveEvent(QMouseEvent *event)
 {
 	QPoint p = event->pos();
 	float x = p.x() + clickOffset[0];
-	float y = p.y() + clickOffset[1];
+	float y = p.y() + clickOffset[1] - toolBarHeight;
 
-	camera.executeAction(p.x(), p.y());
+	camera.executeAction(p.x(), p.y() - toolBarHeight);
 
 	if (move) {
 		ctrl = event->modifiers() & Qt::ControlModifier;
@@ -628,7 +632,7 @@ void CurveEditor::truncateCubicControl(std::vector<Vec3> &controls, int i)
 
 void CurveEditor::paintGL()
 {
-	glViewport(0, 0, width(), height()-22);
+	glViewport(0, 0, width(), height() - toolBarHeight);
 	glClearColor(0.32f, 0.32f, 0.32f, 1.0);
 	glClearDepth(1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
