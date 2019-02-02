@@ -15,53 +15,58 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "stem_selection.h"
+#include "selection.h"
 #include "plant_generator/math/intersection.h"
 #include <limits>
 #include <utility>
 
 using pg::Stem;
 
-StemSelection::StemSelection(Camera *camera, pg::Plant *plant)
+Selection::Selection(Camera *camera, pg::Plant *plant, pg::Mesh *mesh)
 {
 	this->camera = camera;
 	this->plant = plant;
+	this->mesh = mesh;
 }
 
-bool StemSelection::operator==(const StemSelection &obj) const
+bool Selection::operator==(const Selection &obj) const
 {
-	for (auto &instance : selection) {
-		pg::Stem *stem = instance.first;
-		auto a = obj.selection.find(stem);
-		if (a == obj.selection.end())
-			return false;
-		if (a->second != instance.second)
-			return false;
-	}
-	return selection.size() == obj.selection.size();
+	return stems == obj.stems && leaves == obj.leaves;
 }
 
-bool StemSelection::operator!=(const StemSelection &obj) const
+bool Selection::operator!=(const Selection &obj) const
 {
 	return !(*this == obj);
 }
 
-void StemSelection::removeStem(pg::Stem *stem)
+void Selection::removeStem(pg::Stem *stem)
 {
-	selection.erase(stem);
+	stems.erase(stem);
 }
 
-void StemSelection::addStem(pg::Stem *stem)
+void Selection::addStem(pg::Stem *stem)
 {
 	PointSelection ps(camera);
-	selection.emplace(stem, ps);
+	stems.emplace(stem, ps);
 }
 
-void StemSelection::select(QMouseEvent *event)
+void Selection::addLeaf(pg::Stem *stem, unsigned leaf)
+{
+	auto it = leaves.find(stem);
+	if (it == leaves.end()) {
+		std::set<unsigned> ids;
+		ids.insert(leaf);
+		leaves.emplace(stem, ids);
+	} else {
+		it->second.insert(leaf);
+	}
+}
+
+void Selection::select(QMouseEvent *event)
 {
 	int point = -1;
 
-	for (auto &instance : selection) {
+	for (auto &instance : stems) {
 		Stem *stem = instance.first;
 		PointSelection &ps = instance.second;
 		pg::Spline spline = stem->getPath().getSpline();
@@ -69,68 +74,79 @@ void StemSelection::select(QMouseEvent *event)
 		point = ps.selectPoint(event, spline, location);
 		if (point >= 0) {
 			if (!(event->modifiers() & Qt::ControlModifier)) {
-				PointSelection nps = ps;
-				selection.clear();
-				selection.emplace(stem, nps);
+				PointSelection psCopy = ps;
+				stems.clear();
+				stems.emplace(stem, psCopy);
 			}
 			break;
 		}
 	}
 
-	if (point < 0)
-		selectStem(event);
+	if (point < 0) {
+		QPoint point = event->pos();
+		pg::Ray ray = camera->getRay(point.x(), point.y());
+		std::pair<float, Stem *> sp = getStem(ray, plant->getRoot());
+		std::pair<float, pg::Segment> lp = getLeaf(ray);
+
+		/* Remove previous selections if no modifier key is pressed. */
+		if (!(event->modifiers() & Qt::ControlModifier)) {
+			stems.clear();
+			leaves.clear();
+		}
+
+		if (sp.second && sp.first < lp.first) {
+			/* Remove the stem if it is already selected. */
+			auto it = stems.find(sp.second);
+			if (it != stems.end())
+				stems.erase(it);
+			else
+				addStem(sp.second);
+		} else if (lp.second.stem && lp.first < sp.first) {
+			unsigned leaf = lp.second.leaf;
+			Stem *stem = lp.second.stem;
+			auto it = leaves.find(stem);
+			if (it != leaves.end()) {
+				auto leafIt = it->second.find(leaf);
+				if (leafIt != it->second.end())
+					it->second.erase(leafIt);
+				else
+					addLeaf(stem, leaf);
+			} else
+				addLeaf(stem, leaf);
+		} else {
+			/* Clear the selection if nothing was clicked on. */
+			stems.clear();
+			leaves.clear();
+		}
+	}
+
 }
 
-void StemSelection::selectStem(QMouseEvent *event)
+void Selection::setInstances(std::map<pg::Stem *, PointSelection> instances)
 {
-	QPoint point = event->pos();
-	pg::Ray ray = camera->getRay(point.x(), point.y());
-	Stem *stem = getStem(ray);
-
-	/* Remove previous selections if no modifier key is pressed. */
-	if (!(event->modifiers() & Qt::ControlModifier))
-		selection.clear();
-
-	if (stem) {
-		/* Remove the stem from the selection if it is already
-		 * selected. */
-		auto it = selection.find(stem);
-		if (it != selection.end())
-			selection.erase(it);
-		else
-			addStem(stem);
-	} else
-		/* Remove the entire selection if nothing was clicked on. */
-		selection.clear();
+	this->stems = instances;
 }
 
-void StemSelection::setInstances(std::map<pg::Stem *, PointSelection> instances)
+std::map<pg::Stem *, PointSelection> Selection::getStemInstances()
 {
-	this->selection = instances;
+	return stems;
 }
 
-std::map<pg::Stem *, PointSelection> StemSelection::getInstances()
+std::map<pg::Stem *, std::set<unsigned>> Selection::getLeafInstances()
 {
-	return selection;
+	return leaves;
 }
 
-pg::Plant *StemSelection::getPlant()
+pg::Plant *Selection::getPlant()
 {
 	return plant;
-}
-
-Stem *StemSelection::getStem(pg::Ray ray)
-{
-	Stem *stem = plant->getRoot();
-	std::pair<float, Stem *> selection = getStem(ray, stem);
-	return selection.second;
 }
 
 /**
  * Performs cylinder intersection tests to determine which stem was clicked on.
  * A stem and the distance to its intersection is returned.
  */
-std::pair<float, Stem *> StemSelection::getStem(pg::Ray &ray, Stem *stem)
+std::pair<float, Stem *> Selection::getStem(pg::Ray &ray, Stem *stem)
 {
 	float max = std::numeric_limits<float>::max();
 	std::pair<float, Stem *> selection1(max, nullptr);
@@ -165,46 +181,99 @@ std::pair<float, Stem *> StemSelection::getStem(pg::Ray &ray, Stem *stem)
 	return selection1;
 }
 
-void StemSelection::clear()
+std::pair<float, pg::Segment> Selection::getLeaf(pg::Ray ray)
 {
-	selection.clear();
+	int vertexSize = mesh->getVertexSize();
+	unsigned indexOffset = 0;
+	unsigned vertexOffset = 0;
+
+	std::pair<float, pg::Segment> selection;
+	selection.first = std::numeric_limits<float>::max();
+	selection.second.stem = nullptr;
+
+	for (int m = 0; m < mesh->getMeshCount(); m++) {
+		auto vertices = mesh->getVertices(m);
+		auto indices = mesh->getIndices(m);
+		for (int i = 0; i < mesh->getLeafCount(m); i++) {
+			pg::Segment ls = mesh->getLeaf(m, i);
+			ls.indexStart -= indexOffset;
+
+			unsigned len = ls.indexStart + ls.indexCount;
+			for (unsigned j = ls.indexStart; j < len; j += 3) {
+				unsigned triangle[3];
+				triangle[0] = (*indices)[j] * vertexSize;
+				triangle[1] = (*indices)[j+1] * vertexSize;
+				triangle[2] = (*indices)[j+2] * vertexSize;
+				triangle[0] -= vertexOffset;
+				triangle[1] -= vertexOffset;
+				triangle[2] -= vertexOffset;
+				
+				pg::Vec3 v1, v2, v3;
+				v1.x = (*vertices)[triangle[0]];
+				v1.y = (*vertices)[triangle[0]+1];
+				v1.z = (*vertices)[triangle[0]+2];
+				v2.x = (*vertices)[triangle[1]];
+				v2.y = (*vertices)[triangle[1]+1];
+				v2.z = (*vertices)[triangle[1]+2];
+				v3.x = (*vertices)[triangle[2]];
+				v3.y = (*vertices)[triangle[2]+1];
+				v3.z = (*vertices)[triangle[2]+2];
+
+				float t;
+				t = pg::intersectsTriangle(ray, v1, v2, v3);
+				if (t > 0 && t < selection.first) {
+					selection.first = t;
+					selection.second = ls;
+				}
+			}
+		}
+		indexOffset += indices->size();
+		vertexOffset += vertices->size();
+	}
+	return selection;
 }
 
-void StemSelection::selectSiblings()
+void Selection::clear()
 {
-	for (auto &instance : selection) {
+	stems.clear();
+	leaves.clear();
+}
+
+void Selection::selectSiblings()
+{
+	for (auto &instance : stems) {
 		Stem *parent = instance.first->getParent();
 		if (parent) {
 			Stem *child = parent->getChild();
 			std::vector<Stem *>::iterator it;
 			while (child) {
 				PointSelection ps(camera);
-				selection.emplace(child, ps);
+				stems.emplace(child, ps);
 				child = child->getSibling();
 			}
 		}
 	}
 }
 
-void StemSelection::selectChildren()
+void Selection::selectChildren()
 {
-	for (auto &instance : selection) {
+	for (auto &instance : stems) {
 		Stem *child = instance.first->getChild();
 		std::vector<Stem *>::iterator it;
 		while (child) {
-			selection.emplace(child, PointSelection(camera));
+			stems.emplace(child, PointSelection(camera));
 			child = child->getSibling();
 		}
 	}
 }
 
-void StemSelection::reduceToAncestors()
+void Selection::reduceToAncestors()
 {
 	std::map<pg::Stem *, PointSelection> newSelection;
-	for (auto &instance : selection) {
+	for (auto &instance : stems) {
 		pg::Stem *stem1 = instance.first;
 		bool valid = true;
-		for (auto instance : selection) {
+		for (auto instance : stems) {
 			pg::Stem *stem2 = instance.first;
 			if (stem1->isDescendantOf(stem2)) {
 				valid = false;
@@ -214,68 +283,73 @@ void StemSelection::reduceToAncestors()
 		if (valid)
 			newSelection.emplace(instance.first, instance.second);
 	}
-	selection = newSelection;
+	stems = newSelection;
 }
 
-void StemSelection::selectAll(Stem *stem)
+void Selection::selectAll(Stem *stem)
 {
 	if (stem) {
 		Stem *child = stem->getChild();
 		while (child) {
-			selection.emplace(child, PointSelection(camera));
+			stems.emplace(child, PointSelection(camera));
 			selectAll(child);
 			child = child->getSibling();
 		}
 	}
 }
 
-void StemSelection::selectAll()
+void Selection::selectAll()
 {
-	if (selection.empty()) {
+	if (stems.empty()) {
 		Stem *stem = plant->getRoot();
-		selection.emplace(stem, PointSelection(camera));
+		stems.emplace(stem, PointSelection(camera));
 		selectAll(stem);
 	} else
-		selection.clear();
+		stems.clear();
 }
 
-bool StemSelection::hasStems() const
+bool Selection::hasStems() const
 {
-	return !selection.empty();
+	return !stems.empty();
 }
 
-bool StemSelection::contains(pg::Stem *stem) const
+bool Selection::hasLeaves() const
 {
-	return selection.find(stem) != selection.end();
+	return !leaves.empty();
 }
 
-void StemSelection::clearPoints()
+bool Selection::contains(pg::Stem *stem) const
 {
-	for (auto &instance : selection)
+	return stems.find(stem) != stems.end();
+}
+
+void Selection::clearPoints()
+{
+	for (auto &instance : stems)
 		instance.second.clear();
 }
 
-void StemSelection::selectNextPoints()
+void Selection::selectNextPoints()
 {
-	for (auto &instance : selection) {
+	for (auto &instance : stems) {
 		int size = instance.first->getPath().getSpline().getSize();
 		instance.second.selectNext(size);
 	}
 }
 
-void StemSelection::selectPreviousPoints()
+void Selection::selectPreviousPoints()
 {
-	for (auto &instance : selection)
+	for (auto &instance : stems)
 		instance.second.selectPrevious();
 }
 
-void StemSelection::selectAllPoints()
+void Selection::selectAllPoints()
 {
 	if (hasPoints())
-		for (auto &instance : selection)
+		for (auto &instance : stems)
 			instance.second.clear();
 	else {
-		for (auto &instance : selection) {
+		for (auto &instance : stems) {
 			pg::Stem *stem = instance.first;
 			int size = stem->getPath().getSpline().getSize();
 			instance.second.selectAll(size);
@@ -283,26 +357,26 @@ void StemSelection::selectAllPoints()
 	}
 }
 
-void StemSelection::selectFirstPoints()
+void Selection::selectFirstPoints()
 {
-	for (auto &instance : selection) {
+	for (auto &instance : stems) {
 		instance.second.select(0);
 	}
 }
 
-void StemSelection::selectLastPoints()
+void Selection::selectLastPoints()
 {
-	for (auto &instance : selection) {
+	for (auto &instance : stems) {
 		int size = instance.first->getPath().getSpline().getSize();
 		instance.second.select(size - 1);
 	}
 }
 
-pg::Vec3 StemSelection::getAveragePosition() const
+pg::Vec3 Selection::getAveragePosition() const
 {
 	pg::Vec3 position = {0.0f, 0.0f, 0.0f};
 	int count = 0;
-	for (auto &instance : selection) {
+	for (auto &instance : stems) {
 		const PointSelection &ps = instance.second;
 		pg::Stem *stem = instance.first;
 		int size = instance.second.getPoints().size();
@@ -317,11 +391,11 @@ pg::Vec3 StemSelection::getAveragePosition() const
 	return position;
 }
 
-pg::Vec3 StemSelection::getAveragePositionFP() const
+pg::Vec3 Selection::getAveragePositionFP() const
 {
 	pg::Vec3 position = {0.0f, 0.0f, 0.0f};
 	int count = 0;
-	for (auto &instance : selection) {
+	for (auto &instance : stems) {
 		pg::Stem *stem = instance.first;
 		int size = instance.second.getPoints().size();
 		if (size > 0) {
@@ -339,11 +413,11 @@ pg::Vec3 StemSelection::getAveragePositionFP() const
 	return position;
 }
 
-pg::Vec3 StemSelection::getAverageDirectionFP() const
+pg::Vec3 Selection::getAverageDirectionFP() const
 {
 	pg::Vec3 direction = {0.0f, 0.0f, 0.0f};
 	int count = 0;
-	for (auto &instance : selection) {
+	for (auto &instance : stems) {
 		pg::Stem *stem = instance.first;
 		const PointSelection &ps = instance.second;
 		int size = ps.getPoints().size();
@@ -360,10 +434,10 @@ pg::Vec3 StemSelection::getAverageDirectionFP() const
 	return pg::normalize(direction);
 }
 
-bool StemSelection::hasPoints() const
+bool Selection::hasPoints() const
 {
 	bool empty = true;
-	for (auto &instance : selection) {
+	for (auto &instance : stems) {
 		if (instance.second.hasPoints()) {
 			empty = false;
 			break;
@@ -372,9 +446,9 @@ bool StemSelection::hasPoints() const
 	return !empty;
 }
 
-bool StemSelection::hasPoint(int point) const
+bool Selection::hasPoint(int point) const
 {
-	for (auto &instance : selection) {
+	for (auto &instance : stems) {
 		auto points = instance.second.getPoints();
 		if (points.find(point) != points.end())
 			return true;

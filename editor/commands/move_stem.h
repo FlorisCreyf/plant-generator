@@ -20,13 +20,13 @@
 
 #include "command.h"
 #include "../camera.h"
-#include "../stem_selection.h"
+#include "../selection.h"
 #include "../commands/move_spline.h"
 #include <map>
 #include <memory>
 
 class MoveStem : public Command {
-	StemSelection *selection;
+	Selection *selection;
 	std::map<pg::Stem *, pg::Vec3> offsets;
 	Camera camera;
 	pg::Vec2 cursor;
@@ -36,7 +36,7 @@ class MoveStem : public Command {
 	void moveAlongPath(pg::Stem *stem);
 
 public:
-	MoveStem(StemSelection *selection, Camera &camera, int x, int y);
+	MoveStem(Selection *selection, Camera &camera, int x, int y);
 	void snapToCursor(bool snap);
 	void set(int x, int y);
 	void execute();

@@ -21,18 +21,18 @@
 #include "command.h"
 #include "move_spline.h"
 #include "../camera.h"
-#include "../stem_selection.h"
+#include "../selection.h"
 #include "../geometry/translation_axes.h"
 #include "plant_generator/plant.h"
 
 class MovePath : public Command {
 	MoveSpline moveSpline;
 	TranslationAxes *axes;
-	StemSelection *selection;
+	Selection *selection;
 	bool undoing;
-	
+
 public:
-	MovePath(StemSelection *selection, TranslationAxes *axes);
+	MovePath(Selection *selection, TranslationAxes *axes);
 	void set(Camera &camera, int x, int y);
 	void setParallelTangents(bool parallel);
 	void execute();
@@ -41,4 +41,3 @@ public:
 };
 
 #endif /* MOVE_PATH_H */
-

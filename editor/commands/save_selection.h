@@ -15,26 +15,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef REMOVE_STEM_H
-#define REMOVE_STEM_H
+#ifndef SAVE_SELECTION_H
+#define SAVE_SELECTION_H
 
 #include "command.h"
 #include "../selection.h"
-#include <memory>
 
-class RemoveStem : public Command {
+class SaveSelection : public Command {
 	Selection *selection;
-	Selection prevSelection;
-	std::map<pg::Stem *, pg::Spline> splines;
-	std::vector<pg::Stem *> removals;
-	bool cloned;
+	Selection after;
+	Selection before;
 
 public:
-	RemoveStem(Selection *selection);
-	~RemoveStem();
+	SaveSelection(Selection *selection);
+	bool hasChanged() const;
+	void setBefore();
+	void setAfter();
 	void execute();
 	void undo();
-	RemoveStem *clone();
+	SaveSelection *clone();
 };
 
-#endif /* REMOVE_STEM_H */
+#endif /* SAVE_SELECTION_H */

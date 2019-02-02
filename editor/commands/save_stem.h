@@ -19,20 +19,20 @@
 #define SAVE_STEM_H
 
 #include "command.h"
-#include "../stem_selection.h"
+#include "../selection.h"
 #include <map>
 
 class SaveStem : public Command {
-	StemSelection *selection;
-	StemSelection before;
-	StemSelection after;
+	Selection *selection;
+	Selection before;
+	Selection after;
 	std::map<pg::Stem *, pg::Stem> stems;
 	bool undone;
 
 	void swap();
 
 public:
-	SaveStem(StemSelection *selection);
+	SaveStem(Selection *selection);
 	/**
 	 * Determine if the saved stems are the same as the stems in the current
 	 * selection.

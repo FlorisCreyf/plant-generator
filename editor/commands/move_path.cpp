@@ -17,7 +17,7 @@
 
 #include "move_path.h"
 
-MovePath::MovePath(StemSelection *selection, TranslationAxes *axes) :
+MovePath::MovePath(Selection *selection, TranslationAxes *axes) :
 	moveSpline(nullptr, nullptr, axes)
 {
 	this->selection = selection;
@@ -37,7 +37,7 @@ void MovePath::setParallelTangents(bool parallel)
 
 void MovePath::execute()
 {
-	auto instances = selection->getInstances();
+	auto instances = selection->getStemInstances();
 	for (auto &instance : instances) {
 		pg::Stem *stem = instance.first;
 		PointSelection &ps = instance.second;

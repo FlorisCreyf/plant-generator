@@ -19,7 +19,7 @@
 #include "../commands/move_stem.h"
 #include "plant_generator/patterns.h"
 
-AddStem::AddStem(StemSelection *selection) : prevSelection(*selection)
+AddStem::AddStem(Selection *selection) : prevSelection(*selection)
 {
 	this->selection = selection;
 	undone = false;
@@ -33,7 +33,7 @@ AddStem::~AddStem()
 
 void AddStem::create()
 {
-	auto instances = selection->getInstances();
+	auto instances = selection->getStemInstances();
 	if (instances.size() == 1) {
 		pg::Stem *parent = (*instances.begin()).first;
 		pg::Plant *plant = selection->getPlant();

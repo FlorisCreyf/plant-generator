@@ -22,12 +22,12 @@
 
 #include "../camera.h"
 #include "../history.h"
-#include "../stem_selection.h"
+#include "../selection.h"
 #include "../commands/add_stem.h"
 #include "../commands/move_stem.h"
 #include "../commands/move_path.h"
 #include "../commands/rotate_stem.h"
-#include "../commands/save_stem_selection.h"
+#include "../commands/save_selection.h"
 #include "../geometry/path.h"
 #include "../geometry/rotation_axes.h"
 #include "../geometry/translation_axes.h"
@@ -60,7 +60,7 @@ public:
 	void change();
 	void load(const char *filename);
 	pg::Plant *getPlant();
-	StemSelection *getSelection();
+	Selection *getSelection();
 	const pg::Mesh *getMesh();
 	void add(Command &);
 	void undo();
@@ -114,7 +114,7 @@ private:
 	TranslationAxes translationAxes;
 	RotationAxes rotationAxes;
 
-	StemSelection selection;
+	Selection selection;
 	RotateStem rotateStem;
 	MoveStem moveStem;
 	MovePath movePath;

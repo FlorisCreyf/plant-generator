@@ -19,19 +19,19 @@
 #define ADD_STEM_H
 
 #include "command.h"
-#include "../stem_selection.h"
+#include "../selection.h"
 #include "../geometry/translation_axes.h"
 
 class AddStem : public Command {
-	StemSelection *selection;
-	StemSelection prevSelection;
+	Selection *selection;
+	Selection prevSelection;
 	pg::Stem *stem;
 	bool undone;
 
 	void create();
 
 public:
-	AddStem(StemSelection *selection);
+	AddStem(Selection *selection);
 	~AddStem();
 	void execute();
 	void undo();

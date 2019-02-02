@@ -184,8 +184,9 @@ QDockWidget QWidget {
 } QDockWidget QScrollArea {
 	background:transparent;
 } QDockWidget QScrollBar:vertical {
-	width:20px;
-	margin:5px;
+	width:18px;
+	margin-top:5px;
+	margin-left:5px;
 	background:#666;
 } QDockWidget QScrollBar::handle:vertical {
 	background:#4a4a4a;

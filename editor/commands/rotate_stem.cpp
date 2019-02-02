@@ -18,7 +18,7 @@
 #include "rotate_stem.h"
 #include <complex>
 
-RotateStem::RotateStem(StemSelection *selection, RotationAxes *axes)
+RotateStem::RotateStem(Selection *selection, RotationAxes *axes)
 {
 	this->selection = selection;
 	this->axes = axes;
@@ -30,7 +30,7 @@ RotateStem::RotateStem(StemSelection *selection, RotationAxes *axes)
 void RotateStem::checkValidity()
 {
 	valid = true;
-	auto instances = selection->getInstances();
+	auto instances = selection->getStemInstances();
 	for (auto instance : instances) {
 		pg::Stem *stem1 = instance.first;
 		for (auto instance : instances) {
@@ -135,7 +135,7 @@ void RotateStem::rotateChild(pg::Stem *stem, pg::Mat4 t, float distance)
 void RotateStem::rotate()
 {
 	pg::Mat4 t = getTransformation();
-	auto instances = selection->getInstances();
+	auto instances = selection->getStemInstances();
 	for (auto &instance : instances) {
 		pg::Stem *stem = instance.first;
 		PointSelection &ps = instance.second;

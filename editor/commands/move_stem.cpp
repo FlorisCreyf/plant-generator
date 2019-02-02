@@ -20,7 +20,7 @@
 
 using pg::Vec3;
 
-MoveStem::MoveStem(StemSelection *selection, Camera &camera, int x, int y)
+MoveStem::MoveStem(Selection *selection, Camera &camera, int x, int y)
 {
 	this->selection = selection;
 	this->camera = camera;
@@ -32,7 +32,7 @@ MoveStem::MoveStem(StemSelection *selection, Camera &camera, int x, int y)
 	point.x = x;
 	point.y = y;
 	point.z = 0.0f;
-	auto instances = selection->getInstances();
+	auto instances = selection->getStemInstances();
 	for (auto instance : instances) {
 		pg::Stem *stem = instance.first;
 		pg::Vec3 offset = camera.toScreenSpace(stem->getLocation());
@@ -115,7 +115,7 @@ void MoveStem::moveAlongPath(pg::Stem *stem)
 
 void MoveStem::execute()
 {
-	auto instances = selection->getInstances();
+	auto instances = selection->getStemInstances();
 	for (auto &instance : instances) {
 		pg::Stem *stem = instance.first;
 		if (stem->getParent()) {

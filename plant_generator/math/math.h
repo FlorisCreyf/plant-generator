@@ -24,7 +24,7 @@ namespace pg {
 	struct Vec2 {
 		float x;
 		float y;
-
+		
 		Vec2 &operator+=(const Vec2 &b)
 		{
 			this->x += b.x;
@@ -233,6 +233,16 @@ namespace pg {
 			std::setw(10) << m[3].w << "]\n";
 		stream << std::defaultfloat;
 		return stream;
+	}
+	
+	inline bool operator==(const Vec2 &a, const Vec2 &b)
+	{
+		return a.x == b.x && a.y == b.y;
+	}
+
+	inline bool operator!=(const Vec2 &a, const Vec2 &b)
+	{
+		return !(a == b);
 	}
 
 	inline bool operator==(const Vec3 &a, const Vec3 &b)

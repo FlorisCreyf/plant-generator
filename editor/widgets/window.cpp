@@ -27,7 +27,7 @@ Window::Window()
 	this->setCentralWidget(editor);
 	createPropertyBox();
 	createEditors();
-	propertyBox->bind(editor, curveEditor);
+	propertyBox->bind(curveEditor);
 	widget.setupUi(this);
 
 	QMenu *menu = createPopupMenu();
@@ -44,7 +44,7 @@ void Window::createPropertyBox()
 	auto areas = Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea;
 	QScrollArea *scrollArea = new QScrollArea();
 	QDockWidget *dockWidget = new QDockWidget(tr("Property Editor"), this);
-	propertyBox = new PropertyBox(&shared, this);
+	propertyBox = new PropertyBox(&shared, editor, this);
 	dockWidget->setAllowedAreas(areas);
         dockWidget->setWidget(scrollArea);
 	dockWidget->setMinimumWidth(350);

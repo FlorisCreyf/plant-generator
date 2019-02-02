@@ -21,11 +21,16 @@ pg::Leaf::Leaf()
 	tilt = 0.0f;
 	scale.x = 1.0f;
 	scale.y = 2.0f;
+	material = 0;
 }
 
 bool pg::Leaf::operator==(const pg::Leaf &leaf) const
 {
-	return position == leaf.position;
+	return 
+		position == leaf.position &&
+		tilt == leaf.tilt &&
+		scale == leaf.scale &&
+		material == leaf.material;
 }
 
 bool pg::Leaf::operator!=(const pg::Leaf &leaf) const
@@ -61,4 +66,14 @@ void pg::Leaf::setScale(pg::Vec2 scale)
 pg::Vec2 pg::Leaf::getScale() const
 {
 	return scale;
+}
+
+void pg::Leaf::setMaterial(unsigned material)
+{
+	this->material = material;
+}
+
+unsigned pg::Leaf::getMaterial() const
+{
+	return material;
 }

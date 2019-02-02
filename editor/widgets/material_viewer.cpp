@@ -31,7 +31,7 @@ MaterialViewer::MaterialViewer(SharedResources *shared, QWidget *parent)
 
 	camera.setTarget({0.5f, 0.0f, 0.5f});
 	camera.setOrientation(180.0f, -180.0f);
-	camera.setDistance(1.0f);
+	camera.setDistance(0.8f);
 	camera.setPanSpeed(0.004f);
 	camera.setZoom(0.01f, 0.3f, 2.0f);
 }

@@ -18,14 +18,13 @@
 #include "remove_stem.h"
 #include "remove_spline.h"
 
-RemoveStem::RemoveStem(StemSelection *selection) :
-	prevSelection(*selection)
+RemoveStem::RemoveStem(Selection *selection) : prevSelection(*selection)
 {
 	this->selection = selection;
 	cloned = false;
 
 	/* Remember the original splines before removal. */
-	auto instances = selection->getInstances();
+	auto instances = selection->getStemInstances();
 	for (auto &instance : instances) {
 		pg::Stem *stem = instance.first;
 		pg::VolumetricPath path = stem->getPath();
@@ -49,7 +48,7 @@ RemoveStem::~RemoveStem()
 void RemoveStem::execute()
 {
 	removals.clear();
-	auto instances = selection->getInstances();
+	auto instances = selection->getStemInstances();
 	for (auto &instance : instances) {
 		pg::Stem *stem = instance.first;
 		pg::VolumetricPath path = stem->getPath();

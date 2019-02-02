@@ -18,15 +18,15 @@
 #include "extrude_stem.h"
 #include "remove_stem.h"
 
-ExtrudeStem::ExtrudeStem(StemSelection *selection) :
-	prevSelection(*selection), newSelection(*selection)
+ExtrudeStem::ExtrudeStem(Selection *selection) : prevSelection(*selection),
+	newSelection(*selection)
 {
 	this->selection = selection;
 }
 
 void ExtrudeStem::extrude()
 {
-	auto instances = selection->getInstances();
+	auto instances = selection->getStemInstances();
 	for (auto &instance : instances) {
 		pg::Stem *stem = instance.first;
 		std::set<int> points = instance.second.getPoints();
@@ -73,7 +73,7 @@ void ExtrudeStem::undo()
 	/* Memorize state before undoing. */
 	newSelection = *selection;
 	prevSplines.clear();
-	auto instances = selection->getInstances();
+	auto instances = selection->getStemInstances();
 	for (auto &instance : instances) {
 		pg::Stem *stem = instance.first;
 		pg::VolumetricPath path = stem->getPath();

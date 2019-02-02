@@ -19,16 +19,18 @@ plant_generator/spline.cpp \
 plant_generator/stem.cpp \
 plant_generator/volumetric_path.cpp \
 editor/commands/add_stem.cpp \
+editor/commands/add_leaf.cpp \
 editor/commands/extrude_spline.cpp \
 editor/commands/extrude_stem.cpp \
 editor/commands/move_spline.cpp \
 editor/commands/move_stem.cpp \
+editor/commands/move_leaf.cpp \
 editor/commands/move_path.cpp \
 editor/commands/remove_spline.cpp \
 editor/commands/remove_stem.cpp \
 editor/commands/rotate_stem.cpp \
 editor/commands/save_point_selection.cpp \
-editor/commands/save_stem_selection.cpp \
+editor/commands/save_selection.cpp \
 editor/commands/save_stem.cpp \
 editor/geometry/axes.cpp \
 editor/geometry/geometry.cpp \
@@ -50,7 +52,7 @@ editor/file_exporter.cpp \
 editor/history.cpp \
 editor/main.cpp \
 editor/point_selection.cpp \
-editor/stem_selection.cpp
+editor/selection.cpp
 
 HEADERS += \
 plant_generator/math/curve.h \
@@ -67,17 +69,19 @@ plant_generator/spline.h \
 plant_generator/stem.h \
 plant_generator/volumetric_path.h \
 editor/commands/add_stem.h \
+editor/commands/add_leaf.h \
 editor/commands/command.h \
 editor/commands/extrude_spline.h \
 editor/commands/extrude_stem.h \
 editor/commands/move_spline.h \
 editor/commands/move_stem.h \
+editor/commands/move_leaf.h \
 editor/commands/move_path.h \
 editor/commands/remove_spline.h \
 editor/commands/remove_stem.h \
 editor/commands/rotate_stem.h \
 editor/commands/save_point_selection.h \
-editor/commands/save_stem_selection.h \
+editor/commands/save_selection.h \
 editor/commands/save_stem.h \
 editor/geometry/axes.h \
 editor/geometry/geometry.h \
@@ -98,7 +102,7 @@ editor/camera.h \
 editor/file_exporter.h \
 editor/history.h \
 editor/point_selection.h \
-editor/stem_selection.h
+editor/selection.h
 
 FORMS += editor/qt/window.ui
 MOC_DIR = editor/qt

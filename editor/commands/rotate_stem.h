@@ -19,12 +19,12 @@
 #define ROTATE_STEM_H
 
 #include "command.h"
-#include "../stem_selection.h"
+#include "../selection.h"
 #include "../geometry/rotation_axes.h"
 #include "plant_generator/plant.h"
 
 class RotateStem : public Command {
-	StemSelection *selection;
+	Selection *selection;
 	RotationAxes *axes;
 	Axes::Axis axis;
 	Axes::Axis updatedAxis;
@@ -41,7 +41,7 @@ class RotateStem : public Command {
 	void checkValidity();
 
 public:
-	RotateStem(StemSelection *selection, RotationAxes *axes);
+	RotateStem(Selection *selection, RotationAxes *axes);
 	bool isValid();
 	void set(pg::Ray ray, pg::Vec3 planeNormal);
 	pg::Vec3 getDirection();

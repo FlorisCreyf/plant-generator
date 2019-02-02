@@ -47,7 +47,8 @@ bool pg::Stem::operator==(const pg::Stem &stem) const
 		position == stem.position &&
 		location == stem.location &&
 		material[0] == stem.material[0] &&
-		material[1] == stem.material[1];
+		material[1] == stem.material[1] &&
+		leaves == stem.leaves;
 }
 
 bool pg::Stem::operator!=(const pg::Stem &stem) const

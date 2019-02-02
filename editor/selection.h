@@ -21,31 +21,36 @@
 #include "camera.h"
 #include "point_selection.h"
 #include "plant_generator/plant.h"
+#include "plant_generator/mesh.h"
 #include <QtGui/QMouseEvent>
 #include <map>
 #include <vector>
+#include <set>
 
-class StemSelection {
+class Selection {
 	Camera *camera;
 	pg::Plant *plant;
-	std::map<pg::Stem *, PointSelection> selection;
+	pg::Mesh *mesh;
+	std::map<pg::Stem *, PointSelection> stems;
+	std::map<pg::Stem *, std::set<unsigned>> leaves;
 
-	pg::Stem *getStem(pg::Ray ray);
 	std::pair<float, pg::Stem *> getStem(pg::Ray &ray, pg::Stem *stem);
+	std::pair<float, pg::Segment> getLeaf(pg::Ray ray);
 	void selectAll(pg::Stem *stem);
 
 public:
-	StemSelection(Camera *camera, pg::Plant *plant);
-	bool operator==(const StemSelection &obj) const;
-	bool operator!=(const StemSelection &obj) const;
+	Selection(Camera *camera, pg::Plant *plant, pg::Mesh *mesh);
+	bool operator==(const Selection &obj) const;
+	bool operator!=(const Selection &obj) const;
 
 	void removeStem(pg::Stem *stem);
 	void addStem(pg::Stem *stem);
+	void addLeaf(pg::Stem *stem, unsigned leaf);
 
 	void select(QMouseEvent *event);
-	void selectStem(QMouseEvent *event);
 	void setInstances(std::map<pg::Stem *, PointSelection> instances);
-	std::map<pg::Stem *, PointSelection> getInstances();
+	std::map<pg::Stem *, PointSelection> getStemInstances();
+	std::map<pg::Stem *, std::set<unsigned>> getLeafInstances();
 	pg::Plant *getPlant();
 
 	void clear();
@@ -55,6 +60,7 @@ public:
 	void reduceToAncestors();
 
 	bool hasStems() const;
+	bool hasLeaves() const;
 	bool contains(pg::Stem *stem) const;
 
 	void clearPoints();

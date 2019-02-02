@@ -1,5 +1,5 @@
 /* Plant Genererator
- * Copyright (C) 2018  Floris Creyf
+ * Copyright (C) 2019  Floris Creyf
  *
  * Plant Genererator is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,26 +15,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef REMOVE_STEM_H
-#define REMOVE_STEM_H
+#ifndef MOVE_LEAF_H
+#define MOVE_LEAF_H
 
 #include "command.h"
 #include "../selection.h"
-#include <memory>
 
-class RemoveStem : public Command {
-	Selection *selection;
-	Selection prevSelection;
-	std::map<pg::Stem *, pg::Spline> splines;
-	std::vector<pg::Stem *> removals;
-	bool cloned;
-
+class MoveLeaf : public Command {
 public:
-	RemoveStem(Selection *selection);
-	~RemoveStem();
 	void execute();
 	void undo();
-	RemoveStem *clone();
+	MoveLeaf *clone();
 };
 
-#endif /* REMOVE_STEM_H */
+#endif /* MOVE_LEAF_H */

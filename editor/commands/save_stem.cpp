@@ -17,8 +17,8 @@
 
 #include "save_stem.h"
 
-SaveStem::SaveStem(StemSelection *selection) :
-	before(nullptr, nullptr), after(nullptr, nullptr)
+SaveStem::SaveStem(Selection *selection) :
+	before(*selection), after(*selection)
 {
 	this->selection = selection;
 	undone = false;
@@ -27,8 +27,15 @@ SaveStem::SaveStem(StemSelection *selection) :
 bool SaveStem::isSameAsCurrent()
 {
 	if (selection) {
-		auto instances = selection->getInstances();
-		for (auto &instance : instances) {
+		auto stemInstances = selection->getStemInstances();
+		auto leafInstances = selection->getLeafInstances();
+		for (auto &instance : stemInstances) {
+			pg::Stem *stem = instance.first;
+			auto it = stems.find(stem);
+			if (it == stems.end() || it->second != *stem)
+				return false;
+		}
+		for (auto &instance : leafInstances) {
 			pg::Stem *stem = instance.first;
 			auto it = stems.find(stem);
 			if (it == stems.end() || it->second != *stem)
@@ -50,8 +57,11 @@ void SaveStem::execute()
 		*selection = after;
 	} else {
 		before = *selection;
-		auto instances = selection->getInstances();
-		for (auto &instance : instances)
+		auto stemInstances = selection->getStemInstances();
+		auto leafInstances = selection->getLeafInstances();
+		for (auto &instance : stemInstances)
+			stems.emplace(instance.first, *instance.first);
+		for (auto &instance : leafInstances)
 			stems.emplace(instance.first, *instance.first);
 	}
 }
@@ -65,8 +75,18 @@ void SaveStem::undo()
 
 void SaveStem::swap()
 {
-	auto instances = selection->getInstances();
-	for (auto instance : instances) {
+	auto stemInstances = selection->getStemInstances();
+	auto leafInstances = selection->getLeafInstances();
+	for (auto instance : stemInstances) {
+		pg::Stem *stem = instance.first;
+		auto it = stems.find(stem);
+		if (it != stems.end()) {
+			pg::Stem s = *stem;
+			*stem = it->second;
+			it->second = s;
+		}
+	}
+	for (auto instance : leafInstances) {
 		pg::Stem *stem = instance.first;
 		auto it = stems.find(stem);
 		if (it != stems.end()) {

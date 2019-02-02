@@ -15,25 +15,40 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SAVE_STEM_SELECTION_H
-#define SAVE_STEM_SELECTION_H
+#include "save_selection.h"
 
-#include "command.h"
-#include "../stem_selection.h"
+SaveSelection::SaveSelection(Selection *selection) :
+	after(*selection), before(*selection)
+{
+	this->selection = selection;
+}
 
-class SaveStemSelection : public Command {
-	StemSelection *selection;
-	StemSelection after;
-	StemSelection before;
+bool SaveSelection::hasChanged() const
+{
+	return *selection != before;
+}
 
-public:
-	SaveStemSelection(StemSelection *selection);
-	bool hasChanged() const;
-	void setBefore();
-	void setAfter();
-	void execute();
-	void undo();
-	SaveStemSelection *clone();
-};
+void SaveSelection::setBefore()
+{
+	before = *selection;
+}
 
-#endif /* SAVE_STEM_SELECTION_H */
+void SaveSelection::setAfter()
+{
+	after = *selection;
+}
+
+void SaveSelection::execute()
+{
+	*selection = after;
+}
+
+void SaveSelection::undo()
+{
+	*selection = before;
+}
+
+SaveSelection *SaveSelection::clone()
+{
+	return new SaveSelection(*this);
+}

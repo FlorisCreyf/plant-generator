@@ -49,6 +49,7 @@ namespace pg {
 	Aabb createAABB(const float *buffer, size_t size);
 	float intersectsOBB(Ray &ray, Obb &obb);
 	float intersectsAABB(Ray &ray, Aabb &aabb);
+	float intersectsTriangle(Ray &ray, Vec3 p1, Vec3 p2, Vec3 p3);
 	float intersectsPlane(Ray &ray, Plane &plane);
 	float intersectsSphere(Ray &ray, Vec3 position, float radius);
 	float intersectsTaperedCylinder(Ray ray, Vec3 start, Vec3 direction,

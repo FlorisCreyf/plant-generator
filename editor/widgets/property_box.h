@@ -23,14 +23,13 @@
 #include "curve_editor.h"
 #include "../commands/save_stem.h"
 #include <QtWidgets>
-#include <memory>
 
 class PropertyBox : public QWidget {
 	Q_OBJECT
 
 public:
-	PropertyBox(SharedResources *shared, QWidget *parent = 0);
-	void bind(Editor *editor, CurveEditor *curveEditor);
+	PropertyBox(SharedResources *shared, Editor *editor, QWidget *parent);
+	void bind(CurveEditor *curveEditor);
 	QSize sizeHint() const;
 
 public slots:
@@ -43,6 +42,10 @@ public slots:
 	void changeRadiusCurve(pg::Spline &spline);
 	void changeStemMaterial();
 	void changeCapMaterial();
+	void changeTilt(double d);
+	void changeXScale(double d);
+	void changeYScale(double d);
+	void changeLeafMaterial();
 	void finishChanging();
 	void setCurve(pg::Spline spline, QString names);
 	void toggleCurve(CurveButton *w);
@@ -81,6 +84,12 @@ private:
 	QComboBox *capMaterialV;
 
 	QGroupBox *leafG;
+	QLabel *leafScaleXL;
+	QDoubleSpinBox *leafScaleXV;
+	QLabel *leafScaleYL;
+	QDoubleSpinBox *leafScaleYV;
+	QLabel *leafTiltL;
+	QDoubleSpinBox *leafTiltV;
 	QLabel *leafMaterialL;
 	QComboBox *leafMaterialV;
 
@@ -93,7 +102,8 @@ private:
 	void beginChanging();
 	void indicateDifferences(QWidget *widget);
 	void indicateSimilarities(QWidget *widget);
-	void enable(bool enable);
+	void enableStem(bool enable);
+	void enableLeaf(bool enable);
 };
 
 #endif /* PROPERTY_BOX */

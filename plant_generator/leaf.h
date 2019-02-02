@@ -26,7 +26,8 @@ namespace pg {
 		float position;
 		float tilt;
 		Vec2 scale;
-
+		unsigned material;
+		
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned int version)
 		{
@@ -34,6 +35,7 @@ namespace pg {
 			ar & position;
 			ar & tilt;
 			ar & scale;
+			ar & material;
 		}
 
 	public:
@@ -47,6 +49,8 @@ namespace pg {
 		float getTilt() const;
 		void setScale(Vec2 scale);
 		Vec2 getScale() const;
+		void setMaterial(unsigned material);
+		unsigned getMaterial() const;
 	};
 }
 

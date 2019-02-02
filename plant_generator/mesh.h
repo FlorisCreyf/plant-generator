@@ -23,6 +23,7 @@
 
 namespace pg {
 	struct Segment {
+		unsigned leaf;
 		Stem *stem;
 		size_t vertexStart;
 		size_t indexStart;
@@ -39,7 +40,8 @@ namespace pg {
 		std::vector<unsigned> materials;
 		std::vector<std::vector<float>> vertices;
 		std::vector<std::vector<unsigned>> indices;
-		std::vector<std::vector<Segment>> segments;
+		std::vector<std::vector<Segment>> stemSegments;
+		std::vector<std::vector<Segment>> leafSegments;
 
 		Mat4 getSectionTransform(Stem *stem, size_t section,
 			float offset);
@@ -68,12 +70,17 @@ namespace pg {
 		std::vector<unsigned> getIndices() const;
 		const std::vector<float> *getVertices(int mesh) const;
 		const std::vector<unsigned> *getIndices(int mesh) const;
-		const std::vector<Segment> *getSegments(int mesh) const;
-		Segment find(Stem *stem) const;
+		const std::vector<Segment> *getStemSegments(int mesh) const;
+		const std::vector<Segment> *getLeafSegments(int mesh) const;
+		Segment findStem(Stem *stem) const;
+		Segment findLeaf(Stem *stem, unsigned leaf) const;
+		Segment getLeaf(int mesh, int index) const;
+		int getLeafCount(int mesh) const;
 		int getVertexCount() const;
 		int getIndexCount() const;
 		int getMeshCount() const;
-		unsigned getMaterialId(int mesh);
+		unsigned getMaterialId(int mesh) const;
+		int getVertexSize() const;
 	};
 }
 

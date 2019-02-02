@@ -130,6 +130,15 @@ void pg::Generator::growLateralStem(Stem *stem, float position)
 	else
 		stem->setResolution(parent->getResolution() - 4);
 	setPath(stem, getStemDirection(stem));
+
+	Leaf leaf;
+	leaf.setTilt(M_PI);
+	leaf.setPosition(0.5f);
+	leaf.setScale({0.8f, 1.0f});
+	stem->addLeaf(leaf);
+	leaf.setTilt(-M_PI/10.0f);
+	leaf.setPosition(2.0f);
+	stem->addLeaf(leaf);
 }
 
 void pg::Generator::grow()

@@ -10,6 +10,8 @@
 *.gz
 *.pdf
 *.toc
+*.txt
+*.out
 .desktop
 plant
 resources/

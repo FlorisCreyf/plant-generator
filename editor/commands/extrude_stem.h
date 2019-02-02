@@ -19,19 +19,19 @@
 #define EXTRUDE_STEM_H
 
 #include "command.h"
-#include "../stem_selection.h"
+#include "../selection.h"
 
 class ExtrudeStem : public Command {
-	StemSelection *selection;
-	StemSelection prevSelection;
-	StemSelection newSelection;
+	Selection *selection;
+	Selection prevSelection;
+	Selection newSelection;
 	std::map<pg::Stem *, pg::Spline> prevSplines;
 
 	void extrude();
 	void redo();
 
 public:
-	ExtrudeStem(StemSelection *selection);
+	ExtrudeStem(Selection *selection);
 	void execute();
 	void undo();
 	ExtrudeStem *clone();

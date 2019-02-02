@@ -39,7 +39,7 @@ Editor::Editor(SharedResources *shared, QWidget *parent) :
 	QOpenGLWidget(parent),
 	mesh(&plant),
 	generator(&plant),
-	selection(&camera, &plant),
+	selection(&camera, &plant, &mesh),
 	rotateStem(&selection, &rotationAxes),
 	moveStem(&selection, camera, 0, 0),
 	movePath(&selection, &translationAxes),
@@ -129,57 +129,51 @@ void Editor::keyPressEvent(QKeyEvent *event)
 {
 	bool ctrl = event->modifiers() & Qt::ControlModifier;
 	switch (event->key()) {
-	case Qt::Key_1:
-		{
-			SaveStemSelection selectionCopy(&selection);
-			if (ctrl)
-				selection.selectNextPoints();
-			else
-				selection.selectChildren();
-			if (selectionCopy.hasChanged()) {
-				selectionCopy.setAfter();
-				history.add(selectionCopy);
-				updateSelection();
-				update();
-				emit selectionChanged();
-			}
+	case Qt::Key_1: {
+		SaveSelection selectionCopy(&selection);
+		if (ctrl)
+			selection.selectNextPoints();
+		else
+			selection.selectChildren();
+		if (selectionCopy.hasChanged()) {
+			selectionCopy.setAfter();
+			history.add(selectionCopy);
+			updateSelection();
+			update();
+			emit selectionChanged();
 		}
 		break;
-	case Qt::Key_2:
-		{
-			SaveStemSelection selectionCopy(&selection);
-			if (ctrl)
-				selection.selectPreviousPoints();
-			else
-				selection.selectSiblings();
-			if (selectionCopy.hasChanged()) {
-				selectionCopy.setAfter();
-				history.add(selectionCopy);
-				updateSelection();
-				update();
-				emit selectionChanged();
-			}
+	} case Qt::Key_2: {
+		SaveSelection selectionCopy(&selection);
+		if (ctrl)
+			selection.selectPreviousPoints();
+		else
+			selection.selectSiblings();
+		if (selectionCopy.hasChanged()) {
+			selectionCopy.setAfter();
+			history.add(selectionCopy);
+			updateSelection();
+			update();
+			emit selectionChanged();
 		}
 		break;
-	case Qt::Key_3:
-		{
-			SaveStemSelection selectionCopy(&selection);
-			if (ctrl)
-				selection.selectAllPoints();
-			else
-				selection.selectAll();
-			if (selectionCopy.hasChanged()) {
-				selectionCopy.setAfter();
-				history.add(selectionCopy);
-				updateSelection();
-				update();
-				emit selectionChanged();
-			}
+	} case Qt::Key_3: {
+		SaveSelection selectionCopy(&selection);
+		if (ctrl)
+			selection.selectAllPoints();
+		else
+			selection.selectAll();
+		if (selectionCopy.hasChanged()) {
+			selectionCopy.setAfter();
+			history.add(selectionCopy);
+			updateSelection();
+			update();
+			emit selectionChanged();
 		}
 		break;
-	case Qt::Key_4:
+	} case Qt::Key_4:
 		if (!ctrl) {
-			SaveStemSelection selectionCopy(&selection);
+			SaveSelection selectionCopy(&selection);
 			selection.reduceToAncestors();
 			if (selectionCopy.hasChanged()) {
 				selectionCopy.setAfter();
@@ -294,7 +288,7 @@ void Editor::mousePressEvent(QMouseEvent *event)
 		update();
 	} else if (event->button() == Qt::RightButton) {
 		if (mode == None || mode == MovePoint) {
-			SaveStemSelection selectionCopy(&selection);
+			SaveSelection selectionCopy(&selection);
 			mode = None;
 			selection.select(event);
 			if (selectionCopy.hasChanged()) {
@@ -495,6 +489,7 @@ void Editor::paintGL()
 	} else
 		glUniform4f(1, 0.13f, 0.13f, 0.13f, 1.0f);
 
+	/* Indicate selected objects */
 	for (unsigned i = 0; i < meshes.size(); i++) {
 		s = (GLvoid *)(meshes[i].indexStart * sizeof(unsigned));
 		c = meshes[i].indexCount;
@@ -585,13 +580,19 @@ void Editor::paintAxes()
 void Editor::updateSelection()
 {
 	meshes.clear();
-	auto instances = selection.getInstances();
-	for (auto &instance : instances)
-		meshes.push_back(mesh.find(instance.first));
+	auto stemInstances = selection.getStemInstances();
+	for (auto &instance : stemInstances)
+		meshes.push_back(mesh.findStem(instance.first));
+	auto leafInstances = selection.getLeafInstances();
+	for (auto &instance : leafInstances) {
+		pg::Stem *stem = instance.first;
+		for (auto &leaf : instance.second)
+			meshes.push_back(mesh.findLeaf(stem, leaf));
+	}
 
-	if (!instances.empty()) {
+	if (!stemInstances.empty()) {
 		std::vector<Path::Segment> segments;
-		for (auto &instance : instances) {
+		for (auto &instance : stemInstances) {
 			pg::Stem *stem = instance.first;
 			pg::Vec3 location = stem->getLocation();
 			pg::Path path = stem->getPath();
@@ -607,7 +608,7 @@ void Editor::updateSelection()
 
 		{
 			int i = 0;
-			auto instances = selection.getInstances();
+			auto instances = selection.getStemInstances();
 			for (auto &instance : instances)
 				path.setSelectedPoints(instance.second, i++);
 		}
@@ -635,11 +636,11 @@ void Editor::change()
 		const std::vector<float> *v = mesh.getVertices(m);
 		const std::vector<unsigned> *i = mesh.getIndices(m);
 		if (!plantBuffer.update(v->data(), pointOffset, v->size())) {
-			assert("Failed to update vertices.");
+			assert("Failed to update vertices");
 			exit(0);
 		}
 		if (!plantBuffer.update(i->data(), indexOffset, i->size())) {
-			assert("Failed to update indices.");
+			assert("Failed to update indices");
 			exit(0);
 		}
 		pointOffset += v->size();
@@ -709,7 +710,7 @@ pg::Plant *Editor::getPlant()
 	return &plant;
 }
 
-StemSelection *Editor::getSelection()
+Selection *Editor::getSelection()
 {
 	return &selection;
 }

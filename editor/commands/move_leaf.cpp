@@ -1,5 +1,5 @@
 /* Plant Genererator
- * Copyright (C) 2018  Floris Creyf
+ * Copyright (C) 2019  Floris Creyf
  *
  * Plant Genererator is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,40 +15,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "save_stem_selection.h"
+#include "move_leaf.h"
 
-SaveStemSelection::SaveStemSelection(StemSelection *selection) :
-	after(*selection), before(*selection)
+void MoveLeaf::execute()
 {
-	this->selection = selection;
+
 }
 
-bool SaveStemSelection::hasChanged() const
+void MoveLeaf::undo()
 {
-	return *selection != before;
+
 }
 
-void SaveStemSelection::setBefore()
+MoveLeaf *MoveLeaf::clone()
 {
-	before = *selection;
-}
-
-void SaveStemSelection::setAfter()
-{
-	after = *selection;
-}
-
-void SaveStemSelection::execute()
-{
-	*selection = after;
-}
-
-void SaveStemSelection::undo()
-{
-	*selection = before;
-}
-
-SaveStemSelection *SaveStemSelection::clone()
-{
-	return new SaveStemSelection(*this);
+	return new MoveLeaf(*this);
 }
