@@ -105,6 +105,8 @@ private:
 	Buffer staticBuffer;
 	Buffer pathBuffer;
 	Buffer plantBuffer;
+	GLuint outlineFrameBuffer;
+	GLuint outlineColorMap;
 	Path path;
 	pg::Mesh mesh;
 	std::vector<pg::Segment> meshes;

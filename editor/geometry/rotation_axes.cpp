@@ -20,7 +20,7 @@
 Geometry RotationAxes::getLines()
 {
 	unsigned index = 0;
-	float radius = 0.8f;
+	float radius = 0.6f;
 	unsigned resolution = 20;
 	Geometry lines;
 	Geometry::Segment segment;

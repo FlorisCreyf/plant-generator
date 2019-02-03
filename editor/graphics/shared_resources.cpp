@@ -60,6 +60,10 @@ void SharedResources::createPrograms()
 		"shaders/line.frag");
 	GLuint fragMaterial = buildShader(GL_FRAGMENT_SHADER,
 		"shaders/material.frag");
+	GLuint vertOutline = buildShader(GL_VERTEX_SHADER,
+		"shaders/outline.vert");
+	GLuint fragOutline = buildShader(GL_FRAGMENT_SHADER,
+		"shaders/outline.frag");
 
 	GLuint shaders[3];
 	GLuint program;
@@ -94,6 +98,11 @@ void SharedResources::createPrograms()
 	shaders[1] = fragMaterial;
 	program = buildProgram(shaders, 2);
 	programs[Shader::Material] = program;
+
+	shaders[0] = vertOutline;
+	shaders[1] = fragOutline;
+	program = buildProgram(shaders, 2);
+	programs[Shader::Outline] = program;
 }
 
 GLuint SharedResources::addTexture(const QImage &image)

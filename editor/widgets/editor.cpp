@@ -85,6 +85,8 @@ void Editor::initializeGL()
 	initializeOpenGLFunctions();
 
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_STENCIL_TEST);
+	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 	glEnable(GL_LINE_SMOOTH);
 	glDepthMask(GL_TRUE);
 	glDepthFunc(GL_LEQUAL);
@@ -93,6 +95,23 @@ void Editor::initializeGL()
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_PRIMITIVE_RESTART);
 	glPrimitiveRestartIndex(Geometry::primitiveReset);
+
+	/* Create a framebuffer for outlining objects */
+	glGenFramebuffers(1, &outlineFrameBuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, outlineFrameBuffer);
+	glGenTextures(1, &outlineColorMap);
+	glBindTexture(GL_TEXTURE_2D, outlineColorMap);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width(), height(), 0, GL_RGB,
+		GL_UNSIGNED_BYTE, NULL);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COPY);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+		GL_TEXTURE_2D, outlineColorMap, 0);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	shared->initialize();
 	generator.grow();
@@ -185,7 +204,7 @@ void Editor::keyPressEvent(QKeyEvent *event)
 		}
 		break;
 	case Qt::Key_A:
-		if (mode == None && selection.hasStems()) {
+		if (mode == None && selection.getStemInstances().size() == 1) {
 			QPoint p = mapFromGlobal(QCursor::pos());
 			addStem.execute();
 			clickOffset[0] = clickOffset[1] = 0;
@@ -406,6 +425,9 @@ void Editor::resizeGL(int width, int height)
 {
 	updateCamera(width, height);
 	translationAxes.setScale(600.0f / height);
+	glBindTexture(GL_TEXTURE_2D, outlineColorMap);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
+		GL_UNSIGNED_BYTE, NULL);
 }
 
 void Editor::updateCamera(int width, int height)
@@ -429,10 +451,11 @@ void Editor::paintGL()
 	GLsizei c = 0;
 	GLvoid *s = 0;
 
-	glDepthFunc(GL_LEQUAL);
-	glClearColor(0.22f, 0.22f, 0.22f, 1.0);
+	/* Render the scene normally */
 	glClearDepth(1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClearColor(0.22f, 0.22f, 0.22f, 1.0);
+	glDepthFunc(GL_LEQUAL);
+	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
 
 	/* paint grid */
 	staticBuffer.use();
@@ -465,6 +488,7 @@ void Editor::paintGL()
 			start += mesh.getIndices(i)->size() * sizeof(unsigned);
 			glDrawElements(GL_TRIANGLES, c, GL_UNSIGNED_INT, s);
 		}
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	} else if (shader == Shader::Material) {
 		size_t start = 0;
 		glUseProgram(shared->getShader(Shader::Material));
@@ -481,21 +505,32 @@ void Editor::paintGL()
 		}
 	}
 
-	if (shader != Shader::Wire) {
-		glUseProgram(shared->getShader(Shader::Wire));
-		glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		glUniform4f(1, 0.3f, 0.3f, 0.3f, 1.0f);
-	} else
-		glUniform4f(1, 0.13f, 0.13f, 0.13f, 1.0f);
+	/* Create texture for selection objects */
+	glBindFramebuffer(GL_FRAMEBUFFER, outlineFrameBuffer);
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+	glViewport(0, 0, width(), height());
 
-	/* Indicate selected objects */
+	glUseProgram(shared->getShader(Shader::Outline));
+	glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
+	glUniform4f(1, cp.x, cp.y, cp.z, 0.0f);
+	glUniform1i(2, 0);
+	glUniform2f(3, (GLfloat)width(), (GLfloat)height());
 	for (unsigned i = 0; i < meshes.size(); i++) {
 		s = (GLvoid *)(meshes[i].indexStart * sizeof(unsigned));
 		c = meshes[i].indexCount;
 		glDrawElements(GL_TRIANGLES, c, GL_UNSIGNED_INT, s);
 	}
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+	/* Draw objects to screen with outline */
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindTexture(GL_TEXTURE_2D, outlineColorMap);
+	glUniform1i(2, 2);
+	for (unsigned i = 0; i < meshes.size(); i++) {
+		s = (GLvoid *)(meshes[i].indexStart * sizeof(unsigned));
+		c = meshes[i].indexCount;
+		glDrawElements(GL_TRIANGLES, c, GL_UNSIGNED_INT, s);
+	}
 
 	/* Paint path lines */
 	if (selection.hasStems()) {

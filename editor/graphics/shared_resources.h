@@ -33,6 +33,7 @@ enum Shader {
 	Line = 3,
 	Flat = 4,
 	Material = 5,
+	Outline = 6
 };
 
 class SharedResources : public QObject, protected QOpenGLFunctions {
@@ -61,7 +62,7 @@ signals:
 	void materialRemoved(QString name);
 
 private:
-	GLuint programs[6];
+	GLuint programs[7];
 	GLuint textures[2];
 	bool initialized = false;
 	ShaderParams defaultMaterial;

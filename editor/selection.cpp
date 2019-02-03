@@ -207,7 +207,7 @@ std::pair<float, pg::Segment> Selection::getLeaf(pg::Ray ray)
 				triangle[0] -= vertexOffset;
 				triangle[1] -= vertexOffset;
 				triangle[2] -= vertexOffset;
-				
+
 				pg::Vec3 v1, v2, v3;
 				v1.x = (*vertices)[triangle[0]];
 				v1.y = (*vertices)[triangle[0]+1];
@@ -415,7 +415,7 @@ pg::Vec3 Selection::getAveragePositionFP() const
 
 pg::Vec3 Selection::getAverageDirectionFP() const
 {
-	pg::Vec3 direction = {0.0f, 0.0f, 0.0f};
+	pg::Vec3 dir = {0.0f, 0.0f, 0.0f};
 	int count = 0;
 	for (auto &instance : stems) {
 		pg::Stem *stem = instance.first;
@@ -423,15 +423,15 @@ pg::Vec3 Selection::getAverageDirectionFP() const
 		int size = ps.getPoints().size();
 		if (size > 0) {
 			int point = *ps.getPoints().begin();
-			direction += stem->getPath().getDirection(point);
+			dir += stem->getPath().getSpline().getDirection(point);
 			count++;
 		} else {
-			direction += stem->getPath().getDirection(0);
+			dir += stem->getPath().getSpline().getDirection(0);
 			count++;
 		}
 	}
-	direction /= count;
-	return pg::normalize(direction);
+	dir /= count;
+	return pg::normalize(dir);
 }
 
 bool Selection::hasPoints() const
