@@ -42,6 +42,11 @@ float pg::dot(const Vec3 &a, const Vec3 &b)
 	return a.x*b.x + a.y*b.y + a.z*b.z;
 }
 
+float pg::angle(const Vec3 &a, const Vec3 &b)
+{
+	return acos(dot(a, b) / (magnitude(a) * magnitude(b)));
+}
+
 Vec3 pg::cross(const Vec3 &a, const Vec3 &b)
 {
 	Vec3 v;
@@ -120,6 +125,12 @@ Mat4 pg::rotateIntoVec(const Vec3 &normal, const Vec3 &direction)
 	return m;
 }
 
+Quat pg::rotateIntoVecQ(const Vec3 &normal, const Vec3 &direction)
+{
+	float e = sqrt(2.0f * (1.0f + dot(normal, direction)));
+	return toVec4((1.0f / e) * cross(normal, direction), e / 2.0f);
+}
+
 Vec3 pg::rotateAroundAxis(const Vec3 &vec, const Vec3 &axis, float n)
 {
 	Vec3 a = std::cos(n) * vec;
@@ -149,6 +160,23 @@ Mat4 pg::rotateXY(float x, float y)
 		cy, 0.0f, sy, 0.0f,
 		sx*sy, cx, -sx*cy, 0.0f,
 		-cx*sy, sx, cx*cy, 0.0f,
+		0.0f, 0.0f, 0.0f, 1.0f
+	};
+	return m;
+}
+
+Mat4 pg::rotateZYX(float z, float y, float x)
+{
+	float cz = std::cos(z);
+	float sz = std::sin(z);
+	float cy = std::cos(y);
+	float sy = std::sin(y);
+	float cx = std::cos(x);
+	float sx = std::sin(x);
+	Mat4 m = {
+		cz*cy,          sz*cy,          -sy, 0.0f,
+		cz*sy*sx-sz*sx, sz*sy*sx+cz*cz, cy*sx, 0.0f,
+		cz*sy*cx+sz*sx, sz*sy*cx-cz*sx, cy*cx, 0.0f,
 		0.0f, 0.0f, 0.0f, 1.0f
 	};
 	return m;
@@ -194,6 +222,25 @@ Quat pg::slerp(const Quat &a, const Quat &b, float t)
 	m.w = x*a.w + y*b.w;
 
 	return m;
+}
+
+float pg::norm(Quat q)
+{
+	return sqrt(q.x*q.x + q.y+q.y + q.z*q.z + q.w*q.w);
+}
+
+Quat pg::conjugate(Quat q)
+{
+	q.x = -q.x;
+	q.y = -q.y;
+	q.z = -q.z;
+	return q;
+}
+
+Quat pg::inverse(Quat q)
+{
+	float n = norm(q);
+	return conjugate(q) * (1.0f / (n*n));
 }
 
 Mat4 pg::identity()

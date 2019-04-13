@@ -22,6 +22,7 @@
 #include "../selection.h"
 #include "../geometry/rotation_axes.h"
 #include "plant_generator/plant.h"
+#include <vector>
 
 class RotateStem : public Command {
 	Selection *selection;
@@ -35,9 +36,9 @@ class RotateStem : public Command {
 	pg::Vec3 planeNormal;
 	bool valid;
 
-	void rotateChild(pg::Stem *stem, pg::Mat4 t, float distance);
+	void rotateChild(pg::Stem *stem, pg::Quat t, float distance);
 	void rotate();
-	pg::Mat4 getTransformation();
+	pg::Quat getTransformation(pg::Quat q);
 	void checkValidity();
 
 public:

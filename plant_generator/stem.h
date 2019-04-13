@@ -21,7 +21,7 @@
 #include "math/curve.h"
 #include "volumetric_path.h"
 #include <boost/archive/text_oarchive.hpp>
-#include <vector>
+#include <map>
 
 namespace pg {
 	class Stem {
@@ -36,7 +36,7 @@ namespace pg {
 		Stem *child;
 		Stem *parent;
 		int depth;
-		std::vector<Leaf> leaves;
+		std::map<int, Leaf> leaves;
 		VolumetricPath path;
 		int resolution = 10;
 		float position;
@@ -71,10 +71,13 @@ namespace pg {
 		bool operator==(const Stem &stem) const;
 		bool operator!=(const Stem &stem) const;
 
+		unsigned getId() const;
+
 		int addLeaf(const Leaf &leaf);
 		int getLeafCount();
-		Leaf *getLeaf(int index);
-		void removeLeaf(int index);
+		Leaf *getLeaf(int id);
+		const std::map<int, Leaf> &getLeaves();
+		void removeLeaf(int id);
 
 		void setResolution(int resolution);
 		int getResolution() const;

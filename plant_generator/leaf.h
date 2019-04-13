@@ -23,19 +23,26 @@ namespace pg {
 	class Leaf {
 		friend class boost::serialization::access;
 
+		static unsigned counter;
+		unsigned id;
+
 		float position;
-		float tilt;
-		Vec2 scale;
+		Vec3 scale;
 		unsigned material;
-		
+		unsigned mesh;
+		Quat rotation;
+
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned int version)
 		{
 			(void)version;
+			ar & counter;
+			ar & id;
 			ar & position;
-			ar & tilt;
 			ar & scale;
 			ar & material;
+			ar & mesh;
+			ar & rotation;
 		}
 
 	public:
@@ -43,14 +50,18 @@ namespace pg {
 		bool operator==(const Leaf &leaf) const;
 		bool operator!=(const Leaf &leaf) const;
 
+		unsigned getId() const;
 		void setPosition(float position);
 		float getPosition() const;
-		void setTilt(float tilt);
-		float getTilt() const;
-		void setScale(Vec2 scale);
-		Vec2 getScale() const;
+		void setRotation(Quat rotation);
+		Quat getRotation();
+		Quat getDefaultOrientation(Vec3 stemDirection);
+		void setScale(Vec3 scale);
+		Vec3 getScale() const;
 		void setMaterial(unsigned material);
 		unsigned getMaterial() const;
+		void setMesh(unsigned mesh);
+		unsigned getMesh() const;
 	};
 }
 

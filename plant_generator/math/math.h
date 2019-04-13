@@ -24,7 +24,7 @@ namespace pg {
 	struct Vec2 {
 		float x;
 		float y;
-		
+
 		Vec2 &operator+=(const Vec2 &b)
 		{
 			this->x += b.x;
@@ -129,6 +129,16 @@ namespace pg {
 			default: return w;
 			}
 		}
+
+		template<class Archive>
+		void serialize(Archive &ar, const unsigned int version)
+		{
+			(void)version;
+			ar & x;
+			ar & y;
+			ar & z;
+			ar & w;
+		}
 	};
 
 	struct Mat4 {
@@ -181,6 +191,7 @@ namespace pg {
 	Vec2 perp(const Vec2 &vec);
 	float dot(const Vec2 &a, const Vec2 &b);
 	float dot(const Vec3 &a, const Vec3 &b);
+	float angle(const Vec3 &a, const Vec3 &b);
 	Vec3 cross(const Vec3 &a, const Vec3 &b);
 	float magnitude(const Vec2 &vec);
 	float magnitude(const Vec3 &vec);
@@ -189,12 +200,17 @@ namespace pg {
 	Quat normalize(const Quat &quat);
 	Mat4 transpose(const Mat4 &mat);
 	Mat4 rotateIntoVec(const Vec3 &normal, const Vec3 &direction);
+	Quat rotateIntoVecQ(const Vec3 &normal, const Vec3 &direction);
 	Vec3 rotateAroundAxis(const Vec3 &vec, const Vec3 &axis, float n);
 	Mat4 translate(const Vec3 &vec);
 	Mat4 rotateXY(float x, float y);
+	Mat4 rotateZYX(float z, float y, float x);
 	Quat fromAxisAngle(const Vec3 &vec, float theta);
 	Mat4 quatToMat4(const Quat &quat);
 	Quat slerp(const Quat &a, const Quat &b, float t);
+	float norm(Quat q);
+	Quat conjugate(Quat q);
+	Quat inverse(Quat q);
 	Mat4 identity();
 	/** Projects a onto b and returns distance along b. */
 	float project(const Vec3 &a, const Vec3 &b);
@@ -234,7 +250,7 @@ namespace pg {
 		stream << std::defaultfloat;
 		return stream;
 	}
-	
+
 	inline bool operator==(const Vec2 &a, const Vec2 &b)
 	{
 		return a.x == b.x && a.y == b.y;
@@ -248,6 +264,16 @@ namespace pg {
 	inline bool operator==(const Vec3 &a, const Vec3 &b)
 	{
 		return a.x == b.x && a.y == b.y && a.z == b.z;
+	}
+
+	inline bool operator==(const Vec4 &a, const Vec4 &b)
+	{
+		return a.x == b.x && a.y == b.y && a.z == b.z && a.w == b.w;
+	}
+
+	inline bool operator!=(const Vec4 &a, const Vec4 &b)
+	{
+		return !(a == b);
 	}
 
 	inline bool operator!=(const Vec3 &a, const Vec3 &b)
@@ -320,6 +346,20 @@ namespace pg {
 		v.z = b.x*a[0][2] + b.y*a[1][2] + b.z*a[2][2] + a[3][2]*b.w;
 		v.w = b.x*a[0][3] + b.y*a[1][3] + b.z*a[2][3] + a[3][3]*b.w;
 		return v;
+	}
+
+	inline Quat operator*(Quat q, float s)
+	{
+		q.x *= s;
+		q.y *= s;
+		q.z *= s;
+		q.w *= s;
+		return q;
+	}
+
+	inline Quat operator*(float s, Quat q)
+	{
+		return q * s;
 	}
 
 	inline Quat operator*(const Quat &a, const Quat &b)

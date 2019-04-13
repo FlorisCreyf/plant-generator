@@ -42,16 +42,20 @@ public slots:
 	void changeRadiusCurve(pg::Spline &spline);
 	void changeStemMaterial();
 	void changeCapMaterial();
-	void changeTilt(double d);
 	void changeXScale(double d);
 	void changeYScale(double d);
+	void changeZScale(double d);
 	void changeLeafMaterial();
+	void changeLeafMesh();
 	void finishChanging();
 	void setCurve(pg::Spline spline, QString names);
 	void toggleCurve(CurveButton *w);
 	void addMaterial(ShaderParams params);
 	void renameMaterial(QString before, QString after);
 	void removeMaterial(QString name);
+	void addMesh(pg::Geometry geom);
+	void renameMesh(QString before, QString after);
+	void removeMesh(QString name);
 
 signals:
 	void isEnabled(bool enabled);
@@ -88,14 +92,17 @@ private:
 	QDoubleSpinBox *leafScaleXV;
 	QLabel *leafScaleYL;
 	QDoubleSpinBox *leafScaleYV;
-	QLabel *leafTiltL;
-	QDoubleSpinBox *leafTiltV;
+	QLabel *leafScaleZL;
+	QDoubleSpinBox *leafScaleZV;
 	QLabel *leafMaterialL;
 	QComboBox *leafMaterialV;
+	QLabel *leafMeshL;
+	QComboBox *leafMeshV;
 
 	bool changing = false;
 
 	void initProperties();
+	void setValueWidths(QFormLayout *layout);
 	void createStemBox(QVBoxLayout *layout);
 	void createLeafBox(QVBoxLayout *layout);
 	void createCapBox(QVBoxLayout *layout);

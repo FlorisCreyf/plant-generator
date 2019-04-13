@@ -1,5 +1,5 @@
 /* Plant Genererator
- * Copyright (C) 2019  Floris Creyf
+ * Copyright (C) 2016-2018  Floris Creyf
  *
  * Plant Genererator is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,19 +15,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "move_leaf.h"
+#ifndef FILE_H
+#define FILE_H
 
-void MoveLeaf::execute()
-{
+#include "plant_generator/geometry.h"
+#include <cstddef>
+#include <vector>
 
-}
+class File {
+public:
+	void exportObj(const char *filename, const std::vector<float> &vertices,
+		const std::vector<unsigned> &indices);
+	void importObj(const char *filename, pg::Geometry *geom);
+};
 
-void MoveLeaf::undo()
-{
-
-}
-
-MoveLeaf *MoveLeaf::clone()
-{
-	return new MoveLeaf(*this);
-}
+#endif /* FILE_H */

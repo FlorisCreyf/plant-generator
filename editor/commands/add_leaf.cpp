@@ -17,14 +17,40 @@
 
 #include "add_leaf.h"
 
+AddLeaf::AddLeaf(Selection *selection) : prevSelection(*selection)
+{
+	this->selection = selection;
+	stem = nullptr;
+	undone = false;
+}
+
 void AddLeaf::execute()
 {
-
+	auto instances = selection->getStemInstances();
+	if (instances.size( ) == 1) {
+		pg::Stem *stem = (*instances.begin()).first;
+		pg::Leaf leaf;
+		if (undone)
+			leaf = this->leaf;
+		else {
+			this->leaf = leaf;
+			this->stem = stem;
+			prevSelection = *selection;
+		}
+		stem->addLeaf(leaf);
+		selection->clear();
+		selection->addLeaf(stem, leaf.getId());
+	}
 }
 
 void AddLeaf::undo()
 {
-
+	if (stem) {
+		printf("undo\n");
+		stem->removeLeaf(leaf.getId());
+		*selection = prevSelection;
+		undone = true;
+	}
 }
 
 AddLeaf *AddLeaf::clone()

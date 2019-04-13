@@ -68,50 +68,47 @@ pg::Vec3 RotateStem::getDirection()
 	return direction;
 }
 
-pg::Mat4 RotateStem::getTransformation()
+pg::Quat RotateStem::getTransformation(pg::Quat q)
 {
-	float angle = pg::dot(lastDirection, direction);
-	angle /= (pg::magnitude(lastDirection) * pg::magnitude(direction));
-	angle = std::acos(angle);
-
+	pg::Vec3 v;
 	pg::Vec3 normal;
 	switch (axis) {
 	case Axes::XAxis:
-		if (ray.origin.x < 0.0f)
-			normal.x = 1.0f;
-		else
-			normal.x = -1.0f;
+		normal.x = 1.0f;
 		normal.y = 0.0f;
 		normal.z = 0.0f;
+		v = pg::toVec3(q * pg::toVec4(normal, 0.0f) * pg::conjugate(q));
+		if (pg::dot(v, planeNormal) < 0)
+			normal.x *= -1.0f;
 		break;
 	case Axes::YAxis:
 		normal.x = 0.0f;
-		if (ray.origin.y < 0.0f)
-			normal.y = 1.0f;
-		else
-			normal.y = -1.0f;
+		normal.y = 1.0f;
 		normal.z = 0.0f;
+		v = pg::toVec3(q * pg::toVec4(normal, 0.0f) * pg::conjugate(q));
+		if (pg::dot(v, planeNormal) < 0)
+			normal.y *= -1.0f;
 		break;
 	case Axes::ZAxis:
 		normal.x = 0.0f;
 		normal.y = 0.0f;
-		if (ray.origin.z < 0.0f)
-			normal.z = 1.0f;
-		else
-			normal.z = -1.0f;
+		normal.z = 1.0f;
+		v = pg::toVec3(q * pg::toVec4(normal, 0.0f) * pg::conjugate(q));
+		if (pg::dot(v, planeNormal) < 0)
+			normal.z *= -1.0f;
 		break;
 	default:
 		normal = planeNormal;
 		break;
 	}
 
-	pg::Mat4 t = pg::rotateIntoVec(planeNormal, normal);
-	pg::Vec3 nd = pg::toVec3(t * pg::toVec4(direction, 0.0f));
-	pg::Vec3 od = pg::toVec3(t * pg::toVec4(lastDirection, 0.0f));
-	return pg::rotateIntoVec(od, nd);
+	pg::Quat t = pg::rotateIntoVecQ(planeNormal, normal);
+	pg::Quat a = t * pg::toVec4(direction, 0.0f) * pg::conjugate(t);
+	pg::Quat b = t * pg::toVec4(lastDirection, 0.0f) * pg::conjugate(t);
+	return pg::rotateIntoVecQ(pg::toVec3(b), pg::toVec3(a));
 }
 
-void RotateStem::rotateChild(pg::Stem *stem, pg::Mat4 t, float distance)
+void RotateStem::rotateChild(pg::Stem *stem, pg::Quat t, float distance)
 {
 	while (stem) {
 		if (stem->getPosition() >= distance) {
@@ -120,7 +117,7 @@ void RotateStem::rotateChild(pg::Stem *stem, pg::Mat4 t, float distance)
 			std::vector<pg::Vec3> controls = spline.getControls();
 			for (size_t i = 0; i < controls.size(); i++) {
 				pg::Vec4 a = pg::toVec4(controls[i], 0.0f);
-				controls[i] = pg::toVec3(t * a);
+				controls[i] = pg::toVec3(t * a * conjugate(t));
 			}
 			spline.setControls(controls);
 			path.setSpline(spline);
@@ -134,9 +131,10 @@ void RotateStem::rotateChild(pg::Stem *stem, pg::Mat4 t, float distance)
 
 void RotateStem::rotate()
 {
-	pg::Mat4 t = getTransformation();
-	auto instances = selection->getStemInstances();
-	for (auto &instance : instances) {
+	pg::Quat q = {0.0f, 0.0f, 0.0f, 1.0f};
+	pg::Quat t = getTransformation(q);
+	auto stemInstances = selection->getStemInstances();
+	for (auto &instance : stemInstances) {
 		pg::Stem *stem = instance.first;
 		PointSelection &ps = instance.second;
 		int point = ps.hasPoints() ? *ps.getPoints().begin() : 0;
@@ -147,13 +145,13 @@ void RotateStem::rotate()
 		if (spline.getDegree() == 3 && point % 3 == 0 && point > 0) {
 			size_t i = point - 1;
 			pg::Vec3 p = controls[i] - controls[point];
-			controls[i] = toVec3(t * toVec4(p, 0.0f));
+			controls[i] = toVec3(t * toVec4(p, 0.0f) * conjugate(t));
 			controls[i] += controls[point];
 		}
 
 		for (size_t i = point + 1; i < controls.size(); i++) {
 			pg::Vec3 p = controls[i] - controls[point];
-			controls[i] = toVec3(t * toVec4(p, 0.0f));
+			controls[i] = toVec3(t * toVec4(p, 0.0f) * conjugate(t));
 			controls[i] += controls[point];
 		}
 
@@ -162,6 +160,25 @@ void RotateStem::rotate()
 		spline.setControls(controls);
 		path.setSpline(spline);
 		stem->setPath(path);
+	}
+
+	auto leafInstances = selection->getLeafInstances();
+	for (auto &instance : leafInstances) {
+		pg::Stem *stem = instance.first;
+		pg::VolumetricPath path = stem->getPath();
+		for (auto id : instance.second) {
+			pg::Leaf *leaf = stem->getLeaf(id);
+
+			/* Create a rotation 'q' that transforms the global axes
+			 * into the axes of each leaf. This is needed to
+			 * determine if rotations move in the same direction
+			 * as the cursor. */
+			float position = leaf->getPosition();
+			pg::Vec3 d = path.getIntermediateDirection(position);
+			pg::Quat q = leaf->getDefaultOrientation(d);
+			t = getTransformation(q);
+			leaf->setRotation(t * leaf->getRotation());
+		}
 	}
 }
 
@@ -191,6 +208,7 @@ void RotateStem::undo()
 		firstDirection = lastDirection = direction;
 		direction = d;
 		execute();
+
 		/* Set variables for redo. */
 		d = firstDirection;
 		firstDirection = lastDirection = direction;

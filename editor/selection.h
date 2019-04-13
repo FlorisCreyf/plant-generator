@@ -37,6 +37,7 @@ class Selection {
 	std::pair<float, pg::Stem *> getStem(pg::Ray &ray, pg::Stem *stem);
 	std::pair<float, pg::Segment> getLeaf(pg::Ray ray);
 	void selectAll(pg::Stem *stem);
+	void getTotalLeafPosition(pg::Vec3 &, int &) const;
 
 public:
 	Selection(Camera *camera, pg::Plant *plant, pg::Mesh *mesh);
@@ -46,6 +47,7 @@ public:
 	void removeStem(pg::Stem *stem);
 	void addStem(pg::Stem *stem);
 	void addLeaf(pg::Stem *stem, unsigned leaf);
+	void removeLeaves();
 
 	void select(QMouseEvent *event);
 	void setInstances(std::map<pg::Stem *, PointSelection> instances);

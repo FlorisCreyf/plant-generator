@@ -44,6 +44,11 @@ void Selection::removeStem(pg::Stem *stem)
 	stems.erase(stem);
 }
 
+void Selection::removeLeaves()
+{
+	leaves.clear();
+}
+
 void Selection::addStem(pg::Stem *stem)
 {
 	PointSelection ps(camera);
@@ -66,6 +71,7 @@ void Selection::select(QMouseEvent *event)
 {
 	int point = -1;
 
+	/* Try to select a point from an already selected stem. */
 	for (auto &instance : stems) {
 		Stem *stem = instance.first;
 		PointSelection &ps = instance.second;
@@ -95,7 +101,6 @@ void Selection::select(QMouseEvent *event)
 		}
 
 		if (sp.second && sp.first < lp.first) {
-			/* Remove the stem if it is already selected. */
 			auto it = stems.find(sp.second);
 			if (it != stems.end())
 				stems.erase(it);
@@ -372,6 +377,20 @@ void Selection::selectLastPoints()
 	}
 }
 
+void Selection::getTotalLeafPosition(pg::Vec3 &position, int &count) const
+{
+	for (auto &instance : leaves) {
+		pg::Stem *stem = instance.first;
+		pg::VolumetricPath path = stem->getPath();
+		for (unsigned id : instance.second) {
+			pg::Leaf *leaf = stem->getLeaf(id);
+			position += stem->getLocation();
+			position += path.getIntermediate(leaf->getPosition());
+			count++;
+		}
+	}
+}
+
 pg::Vec3 Selection::getAveragePosition() const
 {
 	pg::Vec3 position = {0.0f, 0.0f, 0.0f};
@@ -387,6 +406,7 @@ pg::Vec3 Selection::getAveragePosition() const
 			count++;
 		}
 	}
+	getTotalLeafPosition(position, count);
 	position /= count;
 	return position;
 }
@@ -409,6 +429,7 @@ pg::Vec3 Selection::getAveragePositionFP() const
 			count++;
 		}
 	}
+	getTotalLeafPosition(position, count);
 	position /= count;
 	return position;
 }
@@ -417,6 +438,7 @@ pg::Vec3 Selection::getAverageDirectionFP() const
 {
 	pg::Vec3 dir = {0.0f, 0.0f, 0.0f};
 	int count = 0;
+
 	for (auto &instance : stems) {
 		pg::Stem *stem = instance.first;
 		const PointSelection &ps = instance.second;
@@ -430,6 +452,18 @@ pg::Vec3 Selection::getAverageDirectionFP() const
 			count++;
 		}
 	}
+
+	for (auto &instance : leaves) {
+		pg::Stem *stem = instance.first;
+		for (unsigned id : instance.second) {
+			pg::Leaf *leaf = stem->getLeaf(id);
+			pg::Quat q = leaf->getRotation();
+			pg::Quat k = {0.0f, 0.0f, 1.0f, 0.0f};
+			dir += pg::toVec3(q * k * pg::conjugate(q));
+			count++;
+		}
+	}
+
 	dir /= count;
 	return pg::normalize(dir);
 }

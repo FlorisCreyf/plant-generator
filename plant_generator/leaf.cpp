@@ -15,27 +15,38 @@
 
 #include "leaf.h"
 
+unsigned pg::Leaf::counter = 1;
+
 pg::Leaf::Leaf()
 {
+	id = counter++;
 	position = -1.0f;
-	tilt = 0.0f;
-	scale.x = 1.0f;
-	scale.y = 2.0f;
+	scale = {1.0f, 1.0f, 1.0f};
 	material = 0;
+	mesh = 0;
+	rotation = {0.0f, 0.0f, 0.0f, 1.0f};
 }
 
 bool pg::Leaf::operator==(const pg::Leaf &leaf) const
 {
-	return 
+	return (
+		id == leaf.id &&
 		position == leaf.position &&
-		tilt == leaf.tilt &&
 		scale == leaf.scale &&
-		material == leaf.material;
+		material == leaf.material &&
+		rotation == leaf.rotation &&
+		mesh == leaf.mesh
+	);
 }
 
 bool pg::Leaf::operator!=(const pg::Leaf &leaf) const
 {
 	return !(*this == leaf);
+}
+
+unsigned pg::Leaf::getId() const
+{
+	return id;
 }
 
 void pg::Leaf::setPosition(float position)
@@ -48,22 +59,36 @@ float pg::Leaf::getPosition() const
 	return position;
 }
 
-void pg::Leaf::setTilt(float tilt)
+void pg::Leaf::setRotation(pg::Quat rotation)
 {
-	this->tilt = tilt;
+	this->rotation = rotation;
 }
 
-float pg::Leaf::getTilt() const
+pg::Quat pg::Leaf::getRotation()
 {
-	return tilt;
+	return rotation;
 }
 
-void pg::Leaf::setScale(pg::Vec2 scale)
+pg::Quat pg::Leaf::getDefaultOrientation(pg::Vec3 stemDirection)
+{
+	Vec3 normal = {0.0f, 1.0f, 0.0f};
+	Vec3 d = {0.0f, 0.0f, 1.0f};
+	Vec3 leafDirection = pg::normalize(pg::cross(stemDirection, normal));
+	Quat q = pg::rotateIntoVecQ(d, leafDirection);
+	Vec3 up = {0.0f, -1.0f, 0.0f};
+	d = pg::cross(up, stemDirection);
+	d = pg::cross(d, stemDirection);
+	d = pg::normalize(d);
+	Quat k = pg::rotateIntoVecQ(normal, d);
+	return k * q;
+}
+
+void pg::Leaf::setScale(pg::Vec3 scale)
 {
 	this->scale = scale;
 }
 
-pg::Vec2 pg::Leaf::getScale() const
+pg::Vec3 pg::Leaf::getScale() const
 {
 	return scale;
 }
@@ -76,4 +101,14 @@ void pg::Leaf::setMaterial(unsigned material)
 unsigned pg::Leaf::getMaterial() const
 {
 	return material;
+}
+
+void pg::Leaf::setMesh(unsigned mesh)
+{
+	this->mesh = mesh;
+}
+
+unsigned pg::Leaf::getMesh() const
+{
+	return mesh;
 }

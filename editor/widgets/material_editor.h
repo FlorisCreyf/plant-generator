@@ -60,20 +60,6 @@ signals:
 	void materialModified(ShaderParams params);
 	void materialChanged(ShaderParams params);
 	void materialAdded(ShaderParams params);
-
-};
-
-class ItemDelegate : public QStyledItemDelegate {
-	Q_OBJECT
-
-public:
-	QSize sizeHint(const QStyleOptionViewItem &option,
-		const QModelIndex &index) const
-	{
-		(void)option;
-		(void)index;
-		return QSize(1, 22);
-	}
 };
 
 #endif /* MATERIAL_EDITOR_H */

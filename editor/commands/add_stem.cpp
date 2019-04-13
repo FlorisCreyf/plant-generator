@@ -16,7 +16,6 @@
  */
 
 #include "add_stem.h"
-#include "../commands/move_stem.h"
 #include "plant_generator/patterns.h"
 
 AddStem::AddStem(Selection *selection) : prevSelection(*selection)

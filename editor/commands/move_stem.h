@@ -23,17 +23,22 @@
 #include "../selection.h"
 #include "../commands/move_spline.h"
 #include <map>
+#include <vector>
 #include <memory>
 
 class MoveStem : public Command {
 	Selection *selection;
-	std::map<pg::Stem *, pg::Vec3> offsets;
+	std::map<pg::Stem *, pg::Vec3> stemOffsets;
+	std::map<pg::Stem *, std::vector<pg::Vec3>> leafOffsets;
 	Camera camera;
 	pg::Vec2 cursor;
 	pg::Vec2 origCursor;
 	bool snap;
 
 	void moveAlongPath(pg::Stem *stem);
+	void moveLeavesAlongPath();
+	void getPosition(pg::Stem *parent, size_t &line, float &t, pg::Vec3 p);
+	float getLength(pg::VolumetricPath path, size_t line, float t);
 
 public:
 	MoveStem(Selection *selection, Camera &camera, int x, int y);

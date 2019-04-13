@@ -45,6 +45,26 @@ RemoveStem::~RemoveStem()
 	}
 }
 
+/**
+ * Should be called after stems are removed. Leaves do not need to be removed
+ * from the plant anymore if their stem is removed.
+ */
+void RemoveStem::removeLeaves()
+{
+	auto instances = selection->getLeafInstances();
+	for (auto &instance : instances) {
+		pg::Stem *stem = instance.first;
+		if (selection->getPlant()->contains(stem)) {
+			std::set<unsigned> &ids = instance.second;
+			for (auto it = ids.begin(); it != ids.end(); it++) {
+				leaves.emplace(stem, *(stem->getLeaf(*it)));
+				stem->removeLeaf(*it);
+			}
+		}
+	}
+	selection->removeLeaves();
+}
+
 void RemoveStem::execute()
 {
 	removals.clear();
@@ -81,6 +101,8 @@ void RemoveStem::execute()
 	selection->setInstances(instances);
 	for (auto stem : removals)
 		selection->removeStem(stem);
+
+	removeLeaves();
 }
 
 void RemoveStem::undo()
@@ -92,9 +114,16 @@ void RemoveStem::undo()
 			auto path = stem->getPath();
 			path.setSpline(item.second);
 			stem->setPath(path);
-		} else
+		} else {
 			plant->insert(stem->getParent(), stem);
+		}
 	}
+
+	for (auto &item : leaves) {
+		pg::Stem *stem = item.first;
+		stem->addLeaf(item.second);
+	}
+
 	*selection = prevSelection;
 }
 

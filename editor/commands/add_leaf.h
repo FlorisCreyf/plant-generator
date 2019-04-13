@@ -19,9 +19,17 @@
 #define ADD_LEAF_H
 
 #include "command.h"
+#include "../selection.h"
 
 class AddLeaf : public Command {
+	Selection *selection;
+	Selection prevSelection;
+	pg::Leaf leaf;
+	pg::Stem *stem;
+	bool undone;
+
 public:
+	AddLeaf(Selection *selection);
 	void execute();
 	void undo();
 	AddLeaf *clone();

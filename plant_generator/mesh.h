@@ -33,6 +33,7 @@ namespace pg {
 
 	class Mesh {
 		Plant *plant;
+		Geometry defaultLeaf;
 		const int vertexSize = 8;
 
 		int mesh;
@@ -57,8 +58,6 @@ namespace pg {
 		/** Stems at the end of the parent stem need a small offset. */
 		void addStem(Stem *stem, int mesh, float offset = 0.0f);
 		void addLeaves(Stem *stem);
-		void rotateSideLeaf(Vec3 (&p)[4], Vec3 &normal, Vec3 direction);
-		void rotateEndLeaf(Vec3 (&p)[4], Vec3 &normal, Vec3 direction);
 		void addPoint(Vec3 point, Vec3 normal, Vec2 texture);
 		void addTriangle(int a, int b, int c);
 		int selectBuffer(int material, int mesh);

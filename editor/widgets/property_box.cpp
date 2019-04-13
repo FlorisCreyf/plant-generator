@@ -47,6 +47,18 @@ PropertyBox::PropertyBox(SharedResources *shared, Editor *editor,
 	connect(editor, SIGNAL(selectionChanged()), this, SLOT(fill()));
 }
 
+void PropertyBox::setValueWidths(QFormLayout *layout)
+{
+	layout->setFormAlignment(Qt::AlignRight | Qt::AlignTop);
+	layout->setFieldGrowthPolicy(QFormLayout::FieldsStayAtSizeHint);
+	layout->setLabelAlignment(Qt::AlignRight);
+	for(int i = 0; i < layout->rowCount(); i++) {
+		QLayoutItem *item = layout->itemAt(i, QFormLayout::FieldRole);
+		if (item && item->widget())
+			item->widget()->setFixedWidth(250);
+	}
+}
+
 /**
  * Create a container that stores properties that only affect the current stem.
  */
@@ -58,7 +70,9 @@ void PropertyBox::createStemBox(QVBoxLayout *layout)
 	form->setMargin(10);
 
 	{
+		QWidget *sizeWidget = new QWidget();
 		QHBoxLayout *line = new QHBoxLayout();
+		sizeWidget->setLayout(line);
 		radiusL = new QLabel(tr("Radius"));
 		radiusV = new QDoubleSpinBox;
 		radiusB = new CurveButton("Radius", shared, this);
@@ -69,7 +83,8 @@ void PropertyBox::createStemBox(QVBoxLayout *layout)
 		line->addWidget(radiusV);
 		line->addWidget(radiusB);
 		line->setSpacing(0);
-		form->addRow(radiusL, line);
+		line->setMargin(0);
+		form->addRow(radiusL, sizeWidget);
 	}
 
 	minRadiusL = new QLabel(tr("Min Radius"));
@@ -99,6 +114,7 @@ void PropertyBox::createStemBox(QVBoxLayout *layout)
 	stemMaterialV->addItem(tr(""), QVariant(0));
 	form->addRow(stemMaterialL, stemMaterialV);
 
+	setValueWidths(form);
 	stemG->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
 	layout->addWidget(stemG);
 
@@ -138,6 +154,7 @@ void PropertyBox::createCapBox(QVBoxLayout *layout)
 	capMaterialV->addItem(tr(""), QVariant(0));
 	form->addRow(capMaterialL, capMaterialV);
 
+	setValueWidths(form);
 	capG->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
 	layout->addWidget(capG);
 
@@ -152,12 +169,6 @@ void PropertyBox::createLeafBox(QVBoxLayout *layout)
 	form->setSpacing(3);
 	form->setMargin(10);
 
-	leafTiltL = new QLabel(tr("Tilt"));
-	leafTiltV = new QDoubleSpinBox;
-	leafTiltV->setDecimals(4);
-	leafTiltV->setSingleStep(0.001);
-	form->addRow(leafTiltL, leafTiltV);
-
 	leafScaleXL = new QLabel(tr("X Scale"));
 	leafScaleXV = new QDoubleSpinBox;
 	leafScaleXV->setMinimum(0.01);
@@ -170,15 +181,27 @@ void PropertyBox::createLeafBox(QVBoxLayout *layout)
 	leafScaleYV->setSingleStep(0.1);
 	form->addRow(leafScaleYL, leafScaleYV);
 
+	leafScaleZL = new QLabel(tr("Z Scale"));
+	leafScaleZV = new QDoubleSpinBox;
+	leafScaleZV->setMinimum(0.01);
+	leafScaleZV->setSingleStep(0.1);
+	form->addRow(leafScaleZL, leafScaleZV);
+
 	leafMaterialL = new QLabel(tr("Material"));
 	leafMaterialV = new QComboBox;
 	leafMaterialV->addItem(tr(""), QVariant(0));
 	form->addRow(leafMaterialL, leafMaterialV);
 
+	leafMeshL = new QLabel(tr("Mesh"));
+	leafMeshV = new QComboBox;
+	leafMeshV->addItem(tr(""), QVariant(0));
+	form->addRow(leafMeshL, leafMeshV);
+
 	enableLeaf(false);
+	setValueWidths(form);
 	leafG->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
 	layout->addWidget(leafG);
-	
+
 	connect(leafScaleXV, SIGNAL(valueChanged(double)), this,
 		SLOT(changeXScale(double)));
 	connect(leafScaleXV, SIGNAL(editingFinished()), this,
@@ -187,12 +210,14 @@ void PropertyBox::createLeafBox(QVBoxLayout *layout)
 		SLOT(changeYScale(double)));
 	connect(leafScaleYV, SIGNAL(editingFinished()), this,
 		SLOT(finishChanging()));
-	connect(leafTiltV, SIGNAL(valueChanged(double)), this,
-		SLOT(changeTilt(double)));
-	connect(leafTiltV, SIGNAL(editingFinished()), this,
+	connect(leafScaleZV, SIGNAL(valueChanged(double)), this,
+		SLOT(changeZScale(double)));
+	connect(leafScaleZV, SIGNAL(editingFinished()), this,
 		SLOT(finishChanging()));
 	connect(leafMaterialV, SIGNAL(currentIndexChanged(int)), this,
 		SLOT(changeLeafMaterial()));
+	connect(leafMeshV, SIGNAL(currentIndexChanged(int)), this,
+		SLOT(changeLeafMesh()));
 }
 
 /**
@@ -221,6 +246,7 @@ void PropertyBox::fill()
 				break;
 			}
 		}
+
 		resolutionV->blockSignals(true);
 		resolutionV->setValue(stem->getResolution());
 		resolutionV->blockSignals(false);
@@ -234,6 +260,7 @@ void PropertyBox::fill()
 				break;
 			}
 		}
+
 		divisionV->blockSignals(true);
 		divisionV->setValue(stem->getPath().getResolution());
 		divisionV->blockSignals(false);
@@ -247,6 +274,7 @@ void PropertyBox::fill()
 				break;
 			}
 		}
+
 		radiusV->blockSignals(true);
 		radiusV->setValue(stem->getPath().getMaxRadius());
 		radiusV->blockSignals(false);
@@ -264,6 +292,7 @@ void PropertyBox::fill()
 				break;
 			}
 		}
+
 		minRadiusV->blockSignals(true);
 		minRadiusV->setValue(stem->getPath().getMinRadius());
 		minRadiusV->blockSignals(false);
@@ -277,6 +306,7 @@ void PropertyBox::fill()
 				break;
 			}
 		}
+
 		degreeV->blockSignals(true);
 		switch (stem->getPath().getSpline().getDegree()) {
 		case 1:
@@ -297,6 +327,7 @@ void PropertyBox::fill()
 				break;
 			}
 		}
+
 		stemMaterialV->blockSignals(true);
 		{
 			int id = stem->getMaterial(pg::Stem::Outer);
@@ -315,6 +346,7 @@ void PropertyBox::fill()
 				break;
 			}
 		}
+
 		capMaterialV->blockSignals(true);
 		{
 			int id = stem->getMaterial(pg::Stem::Inner);
@@ -339,76 +371,52 @@ void PropertyBox::fill()
 		unsigned index = *leafInstances.rbegin()->second.begin();
 		pg::Leaf *leaf = stem->getLeaf(index);
 		Selection *selection = editor->getSelection();
-		bool different;
 
-		different = false;
 		indicateSimilarities(leafScaleXL);
+		indicateSimilarities(leafScaleYL);
+		indicateSimilarities(leafScaleZL);
 		auto i = selection->getLeafInstances();
-		for (auto it = i.begin(); !different && it != i.end(); it++) {
+		for (auto it = i.begin(); it != i.end(); it++) {
 			pg::Stem *stem = it->first;
 			for (auto &id : it->second) {
-				float x = stem->getLeaf(id)->getScale().x;
-				if (x != leaf->getScale().x) {
+				pg::Vec3 scale = stem->getLeaf(id)->getScale();
+				if (scale.x != leaf->getScale().x)
 					indicateDifferences(leafScaleXL);
-					different = true;
-					break;
-				}
+				if (scale.y != leaf->getScale().y)
+					indicateDifferences(leafScaleYL);
+				if (scale.z != leaf->getScale().z)
+					indicateDifferences(leafScaleZL);
 			}
 		}
+
 		leafScaleXV->blockSignals(true);
 		leafScaleXV->setValue(leaf->getScale().x);
 		leafScaleXV->blockSignals(false);
-		
-		different = false;
-		indicateSimilarities(leafScaleYL);
-		i = selection->getLeafInstances();
-		for (auto it = i.begin(); !different && it != i.end(); it++) {
-			pg::Stem *stem = it->first;
-			for (auto &id : it->second) {
-				float y = stem->getLeaf(id)->getScale().y;
-				if (y != leaf->getScale().y) {
-					indicateDifferences(leafScaleYL);
-					different = true;
-					break;
-				}
-			}
-		}
+
 		leafScaleYV->blockSignals(true);
 		leafScaleYV->setValue(leaf->getScale().y);
 		leafScaleYV->blockSignals(false);
-		
-		different = false;
-		indicateSimilarities(leafTiltL);
-		i = selection->getLeafInstances();
-		for (auto it = i.begin(); !different && it != i.end(); it++) {
-			pg::Stem *stem = it->first;
-			for (auto &id : it->second) {
-				float y = stem->getLeaf(id)->getTilt();
-				if (y != leaf->getTilt()) {
-					indicateDifferences(leafTiltL);
-					different = true;
-					break;
-				}
-			}
-		}
-		leafTiltV->blockSignals(true);
-		leafTiltV->setValue(leaf->getTilt());
-		leafTiltV->blockSignals(false);
 
-		different = false;
+		leafScaleZV->blockSignals(true);
+		leafScaleZV->setValue(leaf->getScale().z);
+		leafScaleZV->blockSignals(false);
+
 		indicateSimilarities(leafMaterialL);
+		indicateSimilarities(leafMeshL);
 		i = selection->getLeafInstances();
-		for (auto it = i.begin(); !different && it != i.end(); it++) {
+		for (auto it = i.begin(); it != i.end(); it++) {
 			pg::Stem *stem = it->first;
 			for (auto &id : it->second) {
-				float y = stem->getLeaf(id)->getMaterial();
-				if (y != leaf->getMaterial()) {
+				pg::Leaf *l = stem->getLeaf(id);
+				unsigned material = l->getMaterial();
+				unsigned mesh = l->getMesh();
+				if (material != leaf->getMaterial())
 					indicateDifferences(leafMaterialL);
-					different = true;
-					break;
-				}
+				if (mesh != leaf->getMesh())
+					indicateDifferences(leafMeshL);
 			}
 		}
+
 		leafMaterialV->blockSignals(true);
 		{
 			int id = leaf->getMaterial();
@@ -417,7 +425,19 @@ void PropertyBox::fill()
 			leafMaterialV->setCurrentText(qs);
 		}
 		leafMaterialV->blockSignals(false);
-		
+
+		leafMeshV->blockSignals(true);
+		if (leaf->getMesh() != 0) {
+			int id = leaf->getMesh();
+			pg::Plant *plant = editor->getPlant();
+			pg::Geometry geom = plant->getLeafMesh(id);
+			QString qs = QString::fromStdString(geom.getName());
+			leafMeshV->setCurrentText(qs);
+		} else {
+			leafMeshV->setCurrentText(tr(""));
+		}
+		leafMeshV->blockSignals(false);
+
 		enableLeaf(true);
 	}
 }
@@ -437,9 +457,8 @@ void PropertyBox::addMaterial(ShaderParams params)
 
 void PropertyBox::removeMaterial(QString name)
 {
-	int index;
+	int index = stemMaterialV->findText(name);
 	int id;
-	index = stemMaterialV->findText(name);
 	if (index != 0) {
 		id = stemMaterialV->itemData(index).toInt();
 		editor->getPlant()->removeMaterial(id);
@@ -461,6 +480,30 @@ void PropertyBox::renameMaterial(QString before, QString after)
 	capMaterialV->setItemText(index, after);
 	index = leafMaterialV->findText(before);
 	leafMaterialV->setItemText(index, after);
+}
+
+void PropertyBox::addMesh(pg::Geometry geom)
+{
+	QString name;
+	name = QString::fromStdString(geom.getName());
+	if (leafMeshV->findText(name) < 0)
+		leafMeshV->addItem(name, QVariant(geom.getId()));
+	editor->change();
+}
+
+void PropertyBox::renameMesh(QString before, QString after)
+{
+	int index = leafMeshV->findText(before);
+	leafMeshV->setItemText(index, after);
+}
+
+void PropertyBox::removeMesh(QString name)
+{
+	int index = leafMeshV->findText(name);
+	if (index != 0) {
+		leafMeshV->removeItem(index);
+		editor->change();
+	}
 }
 
 void PropertyBox::changePathDegree(int i)
@@ -569,19 +612,6 @@ void PropertyBox::changeCapMaterial()
 	finishChanging();
 }
 
-void PropertyBox::changeTilt(double d)
-{
-	beginChanging();
-	indicateSimilarities(leafTiltL);
-	auto instances = editor->getSelection()->getLeafInstances();
-	for (auto &instance : instances) {
-		pg::Stem *stem = instance.first;
-		for (auto &leaf : instance.second)
-			stem->getLeaf(leaf)->setTilt(d);
-	}
-	editor->change();
-}
-
 void PropertyBox::changeXScale(double d)
 {
 	beginChanging();
@@ -590,7 +620,7 @@ void PropertyBox::changeXScale(double d)
 	for (auto &instance : instances) {
 		pg::Stem *stem = instance.first;
 		for (auto &leaf : instance.second) {
-			pg::Vec2 scale = stem->getLeaf(leaf)->getScale();
+			pg::Vec3 scale = stem->getLeaf(leaf)->getScale();
 			scale.x = d;
 			stem->getLeaf(leaf)->setScale(scale);
 		}
@@ -606,8 +636,24 @@ void PropertyBox::changeYScale(double d)
 	for (auto &instance : instances) {
 		pg::Stem *stem = instance.first;
 		for (auto &leaf : instance.second) {
-			pg::Vec2 scale = stem->getLeaf(leaf)->getScale();
+			pg::Vec3 scale = stem->getLeaf(leaf)->getScale();
 			scale.y = d;
+			stem->getLeaf(leaf)->setScale(scale);
+		}
+	}
+	editor->change();
+}
+
+void PropertyBox::changeZScale(double d)
+{
+	beginChanging();
+	indicateSimilarities(leafScaleYL);
+	auto instances = editor->getSelection()->getLeafInstances();
+	for (auto &instance : instances) {
+		pg::Stem *stem = instance.first;
+		for (auto &leaf : instance.second) {
+			pg::Vec3 scale = stem->getLeaf(leaf)->getScale();
+			scale.z = d;
 			stem->getLeaf(leaf)->setScale(scale);
 		}
 	}
@@ -624,6 +670,21 @@ void PropertyBox::changeLeafMaterial()
 		pg::Stem *stem = instance.first;
 		for (auto &leaf : instance.second)
 			stem->getLeaf(leaf)->setMaterial(id);
+	}
+	editor->change();
+	finishChanging();
+}
+
+void PropertyBox::changeLeafMesh()
+{
+	beginChanging();
+	indicateSimilarities(leafMeshL);
+	int id = leafMeshV->currentData().toInt();
+	auto instances = editor->getSelection()->getLeafInstances();
+	for (auto &instance : instances) {
+		pg::Stem *stem = instance.first;
+		for (auto &leaf : instance.second)
+			stem->getLeaf(leaf)->setMesh(id);
 	}
 	editor->change();
 	finishChanging();
@@ -670,10 +731,18 @@ void PropertyBox::enableStem(bool enable)
 
 void PropertyBox::enableLeaf(bool enable)
 {
+	if (!enable) {
+		indicateSimilarities(leafScaleXV);
+		indicateSimilarities(leafScaleYV);
+		indicateSimilarities(leafScaleZV);
+		indicateSimilarities(leafMaterialV);
+		indicateSimilarities(leafMeshV);
+	}
 	leafScaleXV->setEnabled(enable);
 	leafScaleYV->setEnabled(enable);
-	leafTiltV->setEnabled(enable);
+	leafScaleZV->setEnabled(enable);
 	leafMaterialV->setEnabled(enable);
+	leafMeshV->setEnabled(enable);
 }
 
 void PropertyBox::indicateDifferences(QWidget *widget)

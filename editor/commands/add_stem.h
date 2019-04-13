@@ -20,7 +20,6 @@
 
 #include "command.h"
 #include "../selection.h"
-#include "../geometry/translation_axes.h"
 
 class AddStem : public Command {
 	Selection *selection;

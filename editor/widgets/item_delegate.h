@@ -1,5 +1,5 @@
 /* Plant Genererator
- * Copyright (C) 2016-2018  Floris Creyf
+ * Copyright (C) 2018  Floris Creyf
  *
  * Plant Genererator is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,16 +15,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef FILE_EXPORTER_H
-#define FILE_EXPORTER_H
+#ifndef ITEM_DELEGATE_H
+#define ITEM_DELEGATE_H
 
-#include <cstddef>
-#include <vector>
+#include <QtWidgets>
 
-class FileExporter {
+class ItemDelegate : public QStyledItemDelegate {
+	Q_OBJECT
+
 public:
-	void exportObj(const char *filename, const std::vector<float> &vertices,
-		const std::vector<unsigned> &indices);
+	QSize sizeHint(const QStyleOptionViewItem &option,
+		const QModelIndex &index) const
+	{
+		(void)option;
+		(void)index;
+		return QSize(1, 22);
+	}
 };
 
-#endif /* FILE_EXPORTER_H */
+#endif /* ITEM_DELEGATE_H */

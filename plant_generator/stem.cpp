@@ -36,7 +36,7 @@ pg::Stem::Stem(pg::Stem *parent)
 
 bool pg::Stem::operator==(const pg::Stem &stem) const
 {
-	return
+	return (
 		nextSibling == stem.nextSibling &&
 		prevSibling == stem.prevSibling &&
 		child == stem.child &&
@@ -48,7 +48,8 @@ bool pg::Stem::operator==(const pg::Stem &stem) const
 		location == stem.location &&
 		material[0] == stem.material[0] &&
 		material[1] == stem.material[1] &&
-		leaves == stem.leaves;
+		leaves == stem.leaves
+	);
 }
 
 bool pg::Stem::operator!=(const pg::Stem &stem) const
@@ -56,9 +57,14 @@ bool pg::Stem::operator!=(const pg::Stem &stem) const
 	return !(*this == stem);
 }
 
+unsigned pg::Stem::getId() const
+{
+	return id;
+}
+
 int pg::Stem::addLeaf(const Leaf &leaf)
 {
-	leaves.push_back(leaf);
+	leaves.emplace(leaf.getId(), leaf);
 	return leaves.size() - 1;
 }
 
@@ -67,14 +73,19 @@ int pg::Stem::getLeafCount()
 	return leaves.size();
 }
 
-pg::Leaf *pg::Stem::getLeaf(int index)
+pg::Leaf *pg::Stem::getLeaf(int id)
 {
-	return &leaves[index];
+	return &leaves.at(id);
 }
 
-void pg::Stem::removeLeaf(int index)
+const std::map<int, pg::Leaf> &pg::Stem::getLeaves()
 {
-	leaves.erase(leaves.begin() + index);
+	return leaves;
+}
+
+void pg::Stem::removeLeaf(int id)
+{
+	leaves.erase(leaves.find(id));
 }
 
 void pg::Stem::setResolution(int resolution)

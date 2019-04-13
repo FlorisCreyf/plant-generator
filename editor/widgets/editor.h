@@ -23,6 +23,7 @@
 #include "../camera.h"
 #include "../history.h"
 #include "../selection.h"
+#include "../commands/add_leaf.h"
 #include "../commands/add_stem.h"
 #include "../commands/move_stem.h"
 #include "../commands/move_path.h"
@@ -121,8 +122,10 @@ private:
 	MoveStem moveStem;
 	MovePath movePath;
 	bool extrudeCommand;
-	bool addCommand;
+	bool addStemCommand;
+	bool addLeafCommand;
 	AddStem addStem;
+	AddLeaf addLeaf;
 	History history;
 
 	/* An offset is needed because the cursor is not necessarily at the

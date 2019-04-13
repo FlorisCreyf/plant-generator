@@ -16,7 +16,7 @@
  */
 
 #include "window.h"
-#include "../file_exporter.h"
+#include "../file.h"
 #include <boost/archive/text_iarchive.hpp>
 #include <fstream>
 #include <QFileDialog>
@@ -64,7 +64,7 @@ void Window::createPropertyBox()
 void Window::createEditors()
 {
 	auto areas = Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea;
-	QDockWidget *dockWidget[2];
+	QDockWidget *dockWidget[3];
 
 	dockWidget[0] = new QDockWidget(tr("Curve Editor"), this);
 	curveEditor = new CurveEditor(&shared, this);
@@ -78,7 +78,21 @@ void Window::createEditors()
 	dockWidget[1]->setWidget(materialEditor);
 	this->addDockWidget(static_cast<Qt::DockWidgetArea>(1), dockWidget[1]);
 
+	dockWidget[2] = new QDockWidget(tr("Mesh Editor"), this);
+	meshEditor = new MeshEditor(&shared, editor, this);
+	dockWidget[2]->setAllowedAreas(areas);
+	dockWidget[2]->setWidget(meshEditor);
+	this->addDockWidget(static_cast<Qt::DockWidgetArea>(1), dockWidget[2]);
+
 	tabifyDockWidget(dockWidget[0], dockWidget[1]);
+	tabifyDockWidget(dockWidget[0], dockWidget[2]);
+
+	connect(meshEditor, SIGNAL(meshAdded(pg::Geometry)),
+		propertyBox, SLOT(addMesh(pg::Geometry)));
+	connect(meshEditor, SIGNAL(meshRenamed(QString, QString)),
+		propertyBox, SLOT(renameMesh(QString, QString)));
+	connect(meshEditor, SIGNAL(meshRemoved(QString)), propertyBox,
+		SLOT(removeMesh(QString)));
 }
 
 void Window::keyPressEvent(QKeyEvent *event)
@@ -106,6 +120,8 @@ void Window::newFile()
 	editor->load(nullptr);
 	materialEditor->clear();
 	materialEditor->addMaterial();
+	meshEditor->clear();
+	meshEditor->addMesh();
 	this->setWindowTitle("Plant Generator");
 }
 
@@ -115,11 +131,15 @@ void Window::openDialogBox()
 	filename = QFileDialog::getOpenFileName(this, tr("Open File"), "",
 		tr("Plant (*.plant)"));
 	if (!filename.isNull()) {
+		meshEditor->clear();
 		materialEditor->clear();
 		editor->load(filename.toLatin1());
 		auto materials = editor->getPlant()->getMaterials();
 		for (auto &material : materials)
 			materialEditor->addMaterial(material.second);
+		auto meshes = editor->getPlant()->getLeafMeshes();
+		for (auto &mesh : meshes)
+			meshEditor->addMesh(mesh.second);
 		this->filename = filename;
 		this->setWindowTitle(filename.prepend("Plant Generator — "));
 	}
@@ -156,7 +176,7 @@ void Window::saveDialogBox()
 
 void Window::exportDialogBox()
 {
-	FileExporter f;
+	File f;
 	const pg::Mesh *mesh = editor->getMesh();
 
 	QString filename;

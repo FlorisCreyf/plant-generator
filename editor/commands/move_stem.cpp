@@ -32,12 +32,36 @@ MoveStem::MoveStem(Selection *selection, Camera &camera, int x, int y)
 	point.x = x;
 	point.y = y;
 	point.z = 0.0f;
-	auto instances = selection->getStemInstances();
-	for (auto instance : instances) {
+
+	auto stemInstances = selection->getStemInstances();
+	for (auto instance : stemInstances) {
 		pg::Stem *stem = instance.first;
 		pg::Vec3 offset = camera.toScreenSpace(stem->getLocation());
 		offset.z = 0.0f;
-		offsets.emplace(stem, point - offset);
+		stemOffsets.emplace(stem, point - offset);
+	}
+
+	auto leafInstances = selection->getLeafInstances();
+	for (auto instance : leafInstances) {
+		std::vector<pg::Vec3> offsets;
+		pg::Stem *stem = instance.first;
+		pg::Path path = stem->getPath();
+
+		for (unsigned id : instance.second) {
+			Vec3 location = stem->getLocation();
+			pg::Leaf *leaf = stem->getLeaf(id);
+			float position = leaf->getPosition();
+			if (position >= 0.0f && position < path.getLength())
+				location += path.getIntermediate(position);
+			else
+				location += path.get().back();
+
+			pg::Vec3 offset = camera.toScreenSpace(location);
+			offset.z = 0.0f;
+			offsets.push_back(point - offset);
+		}
+
+		leafOffsets.emplace(stem, offsets);
 	}
 }
 
@@ -52,11 +76,61 @@ void MoveStem::set(int x, int y)
 	this->cursor.y = y;
 }
 
+void MoveStem::getPosition(pg::Stem *parent, size_t &line, float &t, Vec3 point)
+{
+	pg::VolumetricPath path = parent->getPath();
+
+	/* Convert the parent path to the screen space. */
+	auto points = path.get();
+	{
+		pg::Vec3 location = parent->getLocation();
+		for (pg::Vec3 &point : points) {
+			point += location;
+			point = camera.toScreenSpace(point);
+			point.z = 0.0f;
+		}
+	}
+
+	/* Find a distance along a path segment. */
+	float min = std::numeric_limits<float>::max();
+	for (size_t i = 0; i < points.size() - 1; i++) {
+		Vec3 a = point - points[i];
+		Vec3 b = points[i+1] - points[i];
+		float dist = pg::project(a, b);
+
+		if (dist < 0.0f)
+			dist = 0.0f;
+		if (dist > 1.0f)
+			dist = 1.0f;
+
+		float mag = pg::magnitude(points[i] + dist * b - point);
+
+		if (min > mag) {
+			t = dist;
+			min = mag;
+			line = i;
+		}
+	}
+}
+
+float MoveStem::getLength(pg::VolumetricPath path, size_t line, float t)
+{
+	/* Add the distances along each segment until the distance where the
+	 * intersection occurred. */
+	auto points = path.get();;
+	t *= pg::magnitude(points[line] - points[line+1]);
+
+	float len = 0.0f;
+	for (size_t i = 0; i < line; i++)
+		len += pg::magnitude(points[i + 1] - points[i]);
+	len += t; /* Order of floating point additions matters here. */
+
+	return len;
+}
+
 /** Moves a stem along the path of the parent stem. */
 void MoveStem::moveAlongPath(pg::Stem *stem)
 {
- 	float t = 0.0f;
- 	size_t line = 0;
 	pg::VolumetricPath path = stem->getParent()->getPath();
 	Vec3 point;
 	point.x = cursor.x;
@@ -64,53 +138,39 @@ void MoveStem::moveAlongPath(pg::Stem *stem)
 	point.z = 0.0f;
 
 	if (!snap)
-		point -= offsets.at(stem);
+		point -= stemOffsets.at(stem);
 
-	{
-		/* Convert the parent path to the screen space. */
-		auto points = path.get();
-		{
-			pg::Vec3 location = stem->getParent()->getLocation();
-			for (pg::Vec3 &point : points) {
-				point += location;
-				point = camera.toScreenSpace(point);
-				point.z = 0.0f;
-			}
-		}
+	float t = 0.0f;
+ 	size_t line = 0;
+	getPosition(stem->getParent(), line, t, point);
+	stem->setPosition(getLength(path, line, t));
+}
 
-		/* Find a distance along a path segment. */
-		float min = std::numeric_limits<float>::max();
-		for (size_t i = 0; i < points.size() - 1; i++) {
-			Vec3 a = point - points[i];
-			Vec3 b = points[i+1] - points[i];
-			float dist = pg::project(a, b);
+void MoveStem::moveLeavesAlongPath()
+{
+	auto instances = selection->getLeafInstances();
+	for (auto &instance : instances) {
+		pg::Stem *stem = instance.first;
+		pg::VolumetricPath path = stem->getPath();
+		std::vector<pg::Vec3> offsets = leafOffsets.at(stem);
 
-			if (dist < 0.0f)
-				dist = 0.0f;
-			if (dist > 1.0f)
-				dist = 1.0f;
+		int l = 0;
+		for (unsigned id : instance.second) {
+			pg::Leaf *leaf = stem->getLeaf(id);
+			Vec3 point;
+			point.x = cursor.x;
+			point.y = cursor.y;
+			point.z = 0.0f;
 
-			float mag = pg::magnitude(points[i] + dist * b - point);
+			if (!snap)
+				point -= offsets.at(l++);
 
-			if (min > mag) {
-				t = dist;
-				min = mag;
-				line = i;
-			}
+			float t = 0.0f;
+			size_t line = 0;
+			getPosition(stem, line, t, point);
+			leaf->setPosition(getLength(path, line, t));
 		}
 	}
-
-	/* Add the distances along each segment until the distance where the
-	 * intersection occurred. */
-	auto points = path.get();;
- 	t *= pg::magnitude(points[line] - points[line+1]);
-
-	float len = 0.0f;
-	for (size_t i = 0; i < line; i++)
- 		len += pg::magnitude(points[i + 1] - points[i]);
-	len += t; /* Order of floating point additions matters here. */
-
-	stem->setPosition(len);
 }
 
 void MoveStem::execute()
@@ -122,6 +182,7 @@ void MoveStem::execute()
 			moveAlongPath(stem);
 		}
 	}
+	moveLeavesAlongPath();
 }
 
 void MoveStem::undo()

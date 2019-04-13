@@ -18,6 +18,7 @@
 
 #include "stem.h"
 #include "material.h"
+#include "geometry.h"
 #include <boost/serialization/map.hpp>
 #include <boost/archive/text_oarchive.hpp>
 
@@ -27,6 +28,7 @@ namespace pg {
 
 		Stem *root;
 		std::map<unsigned, Material> materials;
+		std::map<unsigned, Geometry> leafMeshes;
 
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned int version)
@@ -34,6 +36,7 @@ namespace pg {
 			(void)version;
 			ar & root;
 			ar & materials;
+			ar & leafMeshes;
 		}
 
 		bool contains(Stem *a, Stem *b);
@@ -65,6 +68,11 @@ namespace pg {
 		void removeMaterial(unsigned id);
 		Material getMaterial(unsigned id);
 		std::map<unsigned, Material> getMaterials();
+		void addLeafMesh(Geometry mesh);
+		Geometry getLeafMesh(unsigned id);
+		void removeLeafMesh(unsigned id);
+		void removeLeafMeshes();
+		std::map<unsigned, Geometry> getLeafMeshes();
 	};
 }
 

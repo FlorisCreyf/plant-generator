@@ -17,6 +17,7 @@
 
 #include "material_editor.h"
 #include "plant_generator/math/math.h"
+#include "item_delegate.h"
 
 using pg::Vec3;
 using pg::Mat4;
@@ -66,11 +67,18 @@ void MaterialEditor::initFields(QFormLayout *form)
 	removeDiffuseButton->setFixedWidth(22);
 	removeDiffuseButton->setFixedHeight(22);
 
+	QWidget *sizeWidget = new QWidget();
+	sizeWidget->setLayout(diffuseLayout);
 	diffuseLayout->setSpacing(0);
+	diffuseLayout->setMargin(0);
 	diffuseLayout->addWidget(diffuseBox);
 	diffuseLayout->addWidget(removeDiffuseButton);
 	diffuseLayout->addWidget(addDiffuseButton);
-	form->addRow(tr("Diffuse Map"), diffuseLayout);
+	form->addRow(tr("Diffuse"), sizeWidget);
+
+	form->setFormAlignment(Qt::AlignRight | Qt::AlignTop);
+	form->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
+	form->setLabelAlignment(Qt::AlignRight | Qt::AlignCenter);
 
 	connect(addDiffuseButton, SIGNAL(clicked()), this,
 		SLOT(openDiffuseFile()));

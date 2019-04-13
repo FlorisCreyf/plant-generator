@@ -105,9 +105,9 @@ bool pg::Plant::contains(Stem *a, Stem *b)
 		Stem *child = b->child;
 		while (child) {
 			Stem *next = child->nextSibling;
-			child = next;
 			if (contains(a, child))
 				return true;
+			child = next;
 		}
 		return false;
 	}
@@ -168,4 +168,29 @@ pg::Material pg::Plant::getMaterial(unsigned id)
 std::map<unsigned, pg::Material> pg::Plant::getMaterials()
 {
 	return materials;
+}
+
+void pg::Plant::addLeafMesh(pg::Geometry mesh)
+{
+	leafMeshes[mesh.getId()] = mesh;
+}
+
+pg::Geometry pg::Plant::getLeafMesh(unsigned id)
+{
+	return leafMeshes[id];
+}
+
+void pg::Plant::removeLeafMesh(unsigned id)
+{
+	leafMeshes.erase(id);
+}
+
+void pg::Plant::removeLeafMeshes()
+{
+	leafMeshes.clear();
+}
+
+std::map<unsigned, pg::Geometry> pg::Plant::getLeafMeshes()
+{
+	return leafMeshes;
 }

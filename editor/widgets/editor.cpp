@@ -43,7 +43,8 @@ Editor::Editor(SharedResources *shared, QWidget *parent) :
 	rotateStem(&selection, &rotationAxes),
 	moveStem(&selection, camera, 0, 0),
 	movePath(&selection, &translationAxes),
-	addStem(&selection)
+	addStem(&selection),
+	addLeaf(&selection)
 {
 	this->shared = shared;
 	Vec3 color1 = {0.102f, 0.212f, 0.6f};
@@ -54,7 +55,8 @@ Editor::Editor(SharedResources *shared, QWidget *parent) :
 	setFocus();
 
 	extrudeCommand = false;
-	addCommand = false;
+	addStemCommand = false;
+	addLeafCommand = false;
 
 	QHBoxLayout *layout = new QHBoxLayout(this);
 	layout->setMargin(0);
@@ -210,7 +212,7 @@ void Editor::keyPressEvent(QKeyEvent *event)
 			clickOffset[0] = clickOffset[1] = 0;
 			translationAxes.selectCenter();
 			mode = PositionStem;
-			addCommand = true;
+			addStemCommand = true;
 			moveStem = MoveStem(&selection, camera, p.x(), p.y());
 			moveStem.snapToCursor(true);
 			moveStem.set(p.x(), p.y());
@@ -238,15 +240,33 @@ void Editor::keyPressEvent(QKeyEvent *event)
 			emit selectionChanged();
 		}
 		break;
+	case Qt::Key_L:
+		if (mode == None && selection.getStemInstances().size() == 1) {
+			QPoint p = mapFromGlobal(QCursor::pos());
+			addLeaf.execute();
+			clickOffset[0] = clickOffset[1] = 0;
+			translationAxes.selectCenter();
+			mode = PositionStem;
+			addLeafCommand = true;
+			moveStem = MoveStem(&selection, camera, p.x(), p.y());
+			moveStem.snapToCursor(true);
+			moveStem.set(p.x(), p.y());
+			moveStem.execute();
+			change();
+			update();
+			emit selectionChanged();
+		}
+		break;
 	case Qt::Key_M:
-		if (mode == None && selection.hasStems()) {
+		if (mode == None &&
+			(selection.hasStems() || selection.hasLeaves())) {
 			QPoint p = mapFromGlobal(QCursor::pos());
 			moveStem = MoveStem(&selection, camera, p.x(), p.y());
 			mode = PositionStem;
 		}
 		break;
 	case Qt::Key_R:
-		if (selection.hasStems()) {
+		if (selection.hasStems() || selection.hasLeaves()) {
 			QPoint p = mapFromGlobal(QCursor::pos());
 			float x = p.x();
 			float y = p.y();
@@ -271,7 +291,7 @@ void Editor::keyPressEvent(QKeyEvent *event)
 			rotationAxes.selectAxis(Axes::ZAxis);
 		break;
 	case Qt::Key_Delete:
-		if (selection.hasStems()) {
+		if (selection.hasStems() || selection.hasLeaves()) {
 			mode = None;
 			RemoveStem removeStem(&selection);
 			removeStem.execute();
@@ -331,7 +351,7 @@ void Editor::mousePressEvent(QMouseEvent *event)
 			movePath = MovePath(&selection, &translationAxes);
 			selectAxis(p.x(), p.y());
 		} else if (mode == PositionStem) {
-			if (addCommand) {
+			if (addStemCommand || addLeafCommand) {
 				mode = MovePoint;
 				movePath.set(camera, p.x(), p.y());
 				movePath.execute();
@@ -352,9 +372,12 @@ void Editor::mouseReleaseEvent(QMouseEvent *event)
 		camera.setAction(Camera::None);
 	if (mode == MovePoint && event->button() == Qt::LeftButton) {
 		translationAxes.clearSelection();
-		if (addCommand) {
+		if (addStemCommand) {
 			history.add(addStem);
-			addCommand = false;
+			addStemCommand = false;
+		} else if (addLeafCommand) {
+			history.add(addLeaf);
+			addLeafCommand = false;
 		} else if (!extrudeCommand) {
 			history.add(movePath);
 		}
@@ -525,7 +548,7 @@ void Editor::paintGL()
 	/* Draw objects to screen with outline */
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glBindTexture(GL_TEXTURE_2D, outlineColorMap);
-	glUniform1i(2, 2);
+	glUniform1i(2, 1);
 	for (unsigned i = 0; i < meshes.size(); i++) {
 		s = (GLvoid *)(meshes[i].indexStart * sizeof(unsigned));
 		c = meshes[i].indexCount;
@@ -535,7 +558,7 @@ void Editor::paintGL()
 	/* Paint path lines */
 	if (selection.hasStems()) {
 		glDepthFunc(GL_ALWAYS);
-		glPointSize(8);
+		glPointSize(6);
 
 		pathBuffer.use();
 		glUseProgram(shared->getShader(Shader::Line));
@@ -561,7 +584,8 @@ void Editor::paintGL()
 
 		if (selection.hasPoints() || mode == Rotate)
 			paintAxes();
-	}
+	} else if (selection.hasLeaves() && mode == Rotate)
+		paintAxes();
 
 	glFlush();
 }
@@ -689,6 +713,7 @@ void Editor::change()
 void Editor::load(const char *filename)
 {
 	plant.removeRoot();
+	plant.removeLeafMeshes();
 	if (filename == nullptr)
 		generator.grow();
 	else {

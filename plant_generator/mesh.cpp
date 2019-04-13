@@ -23,6 +23,7 @@ using pg::Mat4;
 pg::Mesh::Mesh(pg::Plant *plant)
 {
 	this->plant = plant;
+	defaultLeaf.setPerpendicularPlanes();
 }
 
 void pg::Mesh::generate()
@@ -338,105 +339,48 @@ void pg::Mesh::addStem(Stem *stem, int mesh, float pathOffset)
 void pg::Mesh::addLeaves(Stem *stem)
 {
 	int initMesh = this->mesh;
-	for (int i = 0; i < stem->getLeafCount(); i++) {
-		Leaf *leaf = stem->getLeaf(i);
+	auto leaves = stem->getLeaves();
+	for (auto it = leaves.begin(); it != leaves.end(); it++) {
+		Leaf *leaf = stem->getLeaf(it->first);
 		this->mesh = selectBuffer(leaf->getMaterial(), initMesh);
-		
+
 		Segment leafSegment;
-		leafSegment.leaf = i;
+		leafSegment.leaf = leaf->getId();
 		leafSegment.stem = stem;
 		leafSegment.vertexStart = vertices[mesh].size();
 		leafSegment.indexStart = indices[mesh].size();
 
-		
 		VolumetricPath path = stem->getPath();
-		Vec3 normal = {0.0f, 1.0f, 0.0f};
-		Vec3 p[4];
-
-		{
-			pg::Vec2 s = leaf->getScale();
-			p[0] = {0.5f * s.x, 0.0f, 0.0f};
-			p[1] = {0.5f * s.x, 0.0f, 1.0f * s.y};
-			p[2] = {-0.5f * s.x, 0.0f, 1.0f * s.y};
-			p[3] = {-0.5f * s.x, 0.0f, 0.0f};
-		}
-
-		{
-			Mat4 m = rotateXY(leaf->getTilt(), 0.0f);
-			p[1] = pg::toVec3(m * pg::toVec4(p[1], 1.0f));
-			p[2] = pg::toVec3(m * pg::toVec4(p[2], 1.0f));
-		}
-
 		Vec3 location = stem->getLocation();
 		float position = leaf->getPosition();
+		Vec3 dir;
+		Quat rot;
+
 		if (position >= 0.0f && position < path.getLength()) {
-			Vec3 dir = path.getIntermediateDirection(position);
-			rotateSideLeaf(p, normal, dir);
+			dir = path.getIntermediateDirection(position);
 			location += path.getIntermediate(position);
 		} else {
-			Vec3 dir = path.getDirection(path.getSize() - 1);
-			rotateEndLeaf(p, normal, dir);
+			dir = path.getDirection(path.getSize() - 1);
 			location += path.get().back();
 		}
 
-		for (int i = 0; i < 4; i++)
-			p[i] += location;
+		Geometry geom = defaultLeaf;
+		if (leaf->getMesh() != 0)
+			geom = plant->getLeafMesh(leaf->getMesh());
+		rot = leaf->getDefaultOrientation(dir) * leaf->getRotation();
+		geom.transform(rot, leaf->getScale(), location);
 
 		size_t index = vertices[mesh].size() / vertexSize;
-		addPoint(p[0], normal, {0.0f, 1.0f});
-		addPoint(p[1], normal, {0.0f, 0.0f});
-		addPoint(p[2], normal, {1.0f, 0.0f});
-		addPoint(p[3], normal, {1.0f, 1.0f});
-		addTriangle(index, index + 1, index + 3);
-		addTriangle(index + 1, index + 2, index + 3);
+		for (Geometry::Point p : geom.getPoints())
+			addPoint(p.position, p.normal, p.uv);
+		for (unsigned i : geom.getIndices())
+			indices[mesh].push_back(i + index);
 
 		leafSegment.vertexCount = vertices[mesh].size();
 		leafSegment.vertexCount -= leafSegment.vertexStart;
 		leafSegment.indexCount = indices[mesh].size();
 		leafSegment.indexCount -= leafSegment.indexStart;
 		leafSegments[mesh].push_back(leafSegment);
-	}
-}
-
-void pg::Mesh::rotateSideLeaf(Vec3 (&p)[4], Vec3 &normal, Vec3 direction)
-{
-	Vec3 leafDirection = pg::normalize(pg::cross(direction, normal));
-	Vec3 d = {0.0f, 0.0f, 1.0f};
-	Mat4 m = pg::rotateIntoVec(d, leafDirection);
-
-	for (int i = 0; i < 4; i++)
-		p[i] = pg::toVec3(m * pg::toVec4(p[i], 1.0f));
-
-	{
-		Vec3 up = {0.0f, -1.0f, 0.0f};
-		Vec3 d = pg::cross(up, direction);
-		d = pg::cross(d, direction);
-		d = pg::normalize(d);
-		Mat4 m = pg::rotateIntoVec(normal, d);
-		for (int i = 0; i < 4; i++)
-			p[i] = pg::toVec3(m * pg::toVec4(p[i], 1.0f));
-		normal = d;
-	}
-}
-
-void pg::Mesh::rotateEndLeaf(Vec3 (&p)[4], Vec3 &normal, Vec3 direction)
-{
-	Vec3 d = {0.0f, 0.0f, 1.0f};
-	Mat4 m = pg::rotateIntoVec(d, direction);
-
-	normal = pg::toVec3(m * pg::toVec4(normal, 1.0f));
-	for (int i = 0; i < 4; i++)
-		p[i] = pg::toVec3(m * pg::toVec4(p[i], 1.0f));
-
-	{
-		Vec3 up = {0.0f, 1.0f, 0.0f};
-		Vec3 leafDirection = pg::cross(direction, up);
-		leafDirection = pg::cross(leafDirection, direction);
-		leafDirection = pg::normalize(leafDirection);
-		Mat4 m = pg::rotateIntoVec(normal, leafDirection);
-		for (int i = 0; i < 4; i++)
-			p[i] = pg::toVec3(m * pg::toVec4(p[i], 1.0f));
-		normal = leafDirection;
 	}
 }
 

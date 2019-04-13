@@ -23,6 +23,7 @@
 #include "editor.h"
 #include "curve_editor.h"
 #include "material_editor.h"
+#include "mesh_editor.h"
 #include "property_box.h"
 
 class Window : public QMainWindow {
@@ -46,6 +47,7 @@ private:
 	PropertyBox *propertyBox;
 	CurveEditor *curveEditor;
 	MaterialEditor *materialEditor;
+	MeshEditor *meshEditor;
 	QString filename;
 
 	void keyPressEvent(QKeyEvent *event);

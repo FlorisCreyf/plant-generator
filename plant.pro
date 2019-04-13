@@ -3,13 +3,15 @@ CONFIG += qt debug object_parallel_to_source c++11 -g
 QMAKE_LFLAGS += -no-pie
 TARGET = plant
 QT = core gui opengl
-LIBS += -L/usr/lib/x86_64-linux-gnu -lboost_serialization
+#INCLUDEPATH += /usr/include/boost
+LIBS += /usr/lib/x86_64-linux-gnu/libboost_serialization.a
 
 SOURCES += \
 plant_generator/math/curve.cpp \
 plant_generator/math/intersection.cpp \
 plant_generator/math/math.cpp \
 plant_generator/generator.cpp \
+plant_generator/geometry.cpp \
 plant_generator/leaf.cpp \
 plant_generator/material.cpp \
 plant_generator/mesh.cpp \
@@ -24,7 +26,6 @@ editor/commands/extrude_spline.cpp \
 editor/commands/extrude_stem.cpp \
 editor/commands/move_spline.cpp \
 editor/commands/move_stem.cpp \
-editor/commands/move_leaf.cpp \
 editor/commands/move_path.cpp \
 editor/commands/remove_spline.cpp \
 editor/commands/remove_stem.cpp \
@@ -45,10 +46,12 @@ editor/widgets/curve_editor.cpp \
 editor/widgets/editor.cpp \
 editor/widgets/material_editor.cpp \
 editor/widgets/material_viewer.cpp \
+editor/widgets/mesh_editor.cpp \
+editor/widgets/mesh_viewer.cpp \
 editor/widgets/property_box.cpp \
 editor/widgets/window.cpp \
 editor/camera.cpp \
-editor/file_exporter.cpp \
+editor/file.cpp \
 editor/history.cpp \
 editor/main.cpp \
 editor/point_selection.cpp \
@@ -59,6 +62,7 @@ plant_generator/math/curve.h \
 plant_generator/math/intersection.h \
 plant_generator/math/math.h \
 plant_generator/generator.h \
+plant_generator/geometry.h \
 plant_generator/leaf.h \
 plant_generator/material.h \
 plant_generator/mesh.h \
@@ -75,7 +79,6 @@ editor/commands/extrude_spline.h \
 editor/commands/extrude_stem.h \
 editor/commands/move_spline.h \
 editor/commands/move_stem.h \
-editor/commands/move_leaf.h \
 editor/commands/move_path.h \
 editor/commands/remove_spline.h \
 editor/commands/remove_stem.h \
@@ -94,12 +97,15 @@ editor/graphics/shared_resources.h \
 editor/widgets/curve_button.h \
 editor/widgets/curve_editor.h \
 editor/widgets/editor.h \
+editor/widgets/item_delegate.h \
 editor/widgets/material_editor.h \
+editor/widgets/mesh_editor.h \
+editor/widgets/mesh_viewer.h \
 editor/widgets/material_viewer.h \
 editor/widgets/property_box.h \
 editor/widgets/window.h \
 editor/camera.h \
-editor/file_exporter.h \
+editor/file.h \
 editor/history.h \
 editor/point_selection.h \
 editor/selection.h
