@@ -306,6 +306,19 @@ void Editor::keyPressEvent(QKeyEvent *event)
 	QWidget::keyPressEvent(event);
 }
 
+void Editor::wheelEvent(QWheelEvent *event)
+{
+	QPoint a = event->angleDelta();
+	if (!a.isNull()) {
+		float y = a.y() / 8.0f;
+		if (y != 0.0f) {
+			camera.zoom(y);
+			update();
+		}
+	}
+	event->accept();
+}
+
 bool Editor::event(QEvent *e)
 {
 	if (e->type() == QEvent::KeyPress) {

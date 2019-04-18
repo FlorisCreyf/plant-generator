@@ -29,11 +29,13 @@ Camera::Camera()
 	posDiff = {0.0f, 0.0f};
 	pos = {0.0f, 30.0f};
 	ftarget = target = {0.0f, 4.0f, 0.0f};
-	fdistance = distance = 15.0f;
+	distance = 15.0f;
 	panSpeed = 0.002f;
-	zoomSpeed = 0.1f;
+	zoomSpeed = 0.01f;
 	zoomMin = 0.1f;
 	zoomMax = 100.0f;
+	scroll = 0.0f;
+	prevY = 0.0f;
 }
 
 void Camera::setPanSpeed(float speed)
@@ -73,7 +75,8 @@ void Camera::executeAction(float x, float y)
 {
 	switch (action) {
 	case Zoom:
-		zoom(y);
+		zoom(prevY - y);
+		prevY = y;
 		break;
 	case Rotate:
 		setCoordinates(x, y);
@@ -95,8 +98,8 @@ void Camera::setStartCoordinates(float x, float y)
 	start.y = y;
 	start.x = x;
 	pos = {x, y};
-	fdistance = distance;
 	ftarget = target;
+	prevY = pos.y;
 }
 
 void Camera::setCoordinates(float x, float y)
@@ -129,10 +132,10 @@ void Camera::setWindowSize(int width, int height)
 
 void Camera::zoom(float y)
 {
-	float b = (y - start.y) * zoomSpeed;
-	if (fdistance + b > zoomMin && fdistance + b < zoomMax)
-		distance = fdistance + b;
-	else if (fdistance + b <= zoomMin)
+	float b = -y * 0.01f * sqrt(distance);
+	if (distance + b > zoomMin && distance + b < zoomMax)
+		distance += b;
+	else if (distance + b <= zoomMin)
 		distance = zoomMin;
 	else
 		distance = zoomMax;

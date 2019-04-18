@@ -73,13 +73,14 @@ private:
 	int winWidth;
 	int winHeight;
 	float distance;
-	float fdistance;
 	bool perspective;
 
 	float panSpeed;
 	float zoomSpeed;
 	float zoomMin;
 	float zoomMax;
+	float scroll;
+	float prevY;
 
 	pg::Vec3 getCameraPosition();
 	pg::Mat4 getInverseVP();

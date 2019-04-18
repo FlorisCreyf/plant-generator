@@ -56,6 +56,7 @@ protected:
 	void mouseReleaseEvent(QMouseEvent *);
 	void mouseMoveEvent(QMouseEvent *);
 	void keyPressEvent(QKeyEvent *event);
+	void wheelEvent(QWheelEvent *event);
 
 private:
 	SharedResources *shared;

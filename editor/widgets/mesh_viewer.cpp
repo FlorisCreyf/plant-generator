@@ -29,8 +29,8 @@ MeshViewer::MeshViewer(SharedResources *shared, QWidget *parent) :
 	setMouseTracking(true);
 
 	camera.setTarget({0.0f, 0.0f, 0.0f});
-	camera.setOrientation(0.0f, 180.0f);
-	camera.setDistance(0.8f);
+	camera.setOrientation(0.0f, 90.0f);
+	camera.setDistance(2.0f);
 	camera.setPanSpeed(0.004f);
 	camera.setZoom(0.01f, 0.3f, 10.0f);
 }
@@ -105,6 +105,19 @@ void MeshViewer::mouseMoveEvent(QMouseEvent *event)
 	QPoint p = event->pos();
 	camera.executeAction(p.x(), p.y());
 	update();
+}
+
+void MeshViewer::wheelEvent(QWheelEvent *event)
+{
+	QPoint a = event->angleDelta();
+	if (!a.isNull()) {
+		float y = a.y() / 10.0f;
+		if (y != 0.0f) {
+			camera.zoom(y);
+			update();
+		}
+	}
+	event->accept();
 }
 
 void MeshViewer::updateMesh(pg::Geometry mesh)

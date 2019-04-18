@@ -347,6 +347,19 @@ void CurveEditor::mouseMoveEvent(QMouseEvent *event)
 	update();
 }
 
+void CurveEditor::wheelEvent(QWheelEvent *event)
+{
+	QPoint a = event->angleDelta();
+	if (!a.isNull()) {
+		float y = a.y() / 10.0f;
+		if (y != 0.0f) {
+			camera.zoom(y);
+			update();
+		}
+	}
+	event->accept();
+}
+
 void CurveEditor::initiateMovePoint()
 {
 	move = true;

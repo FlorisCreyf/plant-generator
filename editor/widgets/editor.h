@@ -73,6 +73,7 @@ protected:
 	void mouseReleaseEvent(QMouseEvent *);
 	void keyPressEvent(QKeyEvent *);
 	void mouseMoveEvent(QMouseEvent *);
+	void wheelEvent(QWheelEvent *event);
 	bool event(QEvent *);
 
 private:

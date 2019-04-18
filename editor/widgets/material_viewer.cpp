@@ -140,3 +140,16 @@ void MaterialViewer::mouseMoveEvent(QMouseEvent *event)
 	camera.executeAction(p.x(), p.y());
 	update();
 }
+
+void MaterialViewer::wheelEvent(QWheelEvent *event)
+{
+	QPoint a = event->angleDelta();
+	if (!a.isNull()) {
+		float y = a.y() / 10.0f;
+		if (y != 0.0f) {
+			camera.zoom(y);
+			update();
+		}
+	}
+	event->accept();
+}
