@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
 	QApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
 	QApplication app(argc, argv);
 
-	Window window;
+	Window window(argc, argv);
 	window.show();
 
 	return app.exec();

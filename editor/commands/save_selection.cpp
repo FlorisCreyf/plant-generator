@@ -47,8 +47,3 @@ void SaveSelection::undo()
 {
 	*selection = before;
 }
-
-SaveSelection *SaveSelection::clone()
-{
-	return new SaveSelection(*this);
-}

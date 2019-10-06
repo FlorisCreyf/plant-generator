@@ -98,13 +98,13 @@ int pg::Stem::getResolution() const
 	return resolution;
 }
 
-void pg::Stem::setPath(pg::VolumetricPath &path)
+void pg::Stem::setPath(pg::Path &path)
 {
 	this->path = path;
 	updatePositions(this);
 }
 
-pg::VolumetricPath pg::Stem::getPath()
+pg::Path pg::Stem::getPath()
 {
 	return path;
 }
@@ -122,7 +122,7 @@ void pg::Stem::updatePositions(pg::Stem *stem)
 void pg::Stem::setPosition(float position)
 {
 	if (parent != nullptr) {
-		VolumetricPath parentPath = parent->getPath();
+		Path parentPath = parent->getPath();
 		pg::Vec3 point = parentPath.getIntermediate(position);
 		if (std::isnan(point.x))
 			location = point;

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Path=plant-generator
+Exec=plant-generator/plant %U
+Icon=plant-generator/resources/icon.svg
+Name=Plant
+Comment=Plant Generator
+Terminal=true

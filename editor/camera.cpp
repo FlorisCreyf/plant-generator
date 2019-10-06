@@ -27,9 +27,9 @@ Camera::Camera()
 {
 	action = None;
 	posDiff = {0.0f, 0.0f};
-	pos = {0.0f, 30.0f};
+	pos = {180.0f, 30.0f};
 	ftarget = target = {0.0f, 4.0f, 0.0f};
-	distance = 15.0f;
+	distance = 18.0f;
 	panSpeed = 0.002f;
 	zoomSpeed = 0.01f;
 	zoomMin = 0.1f;
@@ -71,28 +71,24 @@ void Camera::setAction(Action action)
 	this->action = action;
 }
 
-void Camera::executeAction(float x, float y)
+bool Camera::executeAction(float x, float y)
 {
-	switch (action) {
-	case Zoom:
+	if (action == Zoom)  {
 		zoom(prevY - y);
 		prevY = y;
-		break;
-	case Rotate:
+		return true;
+	} else if (action == Rotate) {
 		setCoordinates(x, y);
-		break;
-	case Pan:
+		return true;
+	} else if (action == Pan) {
 		setPan(x, y);
-		break;
-	default:
-		break;
+		return true;
 	}
+	return false;
 }
 
 void Camera::setStartCoordinates(float x, float y)
 {
-	/* posDiff becomes large if the viewport is rotated only in one
-	 * direction. */
 	posDiff.x = x - (pos.x - posDiff.x);
 	posDiff.y = y - (pos.y - posDiff.y);
 	start.y = y;
@@ -141,51 +137,55 @@ void Camera::zoom(float y)
 		distance = zoomMax;
 }
 
-Vec3 Camera::getCameraPosition()
+Vec3 Camera::getCameraPosition() const
 {
 	const float toRadian = M_PI / 180.0f;
 	float x = (pos.x - posDiff.x) * toRadian * 0.5f;
 	float y = (pos.y - posDiff.y) * toRadian * 0.5f;
+	Vec3 eye;
 	eye.x = distance * std::cos(x) * std::cos(y) + target.x;
 	eye.y = distance * std::sin(y) + target.y;
 	eye.z = distance * std::sin(x) * std::cos(y) + target.z;
-
-	if (!perspective)
-		initOrthographic(near, far);
-
 	return eye;
 }
 
-Vec3 Camera::getPosition()
+Vec3 Camera::getPosition() const
 {
 	return eye;
 }
 
-Vec3 Camera::getDirection()
+Vec3 Camera::getDirection() const
 {
 	return pg::normalize(target - eye);
 }
 
-pg::Vec3 Camera::getTarget()
+pg::Vec3 Camera::getTarget() const
 {
 	return target;
 }
 
-Mat4 Camera::getVP()
+Mat4 Camera::getVP() const
 {
 	Vec3 eye = getCameraPosition();
-	Mat4 l = getLookAtMatrix(eye, target);
-	return projection * l;
+	return projection * getLookAtMatrix(eye, target);
 }
 
-Mat4 Camera::getInverseVP()
+Mat4 Camera::updateVP()
+{
+	eye = getCameraPosition();
+	if (!perspective)
+		initOrthographic(near, far);
+	return projection * getLookAtMatrix(eye, target);
+}
+
+Mat4 Camera::getInverseVP() const
 {
 	Mat4 invP = getInversePerspective();
 	Mat4 invL = getInverseLookAt();
 	return invL * invP;
 }
 
-Mat4 Camera::getLookAtMatrix(Vec3 &eye, Vec3 &center)
+Mat4 Camera::getLookAtMatrix(Vec3 eye, Vec3 center) const
 {
 	float x, y, z;
 	float rot = (pos.x - posDiff.x) * M_PI / 360.0f;
@@ -204,7 +204,7 @@ Mat4 Camera::getLookAtMatrix(Vec3 &eye, Vec3 &center)
 	};
 }
 
-Mat4 Camera::getInverseLookAt()
+Mat4 Camera::getInverseLookAt() const
 {
 	Vec3 eye = getCameraPosition();
 	Mat4 a = getLookAtMatrix(eye, target);
@@ -249,7 +249,7 @@ void Camera::setOrthographic(Vec3 near, Vec3 far)
 	initOrthographic(near, far);
 }
 
-Mat4 Camera::getInverseOrthographic()
+Mat4 Camera::getInverseOrthographic() const
 {
 	float a = projection[0][0];
 	float b = projection[1][1];
@@ -284,7 +284,7 @@ void Camera::setPerspective(float fovy, float near, float far, float aspect)
 	};
 }
 
-Mat4 Camera::getInversePerspective()
+Mat4 Camera::getInversePerspective() const
 {
 	float a = projection[0][0];
 	float b = projection[1][1];
@@ -300,7 +300,7 @@ Mat4 Camera::getInversePerspective()
 	};
 }
 
-Vec3 Camera::toScreenSpace(Vec3 point)
+Vec3 Camera::toScreenSpace(Vec3 point) const
 {
 	Mat4 vp = getVP();
 	Vec4 v = vp * pg::toVec4(point, 1.0f);
@@ -312,7 +312,7 @@ Vec3 Camera::toScreenSpace(Vec3 point)
 	return point;
 }
 
-pg::Ray Camera::getRay(int x, int y)
+pg::Ray Camera::getRay(int x, int y) const
 {
 	if (perspective)
 		return getPerspectiveRay(x, y);
@@ -324,13 +324,12 @@ pg::Ray Camera::getRay(int x, int y)
  * The direction of the ray remains constant while the camera remains
  * stationary. The origin of the ray depends on the screen coordinates.
  */
-pg::Ray Camera::getOrthographicRay(int x, int y)
+pg::Ray Camera::getOrthographicRay(int x, int y) const
 {
-	pg::Ray ray;
 	Mat4 invProj = getInverseOrthographic();
 	Mat4 invLook = getInverseLookAt();
-	Vec3 p;
 
+	Vec3 p;
 	p.x = 2.0f*x/(winWidth-1) - 1.0f;
 	p.y = 1.0f - 2.0f*y/(winHeight-1);
 	p.z = 0.0f;
@@ -338,23 +337,22 @@ pg::Ray Camera::getOrthographicRay(int x, int y)
 	p.z = eye.z;
 	p = pg::toVec3(invLook * pg::toVec4(p, 1.0f));
 
+	pg::Ray ray;
 	ray.direction = getDirection();
 	ray.origin = p;
-
 	return ray;
 }
 
 /**
- * The direction of the ray depends on the screen coordinates. The origin of the
- * ray remains stationary at the camera position.
+ * The direction of the ray depends on the screen coordinates. The origin of
+ * the ray remains stationary at the camera position.
  */
-pg::Ray Camera::getPerspectiveRay(int x, int y)
+pg::Ray Camera::getPerspectiveRay(int x, int y) const
 {
-	pg::Ray ray;
 	Mat4 invProj = getInversePerspective();
 	Mat4 invLook = getInverseLookAt();
-	Vec3 p;
 
+	Vec3 p;
 	p.x = 2.0f*x/(winWidth-1) - 1.0f;
 	p.y = 1.0f - 2.0f*y/(winHeight-1);
 	p.z = -1.0f;
@@ -363,22 +361,23 @@ pg::Ray Camera::getPerspectiveRay(int x, int y)
 	p = pg::toVec3(invLook * pg::toVec4(p, 0.0f));
 	p = pg::normalize(p);
 
+	pg::Ray ray;
 	ray.direction = p;
 	ray.origin = eye;
 	return ray;
 }
 
-pg::Vec3 Camera::getFar()
+pg::Vec3 Camera::getFar() const
 {
 	return distance * far;
 }
 
-pg::Vec3 Camera::getNear()
+pg::Vec3 Camera::getNear() const
 {
 	return distance * near;
 }
 
-bool Camera::isPerspective()
+bool Camera::isPerspective() const
 {
 	return perspective;
 }

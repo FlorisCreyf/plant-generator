@@ -19,14 +19,16 @@
 #define ROTATE_STEM_H
 
 #include "command.h"
-#include "../selection.h"
-#include "../geometry/rotation_axes.h"
+#include "editor/selection.h"
+#include "editor/camera.h"
+#include "editor/geometry/rotation_axes.h"
 #include "plant_generator/plant.h"
 #include <vector>
 
 class RotateStem : public Command {
 	Selection *selection;
 	RotationAxes *axes;
+	const Camera *camera;
 	Axes::Axis axis;
 	Axes::Axis updatedAxis;
 	pg::Vec3 firstDirection;
@@ -42,13 +44,17 @@ class RotateStem : public Command {
 	void checkValidity();
 
 public:
-	RotateStem(Selection *selection, RotationAxes *axes);
+	RotateStem(Selection *selection, RotationAxes *axes,
+		const Camera *camera, float x, float y);
 	bool isValid();
 	void set(pg::Ray ray, pg::Vec3 planeNormal);
 	pg::Vec3 getDirection();
+	bool onMouseMove(QMouseEvent *);
+	bool onMousePress(QMouseEvent *);
+	bool onKeyPress(QKeyEvent *);
 	void execute();
 	void undo();
-	RotateStem *clone();
+
 };
 
 #endif /* ROTATE_STEM_H */

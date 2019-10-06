@@ -16,7 +16,7 @@
  */
 
 #include "curve_button.h"
-#include "../geometry/geometry.h"
+#include "editor/geometry/geometry.h"
 
 using pg::Vec3;
 using pg::Mat4;

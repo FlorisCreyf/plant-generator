@@ -19,34 +19,38 @@
 #define MOVE_STEM_H
 
 #include "command.h"
-#include "../camera.h"
-#include "../selection.h"
-#include "../commands/move_spline.h"
+#include "editor/camera.h"
+#include "editor/selection.h"
+#include "editor/commands/move_spline.h"
 #include <map>
 #include <vector>
 #include <memory>
 
 class MoveStem : public Command {
+	const Camera *camera;
 	Selection *selection;
 	std::map<pg::Stem *, pg::Vec3> stemOffsets;
 	std::map<pg::Stem *, std::vector<pg::Vec3>> leafOffsets;
-	Camera camera;
 	pg::Vec2 cursor;
-	pg::Vec2 origCursor;
+	pg::Vec2 originalCursor;
 	bool snap;
 
 	void moveAlongPath(pg::Stem *stem);
 	void moveLeavesAlongPath();
 	void getPosition(pg::Stem *parent, size_t &line, float &t, pg::Vec3 p);
-	float getLength(pg::VolumetricPath path, size_t line, float t);
+	float getLength(pg::Path path, size_t line, float t);
+	void setStemOffsets(pg::Vec3 point);
+	void setLeafOffsets(pg::Vec3 point);
 
 public:
-	MoveStem(Selection *selection, Camera &camera, int x, int y);
+	MoveStem(Selection *selection, const Camera *camera,
+		int x, int y, bool snap = false);
 	void snapToCursor(bool snap);
-	void set(int x, int y);
+	bool onMouseMove(QMouseEvent *event);
+	bool onMousePress(QMouseEvent *event);
 	void execute();
 	void undo();
-	MoveStem *clone();
+	void redo();
 };
 
 #endif /* MOVE_STEM_H */

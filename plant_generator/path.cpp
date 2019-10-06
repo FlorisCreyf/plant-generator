@@ -18,11 +18,14 @@
 
 bool pg::Path::operator==(const Path &path) const
 {
-	return
+	return (
 		this->path == path.path &&
-		spline == path.spline &&
-		resolution == path.resolution &&
-		subdivisions == path.subdivisions;
+		this->spline == path.spline &&
+		this->resolution == path.resolution &&
+		this->subdivisions == path.subdivisions &&
+		this->radius == path.radius &&
+		this->minRadius == path.minRadius &&
+		this->maxRadius == path.maxRadius);
 }
 
 bool pg::Path::operator!=(const Path &path) const
@@ -113,10 +116,15 @@ pg::Vec3 pg::Path::getIntermediate(float distance) const
 		float length = pg::magnitude(path[i + 1] - path[i]);
 		if (total + length >= distance) {
 			point = (distance - total) * getDirection(i) + path[i];
+			total += length;
 			break;
 		}
 		total += length;
 	}
+
+	if (total < distance)
+		point = path.back();
+
 	return point;
 }
 
@@ -159,18 +167,24 @@ pg::Vec3 pg::Path::getIntermediateDirection(float t) const
 			break;
 		}
 	}
+	if (s < t)
+		direction = getDirection(path.size() - 1);
 	return direction;
 }
 
 float pg::Path::getDistance(int index) const
 {
-	float distance = 0.0f;
 	std::vector<Vec3> controls = spline.getControls();
-	size_t j = 0;
+	float distance = 0.0f;
 
-	for (int i = spline.getDegree(); i <= index; i += spline.getDegree())
-		for (; j < path.size() && path[j] != controls[i]; j++)
+	for (int i = spline.getDegree(); i <= index; i += spline.getDegree()) {
+		for (size_t j = 0; j < path.size(); j++) {
+			// TODO probably not correct
+			if (path[j] == controls[i])
+				break;
 			distance += pg::magnitude(path[j + 1] - path[j]);
+		}
+	}
 
 	return distance;
 }
@@ -181,4 +195,44 @@ float pg::Path::getIntermediateDistance(int index) const
 		return 0.0f;
 	else
 		return pg::magnitude(path[index] - path[index-1]);
+}
+
+void pg::Path::setMaxRadius(float radius)
+{
+	maxRadius = radius;
+}
+
+float pg::Path::getMaxRadius()
+{
+	return maxRadius;
+}
+
+void pg::Path::setMinRadius(float radius)
+{
+	minRadius = radius;
+}
+
+float pg::Path::getMinRadius()
+{
+	return minRadius;
+}
+
+void pg::Path::setRadius(pg::Spline spline)
+{
+	radius = spline;
+}
+
+pg::Spline pg::Path::getRadius()
+{
+	return radius;
+}
+
+float pg::Path::getRadius(int index)
+{
+	float length = 0.0f;
+	for (int i = 0; i < index; i++)
+		length += magnitude(path[i+1] - path[i]);
+	float t = length / getLength();
+	float z = radius.getPoint(t).z * maxRadius;
+	return z < minRadius ? minRadius : z;
 }

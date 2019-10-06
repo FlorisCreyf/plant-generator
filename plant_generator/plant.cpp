@@ -19,7 +19,7 @@ using pg::Stem;
 
 pg::Plant::Plant()
 {
-	root = new Stem(nullptr);
+	root = nullptr;
 }
 
 pg::Plant::~Plant()
@@ -139,11 +139,13 @@ void pg::Plant::addMaterial(pg::Material material)
 
 void pg::Plant::removeMaterial(unsigned id)
 {
-	if (root->getMaterial(Stem::Outer) == id)
-		root->setMaterial(Stem::Outer, 0);
-	if (root->getMaterial(Stem::Inner) == id)
-		root->setMaterial(Stem::Inner, 0);
-	removeMaterial(root, id);
+	if (root) {
+		if (root->getMaterial(Stem::Outer) == id)
+			root->setMaterial(Stem::Outer, 0);
+		if (root->getMaterial(Stem::Inner) == id)
+			root->setMaterial(Stem::Inner, 0);
+		removeMaterial(root, id);
+	}
 	materials.erase(id);
 }
 

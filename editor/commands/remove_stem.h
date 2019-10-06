@@ -19,7 +19,7 @@
 #define REMOVE_STEM_H
 
 #include "command.h"
-#include "../selection.h"
+#include "editor/selection.h"
 #include <memory>
 
 class RemoveStem : public Command {
@@ -28,16 +28,13 @@ class RemoveStem : public Command {
 	std::map<pg::Stem *, pg::Leaf> leaves;
 	std::map<pg::Stem *, pg::Spline> splines;
 	std::vector<pg::Stem *> removals;
-	bool cloned;
 
 	void removeLeaves();
 public:
 	RemoveStem(Selection *selection);
 	~RemoveStem();
-	/* Removes selected points, stems, and leaves. */
 	void execute();
 	void undo();
-	RemoveStem *clone();
 };
 
 #endif /* REMOVE_STEM_H */

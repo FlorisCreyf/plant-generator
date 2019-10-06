@@ -20,7 +20,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
-#include <array>
+#include <map>
 
 void File::exportObj(const char *filename,
 	const std::vector<float> &vertices,
@@ -71,7 +71,6 @@ void File::importObj(const char *filename, pg::Geometry *geom)
 	std::vector<pg::Vec3> vs;
 	std::vector<pg::Vec3> vns;
 	std::vector<pg::Vec2> vts;
-	unsigned indexCount = 0;
 
 	while (std::getline(file, line)) {
 		std::istringstream iss(line);
@@ -96,30 +95,28 @@ void File::importObj(const char *filename, pg::Geometry *geom)
 	file.clear();
 	file.seekg(0, std::ios::beg);
 
+	std::map<std::string, unsigned> fields;
+	int index = 0;
+
 	while (std::getline(file, line)) {
 		std::istringstream iss(line);
 		std::string field;
 		iss >> field;
 
 		if (field == "f") {
-			std::array<unsigned, 3> s;
-			std::array<int, 12> t;
-			t.fill(0);
-			s.fill(0);
-			pg::Geometry::Point p;
-			int numPoints = 0;
+			std::vector<unsigned> shape;
 
-			std::sscanf(line.c_str(),
-				"f %d/%d/%d %d/%d/%d %d/%d/%d %d/%d/%d\n",
-				&t[0], &t[1], &t[2], &t[3], &t[4], &t[5],
-				&t[6], &t[7], &t[8], &t[9], &t[10], &t[11]);
+			while (iss >> field) {
+				auto it = fields.find(field);
+				if (it == fields.end()) {
+					pg::Geometry::Point p;
+					shape.push_back(index);
+					fields.emplace(field, index++);
 
-			for (int i = 0; i < 4; i++) {
-				s[0] = t[3*i+0];
-				s[1] = t[3*i+1];
-				s[2] = t[3*i+2];
+					unsigned s[3] = {0};
+					std::sscanf(field.c_str(), "%u/%u/%u",
+						&s[0], &s[1], &s[2]);
 
-				if (s[0] != 0 || s[1] != 0 || s[2] != 0) {
 					if (s[0] <= vs.size())
 						p.position = vs[s[0] - 1];
 					if (s[1] <= vns.size())
@@ -127,21 +124,23 @@ void File::importObj(const char *filename, pg::Geometry *geom)
 					if (s[2] <= vts.size())
 						p.uv = vts[s[2] - 1];
 					points.push_back(p);
-					numPoints++;
+				} else {
+					shape.push_back(it->second);
 				}
 			}
 
-			if (numPoints == 3) {
-				indices.push_back(indexCount++);
-				indices.push_back(indexCount++);
-				indices.push_back(indexCount++);
-			} else if (numPoints == 4) {
-				indices.push_back(indexCount++);
-				indices.push_back(indexCount++);
-				indices.push_back(indexCount++);
-				indices.push_back(indexCount++);
-				indices.push_back(indexCount-2);
-				indices.push_back(indexCount-4);
+			if (shape.size() == 3) {
+				indices.push_back(shape[0]);
+				indices.push_back(shape[1]);
+				indices.push_back(shape[2]);
+			} else if (shape.size() == 4) {
+				indices.push_back(shape[0]);
+				indices.push_back(shape[1]);
+				indices.push_back(shape[2]);
+
+				indices.push_back(shape[0]);
+				indices.push_back(shape[2]);
+				indices.push_back(shape[3]);
 			}
 		}
 	}

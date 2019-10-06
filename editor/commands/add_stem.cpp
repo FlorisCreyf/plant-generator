@@ -18,15 +18,20 @@
 #include "add_stem.h"
 #include "plant_generator/patterns.h"
 
-AddStem::AddStem(Selection *selection) : prevSelection(*selection)
+AddStem::AddStem(
+	Selection *selection, TranslationAxes *axes, const Camera *camera,
+	int x, int y) :
+	prevSelection(*selection),
+	moveStem(selection, camera, x, y, true),
+	movePath(selection, axes, camera)
 {
 	this->selection = selection;
-	undone = false;
+	canDeleteStem = false;
 }
 
 AddStem::~AddStem()
 {
-	if (undone)
+	if (canDeleteStem)
 		pg::Plant::deleteStem(stem);
 }
 
@@ -38,7 +43,8 @@ void AddStem::create()
 		pg::Plant *plant = selection->getPlant();
 		stem = plant->addStem(parent);
 
-		pg::VolumetricPath path = stem->getPath();
+		pg::Path parentPath = parent->getPath();
+		pg::Path path = stem->getPath();
 		pg::Spline spline = path.getSpline();
 		std::vector<pg::Vec3> controls;
 		controls.push_back(pg::getZeroVec3());
@@ -47,7 +53,8 @@ void AddStem::create()
 		spline.setControls(controls);
 		spline.setDegree(1);
 		path.setSpline(spline);
-		path.setMaxRadius(parent->getPath().getMaxRadius() / 4.0f);
+		path.setMaxRadius(parentPath.getMaxRadius() / 4.0f);
+		path.setMinRadius(parentPath.getMinRadius());
 		path.setRadius(pg::getDefaultCurve(0));
 		stem->setPath(path);
 		stem->setPosition(0.0f);
@@ -58,18 +65,36 @@ void AddStem::create()
 	}
 }
 
+bool AddStem::onMouseMove(QMouseEvent *event)
+{
+	if (!this->moveStem.isDone())
+		return this->moveStem.onMouseMove(event);
+	else
+		return this->movePath.onMouseMove(event);
+}
+
+bool AddStem::onMousePress(QMouseEvent *event)
+{
+	if (!this->moveStem.isDone())
+		return this->moveStem.onMousePress(event);
+	if (this->moveStem.isDone()) {
+		bool update = this->movePath.onMouseRelease(event);
+		this->done = this->movePath.isDone();
+		return update;
+	}
+	return false;
+}
+
+bool AddStem::onMouseRelease(QMouseEvent *event)
+{
+	return onMousePress(event);
+}
+
 void AddStem::execute()
 {
-	if (undone) {
-		pg::Plant *plant = selection->getPlant();
-		plant->insert(stem->getParent(), stem);
-		selection->clear();
-		selection->addStem(stem);
-		selection->selectLastPoints();
-	} else {
-		prevSelection = *selection;
-		create();
-	}
+	prevSelection = *selection;
+	create();
+	moveStem.execute();
 }
 
 void AddStem::undo()
@@ -77,12 +102,14 @@ void AddStem::undo()
 	pg::Plant *plant = selection->getPlant();
 	plant->release(stem);
 	*selection = prevSelection;
-	// selection->clear();
-	// selection->addStem(stem->getParent());
-	undone = true;
+	canDeleteStem = true;
 }
 
-AddStem *AddStem::clone()
+void AddStem::redo()
 {
-	return new AddStem(*this);
+	pg::Plant *plant = selection->getPlant();
+	plant->insert(stem->getParent(), stem);
+	selection->clear();
+	selection->addStem(stem);
+	selection->selectLastPoints();
 }

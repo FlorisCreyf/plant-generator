@@ -18,9 +18,9 @@
 #ifndef MESH_VIEWER_H
 #define MESH_VIEWER_H
 
-#include "../camera.h"
-#include "../graphics/buffer.h"
-#include "../graphics/shared_resources.h"
+#include "editor/camera.h"
+#include "editor/graphics/buffer.h"
+#include "editor/graphics/shared_resources.h"
 #include "plant_generator/geometry.h"
 #include <vector>
 #include <QOpenGLFunctions>

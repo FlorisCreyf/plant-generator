@@ -19,7 +19,7 @@
 #define SAVE_POINT_SELECTION_H
 
 #include "command.h"
-#include "../point_selection.h"
+#include "editor/point_selection.h"
 
 class SavePointSelection : public Command {
 	PointSelection *selection;
@@ -33,7 +33,6 @@ public:
 	void setAfter();
 	void execute();
 	void undo();
-	SavePointSelection *clone();
 };
 
 #endif /* SAVE_POINT_SELECTION_H */

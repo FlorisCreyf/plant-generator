@@ -20,7 +20,7 @@
 
 #define GL_GLEXT_PROTOTYPES
 
-#include "../geometry/geometry.h"
+#include "editor/geometry/geometry.h"
 #include <QOpenGLFunctions>
 
 class Buffer : protected QOpenGLFunctions {

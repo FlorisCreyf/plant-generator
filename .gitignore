@@ -6,13 +6,12 @@
 *.plant
 *.aux
 *.log
-*.pdf
+*.pdf*
 *.gz
-*.pdf
 *.toc
 *.txt
 *.out
-.desktop
+*.svg
 plant
 resources/
 build/

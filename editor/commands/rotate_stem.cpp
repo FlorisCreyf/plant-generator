@@ -18,12 +18,24 @@
 #include "rotate_stem.h"
 #include <complex>
 
-RotateStem::RotateStem(Selection *selection, RotationAxes *axes)
+using pg::Vec3;
+using pg::Vec4;
+
+RotateStem::RotateStem(
+	Selection *selection, RotationAxes *axes,
+	const Camera *camera, float x, float y)
 {
 	this->selection = selection;
 	this->axes = axes;
-	firstDirection = pg::getZeroVec3();
+	this->camera = camera;
+
 	axes->setPosition(selection->getAveragePositionFP());
+
+	firstDirection = pg::getZeroVec3();
+	pg::Ray ray = camera->getRay(x, y);
+	pg::Vec3 normal = camera->getDirection();
+	set(ray, normal);
+
 	checkValidity();
 }
 
@@ -70,37 +82,34 @@ pg::Vec3 RotateStem::getDirection()
 
 pg::Quat RotateStem::getTransformation(pg::Quat q)
 {
-	pg::Vec3 v;
-	pg::Vec3 normal;
-	switch (axis) {
-	case Axes::XAxis:
+	Vec3 normal;
+
+	if (this->axes->getSelection() == Axes::XAxis) {
 		normal.x = 1.0f;
 		normal.y = 0.0f;
 		normal.z = 0.0f;
-		v = pg::toVec3(q * pg::toVec4(normal, 0.0f) * pg::conjugate(q));
+		Vec4 r = q * pg::toVec4(normal, 0.0f) * pg::conjugate(q);
+		Vec3 v = pg::toVec3(r);
 		if (pg::dot(v, planeNormal) < 0)
 			normal.x *= -1.0f;
-		break;
-	case Axes::YAxis:
+	} else if (this->axes->getSelection() == Axes::YAxis) {
 		normal.x = 0.0f;
 		normal.y = 1.0f;
 		normal.z = 0.0f;
-		v = pg::toVec3(q * pg::toVec4(normal, 0.0f) * pg::conjugate(q));
+		Vec4 r = q * pg::toVec4(normal, 0.0f) * pg::conjugate(q);
+		Vec3 v = pg::toVec3(r);
 		if (pg::dot(v, planeNormal) < 0)
 			normal.y *= -1.0f;
-		break;
-	case Axes::ZAxis:
+	} else if (this->axes->getSelection() == Axes::ZAxis) {
 		normal.x = 0.0f;
 		normal.y = 0.0f;
 		normal.z = 1.0f;
-		v = pg::toVec3(q * pg::toVec4(normal, 0.0f) * pg::conjugate(q));
+		Vec4 r = q * pg::toVec4(normal, 0.0f) * pg::conjugate(q);
+		Vec3 v = pg::toVec3(r);
 		if (pg::dot(v, planeNormal) < 0)
 			normal.z *= -1.0f;
-		break;
-	default:
+	} else
 		normal = planeNormal;
-		break;
-	}
 
 	pg::Quat t = pg::rotateIntoVecQ(planeNormal, normal);
 	pg::Quat a = t * pg::toVec4(direction, 0.0f) * pg::conjugate(t);
@@ -112,7 +121,7 @@ void RotateStem::rotateChild(pg::Stem *stem, pg::Quat t, float distance)
 {
 	while (stem) {
 		if (stem->getPosition() >= distance) {
-			pg::VolumetricPath path = stem->getPath();
+			pg::Path path = stem->getPath();
 			pg::Spline spline = path.getSpline();
 			std::vector<pg::Vec3> controls = spline.getControls();
 			for (size_t i = 0; i < controls.size(); i++) {
@@ -138,20 +147,20 @@ void RotateStem::rotate()
 		pg::Stem *stem = instance.first;
 		PointSelection &ps = instance.second;
 		int point = ps.hasPoints() ? *ps.getPoints().begin() : 0;
-		pg::VolumetricPath path = stem->getPath();
+		pg::Path path = stem->getPath();
 		pg::Spline spline = path.getSpline();
 		auto controls = spline.getControls();
 
 		if (spline.getDegree() == 3 && point % 3 == 0 && point > 0) {
 			size_t i = point - 1;
 			pg::Vec3 p = controls[i] - controls[point];
-			controls[i] = toVec3(t * toVec4(p, 0.0f) * conjugate(t));
+			controls[i] = toVec3(t * toVec4(p, 0.f) * conjugate(t));
 			controls[i] += controls[point];
 		}
 
 		for (size_t i = point + 1; i < controls.size(); i++) {
 			pg::Vec3 p = controls[i] - controls[point];
-			controls[i] = toVec3(t * toVec4(p, 0.0f) * conjugate(t));
+			controls[i] = toVec3(t * toVec4(p, 0.f) * conjugate(t));
 			controls[i] += controls[point];
 		}
 
@@ -165,12 +174,12 @@ void RotateStem::rotate()
 	auto leafInstances = selection->getLeafInstances();
 	for (auto &instance : leafInstances) {
 		pg::Stem *stem = instance.first;
-		pg::VolumetricPath path = stem->getPath();
+		pg::Path path = stem->getPath();
 		for (auto id : instance.second) {
 			pg::Leaf *leaf = stem->getLeaf(id);
 
-			/* Create a rotation 'q' that transforms the global axes
-			 * into the axes of each leaf. This is needed to
+			/* Create a rotation 'q' that transforms the global
+			 * axes into the axes of each leaf. This is needed to
 			 * determine if rotations move in the same direction
 			 * as the cursor. */
 			float position = leaf->getPosition();
@@ -186,9 +195,8 @@ void RotateStem::execute()
 {
 	if (valid) {
 		pg::Vec3 tempDirection = direction;
-		if (updatedAxis != axis) {
+		if (updatedAxis != axis)
 			direction = firstDirection;
-		}
 
 		rotate();
 
@@ -209,14 +217,38 @@ void RotateStem::undo()
 		direction = d;
 		execute();
 
-		/* Set variables for redo. */
 		d = firstDirection;
 		firstDirection = lastDirection = direction;
 		direction = d;
 	}
 }
 
-RotateStem *RotateStem::clone()
+bool RotateStem::onMouseMove(QMouseEvent *event)
 {
-	return new RotateStem(*this);
+	QPoint point = event->pos();
+	float x = point.x();
+	float y = point.y();
+	set(camera->getRay(x, y), camera->getDirection());
+	execute();
+	return true;
+}
+
+bool RotateStem::onMousePress(QMouseEvent *)
+{
+	done = true;
+	return false;
+}
+
+bool RotateStem::onKeyPress(QKeyEvent *event)
+{
+	char key = event->key();
+	if (key == Qt::Key_C)
+		axes->selectAxis(Axes::Center);
+	else if (key == Qt::Key_X)
+		axes->selectAxis(Axes::XAxis);
+	else if (key == Qt::Key_Y)
+		axes->selectAxis(Axes::YAxis);
+	else if (key == Qt::Key_Z)
+		axes->selectAxis(Axes::ZAxis);
+	return false;
 }

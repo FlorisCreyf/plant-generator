@@ -34,6 +34,8 @@ class Selection {
 	std::map<pg::Stem *, PointSelection> stems;
 	std::map<pg::Stem *, std::set<unsigned>> leaves;
 
+	bool selectPoint(QMouseEvent *event);
+	void selectStem(QMouseEvent *event);
 	std::pair<float, pg::Stem *> getStem(pg::Ray &ray, pg::Stem *stem);
 	std::pair<float, pg::Segment> getLeaf(pg::Ray ray);
 	void selectAll(pg::Stem *stem);

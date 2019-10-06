@@ -19,7 +19,7 @@
 #define SAVE_SELECTION_H
 
 #include "command.h"
-#include "../selection.h"
+#include "editor/selection.h"
 
 class SaveSelection : public Command {
 	Selection *selection;
@@ -33,7 +33,6 @@ public:
 	void setAfter();
 	void execute();
 	void undo();
-	SaveSelection *clone();
 };
 
 #endif /* SAVE_SELECTION_H */

@@ -1,5 +1,5 @@
 /* Plant Genererator
- * Copyright (C) 2018  Floris Creyf
+ * Copyright (C) 2019  Floris Creyf
  *
  * Plant Genererator is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,25 +15,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef COMMAND_H
-#define COMMAND_H
+#ifndef KEY_EDITOR_H
+#define KEY_EDITOR_H
 
-#include <QMouseEvent>
-#include <QKeyEvent>
+#include "editor/keymap.h"
+#include <QtWidgets>
 
-class Command {
-protected:
-	bool done = false;
+class KeyEditor : public QWidget {
+	Q_OBJECT
+
+	QFormLayout *form;
+	KeyMap *keymap;
+
+	void initField(QPushButton **widget, QString name);
+	void setValueWidths(QFormLayout *layout);
 
 public:
-	virtual void execute() = 0;
-	virtual void undo() = 0;
-	virtual void redo();
-	virtual bool isDone();
-	virtual bool onMouseMove(QMouseEvent *);
-	virtual bool onMousePress(QMouseEvent *);
-	virtual bool onMouseRelease(QMouseEvent *);
-	virtual bool onKeyPress(QKeyEvent *);
+	KeyEditor(KeyMap *keyMap, QWidget *parent);
+	QSize sizeHint() const;
 };
 
-#endif /* COMMAND_H */
+#endif /* KEY_EDITOR_H */

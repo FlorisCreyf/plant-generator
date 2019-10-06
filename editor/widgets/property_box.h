@@ -21,7 +21,7 @@
 #include "editor.h"
 #include "curve_button.h"
 #include "curve_editor.h"
-#include "../commands/save_stem.h"
+#include "editor/commands/save_stem.h"
 #include <QtWidgets>
 
 class PropertyBox : public QWidget {
@@ -64,7 +64,7 @@ signals:
 private:
 	SharedResources *shared;
 	Editor *editor;
-	SaveStem saveStem;
+	SaveStem *saveStem;
 	CurveEditor *curveEditor;
 	CurveButton *selectedCurve;
 
@@ -101,16 +101,18 @@ private:
 
 	bool changing = false;
 
-	void initProperties();
-	void setValueWidths(QFormLayout *layout);
+	void beginChanging();
 	void createStemBox(QVBoxLayout *layout);
 	void createLeafBox(QVBoxLayout *layout);
 	void createCapBox(QVBoxLayout *layout);
-	void beginChanging();
-	void indicateDifferences(QWidget *widget);
-	void indicateSimilarities(QWidget *widget);
 	void enableStem(bool enable);
 	void enableLeaf(bool enable);
+	void indicateDifferences(QWidget *widget);
+	void indicateSimilarities(QWidget *widget);
+	void initProperties();
+	void setLeafFields(std::map<pg::Stem *, std::set<unsigned>> instances);
+	void setStemFields(std::map<pg::Stem *, PointSelection> instances);
+	void setValueWidths(QFormLayout *layout);
 };
 
 #endif /* PROPERTY_BOX */

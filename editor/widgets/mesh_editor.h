@@ -41,13 +41,16 @@ class MeshEditor : public QWidget {
 	QPushButton *customButton;
 	QPushButton *planeButton;
 	QPushButton *perpPlaneButton;
+	QPushButton *emptyButton;
 
 	void initFields(QVBoxLayout *form);
 	void initTopRow(QHBoxLayout *topRow);
 
 public:
 	MeshEditor(SharedResources *shared, Editor *editor, QWidget *parent);
+	QSize sizeHint() const;
 	void clear();
+	const MeshViewer *getViewer() const;
 
 public slots:
 	void addMesh();
@@ -55,6 +58,7 @@ public slots:
 	void loadCustom();
 	void loadPlane();
 	void loadPerpPlane();
+	void loadEmpty();
 	void selectMesh();
 	void renameMesh(const QString &text);
 	void removeMesh();

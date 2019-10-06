@@ -19,22 +19,31 @@
 #define ADD_STEM_H
 
 #include "command.h"
-#include "../selection.h"
+#include "move_path.h"
+#include "move_stem.h"
+#include "editor/camera.h"
+#include "editor/selection.h"
 
 class AddStem : public Command {
 	Selection *selection;
 	Selection prevSelection;
 	pg::Stem *stem;
-	bool undone;
+	MoveStem moveStem;
+	MovePath movePath;
+	bool canDeleteStem;
 
 	void create();
 
 public:
-	AddStem(Selection *selection);
+	AddStem(Selection *selection, TranslationAxes *axes,
+		const Camera *camera, int x, int y);
 	~AddStem();
+	bool onMouseMove(QMouseEvent *event);
+	bool onMousePress(QMouseEvent *event);
+	bool onMouseRelease(QMouseEvent *event);
 	void execute();
 	void undo();
-	AddStem *clone();
+	void redo();
 };
 
 #endif /* ADD_STEM_H */

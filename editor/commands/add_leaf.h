@@ -19,20 +19,23 @@
 #define ADD_LEAF_H
 
 #include "command.h"
-#include "../selection.h"
+#include "move_stem.h"
+#include "editor/selection.h"
 
 class AddLeaf : public Command {
 	Selection *selection;
 	Selection prevSelection;
 	pg::Leaf leaf;
 	pg::Stem *stem;
-	bool undone;
+	MoveStem moveStem;
 
 public:
-	AddLeaf(Selection *selection);
+	AddLeaf(Selection *selection, const Camera *camera, int x, int y);
+	bool onMouseMove(QMouseEvent *event);
+	bool onMousePress(QMouseEvent *event);
 	void execute();
 	void undo();
-	AddLeaf *clone();
+	void redo();
 };
 
 #endif /* ADD_LEAF_H */

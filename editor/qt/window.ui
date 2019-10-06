@@ -10,17 +10,18 @@
     <height>700</height>
    </rect>
   </property>
-  <property name="windowTitle">
-   <string>Plant Generator</string>
-  </property>
   <property name="windowIcon">
    <iconset>
-    <normaloff>../logo.png</normaloff>../logo.png</iconset>
+    <normaloff>resources/icon.svg</normaloff>
+   </iconset>
   </property>
   <property name="styleSheet">
    <string notr="true">
-QMenu {
-	background-color:#666;
+QWidget {
+	font-size:12px;
+	color:#ddd;
+} QMenu {
+	background-color:#505050;
 	border:0px solid #555;
 	font-size:11px;
 	color:#ddd;
@@ -30,10 +31,11 @@ QMenu {
 	color:#eee;
 	padding:5px 100px 5px 30px;
 	background-color:transparent;
+} QMenu::item:checked {
 } QMenu::item:disabled {
 	color:#aaa;
 } QMenu::item:selected {
-	background:#5a5a5a;
+	background:#666;
 } QMenu::shortcut {
 } QMenu::separator {
 	background-color:#555;
@@ -42,24 +44,39 @@ QMenu {
 	font-size:11px;
 	margin:0;
 	spacing:0;
-	background-color:#666;
+	background-color:#333;
+} QMenu::indicator:non-exclusive:unchecked {
+	image: none;
+	margin-left:10px;
+} QMenu::indicator:non-exclusive:unchecked:selected {
+	image: none;
+	margin-left:10px;
+} QMenu::indicator:non-exclusive:checked {
+	width:8px;
+	height:8px;
+	margin-left:10px;
+	image: url(&quot;resources/check.png&quot;);
+} QMenu::indicator:non-exclusive:checked:selected {
+	width:8px;
+	height:8px;
+	margin-left:10px;
+	image: url(&quot;resources/check.png&quot;);
 } QMenuBar::item {
 	color:#ddd;
 	spacing:0;
 	background-color:transparent;
-	padding:7px 10px 7px 10px;
+	padding:6px 10px 6px 10px;
 } QMenuBar::item:pressed {
 	background-color:#444;
 	border-top:3px solid #444;
 	margin-top:0;
-}
-
-QWidget {
-	font-size:12px;
-	color:#ddd;
-}
-
-QDockWidget QWidget {
+} QStatusBar {
+	background-color:#303030;
+} QStatusBar QLabel {
+	color:#bbb;
+	font-size:11px;
+	margin-left:5px;
+} QDockWidget QWidget {
 	color:#ddd;
 	font-size:11px;
 	border-image:none;
@@ -76,7 +93,7 @@ QDockWidget QWidget {
 } QDockWidget::title {
 	font-size:11px;
 	background:#3d3d3d;
-	padding:9px 5px 0 10px;
+	padding:8px 0px 0 5px;
 } QDockWidget::close-button, QDockWidget::float-button {
 	background:transparent;
 	border:solid 1px transparent;
@@ -93,7 +110,7 @@ QDockWidget QWidget {
 	top:0px;
 	right:4px;
 	bottom:0px;
-	width:15px;
+	width:14px;
 } QDockWidget::float-button {
 	subcontrol-position:top right;
 	subcontrol-origin:margin;
@@ -101,7 +118,7 @@ QDockWidget QWidget {
 	top:0px;
 	right:22px;
 	bottom:0px;
-	width:15px;
+	width:14px;
 } QDockWidget QLabel {
 	height:24px;
 	font-size:11px;
@@ -184,7 +201,7 @@ QDockWidget QWidget {
 } QDockWidget QScrollArea {
 	background:transparent;
 } QDockWidget QScrollBar:vertical {
-	width:18px;
+	width:16px;
 	margin-top:5px;
 	margin-left:5px;
 	background:#666;
@@ -211,9 +228,7 @@ QDockWidget QWidget {
 } QDockWidget QScrollBar::sub-line:horizontal {
 	border:0;
 	background:#666;
-}
-
-QDockWidget QRadioButton {
+} QDockWidget QRadioButton {
 	font-size:11px;
 } QDockWidget QRadioButton::indicator {
 	height:13px;
@@ -236,6 +251,9 @@ QDockWidget QRadioButton {
 	spacing:0;
 	width:0;
 	height:0;
+} KeyEditor QPushButton {
+	text-align:left;
+	padding-left:4px;
 } QDockWidget QLineEdit {
 	background-color:#555;
 	padding-left:4px;
@@ -260,9 +278,7 @@ QDockWidget QRadioButton {
 	border:1px solid #404040;
 	background-color:#444;
 	padding-left:7px;
-}
-
-QToolBar {
+} QToolBar {
 	background-color:#383838;
 	padding:0;
 	margin:0;
@@ -276,9 +292,7 @@ QToolBar {
 	background:#303030;
 } QToolButton:pressed {
 	border:0;
-}
-
-QComboBox {
+} QComboBox {
 	font-size:11px;
 	border:0;
 	padding-left:4px;
@@ -333,9 +347,7 @@ QComboBox {
 	color:#444;
 } QComboBox::down-arrow:disabled {
 	image:none;
-}
-
-QLabel {
+} QLabel {
 	padding-right:4px;
 }
 

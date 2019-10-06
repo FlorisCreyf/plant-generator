@@ -19,9 +19,9 @@
 #define MOVE_SPLINE_H
 
 #include "command.h"
-#include "../camera.h"
-#include "../point_selection.h"
-#include "../geometry/translation_axes.h"
+#include "editor/camera.h"
+#include "editor/geometry/translation_axes.h"
+#include "editor/point_selection.h"
 #include "plant_generator/spline.h"
 
 class MoveSpline : public Command {
@@ -33,10 +33,13 @@ class MoveSpline : public Command {
 	pg::Vec3 planeNormal;
 	pg::Ray ray;
 	bool parallel;
+	const Camera *camera;
+	int clickOffset[2];
 
 public:
 	MoveSpline(PointSelection *selection, pg::Spline *spline,
-		TranslationAxes *axes);
+		TranslationAxes *axes, const Camera *camera);
+	void setClickOffset(int x, int y);
 	void setSelection(PointSelection *selection);
 	void setSpline(pg::Spline *spline);
 	/** The direction that points will move in. */
@@ -44,9 +47,14 @@ public:
 	void setParallelTangents(bool parallel);
 	/** The direction and distance points will be moved in. */
 	pg::Vec3 getDirection();
+
 	void execute();
 	void undo();
-	MoveSpline *clone();
+
+	bool onMouseMove(QMouseEvent *event);
+	bool onMousePress(QMouseEvent *event);
+	bool onMouseRelease(QMouseEvent *event);
+	bool onKeyPress(QKeyEvent *event);
 };
 
 #endif /* MOVE_SPLINE_H */

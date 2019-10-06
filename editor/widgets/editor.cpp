@@ -16,37 +16,41 @@
  */
 
 #include "editor.h"
-#include "../commands/extrude_stem.h"
-#include "../commands/remove_stem.h"
-#include "../geometry/geometry.h"
+#include "editor/commands/extrude_stem.h"
+#include "editor/commands/remove_stem.h"
+#include "editor/geometry/geometry.h"
+
 #include <algorithm>
 #include <cmath>
 #include <fstream>
 #include <iterator>
-#include <QVBoxLayout>
+
 #include <QMenu>
 #include <QScrollArea>
 #include <QtOpenGL/QGLFormat>
 #include <QtGui/QKeyEvent>
 #include <QtGui/QMouseEvent>
+#include <QVBoxLayout>
+
 #include <boost/archive/text_iarchive.hpp>
 
 using pg::Vec3;
 using pg::Mat4;
 using pg::Ray;
 
-Editor::Editor(SharedResources *shared, QWidget *parent) :
+Editor::Editor(SharedResources *shared, KeyMap *keymap, QWidget *parent) :
 	QOpenGLWidget(parent),
-	mesh(&plant),
 	generator(&plant),
-	selection(&camera, &plant, &mesh),
-	rotateStem(&selection, &rotationAxes),
-	moveStem(&selection, camera, 0, 0),
-	movePath(&selection, &translationAxes),
-	addStem(&selection),
-	addLeaf(&selection)
+	mesh(&plant),
+	selection(&camera, &plant, &mesh)
 {
 	this->shared = shared;
+	this->keymap = keymap;
+
+	currentCommand = nullptr;
+	perspective = true;
+	shader = Model;
+
 	Vec3 color1 = {0.102f, 0.212f, 0.6f};
 	Vec3 color2 = {0.102f, 0.212f, 0.6f};
 	Vec3 color3 = {0.1f, 1.0f, 0.4f};
@@ -54,16 +58,15 @@ Editor::Editor(SharedResources *shared, QWidget *parent) :
 	setMouseTracking(true);
 	setFocus();
 
-	extrudeCommand = false;
-	addStemCommand = false;
-	addLeafCommand = false;
+	createToolBar();
+}
 
+void Editor::createToolBar()
+{
 	QHBoxLayout *layout = new QHBoxLayout(this);
 	layout->setMargin(0);
 	layout->setAlignment(Qt::AlignBottom);
 	QToolBar *toolbar = new QToolBar(this);
-	connect(toolbar, SIGNAL(actionTriggered(QAction *)), this,
-		SLOT(change(QAction *)));
 	perspectiveAction = toolbar->addAction(tr("Perspective"));
 	orthographicAction = toolbar->addAction(tr("Orthographic"));
 	wireframeAction = toolbar->addAction(tr("Wireframe"));
@@ -78,14 +81,15 @@ Editor::Editor(SharedResources *shared, QWidget *parent) :
 	solidAction->toggle();
 	layout->addWidget(toolbar);
 
-	perspective = true;
-	shader = Model;
+	connect(toolbar, SIGNAL(actionTriggered(QAction *)), this,
+		SLOT(change(QAction *)));
 }
 
 void Editor::initializeGL()
 {
 	initializeOpenGLFunctions();
 
+	glEnable(GL_MULTISAMPLE);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_STENCIL_TEST);
 	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
@@ -98,12 +102,25 @@ void Editor::initializeGL()
 	glEnable(GL_PRIMITIVE_RESTART);
 	glPrimitiveRestartIndex(Geometry::primitiveReset);
 
-	/* Create a framebuffer for outlining objects */
+	createFrameBuffers();
+
+	shared->initialize();
+	initializeBuffers();
+	if (!plant.getRoot())
+		generator.grow();
+
+	change();
+	emit ready();
+}
+
+void Editor::createFrameBuffers()
+{
 	glGenFramebuffers(1, &outlineFrameBuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, outlineFrameBuffer);
 	glGenTextures(1, &outlineColorMap);
 	glBindTexture(GL_TEXTURE_2D, outlineColorMap);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width(), height(), 0, GL_RGB,
+	glTexImage2D(
+		GL_TEXTURE_2D, 0, GL_RGB, width(), height(), 0, GL_RGB,
 		GL_UNSIGNED_BYTE, NULL);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -111,14 +128,10 @@ void Editor::initializeGL()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COPY);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+	glFramebufferTexture2D(
+		GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
 		GL_TEXTURE_2D, outlineColorMap, 0);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-	shared->initialize();
-	generator.grow();
-	initializeBuffers();
-	change();
 }
 
 void Editor::initializeBuffers()
@@ -128,7 +141,10 @@ void Editor::initializeBuffers()
 	Geometry axesArrows = translationAxes.getArrows();
 	Geometry rotationLines = rotationAxes.getLines();
 
-	geometry.addGrid(5, {0.41, 0.41, 0.41}, {0.3, 0.3, 0.3});
+	pg::Vec3 colors[2];
+	colors[0] = {0.4f, 0.4f, 0.4f};
+	colors[1] = {0.4f, 0.4f, 0.4f};
+	geometry.addGrid(5, colors, {0.3, 0.3, 0.3});
 	scene.grid = geometry.getSegment();
 	scene.axesLines = geometry.append(axesLines);
 	scene.axesArrows = geometry.append(axesArrows);
@@ -148,162 +164,124 @@ void Editor::initializeBuffers()
 
 void Editor::keyPressEvent(QKeyEvent *event)
 {
-	bool ctrl = event->modifiers() & Qt::ControlModifier;
-	switch (event->key()) {
-	case Qt::Key_1: {
-		SaveSelection selectionCopy(&selection);
-		if (ctrl)
-			selection.selectNextPoints();
-		else
-			selection.selectChildren();
-		if (selectionCopy.hasChanged()) {
-			selectionCopy.setAfter();
-			history.add(selectionCopy);
-			updateSelection();
-			update();
-			emit selectionChanged();
-		}
-		break;
-	} case Qt::Key_2: {
-		SaveSelection selectionCopy(&selection);
-		if (ctrl)
-			selection.selectPreviousPoints();
-		else
-			selection.selectSiblings();
-		if (selectionCopy.hasChanged()) {
-			selectionCopy.setAfter();
-			history.add(selectionCopy);
-			updateSelection();
-			update();
-			emit selectionChanged();
-		}
-		break;
-	} case Qt::Key_3: {
-		SaveSelection selectionCopy(&selection);
-		if (ctrl)
-			selection.selectAllPoints();
-		else
-			selection.selectAll();
-		if (selectionCopy.hasChanged()) {
-			selectionCopy.setAfter();
-			history.add(selectionCopy);
-			updateSelection();
-			update();
-			emit selectionChanged();
-		}
-		break;
-	} case Qt::Key_4:
-		if (!ctrl) {
-			SaveSelection selectionCopy(&selection);
-			selection.reduceToAncestors();
-			if (selectionCopy.hasChanged()) {
-				selectionCopy.setAfter();
-				history.add(selectionCopy);
-				emit selectionChanged();
-				updateSelection();
-				update();
-			}
-		}
-		break;
-	case Qt::Key_A:
-		if (mode == None && selection.getStemInstances().size() == 1) {
-			QPoint p = mapFromGlobal(QCursor::pos());
-			addStem.execute();
-			clickOffset[0] = clickOffset[1] = 0;
-			translationAxes.selectCenter();
-			mode = PositionStem;
-			addStemCommand = true;
-			moveStem = MoveStem(&selection, camera, p.x(), p.y());
-			moveStem.snapToCursor(true);
-			moveStem.set(p.x(), p.y());
-			moveStem.execute();
-			change();
-			update();
-			emit selectionChanged();
-		}
-		break;
-	case Qt::Key_C:
-		if (mode == Rotate)
-			rotationAxes.selectAxis(Axes::Center);
-		break;
-	case Qt::Key_E:
-		if (mode == None && selection.hasPoints()) {
-			mode = MovePoint;
-			ExtrudeStem extrude(&selection);
-			extrude.execute();
-			history.add(extrude);
-			extrudeCommand = true;
-			QPoint p = mapFromGlobal(QCursor::pos());
-			pg::Vec3 avg = selection.getAveragePosition();
-			setClickOffset(p.x(), p.y(), avg);
-			translationAxes.selectCenter();
-			emit selectionChanged();
-		}
-		break;
-	case Qt::Key_L:
-		if (mode == None && selection.getStemInstances().size() == 1) {
-			QPoint p = mapFromGlobal(QCursor::pos());
-			addLeaf.execute();
-			clickOffset[0] = clickOffset[1] = 0;
-			translationAxes.selectCenter();
-			mode = PositionStem;
-			addLeafCommand = true;
-			moveStem = MoveStem(&selection, camera, p.x(), p.y());
-			moveStem.snapToCursor(true);
-			moveStem.set(p.x(), p.y());
-			moveStem.execute();
-			change();
-			update();
-			emit selectionChanged();
-		}
-		break;
-	case Qt::Key_M:
-		if (mode == None &&
-			(selection.hasStems() || selection.hasLeaves())) {
-			QPoint p = mapFromGlobal(QCursor::pos());
-			moveStem = MoveStem(&selection, camera, p.x(), p.y());
-			mode = PositionStem;
-		}
-		break;
-	case Qt::Key_R:
-		if (selection.hasStems() || selection.hasLeaves()) {
-			QPoint p = mapFromGlobal(QCursor::pos());
-			float x = p.x();
-			float y = p.y();
-			pg::Ray ray = camera.getRay(x, y);
-			pg::Vec3 normal = camera.getDirection();
-			rotateStem = RotateStem(&selection, &rotationAxes),
-			rotateStem.set(ray, normal);
-			mode = Rotate;
-		}
-		update();
-		break;
-	case Qt::Key_X:
-		if (mode == Rotate)
-			rotationAxes.selectAxis(Axes::XAxis);
-		break;
-	case Qt::Key_Y:
-		if (mode == Rotate)
-			rotationAxes.selectAxis(Axes::YAxis);
-		break;
-	case Qt::Key_Z:
-		if (mode == Rotate)
-			rotationAxes.selectAxis(Axes::ZAxis);
-		break;
-	case Qt::Key_Delete:
-		if (selection.hasStems() || selection.hasLeaves()) {
-			mode = None;
-			RemoveStem removeStem(&selection);
-			removeStem.execute();
-			history.add(removeStem);
-			emit selectionChanged();
-			updateSelection();
-			change();
-		}
-		break;
+	if (currentCommand) {
+		exitCommand(currentCommand->onKeyPress(event));
+		QWidget::keyPressEvent(event);
+		return;
 	}
 
+	QPoint pos = mapFromGlobal(QCursor::pos());
+	float x = pos.x();
+	float y = pos.y();
+
+	unsigned key = event->key();
+	bool ctrl = event->modifiers() & Qt::ControlModifier;
+	bool shift = event->modifiers() & Qt::ShiftModifier;
+	bool alt = event->modifiers() & Qt::AltModifier;
+	QString command = keymap->getBinding(key, ctrl, shift, alt);
+
+	bool hasPoints = selection.hasPoints();
+	bool hasFirstPoint = selection.hasPoint(0);
+	bool hasStems = selection.hasStems();
+	bool hasOneStem = selection.getStemInstances().size() == 1;
+	bool hasLeaves = selection.hasLeaves();
+	bool containsRoot = selection.contains(plant.getRoot());
+
+	if (command == tr("Add Leaf") && hasOneStem) {
+		currentCommand = new AddLeaf(&selection, &camera, x, y);
+		currentCommand->execute();
+		change();
+		emit selectionChanged();
+	} else if (command == tr("Add Stem") && hasOneStem) {
+		currentCommand = new AddStem(
+			&selection, &translationAxes, &camera, x, y);
+		currentCommand->execute();
+		change();
+		emit selectionChanged();
+	} else if (command == tr("Extrude") && hasPoints) {
+		ExtrudeStem *extrude = new ExtrudeStem(
+			&selection, &translationAxes, &camera);
+		extrude->setClickOffset(x, y);
+		extrude->execute();
+		currentCommand = extrude;
+		emit selectionChanged();
+	} else if (command == tr("Move Point") && hasPoints && !hasFirstPoint) {
+		MovePath *movePath = new MovePath(
+			&selection, &translationAxes, &camera);
+		Vec3 axesPosition = translationAxes.getPosition();
+		Vec3 crd = camera.toScreenSpace(axesPosition);
+		movePath->setClickOffset(crd.x - x, crd.y - y);
+		currentCommand = movePath;
+	} else if (command == tr("Move Stem") &&
+			(hasStems || hasLeaves) && !containsRoot) {
+		currentCommand = new MoveStem(&selection, &camera, x, y);
+	} else if (command == tr("Reduce To Ancestors") && hasStems) {
+		SaveSelection *copy = new SaveSelection(&selection);
+		selection.reduceToAncestors();
+		addSelectionToHistory(copy);
+	} else if (command == tr("Remove") && (hasStems || hasLeaves)) {
+		RemoveStem *removeStem = new RemoveStem(&selection);
+		removeStem->execute();
+		history.add(removeStem);
+		emit selectionChanged();
+		updateSelection();
+		change();
+	} else if (command == tr("Rotate") && (hasStems || hasLeaves)) {
+		RotateStem *rotate = new RotateStem(
+			&selection, &rotationAxes, &camera, x, y);
+		currentCommand = rotate;
+		rotating = true;
+	} else if (command == tr("Select All")) {
+		SaveSelection *copy = new SaveSelection(&selection);
+		selection.selectAll();
+		addSelectionToHistory(copy);
+	} else if (command == tr("Select All Points")) {
+		SaveSelection *copy = new SaveSelection(&selection);
+		selection.selectAllPoints();
+		addSelectionToHistory(copy);
+	} else if (command == tr("Select Children")) {
+		SaveSelection *copy = new SaveSelection(&selection);
+		selection.selectChildren();
+		addSelectionToHistory(copy);
+	} else if (command == tr("Select Previous Points")) {
+		SaveSelection *copy = new SaveSelection(&selection);
+		selection.selectPreviousPoints();
+		addSelectionToHistory(copy);
+	} else if (command == tr("Select Next Points")) {
+		SaveSelection *copy = new SaveSelection(&selection);
+		selection.selectNextPoints();
+		addSelectionToHistory(copy);
+	} else if (command == tr("Select Siblings")) {
+		SaveSelection *copy = new SaveSelection(&selection);
+		selection.selectSiblings();
+		addSelectionToHistory(copy);
+	}
+
+	update();
 	QWidget::keyPressEvent(event);
+}
+
+void Editor::exitCommand(bool changed)
+{
+	if (changed)
+		change();
+
+	if (currentCommand->isDone()) {
+		history.add(currentCommand);
+		currentCommand = nullptr;
+		rotating = false;
+	}
+}
+
+void Editor::addSelectionToHistory(SaveSelection *selection)
+{
+	if (selection->hasChanged()) {
+		selection->setAfter();
+		history.add(selection);
+		emit selectionChanged();
+		updateSelection();
+		update();
+	}
 }
 
 void Editor::wheelEvent(QWheelEvent *event)
@@ -331,28 +309,21 @@ bool Editor::event(QEvent *e)
 
 void Editor::mousePressEvent(QMouseEvent *event)
 {
-	QPoint p = event->pos();
-
-	if (mode == Rotate) {
-		mode = None;
-		history.add(rotateStem);
-		rotationAxes.selectCenter();
-		update();
+	QPoint pos = event->pos();
+	if (currentCommand) {
+		exitCommand(currentCommand->onMousePress(event));
 	} else if (event->button() == Qt::RightButton) {
-		if (mode == None || mode == MovePoint) {
-			SaveSelection selectionCopy(&selection);
-			mode = None;
-			selection.select(event);
-			if (selectionCopy.hasChanged()) {
-				selectionCopy.setAfter();
-				history.add(selectionCopy);
-				emit selectionChanged();
-				updateSelection();
-				update();
-			}
+		SaveSelection *selectionCopy = new SaveSelection(&selection);
+		selection.select(event);
+		if (selectionCopy->hasChanged()) {
+			selectionCopy->setAfter();
+			history.add(selectionCopy);
+			emit selectionChanged();
+			updateSelection();
+			update();
 		}
-	} if (event->button() == Qt::MidButton && mode == None) {
-		camera.setStartCoordinates(p.x(), p.y());
+	} else if (event->button() == Qt::MidButton) {
+		camera.setStartCoordinates(pos.x(), pos.y());
 		if (event->modifiers() & Qt::ControlModifier)
 			camera.setAction(Camera::Zoom);
 		else if (event->modifiers() & Qt::ShiftModifier)
@@ -360,19 +331,17 @@ void Editor::mousePressEvent(QMouseEvent *event)
 		else
 			camera.setAction(Camera::Rotate);
 	} else if (event->button() == Qt::LeftButton) {
-		if (selection.hasPoints() && mode == None) {
-			movePath = MovePath(&selection, &translationAxes);
-			selectAxis(p.x(), p.y());
-		} else if (mode == PositionStem) {
-			if (addStemCommand || addLeafCommand) {
-				mode = MovePoint;
-				movePath.set(camera, p.x(), p.y());
-				movePath.execute();
-				change();
-			} else {
-				mode = None;
-				history.add(moveStem);
-			}
+		selectAxis(pos.x(), pos.y());
+		bool axis = translationAxes.getSelection();
+		bool hasPoints = selection.hasPoints();
+		bool hasFirstPoint = selection.hasPoint(0);
+		if (hasPoints && !hasFirstPoint && axis != Axes::None) {
+			MovePath *movePath = new MovePath(
+				&selection, &translationAxes, &camera);
+			pg::Vec3 axesPosition = translationAxes.getPosition();
+			pg::Vec3 s = camera.toScreenSpace(axesPosition);
+			movePath->setClickOffset(s.x - pos.x(), s.y - pos.y());
+			currentCommand = movePath;
 		}
 	}
 
@@ -381,80 +350,39 @@ void Editor::mousePressEvent(QMouseEvent *event)
 
 void Editor::mouseReleaseEvent(QMouseEvent *event)
 {
-	if (event->button() == Qt::MidButton)
+	if (currentCommand)
+		exitCommand(currentCommand->onMouseRelease(event));
+	else if (event->button() == Qt::MidButton)
 		camera.setAction(Camera::None);
-	if (mode == MovePoint && event->button() == Qt::LeftButton) {
-		translationAxes.clearSelection();
-		if (addStemCommand) {
-			history.add(addStem);
-			addStemCommand = false;
-		} else if (addLeafCommand) {
-			history.add(addLeaf);
-			addLeafCommand = false;
-		} else if (!extrudeCommand) {
-			history.add(movePath);
-		}
-		extrudeCommand = false;
-		mode = None;
-	}
 }
 
 void Editor::mouseMoveEvent(QMouseEvent *event)
 {
-	QPoint point = event->pos();
-	bool axisSelected = translationAxes.getSelection() != Axes::None;
-
-	camera.executeAction(point.x(), point.y());
-
-	if (mode == PositionStem) {
-		moveStem.set(point.x(), point.y());
-		moveStem.execute();
-		change();
-	} else if (mode == MovePoint && axisSelected) {
-		bool ctrl = event->modifiers() & Qt::ControlModifier;
-		float x = point.x() + clickOffset[0];
-		float y = point.y() + clickOffset[1];
-		movePath.setParallelTangents(!ctrl);
-		movePath.set(camera, x, y);
-		movePath.execute();
-		change();
-	} else if (mode == Rotate) {
-		float x = point.x();
-		float y = point.y();
-		rotateStem.set(camera.getRay(x, y), camera.getDirection());
-		rotateStem.execute();
-		change();
+	if (currentCommand)
+		exitCommand(currentCommand->onMouseMove(event));
+	else {
+		QPoint point = event->pos();
+		camera.executeAction(point.x(), point.y());
+		update();
 	}
-
-	update();
 }
 
 void Editor::selectAxis(int x, int y)
 {
-	if (!selection.hasPoint(0)) {
-		pg::Ray ray = camera.getRay(x, y);
-		float d;
-		if (camera.isPerspective())
-			d = pg::magnitude(camera.getPosition() -
-				translationAxes.getPosition());
-		else {
-			d = pg::magnitude(camera.getFar() - camera.getNear());
-			d /= 80.0f;
-		}
-		setClickOffset(x, y, translationAxes.getPosition());
-		translationAxes.selectAxis(ray, d);
-		if (translationAxes.getSelection() == Axes::Axis::None)
-			mode = None;
-		else
-			mode = MovePoint;
-	}
-}
+	if (selection.hasPoint(0))
+		return;
 
-void Editor::setClickOffset(int x, int y, Vec3 point)
-{
-	Vec3 s = camera.toScreenSpace(point);
-	clickOffset[0] = s.x - x;
-	clickOffset[1] = s.y - y;
+	pg::Ray ray = camera.getRay(x, y);
+	float distance;
+	if (camera.isPerspective()) {
+		Vec3 cameraPosition = camera.getPosition();
+		Vec3 axesPosition = translationAxes.getPosition();
+		distance = pg::magnitude(cameraPosition - axesPosition);
+	} else {
+		distance = pg::magnitude(camera.getFar() - camera.getNear());
+		distance /= 80.0f;
+	}
+	translationAxes.selectAxis(ray, distance);
 }
 
 void Editor::resizeGL(int width, int height)
@@ -471,7 +399,7 @@ void Editor::updateCamera(int width, int height)
 	float ratio = static_cast<float>(width) / static_cast<float>(height);
 	camera.setWindowSize(width, height);
 	if (perspective)
-		camera.setPerspective(45.0f, 0.1f, 200.0f, ratio);
+		camera.setPerspective(45.0f, 0.001f, 200.0f, ratio);
 	else {
 		ratio /= 2.0f;
 		Vec3 a = {-ratio, -0.5f, 0.0f};
@@ -482,122 +410,124 @@ void Editor::updateCamera(int width, int height)
 
 void Editor::paintGL()
 {
-	Mat4 vp = camera.getVP();
-	Vec3 cp = camera.getPosition();
-	GLsizei c = 0;
-	GLvoid *s = 0;
+	Mat4 projection = camera.updateVP();
+	Vec3 position = camera.getPosition();
 
-	/* Render the scene normally */
+	/* Render the scene normally. */
 	glClearDepth(1.0f);
-	glClearColor(0.22f, 0.22f, 0.22f, 1.0);
+	glClearColor(0.22f, 0.23f, 0.24f, 1.0);
 	glDepthFunc(GL_LEQUAL);
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
 
-	/* paint grid */
+	/* Paint the grid. */
 	staticBuffer.use();
 	glUseProgram(shared->getShader(Shader::Flat));
-	glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
+	glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
 	glDrawArrays(GL_LINES, scene.grid.pstart, scene.grid.pcount);
 
-	/* paint plant */
+	/* Paint the plant. */
 	plantBuffer.use();
 	if (shader == Shader::Model) {
 		size_t start = 0;
 		glUseProgram(shared->getShader(Shader::Model));
-		glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
-		glUniform4f(1, cp.x, cp.y, cp.z, 0.0f);
+		glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
+		glUniform4f(1, position.x, position.y, position.z, 0.0f);
 		for (int i = 0; i < mesh.getMeshCount(); i++) {
-			c = mesh.getIndices(i)->size();
-			s = (GLvoid *)start;
+			GLsizei size = mesh.getIndices(i)->size();
+			glDrawElements(
+				GL_TRIANGLES, size,
+				GL_UNSIGNED_INT, (GLvoid *)start);
 			start += mesh.getIndices(i)->size() * sizeof(unsigned);
-			glDrawElements(GL_TRIANGLES, c, GL_UNSIGNED_INT, s);
 		}
 	} else if (shader == Shader::Wire) {
 		size_t start = 0;
 		glUseProgram(shared->getShader(Shader::Wire));
-		glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
+		glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
 		glUniform4f(1, 0.13f, 0.13f, 0.13f, 1.0f);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		for (int i = 0; i < mesh.getMeshCount(); i++) {
-			c = mesh.getIndices(i)->size();
-			s = (GLvoid *)start;
+			GLsizei size = mesh.getIndices(i)->size();
+			glDrawElements(
+				GL_TRIANGLES, size,
+				GL_UNSIGNED_INT, (GLvoid *)start);
 			start += mesh.getIndices(i)->size() * sizeof(unsigned);
-			glDrawElements(GL_TRIANGLES, c, GL_UNSIGNED_INT, s);
 		}
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	} else if (shader == Shader::Material) {
 		size_t start = 0;
 		glUseProgram(shared->getShader(Shader::Material));
-		glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
+		glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
 		for (int i = 0; i < mesh.getMeshCount(); i++) {
-			int materialId = mesh.getMaterialId(i);
-			ShaderParams params = shared->getMaterial(materialId);
+			int materialID = mesh.getMaterialId(i);
+			ShaderParams params = shared->getMaterial(materialID);
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, params.getTexture(0));
-			c = mesh.getIndices(i)->size();
-			s = (GLvoid *)start;
+			GLsizei size = mesh.getIndices(i)->size();
+			glDrawElements(
+				GL_TRIANGLES, size,
+				GL_UNSIGNED_INT, (GLvoid *)start);
 			start += mesh.getIndices(i)->size() * sizeof(unsigned);
-			glDrawElements(GL_TRIANGLES, c, GL_UNSIGNED_INT, s);
 		}
 	}
 
-	/* Create texture for selection objects */
+	/* Create a texture for selection objects. */
 	glBindFramebuffer(GL_FRAMEBUFFER, outlineFrameBuffer);
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 	glViewport(0, 0, width(), height());
 
 	glUseProgram(shared->getShader(Shader::Outline));
-	glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
-	glUniform4f(1, cp.x, cp.y, cp.z, 0.0f);
+	glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
+	glUniform4f(1, position.x, position.y, position.z, 0.0f);
 	glUniform1i(2, 0);
 	glUniform2f(3, (GLfloat)width(), (GLfloat)height());
 	for (unsigned i = 0; i < meshes.size(); i++) {
-		s = (GLvoid *)(meshes[i].indexStart * sizeof(unsigned));
-		c = meshes[i].indexCount;
-		glDrawElements(GL_TRIANGLES, c, GL_UNSIGNED_INT, s);
+		unsigned index = meshes[i].indexStart;
+		GLvoid *offset = (GLvoid *)(index * sizeof(unsigned));
+		GLsizei size = meshes[i].indexCount;
+		glDrawElements(GL_TRIANGLES, size, GL_UNSIGNED_INT, offset);
 	}
 
-	/* Draw objects to screen with outline */
+	/* Draw objects to screen with outline. */
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glBindTexture(GL_TEXTURE_2D, outlineColorMap);
 	glUniform1i(2, 1);
 	for (unsigned i = 0; i < meshes.size(); i++) {
-		s = (GLvoid *)(meshes[i].indexStart * sizeof(unsigned));
-		c = meshes[i].indexCount;
-		glDrawElements(GL_TRIANGLES, c, GL_UNSIGNED_INT, s);
+		unsigned index = meshes[i].indexStart;
+		GLvoid *offset = (GLvoid *)(index * sizeof(unsigned));
+		GLsizei size = meshes[i].indexCount;
+		glDrawElements(GL_TRIANGLES, size, GL_UNSIGNED_INT, offset);
 	}
 
-	/* Paint path lines */
+	/* Paint path lines. */
 	if (selection.hasStems()) {
+		Geometry::Segment segment;
+
 		glDepthFunc(GL_ALWAYS);
 		glPointSize(6);
 
 		pathBuffer.use();
 		glUseProgram(shared->getShader(Shader::Line));
-		glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
+		glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
 		glUniform2f(1, QWidget::width(), QWidget::height());
 
-		{
-			Geometry::Segment segment = path.getLineSegment();
-			s = (GLvoid *)(segment.istart * sizeof(unsigned));
-			glDrawElements(GL_LINE_STRIP, segment.icount,
-				GL_UNSIGNED_INT, s);
-		}
+		segment = path.getLineSegment();
+		GLvoid *offset = (GLvoid *)(segment.istart * sizeof(unsigned));
+		glDrawElements(
+			GL_LINE_STRIP, segment.icount,
+			GL_UNSIGNED_INT, offset);
 
 		auto texture = shared->getTexture(shared->DotTexture);
 		glBindTexture(GL_TEXTURE_2D, texture);
 		glUseProgram(shared->getShader(Shader::Point));
-		glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
+		glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
 
-		{
-			Geometry::Segment s = path.getPointSegment();
-			glDrawArrays(GL_POINTS, s.pstart, s.pcount);
-		}
+		segment = path.getPointSegment();
+		glDrawArrays(GL_POINTS, segment.pstart, segment.pcount);
 
-		if (selection.hasPoints() || mode == Rotate)
+		if (selection.hasPoints())
 			paintAxes();
-	} else if (selection.hasLeaves() && mode == Rotate)
+	} else if (selection.hasLeaves())
 		paintAxes();
 
 	glFlush();
@@ -605,10 +535,8 @@ void Editor::paintGL()
 
 void Editor::paintAxes()
 {
-	Mat4 vp = camera.getVP();
-	Vec3 cp = camera.getPosition();
-	GLvoid *s;
-	GLsizei c;
+	Mat4 projection = camera.getVP();
+	Vec3 position = camera.getPosition();
 
 	glClear(GL_DEPTH_BUFFER_BIT);
 	glDepthFunc(GL_LEQUAL);
@@ -618,37 +546,39 @@ void Editor::paintAxes()
 
 	translationAxes.setPosition(selection.getAveragePosition());
 
-	float dist;
-	if (camera.isPerspective())
-		/* Both axes have the same position. */
-		dist = pg::magnitude(cp - translationAxes.getPosition());
-	else {
-		dist = pg::magnitude(camera.getFar() - camera.getNear());
-		dist /= 80.0f;
+	float distance;
+	if (camera.isPerspective()) {
+		Vec3 diff = position - translationAxes.getPosition();
+		distance = pg::magnitude(diff);
+	} else {
+		distance = pg::magnitude(camera.getFar() - camera.getNear());
+		distance /= 80.0f;
 	}
 
-	if (mode == Rotate) {
-		pg::Vec3 dir = selection.getAverageDirectionFP();
-		pg::Mat4 m = vp * rotationAxes.getTransformation(dist, dir);
-		glUniformMatrix4fv(0, 1, GL_FALSE, &m[0][0]);
-		s = (GLvoid *)((scene.rotation.istart) * sizeof(unsigned));
-		c = scene.rotation.icount;
-		glDrawElements(GL_LINE_STRIP, c, GL_UNSIGNED_INT, s);
+	if (rotating) {
+		Vec3 direction = selection.getAverageDirectionFP();
+		Mat4 transformation =
+			projection *
+			rotationAxes.getTransformation(distance, direction);
+		glUniformMatrix4fv(0, 1, GL_FALSE, &transformation[0][0]);
+		unsigned index = scene.rotation.istart;
+		GLvoid *offset = (GLvoid *)(index * sizeof(unsigned));
+		GLsizei size = scene.rotation.icount;
+		glDrawElements(GL_LINE_STRIP, size, GL_UNSIGNED_INT, offset);
 	} else {
-		pg::Mat4 m = vp * translationAxes.getTransformation(dist);
-		glUniformMatrix4fv(0, 1, GL_FALSE, &m[0][0]);
-		glDrawArrays(GL_LINES, scene.axesLines.pstart,
+		Mat4 transformation = projection;
+		transformation *= translationAxes.getTransformation(distance);
+		glUniformMatrix4fv(0, 1, GL_FALSE, &transformation[0][0]);
+		glDrawArrays(
+			GL_LINES, scene.axesLines.pstart,
 			scene.axesLines.pcount);
-		s = (GLvoid *)((scene.axesArrows.istart) * sizeof(unsigned));
-		c = scene.axesArrows.icount;
-		glDrawElements(GL_TRIANGLES, c, GL_UNSIGNED_INT, s);
+		unsigned index = scene.axesArrows.istart;
+		GLvoid *offset = (GLvoid *)(index * sizeof(unsigned));
+		GLsizei size = scene.axesArrows.icount;
+		glDrawElements(GL_TRIANGLES, size, GL_UNSIGNED_INT, offset);
 	}
 }
 
-/**
- * The path buffer, geometry segments, etc. are updated whenever the selection
- * changes.
- */
 void Editor::updateSelection()
 {
 	meshes.clear();
@@ -678,12 +608,10 @@ void Editor::updateSelection()
 		}
 		path.set(segments);
 
-		{
-			int i = 0;
-			auto instances = selection.getStemInstances();
-			for (auto &instance : instances)
-				path.setSelectedPoints(instance.second, i++);
-		}
+		int i = 0;
+		auto instances = selection.getStemInstances();
+		for (auto &instance : instances)
+			path.setSelectedPoints(instance.second, i++);
 
 		const Geometry *geometry = path.getGeometry();
 		pathBuffer.update(*geometry);
@@ -708,17 +636,18 @@ void Editor::change()
 		const std::vector<float> *v = mesh.getVertices(m);
 		const std::vector<unsigned> *i = mesh.getIndices(m);
 		if (!plantBuffer.update(v->data(), pointOffset, v->size())) {
-			assert("Failed to update vertices");
-			exit(0);
+			printf("Failed to update vertices\n");
+			exit(1);
 		}
 		if (!plantBuffer.update(i->data(), indexOffset, i->size())) {
-			assert("Failed to update indices");
-			exit(0);
+			printf("Failed to update indices\n");
+			exit(1);
 		}
 		pointOffset += v->size();
 		indexOffset += i->size();
 	}
 
+	emit changed();
 	updateSelection();
 	update();
 }
@@ -727,6 +656,7 @@ void Editor::load(const char *filename)
 {
 	plant.removeRoot();
 	plant.removeLeafMeshes();
+
 	if (filename == nullptr)
 		generator.grow();
 	else {
@@ -735,10 +665,13 @@ void Editor::load(const char *filename)
 		ia >> plant;
 		stream.close();
 	}
-	selection.clear();
-	history.clear();
-	emit selectionChanged();
-	change();
+
+	if (isValid()) {
+		selection.clear();
+		history.clear();
+		emit selectionChanged();
+		change();
+	}
 }
 
 void Editor::change(QAction *action)
@@ -760,7 +693,7 @@ void Editor::change(QAction *action)
 		solidAction->setChecked(false);
 		materialAction->setChecked(false);
 	} else if (text == "Solid") {
-		shader= Model;
+		shader = Model;
 		wireframeAction->setChecked(false);
 		solidAction->setChecked(true);
 		materialAction->setChecked(false);
@@ -795,12 +728,12 @@ const pg::Mesh *Editor::getMesh()
 
 void Editor::add(Command &cmd)
 {
-	history.add(cmd);
+	history.add(&cmd);
 }
 
 void Editor::undo()
 {
-	if (mode == None) {
+	if (!currentCommand) {
 		history.undo();
 		change();
 		emit selectionChanged();
@@ -809,7 +742,7 @@ void Editor::undo()
 
 void Editor::redo()
 {
-	if (mode == None) {
+	if (!currentCommand) {
 		history.redo();
 		change();
 		emit selectionChanged();

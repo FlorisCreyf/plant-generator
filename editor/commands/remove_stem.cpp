@@ -21,13 +21,12 @@
 RemoveStem::RemoveStem(Selection *selection) : prevSelection(*selection)
 {
 	this->selection = selection;
-	cloned = false;
 
 	/* Remember the original splines before removal. */
 	auto instances = selection->getStemInstances();
 	for (auto &instance : instances) {
 		pg::Stem *stem = instance.first;
-		pg::VolumetricPath path = stem->getPath();
+		pg::Path path = stem->getPath();
 		pg::Spline spline = path.getSpline();
 		splines.emplace(stem, spline);
 	}
@@ -35,7 +34,7 @@ RemoveStem::RemoveStem(Selection *selection) : prevSelection(*selection)
 
 RemoveStem::~RemoveStem()
 {
-	if (!cloned && !removals.empty()) {
+	if (!removals.empty()) {
 		/* Adjust the selection so that descendants are not deleted
 		 * after ancestors have been deleted. */
 		prevSelection.reduceToAncestors();
@@ -71,7 +70,7 @@ void RemoveStem::execute()
 	auto instances = selection->getStemInstances();
 	for (auto &instance : instances) {
 		pg::Stem *stem = instance.first;
-		pg::VolumetricPath path = stem->getPath();
+		pg::Path path = stem->getPath();
 		pg::Spline spline = path.getSpline();
 		PointSelection &pointSelection = instance.second;
 		auto points = pointSelection.getPoints();
@@ -84,9 +83,9 @@ void RemoveStem::execute()
 				removals.push_back(stem);
 			}
 		} else {
-			RemoveSpline rp(&pointSelection, &spline);
-			rp.setClearable(false);
-			rp.execute();
+			RemoveSpline removeSpline(&pointSelection, &spline);
+			removeSpline.setClearable(false);
+			removeSpline.execute();
 			path.setSpline(spline);
 			stem->setPath(path);
 
@@ -125,10 +124,4 @@ void RemoveStem::undo()
 	}
 
 	*selection = prevSelection;
-}
-
-RemoveStem *RemoveStem::clone()
-{
-	cloned = true;
-	return new RemoveStem(*this);
 }

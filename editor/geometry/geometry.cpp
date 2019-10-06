@@ -110,17 +110,17 @@ void Geometry::addCone(float radius, float height, int points, Vec3 color)
 	addPoint({0.0f, 0.0f, 0.0f}, color);
 }
 
-void Geometry::addGrid(int size, pg::Vec3 pcolor, pg::Vec3 scolor)
+void Geometry::addGrid(int size, pg::Vec3 pcolor[2], pg::Vec3 scolor)
 {
 	Vec3 line[2];
 	float bound = static_cast<float>(size);
 
 	line[0] = {0.0f, 0.0f, bound};
 	line[1] = {0.0f, 0.0f, -bound};
-	addLine(line, pcolor);
+	addLine(line, pcolor[1]);
 	line[0] = {bound, 0.0f, 0.0f};
 	line[1] = {-bound, 0.0f, 0.0f};
-	addLine(line, pcolor);
+	addLine(line, pcolor[0]);
 
 	for (int i = 1; i <= size; i++) {
 		float j = static_cast<float>(i);

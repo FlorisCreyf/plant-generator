@@ -39,18 +39,23 @@ MeshEditor::MeshEditor(SharedResources *shared, Editor *editor,
 	columns->addLayout(topRow);
 
 	meshViewer = new MeshViewer(shared, this);
+	meshViewer->setMinimumHeight(200);
 	columns->addWidget(meshViewer);
 
 	QVBoxLayout *layout = new QVBoxLayout();
 	layout->setMargin(10);
-	layout->setSpacing(3);
+	layout->setSpacing(2);
 	initFields(layout);
 	columns->addLayout(layout);
 	columns->addStretch(1);
 
 	connect(this, SIGNAL(meshChanged(pg::Geometry)), meshViewer,
 		SLOT(updateMesh(pg::Geometry)));
-	connect(meshViewer, SIGNAL(ready()), this, SLOT(addMesh()));
+}
+
+QSize MeshEditor::sizeHint() const
+{
+	return QSize(350, 200);
 }
 
 void MeshEditor::initFields(QVBoxLayout *layout)
@@ -61,15 +66,26 @@ void MeshEditor::initFields(QVBoxLayout *layout)
 	planeButton->setFixedHeight(22);
 	perpPlaneButton = new QPushButton("Perpendicular Planes", this);
 	perpPlaneButton->setFixedHeight(22);
+	emptyButton = new QPushButton("Empty", this);
+	emptyButton->setFixedHeight(22);
+
+
+	QString style = tr("text-align:left;padding:0 5px;");
+	customButton->setStyleSheet(style);
+	planeButton->setStyleSheet(style);
+	perpPlaneButton->setStyleSheet(style);
+	emptyButton->setStyleSheet(style);
 
 	layout->addWidget(customButton);
 	layout->addWidget(planeButton);
 	layout->addWidget(perpPlaneButton);
+	layout->addWidget(emptyButton);
 
 	connect(customButton, SIGNAL(clicked()), this, SLOT(loadCustom()));
 	connect(planeButton, SIGNAL(clicked()), this, SLOT(loadPlane()));
 	connect(perpPlaneButton, SIGNAL(clicked()), this,
 		SLOT(loadPerpPlane()));
+	connect(emptyButton, SIGNAL(clicked()), this, SLOT(loadEmpty()));
 }
 
 void MeshEditor::initTopRow(QHBoxLayout *topRow)
@@ -87,7 +103,7 @@ void MeshEditor::initTopRow(QHBoxLayout *topRow)
 	meshBox->setInsertPolicy(QComboBox::NoInsert);
 	meshBox->setItemDelegate(new ItemDelegate());
 
-	topRow->addWidget(meshBox);;
+	topRow->addWidget(meshBox);
 	topRow->addWidget(removeButton);
 	topRow->addWidget(addButton);
 	topRow->setAlignment(Qt::AlignTop);
@@ -105,6 +121,11 @@ void MeshEditor::clear()
 	for (int i = 0; i < meshBox->count(); i++)
 		emit meshRemoved(meshBox->itemText(i));
 	meshBox->clear();
+}
+
+const MeshViewer *MeshEditor::getViewer() const
+{
+	return meshViewer;
 }
 
 void MeshEditor::addMesh()
@@ -139,10 +160,9 @@ void MeshEditor::addMesh(pg::Geometry geom)
 void MeshEditor::loadCustom()
 {
 	if (meshBox->count() > 0) {
-		QFileDialog dialog(this, tr("Open File"));
-		dialog.exec();
+		QString filename = QFileDialog::getOpenFileName(this,
+			tr("Open File"), "", tr("Wavefront OBJ (*.obj)"));
 
-		QString filename = dialog.selectedFiles().first();
 		if (!filename.isNull()) {
 			pg::Plant *plant = editor->getPlant();
 			int id = meshBox->currentData().toInt();
@@ -150,6 +170,7 @@ void MeshEditor::loadCustom()
 			File file;
 			std::string s = filename.toStdString();
 			file.importObj(s.c_str(), &geom);
+			printf("file = \"%s\"\n", s.c_str());
 			plant->addLeafMesh(geom);
 			emit meshChanged(geom);
 			editor->change();
@@ -177,6 +198,19 @@ void MeshEditor::loadPerpPlane()
 		int id = meshBox->currentData().toInt();
 		pg::Geometry geom = plant->getLeafMesh(id);
 		geom.setPerpendicularPlanes();
+		plant->addLeafMesh(geom);
+		emit meshChanged(geom);
+		editor->change();
+	}
+}
+
+void MeshEditor::loadEmpty()
+{
+	if (meshBox->count() > 0) {
+		pg::Plant *plant = editor->getPlant();
+		int id = meshBox->currentData().toInt();
+		pg::Geometry geom = plant->getLeafMesh(id);
+		geom.clear();
 		plant->addLeafMesh(geom);
 		emit meshChanged(geom);
 		editor->change();

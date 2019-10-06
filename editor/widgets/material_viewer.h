@@ -18,10 +18,10 @@
 #ifndef MATERIAL_VIEWER_H
 #define MATERIAL_VIEWER_H
 
-#include "../camera.h"
-#include "../geometry/geometry.h"
-#include "../graphics/buffer.h"
-#include "../graphics/shared_resources.h"
+#include "editor/camera.h"
+#include "editor/geometry/geometry.h"
+#include "editor/graphics/buffer.h"
+#include "editor/graphics/shared_resources.h"
 #include "plant_generator/material.h"
 #include <QOpenGLFunctions>
 #include <QOpenGLWidget>

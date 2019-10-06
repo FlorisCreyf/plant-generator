@@ -18,19 +18,21 @@
 #ifndef WINDOW_H
 #define WINDOW_H
 
-#include "../qt/ui_window.h"
-#include "../graphics/shared_resources.h"
+#include "editor/keymap.h"
+#include "editor/qt/ui_window.h"
+#include "editor/graphics/shared_resources.h"
 #include "editor.h"
 #include "curve_editor.h"
 #include "material_editor.h"
 #include "mesh_editor.h"
+#include "key_editor.h"
 #include "property_box.h"
 
 class Window : public QMainWindow {
 	Q_OBJECT
 
 public:
-	Window();
+	Window(int argc, char **argv);
 
 public Q_SLOTS:
 	void newFile();
@@ -39,20 +41,32 @@ public Q_SLOTS:
 	void saveAsDialogBox();
 	void saveDialogBox();
 	void reportIssue();
+	void initEditor();
+	void initMeshEditor();
+	void initMaterialEditor();
+	void updateStatus();
 
 private:
 	Ui::Window widget;
 	SharedResources shared;
+	KeyMap keymap;
+
 	Editor *editor;
 	PropertyBox *propertyBox;
 	CurveEditor *curveEditor;
 	MaterialEditor *materialEditor;
 	MeshEditor *meshEditor;
+	KeyEditor *keyEditor;
+
 	QString filename;
+	QLabel *objectLabel;
+	QLabel *fileLabel;
+	QLabel *commandLabel;
 
 	void keyPressEvent(QKeyEvent *event);
 	void createPropertyBox();
 	void createEditors();
+	void setFilename(QString filename);
 };
 
 #endif /* WINDOW_H */

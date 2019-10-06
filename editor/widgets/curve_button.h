@@ -18,9 +18,9 @@
 #ifndef CURVE_BUTTON_H
 #define CURVE_BUTTON_H
 
-#include "../geometry/geometry.h"
-#include "../graphics/buffer.h"
-#include "../graphics/shared_resources.h"
+#include "editor/geometry/geometry.h"
+#include "editor/graphics/buffer.h"
+#include "editor/graphics/shared_resources.h"
 #include "plant_generator/math/math.h"
 #include "plant_generator/spline.h"
 #include <QtGui/QOpenGLFunctions>

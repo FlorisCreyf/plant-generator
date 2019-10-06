@@ -47,22 +47,20 @@ namespace pg {
 		Plant();
 		~Plant();
 
-		/**
-		 * This method needs to be called some time after calling
-		 * release() to free up memory.
-		 */
+		/* This method needs to be called some time after calling
+		 * release() to free up memory. */
 		static void deleteStem(Stem *stem);
 
 		Stem *getRoot();
 		Stem *addStem(Stem *stem);
 		void removeStem(Stem *stem);
 		void insert(Stem *parent, Stem *child);
-		/** Remove without deletion.*/
+		/* Remove without deletion.*/
 		void release(Stem *stem);
 		bool contains(Stem *stem);
-		/** Removes the root and sets root to nullptr. */
+		/* Removes the root and sets root to nullptr. */
 		void removeRoot();
-		/** This does not delete the previous root. */
+		/* This does not delete the previous root. */
 		void setRoot(Stem *stem);
 		void addMaterial(Material material);
 		void removeMaterial(unsigned id);

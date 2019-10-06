@@ -18,14 +18,16 @@
 #include "property_box.h"
 #include <iterator>
 
-using pg::VolumetricPath;
 using pg::Spline;
+
 using std::next;
 using std::prev;
 using std::string;
+using std::map;
+using std::set;
 
 PropertyBox::PropertyBox(SharedResources *shared, Editor *editor,
-	QWidget *parent) : QWidget(parent), saveStem(editor->getSelection())
+	QWidget *parent) : QWidget(parent)
 {
 	this->shared = shared;
 	curveEditor = nullptr;
@@ -59,14 +61,11 @@ void PropertyBox::setValueWidths(QFormLayout *layout)
 	}
 }
 
-/**
- * Create a container that stores properties that only affect the current stem.
- */
 void PropertyBox::createStemBox(QVBoxLayout *layout)
 {
 	stemG = new QGroupBox(tr("Stem"));
 	QFormLayout *form = new QFormLayout(stemG);
-	form->setSpacing(3);
+	form->setSpacing(2);
 	form->setMargin(10);
 
 	{
@@ -146,7 +145,7 @@ void PropertyBox::createCapBox(QVBoxLayout *layout)
 {
 	capG = new QGroupBox(tr("Cap"));
 	QFormLayout *form = new QFormLayout(capG);
-	form->setSpacing(3);
+	form->setSpacing(2);
 	form->setMargin(10);
 
 	capMaterialL = new QLabel(tr("Material"));
@@ -166,7 +165,7 @@ void PropertyBox::createLeafBox(QVBoxLayout *layout)
 {
 	leafG = new QGroupBox(tr("Leaf"));
 	QFormLayout *form = new QFormLayout(leafG);
-	form->setSpacing(3);
+	form->setSpacing(2);
 	form->setMargin(10);
 
 	leafScaleXL = new QLabel(tr("X Scale"));
@@ -220,226 +219,226 @@ void PropertyBox::createLeafBox(QVBoxLayout *layout)
 		SLOT(changeLeafMesh()));
 }
 
-/**
- * Changes the values in each container to reflect the new selection. If
- * multiple stems are selected, then show the latest value and set the
- * property name bold.
- */
 void PropertyBox::fill()
 {
-	auto stemInstances = editor->getSelection()->getStemInstances();
 	auto leafInstances = editor->getSelection()->getLeafInstances();
+	auto stemInstances = editor->getSelection()->getStemInstances();
 
 	if (stemInstances.empty()) {
 		enableStem(false);
 		curveEditor->setEnabled(false);
-	} else {
-		pg::Stem *stem = stemInstances.rbegin()->first;
-		auto nextIt = next(stemInstances.begin());
+	} else
+		setStemFields(stemInstances);
 
-		indicateSimilarities(resolutionL);
-		for (auto it = nextIt; it != stemInstances.end(); ++it) {
-			pg::Stem *a = prev(it)->first;
-			pg::Stem *b = it->first;
-			if (a->getResolution() != b->getResolution()) {
-				indicateDifferences(resolutionL);
-				break;
-			}
-		}
-
-		resolutionV->blockSignals(true);
-		resolutionV->setValue(stem->getResolution());
-		resolutionV->blockSignals(false);
-
-		indicateSimilarities(divisionL);
-		for (auto it = nextIt; it != stemInstances.end(); ++it) {
-			VolumetricPath a = prev(it)->first->getPath();
-			VolumetricPath b = it->first->getPath();
-			if (a.getResolution() != b.getResolution()) {
-				indicateDifferences(divisionL);
-				break;
-			}
-		}
-
-		divisionV->blockSignals(true);
-		divisionV->setValue(stem->getPath().getResolution());
-		divisionV->blockSignals(false);
-
-		indicateSimilarities(radiusL);
-		for (auto it = nextIt; it != stemInstances.end(); ++it) {
-			VolumetricPath a = prev(it)->first->getPath();
-			VolumetricPath b = it->first->getPath();
-			if (a.getMaxRadius() != b.getMaxRadius()) {
-				indicateDifferences(radiusL);
-				break;
-			}
-		}
-
-		radiusV->blockSignals(true);
-		radiusV->setValue(stem->getPath().getMaxRadius());
-		radiusV->blockSignals(false);
-		/* TODO make curve bold if radius curves are different. */
-		radiusB->blockSignals(true);
-		radiusB->setCurve(stem->getPath().getRadius());
-		radiusB->blockSignals(false);
-
-		indicateSimilarities(minRadiusL);
-		for (auto it = nextIt; it != stemInstances.end(); ++it) {
-			VolumetricPath a = prev(it)->first->getPath();
-			VolumetricPath b = it->first->getPath();
-			if (a.getMinRadius() != b.getMinRadius()) {
-				indicateDifferences(minRadiusL);
-				break;
-			}
-		}
-
-		minRadiusV->blockSignals(true);
-		minRadiusV->setValue(stem->getPath().getMinRadius());
-		minRadiusV->blockSignals(false);
-
-		indicateSimilarities(degreeL);
-		for (auto it = nextIt; it != stemInstances.end(); ++it) {
-			Spline a = prev(it)->first->getPath().getSpline();
-			Spline b = it->first->getPath().getSpline();
-			if (a.getDegree() != b.getDegree()) {
-				indicateDifferences(degreeL);
-				break;
-			}
-		}
-
-		degreeV->blockSignals(true);
-		switch (stem->getPath().getSpline().getDegree()) {
-		case 1:
-			degreeV->setCurrentIndex(0);
-			break;
-		case 3:
-			degreeV->setCurrentIndex(1);
-			break;
-		}
-		degreeV->blockSignals(false);
-
-		indicateSimilarities(stemMaterialL);
-		for (auto it = nextIt; it != stemInstances.end(); ++it) {
-			int a = prev(it)->first->getMaterial(pg::Stem::Outer);
-			int b = it->first->getMaterial(pg::Stem::Outer);
-			if (a != b) {
-				indicateDifferences(stemMaterialL);
-				break;
-			}
-		}
-
-		stemMaterialV->blockSignals(true);
-		{
-			int id = stem->getMaterial(pg::Stem::Outer);
-			string s = shared->getMaterial(id).getName();
-			QString qs = QString::fromStdString(s);
-			stemMaterialV->setCurrentText(qs);
-		}
-		stemMaterialV->blockSignals(false);
-
-		indicateSimilarities(capMaterialL);
-		for (auto it = nextIt; it != stemInstances.end(); ++it) {
-			int a = prev(it)->first->getMaterial(pg::Stem::Inner);
-			int b = it->first->getMaterial(pg::Stem::Inner);
-			if (a != b) {
-				indicateDifferences(capMaterialL);
-				break;
-			}
-		}
-
-		capMaterialV->blockSignals(true);
-		{
-			int id = stem->getMaterial(pg::Stem::Inner);
-			string s = shared->getMaterial(id).getName();
-			QString qs = QString::fromStdString(s);
-			capMaterialV->setCurrentText(qs);
-		}
-		capMaterialV->blockSignals(false);
-
-		if (selectedCurve)
-			selectedCurve->select();
-
-		enableStem(true);
-		curveEditor->setEnabled(true);
-		stemG->blockSignals(false);
-	}
-
-	if (leafInstances.empty()) {
+	if (leafInstances.empty())
 		enableLeaf(false);
-	} else {
-		pg::Stem *stem = leafInstances.rbegin()->first;
-		unsigned index = *leafInstances.rbegin()->second.begin();
-		pg::Leaf *leaf = stem->getLeaf(index);
-		Selection *selection = editor->getSelection();
+	else
+		setLeafFields(leafInstances);
+}
 
-		indicateSimilarities(leafScaleXL);
-		indicateSimilarities(leafScaleYL);
-		indicateSimilarities(leafScaleZL);
-		auto i = selection->getLeafInstances();
-		for (auto it = i.begin(); it != i.end(); it++) {
-			pg::Stem *stem = it->first;
-			for (auto &id : it->second) {
-				pg::Vec3 scale = stem->getLeaf(id)->getScale();
-				if (scale.x != leaf->getScale().x)
-					indicateDifferences(leafScaleXL);
-				if (scale.y != leaf->getScale().y)
-					indicateDifferences(leafScaleYL);
-				if (scale.z != leaf->getScale().z)
-					indicateDifferences(leafScaleZL);
-			}
+void PropertyBox::setStemFields(map<pg::Stem *, PointSelection> instances)
+{
+	pg::Stem *stem = instances.rbegin()->first;
+	auto nextIt = next(instances.begin());
+
+	indicateSimilarities(resolutionL);
+	for (auto it = nextIt; it != instances.end(); ++it) {
+		pg::Stem *a = prev(it)->first;
+		pg::Stem *b = it->first;
+		if (a->getResolution() != b->getResolution()) {
+			indicateDifferences(resolutionL);
+			break;
 		}
-
-		leafScaleXV->blockSignals(true);
-		leafScaleXV->setValue(leaf->getScale().x);
-		leafScaleXV->blockSignals(false);
-
-		leafScaleYV->blockSignals(true);
-		leafScaleYV->setValue(leaf->getScale().y);
-		leafScaleYV->blockSignals(false);
-
-		leafScaleZV->blockSignals(true);
-		leafScaleZV->setValue(leaf->getScale().z);
-		leafScaleZV->blockSignals(false);
-
-		indicateSimilarities(leafMaterialL);
-		indicateSimilarities(leafMeshL);
-		i = selection->getLeafInstances();
-		for (auto it = i.begin(); it != i.end(); it++) {
-			pg::Stem *stem = it->first;
-			for (auto &id : it->second) {
-				pg::Leaf *l = stem->getLeaf(id);
-				unsigned material = l->getMaterial();
-				unsigned mesh = l->getMesh();
-				if (material != leaf->getMaterial())
-					indicateDifferences(leafMaterialL);
-				if (mesh != leaf->getMesh())
-					indicateDifferences(leafMeshL);
-			}
-		}
-
-		leafMaterialV->blockSignals(true);
-		{
-			int id = leaf->getMaterial();
-			string s = shared->getMaterial(id).getName();
-			QString qs = QString::fromStdString(s);
-			leafMaterialV->setCurrentText(qs);
-		}
-		leafMaterialV->blockSignals(false);
-
-		leafMeshV->blockSignals(true);
-		if (leaf->getMesh() != 0) {
-			int id = leaf->getMesh();
-			pg::Plant *plant = editor->getPlant();
-			pg::Geometry geom = plant->getLeafMesh(id);
-			QString qs = QString::fromStdString(geom.getName());
-			leafMeshV->setCurrentText(qs);
-		} else {
-			leafMeshV->setCurrentText(tr(""));
-		}
-		leafMeshV->blockSignals(false);
-
-		enableLeaf(true);
 	}
+
+	resolutionV->blockSignals(true);
+	resolutionV->setValue(stem->getResolution());
+	resolutionV->blockSignals(false);
+
+	indicateSimilarities(divisionL);
+	for (auto it = nextIt; it != instances.end(); ++it) {
+		pg::Path a = prev(it)->first->getPath();
+		pg::Path b = it->first->getPath();
+		if (a.getResolution() != b.getResolution()) {
+			indicateDifferences(divisionL);
+			break;
+		}
+	}
+
+	divisionV->blockSignals(true);
+	divisionV->setValue(stem->getPath().getResolution());
+	divisionV->blockSignals(false);
+
+	indicateSimilarities(radiusL);
+	for (auto it = nextIt; it != instances.end(); ++it) {
+		pg::Path a = prev(it)->first->getPath();
+		pg::Path b = it->first->getPath();
+		if (a.getMaxRadius() != b.getMaxRadius()) {
+			indicateDifferences(radiusL);
+			break;
+		}
+	}
+
+	radiusV->blockSignals(true);
+	radiusV->setValue(stem->getPath().getMaxRadius());
+	radiusV->blockSignals(false);
+	/* TODO make curve bold if radius curves are different. */
+	radiusB->blockSignals(true);
+	radiusB->setCurve(stem->getPath().getRadius());
+	radiusB->blockSignals(false);
+
+	indicateSimilarities(minRadiusL);
+	for (auto it = nextIt; it != instances.end(); ++it) {
+		pg::Path a = prev(it)->first->getPath();
+		pg::Path b = it->first->getPath();
+		if (a.getMinRadius() != b.getMinRadius()) {
+			indicateDifferences(minRadiusL);
+			break;
+		}
+	}
+
+	minRadiusV->blockSignals(true);
+	minRadiusV->setValue(stem->getPath().getMinRadius());
+	minRadiusV->blockSignals(false);
+
+	indicateSimilarities(degreeL);
+	for (auto it = nextIt; it != instances.end(); ++it) {
+		Spline a = prev(it)->first->getPath().getSpline();
+		Spline b = it->first->getPath().getSpline();
+		if (a.getDegree() != b.getDegree()) {
+			indicateDifferences(degreeL);
+			break;
+		}
+	}
+
+	degreeV->blockSignals(true);
+	switch (stem->getPath().getSpline().getDegree()) {
+	case 1:
+		degreeV->setCurrentIndex(0);
+		break;
+	case 3:
+		degreeV->setCurrentIndex(1);
+		break;
+	}
+	degreeV->blockSignals(false);
+
+	indicateSimilarities(stemMaterialL);
+	for (auto it = nextIt; it != instances.end(); ++it) {
+		int a = prev(it)->first->getMaterial(pg::Stem::Outer);
+		int b = it->first->getMaterial(pg::Stem::Outer);
+		if (a != b) {
+			indicateDifferences(stemMaterialL);
+			break;
+		}
+	}
+
+	stemMaterialV->blockSignals(true);
+	{
+		int id = stem->getMaterial(pg::Stem::Outer);
+		string s = shared->getMaterial(id).getName();
+		QString qs = QString::fromStdString(s);
+		stemMaterialV->setCurrentText(qs);
+	}
+	stemMaterialV->blockSignals(false);
+
+	indicateSimilarities(capMaterialL);
+	for (auto it = nextIt; it != instances.end(); ++it) {
+		int a = prev(it)->first->getMaterial(pg::Stem::Inner);
+		int b = it->first->getMaterial(pg::Stem::Inner);
+		if (a != b) {
+			indicateDifferences(capMaterialL);
+			break;
+		}
+	}
+
+	capMaterialV->blockSignals(true);
+	{
+		int id = stem->getMaterial(pg::Stem::Inner);
+		string s = shared->getMaterial(id).getName();
+		QString qs = QString::fromStdString(s);
+		capMaterialV->setCurrentText(qs);
+	}
+	capMaterialV->blockSignals(false);
+
+	if (selectedCurve)
+		selectedCurve->select();
+
+	enableStem(true);
+	curveEditor->setEnabled(true);
+	stemG->blockSignals(false);
+}
+
+void PropertyBox::setLeafFields(map<pg::Stem *, set<unsigned>> instances)
+{
+	pg::Stem *stem = instances.rbegin()->first;
+	unsigned index = *instances.rbegin()->second.begin();
+	pg::Leaf *leaf = stem->getLeaf(index);
+
+	indicateSimilarities(leafScaleXL);
+	indicateSimilarities(leafScaleYL);
+	indicateSimilarities(leafScaleZL);
+	for (auto it = instances.begin(); it != instances.end(); it++) {
+		pg::Stem *stem = it->first;
+		for (auto &id : it->second) {
+			pg::Vec3 scale = stem->getLeaf(id)->getScale();
+			if (scale.x != leaf->getScale().x)
+				indicateDifferences(leafScaleXL);
+			if (scale.y != leaf->getScale().y)
+				indicateDifferences(leafScaleYL);
+			if (scale.z != leaf->getScale().z)
+				indicateDifferences(leafScaleZL);
+		}
+	}
+
+	leafScaleXV->blockSignals(true);
+	leafScaleXV->setValue(leaf->getScale().x);
+	leafScaleXV->blockSignals(false);
+
+	leafScaleYV->blockSignals(true);
+	leafScaleYV->setValue(leaf->getScale().y);
+	leafScaleYV->blockSignals(false);
+
+	leafScaleZV->blockSignals(true);
+	leafScaleZV->setValue(leaf->getScale().z);
+	leafScaleZV->blockSignals(false);
+
+	indicateSimilarities(leafMaterialL);
+	indicateSimilarities(leafMeshL);
+	for (auto it = instances.begin(); it != instances.end(); it++) {
+		pg::Stem *stem = it->first;
+		for (auto &id : it->second) {
+			pg::Leaf *l = stem->getLeaf(id);
+			unsigned material = l->getMaterial();
+			unsigned mesh = l->getMesh();
+			if (material != leaf->getMaterial())
+				indicateDifferences(leafMaterialL);
+			if (mesh != leaf->getMesh())
+				indicateDifferences(leafMeshL);
+		}
+	}
+
+	leafMaterialV->blockSignals(true);
+	{
+		int id = leaf->getMaterial();
+		string s = shared->getMaterial(id).getName();
+		QString qs = QString::fromStdString(s);
+		leafMaterialV->setCurrentText(qs);
+	}
+	leafMaterialV->blockSignals(false);
+
+	leafMeshV->blockSignals(true);
+	if (leaf->getMesh() != 0) {
+		int id = leaf->getMesh();
+		pg::Plant *plant = editor->getPlant();
+		pg::Geometry geom = plant->getLeafMesh(id);
+		QString qs = QString::fromStdString(geom.getName());
+		leafMeshV->setCurrentText(qs);
+	} else {
+		leafMeshV->setCurrentText(tr(""));
+	}
+	leafMeshV->blockSignals(false);
+
+	enableLeaf(true);
 }
 
 void PropertyBox::addMaterial(ShaderParams params)
@@ -513,7 +512,7 @@ void PropertyBox::changePathDegree(int i)
 	int degree = i == 1 ? 3 : 1;
 	auto instances = editor->getSelection()->getStemInstances();
 	for (auto &instance : instances) {
-		VolumetricPath path = instance.first->getPath();
+		pg::Path path = instance.first->getPath();
 		Spline spline = path.getSpline();
 		if (spline.getDegree() != degree) {
 			spline.adjust(degree);
@@ -543,9 +542,9 @@ void PropertyBox::changeDivisions(int i)
 	indicateSimilarities(divisionL);
 	auto instances = editor->getSelection()->getStemInstances();
 	for (auto &instance : instances) {
-		VolumetricPath vpath = instance.first->getPath();
-		vpath.setResolution(i);
-		instance.first->setPath(vpath);
+		pg::Path path = instance.first->getPath();
+		path.setResolution(i);
+		instance.first->setPath(path);
 	}
 	editor->change();
 }
@@ -556,9 +555,9 @@ void PropertyBox::changeRadius(double d)
 	indicateSimilarities(radiusL);
 	auto instances = editor->getSelection()->getStemInstances();
 	for (auto &instance : instances) {
-		VolumetricPath vpath = instance.first->getPath();
-		vpath.setMaxRadius(d);
-		instance.first->setPath(vpath);
+		pg::Path path = instance.first->getPath();
+		path.setMaxRadius(d);
+		instance.first->setPath(path);
 	}
 	editor->change();
 }
@@ -569,9 +568,9 @@ void PropertyBox::changeMinRadius(double d)
 	indicateSimilarities(minRadiusL);
 	auto instances = editor->getSelection()->getStemInstances();
 	for (auto &instance : instances) {
-		VolumetricPath vpath = instance.first->getPath();
-		vpath.setMinRadius(d);
-		instance.first->setPath(vpath);
+		pg::Path path = instance.first->getPath();
+		path.setMinRadius(d);
+		instance.first->setPath(path);
 	}
 	editor->change();
 }
@@ -581,7 +580,7 @@ void PropertyBox::changeRadiusCurve(pg::Spline &spline)
 	beginChanging();
 	auto instances = editor->getSelection()->getStemInstances();
 	for (auto &instance : instances) {
-		VolumetricPath vp = instance.first->getPath();
+		pg::Path vp = instance.first->getPath();
 		vp.setRadius(spline);
 		instance.first->setPath(vp);
 	}
@@ -693,17 +692,17 @@ void PropertyBox::changeLeafMesh()
 void PropertyBox::beginChanging()
 {
 	if (!changing) {
-		saveStem = SaveStem(editor->getSelection());
-		saveStem.execute();
+		saveStem = new SaveStem(editor->getSelection());
+		saveStem->execute();
 	}
 	changing = true;
 }
 
 void PropertyBox::finishChanging()
 {
-	if (changing && !saveStem.isSameAsCurrent()) {
-		saveStem.setNewSelection();
-		editor->add(saveStem);
+	if (changing && !saveStem->isSameAsCurrent()) {
+		saveStem->setNewSelection();
+		editor->add(*saveStem);
 	}
 	changing = false;
 }
@@ -719,6 +718,7 @@ void PropertyBox::enableStem(bool enable)
 		indicateSimilarities(stemMaterialL);
 		indicateSimilarities(capMaterialL);
 	}
+
 	radiusV->setEnabled(enable);
 	radiusB->setEnabled(enable);
 	minRadiusV->setEnabled(enable);
@@ -738,6 +738,7 @@ void PropertyBox::enableLeaf(bool enable)
 		indicateSimilarities(leafMaterialV);
 		indicateSimilarities(leafMeshV);
 	}
+
 	leafScaleXV->setEnabled(enable);
 	leafScaleYV->setEnabled(enable);
 	leafScaleZV->setEnabled(enable);
@@ -766,7 +767,7 @@ void PropertyBox::bind(CurveEditor *curveEditor)
 
 QSize PropertyBox::sizeHint() const
 {
-	return QSize(400, 200);
+	return QSize(350, 200);
 }
 
 void PropertyBox::setCurve(pg::Spline spline, QString name)

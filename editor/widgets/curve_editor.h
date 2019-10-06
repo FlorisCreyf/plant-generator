@@ -18,16 +18,16 @@
 #ifndef CURVE_EDITOR_H
 #define CURVE_EDITOR_H
 
-#include "../camera.h"
-#include "../history.h"
-#include "../point_selection.h"
-#include "../commands/move_spline.h"
-#include "../geometry/path.h"
-#include "../graphics/buffer.h"
-#include "../graphics/shared_resources.h"
-#include "../geometry/translation_axes.h"
+#include "editor/camera.h"
+#include "editor/history.h"
+#include "editor/keymap.h"
+#include "editor/point_selection.h"
+#include "editor/commands/move_spline.h"
+#include "editor/geometry/path.h"
+#include "editor/graphics/buffer.h"
+#include "editor/graphics/shared_resources.h"
+#include "editor/geometry/translation_axes.h"
 #include "plant_generator/math/math.h"
-#include "plant_generator/path.h"
 #include <QOpenGLFunctions>
 #include <QOpenGLWidget>
 #include <QtWidgets>
@@ -36,7 +36,9 @@ class CurveEditor : public QOpenGLWidget, protected QOpenGLFunctions {
 	Q_OBJECT
 
 public:
-	CurveEditor(SharedResources *shared, QWidget *parent = 0);
+	CurveEditor(
+		SharedResources *shared, KeyMap *keymap,
+		QWidget *parent = 0);
 	QSize sizeHint() const;
 
 public slots:
@@ -60,6 +62,7 @@ protected:
 
 private:
 	SharedResources *shared;
+	KeyMap *keymap;
 	PointSelection selection;
 	Camera camera;
 	History history;
@@ -68,7 +71,7 @@ private:
 	pg::Spline spline;
 	pg::Spline origSpline; /* The original spline without restrictions. */
 	TranslationAxes axes;
-	MoveSpline moveSpline;
+	Command *command = nullptr;
 	Geometry::Segment gridSegment;
 	Geometry::Segment planeSegment;
 	Geometry::Segment controlSegment;
@@ -77,11 +80,8 @@ private:
 	QString name;
 	bool enabled;
 	bool ctrl;
-	bool move = false;
-	bool extruding = false;
 	bool moveLeft;
 	pg::Vec3 origPoint;
-	int clickOffset[2];
 	int toolBarHeight = 22;
 
 	QComboBox *degree;
@@ -102,6 +102,8 @@ private:
 	void paintCurve(pg::Mat4 &vp);
 	void extrude();
 	void setClickOffset(int x, int y, pg::Vec3 point);
+	void exitCommand(bool changed);
+	void change();
 };
 
 #endif /* CURVE_EDITOR_H */

@@ -1,5 +1,5 @@
 /* Plant Genererator
- * Copyright (C) 2018  Floris Creyf
+ * Copyright (C) 2019  Floris Creyf
  *
  * Plant Genererator is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,25 +15,34 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef COMMAND_H
-#define COMMAND_H
+#include "command.h"
 
-#include <QMouseEvent>
-#include <QKeyEvent>
+bool Command::onMouseMove(QMouseEvent *)
+{
+	return false;
+}
 
-class Command {
-protected:
-	bool done = false;
+bool Command::onMousePress(QMouseEvent *)
+{
+	return false;
+}
 
-public:
-	virtual void execute() = 0;
-	virtual void undo() = 0;
-	virtual void redo();
-	virtual bool isDone();
-	virtual bool onMouseMove(QMouseEvent *);
-	virtual bool onMousePress(QMouseEvent *);
-	virtual bool onMouseRelease(QMouseEvent *);
-	virtual bool onKeyPress(QKeyEvent *);
-};
+bool Command::onMouseRelease(QMouseEvent *)
+{
+	return false;
+}
 
-#endif /* COMMAND_H */
+bool Command::onKeyPress(QKeyEvent *)
+{
+	return false;
+}
+
+void Command::redo()
+{
+	execute();
+}
+
+bool Command::isDone()
+{
+	return done;
+}

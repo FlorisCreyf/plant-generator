@@ -17,27 +17,31 @@
 
 #include "move_path.h"
 
-MovePath::MovePath(Selection *selection, TranslationAxes *axes) :
-	moveSpline(nullptr, nullptr, axes)
+MovePath::MovePath(
+	Selection *selection, TranslationAxes *axes, const Camera *camera) :
+	moveSpline(nullptr, nullptr, axes, camera)
 {
+	this->camera = camera;
 	this->selection = selection;
 	this->axes = axes;
-	undoing = false;
+	this->clickOffset[0] = this->clickOffset[1] = 0.0f;
+	this->undoing = false;
 }
 
-void MovePath::set(Camera &camera, int x, int y)
+void MovePath::setClickOffset(int x, int y)
 {
-	moveSpline.set(camera.getRay(x, y), camera.getDirection());
+	this->clickOffset[0] = x;
+	this->clickOffset[1] = y;
 }
 
 void MovePath::setParallelTangents(bool parallel)
 {
-	moveSpline.setParallelTangents(parallel);
+	this->moveSpline.setParallelTangents(parallel);
 }
 
 void MovePath::execute()
 {
-	auto instances = selection->getStemInstances();
+	auto instances = this->selection->getStemInstances();
 	for (auto &instance : instances) {
 		pg::Stem *stem = instance.first;
 		PointSelection &ps = instance.second;
@@ -46,14 +50,14 @@ void MovePath::execute()
 		if (points.empty())
 			continue;
 
-		pg::VolumetricPath path = stem->getPath();
+		pg::Path path = stem->getPath();
 		pg::Spline spline = path.getSpline();
-		moveSpline.setSelection(&instance.second);
-		moveSpline.setSpline(&spline);
-		if (undoing)
-			moveSpline.undo();
+		this->moveSpline.setSelection(&instance.second);
+		this->moveSpline.setSpline(&spline);
+		if (this->undoing)
+			this->moveSpline.undo();
 		else
-			moveSpline.execute();
+			this->moveSpline.execute();
 		path.setSpline(spline);
 		stem->setPath(path);
 	}
@@ -61,12 +65,35 @@ void MovePath::execute()
 
 void MovePath::undo()
 {
-	undoing = true;
+	this->undoing = true;
 	execute();
-	undoing = false;
+	this->undoing = false;
 }
 
-MovePath *MovePath::clone()
+bool MovePath::onMouseMove(QMouseEvent *event)
 {
-	return new MovePath(*this);
+	QPoint point = event->pos();
+	bool ctrl = event->modifiers() & Qt::ControlModifier;
+	float x = point.x() + clickOffset[0];
+	float y = point.y() + clickOffset[1];
+	setParallelTangents(!ctrl);
+	this->moveSpline.set(camera->getRay(x, y), camera->getDirection());
+	execute();
+	return true;
+}
+
+bool MovePath::onMousePress(QMouseEvent *)
+{
+	return false;
+}
+
+bool MovePath::onMouseRelease(QMouseEvent *)
+{
+	this->done = true;
+	return false;
+}
+
+bool MovePath::onKeyPress(QKeyEvent *)
+{
+	return false;
 }

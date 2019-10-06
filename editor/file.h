@@ -20,6 +20,7 @@
 
 #include "plant_generator/geometry.h"
 #include <cstddef>
+#include <map>
 #include <vector>
 
 class File {

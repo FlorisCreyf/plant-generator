@@ -53,7 +53,7 @@ void pg::Generator::getDichotomousDirections(Stem *parent, Vec3 directions[2])
 	float angleX = dis(randomGenerator) * 0.5f;
 	float angleY = dis(randomGenerator) + M_PI*0.25f;
 
-	VolumetricPath path = parent->getPath();
+	Path path = parent->getPath();
 	Vec3 normal = path.getDirection(path.getResolution() - 1);
 	Vec3 b = pg::cross(normal, {normal.x, 0.0f, normal.z});
 
@@ -76,7 +76,7 @@ float pg::Generator::getRadius(Stem *stem)
 
 void pg::Generator::setPath(Stem *stem, Vec3 direction)
 {
-	VolumetricPath path;
+	Path path;
 	Spline spline;
 
 	std::vector<Vec3> controls;
@@ -132,9 +132,8 @@ void pg::Generator::growLateralStem(Stem *stem, float position)
 	setPath(stem, getStemDirection(stem));
 
 	Leaf leaf;
-	leaf.setPosition(0.5f);
-	stem->addLeaf(leaf);
-	leaf.setPosition(2.0f);
+	leaf.setPosition(1.5f);
+	leaf.setScale((Vec3){2.0f, 2.0f, 2.0f});
 	stem->addLeaf(leaf);
 }
 

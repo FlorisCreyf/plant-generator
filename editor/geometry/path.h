@@ -18,7 +18,7 @@
 #ifndef PATH_H
 #define PATH_H
 
-#include "../point_selection.h"
+#include "editor/point_selection.h"
 #include "plant_generator/math/math.h"
 #include "plant_generator/spline.h"
 #include "geometry.h"

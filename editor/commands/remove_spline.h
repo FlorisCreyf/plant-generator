@@ -19,7 +19,7 @@
 #define REMOVE_SPLINE_H
 
 #include "command.h"
-#include "../point_selection.h"
+#include "editor/point_selection.h"
 #include "plant_generator/spline.h"
 #include <memory>
 
@@ -35,7 +35,6 @@ public:
 	void setClearable(bool clearable);
 	void execute();
 	void undo();
-	RemoveSpline *clone();
 };
 
 #endif /* REMOVE_SPLINE_H */

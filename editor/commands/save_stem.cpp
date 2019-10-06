@@ -96,8 +96,3 @@ void SaveStem::swap()
 		}
 	}
 }
-
-SaveStem *SaveStem::clone()
-{
-	return new SaveStem(*this);
-}

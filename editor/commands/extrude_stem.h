@@ -19,22 +19,28 @@
 #define EXTRUDE_STEM_H
 
 #include "command.h"
-#include "../selection.h"
+#include "move_path.h"
+#include "editor/selection.h"
 
 class ExtrudeStem : public Command {
 	Selection *selection;
 	Selection prevSelection;
 	Selection newSelection;
+	TranslationAxes *axes;
+	Camera *camera;
 	std::map<pg::Stem *, pg::Spline> prevSplines;
-
-	void extrude();
-	void redo();
+	MovePath movePath;
 
 public:
-	ExtrudeStem(Selection *selection);
+	ExtrudeStem(Selection *selection, TranslationAxes *axes,
+		Camera *camera);
+	void setClickOffset(int x, int y);
+	bool onMouseMove(QMouseEvent *event);
+	bool onMousePress(QMouseEvent *event);
+	bool onMouseRelease(QMouseEvent *event);
 	void execute();
 	void undo();
-	ExtrudeStem *clone();
+	void redo();
 };
 
 #endif /* EXTRUDE_STEM_H */

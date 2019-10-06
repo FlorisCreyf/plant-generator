@@ -20,20 +20,21 @@
 
 #define GL_GLEXT_PROTOTYPES
 
-#include "../camera.h"
-#include "../history.h"
-#include "../selection.h"
-#include "../commands/add_leaf.h"
-#include "../commands/add_stem.h"
-#include "../commands/move_stem.h"
-#include "../commands/move_path.h"
-#include "../commands/rotate_stem.h"
-#include "../commands/save_selection.h"
-#include "../geometry/path.h"
-#include "../geometry/rotation_axes.h"
-#include "../geometry/translation_axes.h"
-#include "../graphics/buffer.h"
-#include "../graphics/shared_resources.h"
+#include "editor/camera.h"
+#include "editor/history.h"
+#include "editor/keymap.h"
+#include "editor/selection.h"
+#include "editor/commands/add_leaf.h"
+#include "editor/commands/add_stem.h"
+#include "editor/commands/move_stem.h"
+#include "editor/commands/move_path.h"
+#include "editor/commands/rotate_stem.h"
+#include "editor/commands/save_selection.h"
+#include "editor/geometry/path.h"
+#include "editor/geometry/rotation_axes.h"
+#include "editor/geometry/translation_axes.h"
+#include "editor/graphics/buffer.h"
+#include "editor/graphics/shared_resources.h"
 #include "plant_generator/plant.h"
 #include "plant_generator/mesh.h"
 #include "plant_generator/generator.h"
@@ -51,14 +52,16 @@ class Editor : public QOpenGLWidget, protected QOpenGLFunctions {
 signals:
 	void selectionChanged();
 	void modeChanged();
+	void ready();
+	void changed();
 
 public slots:
+	void change();
 	void change(QAction *action);
 	void updateMaterial(ShaderParams params);
 
 public:
-	Editor(SharedResources *shared, QWidget *parent = 0);
-	void change();
+	Editor(SharedResources *shared, KeyMap *keymap, QWidget *parent = 0);
 	void load(const char *filename);
 	pg::Plant *getPlant();
 	Selection *getSelection();
@@ -77,71 +80,62 @@ protected:
 	bool event(QEvent *);
 
 private:
-	QToolBar *toolbar;
+	QAction *materialAction;
+	QAction *orthographicAction;
+	QAction *perspectiveAction;
+	QAction *solidAction;
+	QAction *wireframeAction;
 	QComboBox *projectionBox;
 	QComboBox *shaderBox;
-	QAction *perspectiveAction;
-	QAction *orthographicAction;
-	QAction *wireframeAction;
-	QAction *solidAction;
-	QAction *materialAction;
+	QToolBar *toolbar;
 
-	bool perspective;
-	Shader shader;
-
-	pg::Plant plant;
-	enum Mode {
-		None,
-		MovePoint,
-		PositionStem,
-		Rotate
-	} mode = None;
 	struct Scene {
-		Geometry::Segment grid;
-		Geometry::Segment axesLines;
 		Geometry::Segment axesArrows;
-		Geometry::Segment selection;
+		Geometry::Segment axesLines;
+		Geometry::Segment grid;
 		Geometry::Segment rotation;
+		Geometry::Segment selection;
 	} scene;
+
+	Command *currentCommand;
+	KeyMap *keymap;
 	SharedResources *shared;
-	Buffer staticBuffer;
+
 	Buffer pathBuffer;
 	Buffer plantBuffer;
-	GLuint outlineFrameBuffer;
+	Buffer staticBuffer;
 	GLuint outlineColorMap;
-	Path path;
-	pg::Mesh mesh;
-	std::vector<pg::Segment> meshes;
+	GLuint outlineFrameBuffer;
+	Shader shader;
+
 	pg::Generator generator;
+	pg::Mesh mesh;
+	pg::Plant plant;
+	std::vector<pg::Segment> meshes;
+	Path path;
 
 	Camera camera;
-	TranslationAxes translationAxes;
-	RotationAxes rotationAxes;
-
-	Selection selection;
-	RotateStem rotateStem;
-	MoveStem moveStem;
-	MovePath movePath;
-	bool extrudeCommand;
-	bool addStemCommand;
-	bool addLeafCommand;
-	AddStem addStem;
-	AddLeaf addLeaf;
 	History history;
+	RotationAxes rotationAxes;
+	Selection selection;
+	TranslationAxes translationAxes;
 
-	/* An offset is needed because the cursor is not necessarily at the
-	 * center of the selection. */
-	int clickOffset[2];
+	bool perspective;
+	bool rotating = false;
 
-	void selectStem(QMouseEvent *event);
-	void selectPoint(QMouseEvent *event);
-	void selectAxis(int x, int y);
-	void setClickOffset(int x, int y, pg::Vec3 point);
+	void addSelectionToHistory(SaveSelection *selection);
+	void createToolBar();
+	void createFrameBuffers();
+	void exitCommand(bool changed);
 	void initializeGL();
 	void initializeBuffers();
 	void paintGL();
 	void paintAxes();
 	void resizeGL(int width, int height);
+	void selectStem(QMouseEvent *event);
+	void selectPoint(QMouseEvent *event);
+	void selectAxis(int x, int y);
+	void setClickOffset(int x, int y, pg::Vec3 point);
 	void updateCamera(int width, int height);
 };
 

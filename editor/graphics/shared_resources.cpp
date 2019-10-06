@@ -16,7 +16,7 @@
  */
 
 #include "shared_resources.h"
-#include "../terminal.h"
+#include "editor/terminal.h"
 #include <QImage>
 #include <stdio.h>
 

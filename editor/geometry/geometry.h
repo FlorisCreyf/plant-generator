@@ -49,7 +49,7 @@ public:
 	void addCurve(const pg::Spline &spline, pg::Vec3 color, int size);
 	void addPlane(pg::Vec3 a, pg::Vec3 b, pg::Vec3 c, pg::Vec3 color);
 	void addCone(float radius, float height, int points, pg::Vec3 color);
-	void addGrid(int size, pg::Vec3 pcolor, pg::Vec3 scolor);
+	void addGrid(int size, pg::Vec3 pcolor[2], pg::Vec3 scolor);
 	void transform(size_t start, size_t count, const pg::Mat4 &transform);
 	void changeColor(size_t start, pg::Vec3 color);
 

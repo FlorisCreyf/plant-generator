@@ -54,6 +54,7 @@ namespace pg {
 		const std::vector<unsigned> &getIndices() const;
 		void transform(Quat rotation, Vec3 scale, Vec3 translation);
 		void toCenter();
+		void clear();
 
 	private:
 		friend class boost::serialization::access;

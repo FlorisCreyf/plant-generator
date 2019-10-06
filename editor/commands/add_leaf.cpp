@@ -17,43 +17,52 @@
 
 #include "add_leaf.h"
 
-AddLeaf::AddLeaf(Selection *selection) : prevSelection(*selection)
+AddLeaf::AddLeaf(Selection *selection, const Camera *camera, int x, int y) :
+	prevSelection(*selection), moveStem(selection, camera, x, y, true)
 {
 	this->selection = selection;
-	stem = nullptr;
-	undone = false;
+	this->stem = nullptr;
 }
 
 void AddLeaf::execute()
 {
-	auto instances = selection->getStemInstances();
-	if (instances.size( ) == 1) {
-		pg::Stem *stem = (*instances.begin()).first;
-		pg::Leaf leaf;
-		if (undone)
-			leaf = this->leaf;
-		else {
-			this->leaf = leaf;
-			this->stem = stem;
-			prevSelection = *selection;
-		}
-		stem->addLeaf(leaf);
-		selection->clear();
-		selection->addLeaf(stem, leaf.getId());
+	auto instances = this->selection->getStemInstances();
+	if (instances.size() == 1) {
+		this->leaf = pg::Leaf();
+		this->stem = (*instances.begin()).first;
+		this->stem->addLeaf(this->leaf);
+		this->selection->clear();
+		this->selection->addLeaf(this->stem, this->leaf.getId());
+		this->moveStem.execute();
 	}
+}
+
+bool AddLeaf::onMouseMove(QMouseEvent *event)
+{
+	return this->moveStem.onMouseMove(event);
+}
+
+bool AddLeaf::onMousePress(QMouseEvent *event)
+{
+	bool update = this->moveStem.onMousePress(event);
+	this->done = this->moveStem.isDone();
+	return update;
 }
 
 void AddLeaf::undo()
 {
-	if (stem) {
-		printf("undo\n");
-		stem->removeLeaf(leaf.getId());
-		*selection = prevSelection;
-		undone = true;
-	}
+	this->leaf = *this->stem->getLeaf(this->leaf.getId());
+	this->stem->removeLeaf(this->leaf.getId());
+	*this->selection = this->prevSelection;
 }
 
-AddLeaf *AddLeaf::clone()
+void AddLeaf::redo()
 {
-	return new AddLeaf(*this);
+	auto instances = this->selection->getStemInstances();
+	if (instances.size( ) == 1) {
+		pg::Stem *stem = (*instances.begin()).first;
+		this->stem->addLeaf(this->leaf);
+		this->selection->clear();
+		this->selection->addLeaf(stem, this->leaf.getId());
+	}
 }

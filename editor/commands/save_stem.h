@@ -19,7 +19,7 @@
 #define SAVE_STEM_H
 
 #include "command.h"
-#include "../selection.h"
+#include "editor/selection.h"
 #include <map>
 
 class SaveStem : public Command {
@@ -41,7 +41,6 @@ public:
 	void setNewSelection();
 	void execute();
 	void undo();
-	SaveStem *clone();
 };
 
 #endif /* SAVE_STEM_H */

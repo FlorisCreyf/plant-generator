@@ -20,24 +20,33 @@
 
 #include "command.h"
 #include "move_spline.h"
-#include "../camera.h"
-#include "../selection.h"
-#include "../geometry/translation_axes.h"
+#include "editor/camera.h"
+#include "editor/selection.h"
+#include "editor/geometry/translation_axes.h"
 #include "plant_generator/plant.h"
 
 class MovePath : public Command {
+	static char modifiers;
+	static char key;
+
+	const Camera *camera;
 	MoveSpline moveSpline;
 	TranslationAxes *axes;
 	Selection *selection;
+	float clickOffset[2];
 	bool undoing;
 
 public:
-	MovePath(Selection *selection, TranslationAxes *axes);
-	void set(Camera &camera, int x, int y);
+	MovePath(Selection *selection, TranslationAxes *axes,
+		const Camera *camera);
+	void setClickOffset(int x, int y);
 	void setParallelTangents(bool parallel);
+	bool onMouseMove(QMouseEvent *event);
+	bool onMousePress(QMouseEvent *event);
+	bool onMouseRelease(QMouseEvent *event);
+	bool onKeyPress(QKeyEvent *event);
 	void execute();
 	void undo();
-	MovePath *clone();
 };
 
 #endif /* MOVE_PATH_H */

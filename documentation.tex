@@ -2,6 +2,8 @@
 \title{Plant Generator}
 \date{\today}
 \usepackage[margin=1in]{geometry}
+\usepackage{svg}
+\usepackage{calc}
 \usepackage{float}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta}
@@ -28,6 +30,11 @@
 \makeatletter
 \begin{document}
 \begin{center}
+	\begin{figure}
+		\centering
+		\def\svgscale{1.5}
+		\input{icon.pdf_tex}
+	\end{figure}
 	\begin{huge} \@title \end{huge} \\
 	\vspace{1em}
 	\begin{LARGE} Documentation \end{LARGE} \\
@@ -39,7 +46,7 @@
 
 \section{Introduction}
 
-The project is split in two parts. The editor component handles all user input and provides realtime feedback. The generator component defines and generates the plant structure, which is used to create a plant mesh. It is intended that the generator is removable from the editor so that it can be used as a library instead. Plants are generated preferably from environmental input if the generator is used as a library.
+The project is split in two parts. The editor component handles all user input and provides realtime feedback. The generator component defines and generates the plant structure, which is used to create a plant mesh. It is intended that the generator is removable from the editor so that it can be used as a library instead. Plants are preferably generated from environmental input (not yet implemented) if the generator is used as a library.
 
 \vspace{2em}
 \begin{figure}[H]
@@ -66,7 +73,7 @@ The project is split in two parts. The editor component handles all user input a
 
 \subsection{Camera}
 
-The camera produces matrices for transforming the world space into the screen space. Points can be transformed so that a perspective or orthographic view is created. The camera also produces inverse matrices so that the screen space can be transformed back into the world space. This is useful for object selection.
+The camera produces matrices for transforming the world space into the screen space. Points can be transformed so that either a perspective or orthographic view is created. The camera also produces inverse matrices so that the screen space can be transformed back into the world space. This is useful for object selection.
 
 The variables listed below determine the positioning and orientation of the camera.
 \begin{itemize}
@@ -78,9 +85,23 @@ The variables listed below determine the positioning and orientation of the came
 
 The \texttt{x} and \texttt{y} rotations are used to calculate a point on a sphere. The location of the camera is then: (\textit{location on sphere}) (\textit{distance}) +  \textit{target}. The \texttt{x} and \texttt{y} rotations are also used to maintain the orientation of the camera even when the direction and up vectors are parallel.
 
+\subsection{Commands}
+
+The editor uses the command pattern to store all user invocable commands. This allows each command to be easily associated with a key combination, and makes it possible to implement an undo/redo system without having to copy the entire application state. Commands are required to be able to execute, undo, and then redo themselves using the execute function. The downside of this approach is that if a command improperly undoes its changes, then the undo behavior of prior commands will also be faulty.
+
+\subsubsection{Move Commands}
+
+In order to move an object in the world space using the cursor, the cursor position is converted into a ray pointing into the world space. The ray is used to create a point in the world space by intersecting with a plane that is parallel to the camera direction. Points are moved by the difference of the initial and last (cursor generated) points.
+
+There is also a need to move points along paths instead of straight through the world space. This functions differently from the first method. Instead of converting the cursor position to a point in the world space, the points along the path are converted to the screen space. The cursor position is projected onto the (now two-dimensional) path to determine a new point.
+
+\subsubsection{Save Commands}
+
+The internal properties of stems and leaves can be adjusted using a property editor. The program checks for changes within the selection whenever a property editor loses focus. A command storing the previous objects is inserted into the history if changes were made.
+
 \subsection{Resources}
 
-The editor contains a \texttt{SharedResources} object that stores all the shaders and materials that are needed across all OpenGL widgets. Default images are automatically loaded from the \texttt{resources} file, and shaders are automatically loaded from the \texttt{shaders} file. The \texttt{SharedResources} object also keeps track of all materials. Signals are emitted when materials are edited.
+The editor stores a \texttt{SharedResources} object that stores all the shaders and materials that are needed across all OpenGL widgets. Default images are automatically loaded from the \texttt{resources} file, and shaders are automatically loaded from the \texttt{shaders} file. The \texttt{SharedResources} object also keeps track of all materials. Signals are emitted when materials are edited.
 
 \subsection{History}
 
@@ -128,13 +149,31 @@ Let \texttt{can\_undo} and \texttt{can\_undo} be booleans that determine if the 
 
 The positions of stems are stored as distances along parent stems. Stems internally calculate vector positions (\textit{i.e.} locations in world space) when distances are changed and when paths of ancestor stems are changed.
 
-\textbf{(TODO)} A map that pairs memory addresses with stem IDs is stored within each plant object so that is possible to quickly reference stems without storing their memory addresses. Entries are added to the map when stems are added to the plant and removed from the map when stems are removed from the plant. This enables objects to manage their own stem copies without leaking memory and preserves selection information after the program exits.
+\texttt{(TODO)} A map that pairs memory addresses with stem IDs is stored within each plant object so that is possible to quickly reference stems without storing their memory addresses. Entries are added to the map when stems are added to the plant and removed from the map when stems are removed from the plant. This enables objects to manage their own stem copies without leaking memory and preserves selection information after the program exits.
 
-\subsection{Materials/Textures}
+\subsubsection{Bark Ridges and Branch Collars}
+
+\texttt{(TODO)} The branch collar is a swelling at the base of the stem. It is an important structural feature.
+
+\subsubsection{Stem Forking}
+
+\texttt{(TODO)} A plant that has little apical dominance has more forks in its structure. Auxin is a hormone that surpresses the growth of lateral branches. Therefore, the less a plant produces auxin, the less likely there will be a central leader. 
+
+\subsection{Leaves}
+
+The position of leaves is stored as the distance along the parent stem. Since leaves do not know about their parent stems, the world position of the leaf can only be determined if the parent stem is also known.
+
+The orientation of leaves is more complicated than that of stems. This is because stems are represented as two dimensional lines, whereas leaves are represented as three dimensional objects. An additional set of rotations is applied to each leaf so that all leaves by default point upward. Finally, all leaf rotations are represented using quaternions. Subsequently concatenating Euler rotations cause gimbal lock if a leaf is rotated by 90 degrees around one axis. Quaternions provide more desirable behavior.
+
+\subsection{Materials and Textures}
 
 The plant object stores a list of all materials that stems and leaves can have. Stems and leaves store IDs of materials (instead of actual material objects), so materials only have to be updated in the plant object. An ID with a value of zero means that the stem or leaf has no material.
 
 The geometry generator needs to create vertex seams (\textit{i.e.} duplicate vertices) so that textures can be wraped around the stems. Vertex seams might not be needed if a special fragment shader is used.
+
+\subsection{Meshes}
+
+Each leaf has a reference to a mesh, where each mesh consists of an arbitrary set of points, texture coordinates, and indices. These meshes are stored within the plant object and are inserted into the plant geometry during generation.
 
 \section{Shaders}
 

@@ -19,32 +19,35 @@
 #include "remove_spline.h"
 #include <iterator>
 
-ExtrudeSpline::ExtrudeSpline(PointSelection *selection, pg::Spline *spline) :
-	prevSelection(*selection), newSelection(*selection)
+ExtrudeSpline::ExtrudeSpline(
+	PointSelection *selection, pg::Spline *spline, TranslationAxes *axes,
+	const Camera *camera) :
+	prevSelection(*selection), newSelection(*selection),
+	moveSpline(selection, spline, axes, camera)
 {
 	this->selection = selection;
 	this->spline = spline;
 }
 
+void ExtrudeSpline::setClickOffset(int x, int y)
+{
+	moveSpline.setClickOffset(x, y);
+}
+
 void ExtrudeSpline::execute()
 {
-	if (prevSpline.getSize() > 0) {
-		*spline = prevSpline;
-		*selection = newSelection;
-	} else {
-		std::set<int> points = selection->getPoints();
-		std::set<int> newPoints;
-		int o = 0;
+	std::set<int> points = selection->getPoints();
+	std::set<int> newPoints;
+	int o = 0;
 
-		for (auto it = points.begin(); it != points.end(); ++it) {
-			int p = *it;
-			p = spline->insert(p + o, spline->getControls()[p + o]);
-			newPoints.insert(p);
-			o += spline->getDegree();
-		}
-
-		selection->setPoints(newPoints);
+	for (auto it = points.begin(); it != points.end(); ++it) {
+		int p = *it;
+		p = spline->insert(p + o, spline->getControls()[p + o]);
+		newPoints.insert(p);
+		o += spline->getDegree();
 	}
+
+	selection->setPoints(newPoints);
 }
 
 void ExtrudeSpline::undo()
@@ -56,7 +59,28 @@ void ExtrudeSpline::undo()
 	*selection = prevSelection;
 }
 
-ExtrudeSpline *ExtrudeSpline::clone()
+void ExtrudeSpline::redo() {
+	*spline = prevSpline;
+	*selection = newSelection;
+}
+
+bool ExtrudeSpline::onMouseMove(QMouseEvent *event)
 {
-	return new ExtrudeSpline(*this);
+	bool update = moveSpline.onMouseMove(event);
+	this->done = moveSpline.isDone();
+	return update;
+}
+
+bool ExtrudeSpline::onMousePress(QMouseEvent *event)
+{
+	bool update = moveSpline.onMousePress(event);
+	this->done = moveSpline.isDone();
+	return update;
+}
+
+bool ExtrudeSpline::onMouseRelease(QMouseEvent *event)
+{
+	bool update = moveSpline.onMouseRelease(event);
+	this->done = moveSpline.isDone();
+	return update;
 }

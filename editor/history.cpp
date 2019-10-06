@@ -19,10 +19,10 @@
 
 using std::vector;
 
-void History::add(Command &command)
+void History::add(Command *command)
 {
 	future.clear();
-	std::shared_ptr<Command> cmd(command.clone());
+	std::shared_ptr<Command> cmd(command);
 	past.push_back(std::move(cmd));
 }
 
@@ -38,7 +38,7 @@ void History::undo()
 void History::redo()
 {
 	if (!future.empty()) {
-		future.back()->execute();
+		future.back()->redo();
 		past.push_back(future.back());
 		future.pop_back();
 	}

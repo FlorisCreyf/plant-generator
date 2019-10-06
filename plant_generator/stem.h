@@ -19,7 +19,7 @@
 #include "leaf.h"
 #include "math/math.h"
 #include "math/curve.h"
-#include "volumetric_path.h"
+#include "path.h"
 #include <boost/archive/text_oarchive.hpp>
 #include <map>
 
@@ -37,7 +37,7 @@ namespace pg {
 		Stem *parent;
 		int depth;
 		std::map<int, Leaf> leaves;
-		VolumetricPath path;
+		Path path;
 		int resolution = 10;
 		float position;
 		Vec3 location;
@@ -81,8 +81,8 @@ namespace pg {
 
 		void setResolution(int resolution);
 		int getResolution() const;
-		void setPath(VolumetricPath &path);
-		VolumetricPath getPath();
+		void setPath(Path &path);
+		Path getPath();
 		void setPosition(float position);
 		float getPosition() const;
 		Vec3 getLocation() const;

@@ -13,13 +13,6 @@ __Mouse controls__
 - _Left mouse button:_ Move items or add stems when no points are selected
 - _Right mouse button (+ Ctrl):_ Select items in the scene
 
-__Key controls__
-- _E_ Extrude the active path from the selected point
-- _R_ Rotate the path of stems
-- _A_ Add a new stem
-- _M_ Move stems along the parent path
-- _Num (+ Ctrl)_ Modify selection
-
 ## Installation
 
 ```sh
@@ -34,4 +27,3 @@ make all
 - Implement a flare (i.e. branch collar and branch ridge) component for stems
 - Implement branch forking
 - Implement asymmetrical cross sections
-- Finish leaf implementation

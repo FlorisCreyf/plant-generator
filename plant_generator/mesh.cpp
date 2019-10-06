@@ -350,7 +350,7 @@ void pg::Mesh::addLeaves(Stem *stem)
 		leafSegment.vertexStart = vertices[mesh].size();
 		leafSegment.indexStart = indices[mesh].size();
 
-		VolumetricPath path = stem->getPath();
+		Path path = stem->getPath();
 		Vec3 location = stem->getLocation();
 		float position = leaf->getPosition();
 		Vec3 dir;

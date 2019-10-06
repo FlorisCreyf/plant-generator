@@ -17,14 +17,23 @@
 
 #include "move_spline.h"
 
-MoveSpline::MoveSpline(PointSelection *selection, pg::Spline *spline,
-	TranslationAxes *axes)
+MoveSpline::MoveSpline(
+	PointSelection *selection, pg::Spline *spline, TranslationAxes *axes,
+	const Camera *camera)
 {
-	parallel = true;
-	totalDirection = pg::getZeroVec3();
+	this->parallel = true;
+	this->clickOffset[0] = this->clickOffset[1] = 0.0f;
+	this->totalDirection = pg::getZeroVec3();
 	this->selection = selection;
 	this->spline = spline;
 	this->axes = axes;
+	this->camera = camera;
+}
+
+void MoveSpline::setClickOffset(int x, int y)
+{
+	this->clickOffset[0] = x;
+	this->clickOffset[1] = y;
 }
 
 void MoveSpline::setSelection(PointSelection *selection)
@@ -43,43 +52,30 @@ void MoveSpline::set(pg::Ray ray, pg::Vec3 cameraDirection)
 	pg::Vec3 position = axes->getPosition();
 	pg::Plane plane = {position, cameraDirection};
 
-	switch (axes->getSelection()) {
-	case Axes::XAxis:
+	if (axes->getSelection() == Axes::XAxis)
 		plane.normal.x = 0.0f;
-		break;
-	case Axes::YAxis:
+	else if (axes->getSelection() == Axes::XAxis)
 		plane.normal.y = 0.0f;
-		break;
-	case Axes::ZAxis:
+	else if (axes->getSelection() == Axes::XAxis)
 		plane.normal.z = 0.0f;
-		break;
-	default:
-		break;
-	}
 
 	plane.normal = pg::normalize(plane.normal);
 	distance = pg::intersectsPlane(ray, plane);
 	position = distance * ray.direction + ray.origin;
 
-	switch (axes->getSelection()) {
-	case Axes::XAxis:
+	if (axes->getSelection() == Axes::XAxis) {
 		position.y = plane.point.y;
 		position.z = plane.point.z;
-		break;
-	case Axes::YAxis:
+	} else if (axes->getSelection() == Axes::XAxis) {
 		position.x = plane.point.x;
 		position.z = plane.point.z;
-		break;
-	case Axes::ZAxis:
+	} else if (axes->getSelection() == Axes::XAxis) {
 		position.x = plane.point.x;
 		position.y = plane.point.y;
-		break;
-	default:
-		break;
 	}
 
-	direction = position - axes->getPosition();
-	totalDirection += direction;
+	this->direction = position - axes->getPosition();
+	this->totalDirection += direction;
 	axes->setPosition(position);
 }
 
@@ -109,14 +105,14 @@ void MoveSpline::execute()
 			int p = *it;
 			bool a = it == points.begin();
 			bool b = it == --points.end();
-			
+
 			/* Don't move peripheral points if the center
 			 * point is also selected. */
 			if (p % 3 == 2 && (!b && *std::next(it) == p + 1))
 				continue;
 			if (p % 3 == 1 && (!a && *std::prev(it) == p - 1))
 				continue;
-			
+
 			/* Only one point can be moved if one peripheral
 			 * point moves the other. */
 			pg::Vec3 location = spline->getControls()[p];
@@ -132,13 +128,34 @@ void MoveSpline::execute()
 
 void MoveSpline::undo()
 {
-	direction = totalDirection = -1.0f * totalDirection;
+	this->direction = this->totalDirection = -1.0f * this->totalDirection;
 	execute();
-	/* Update direction for redo. */
-	direction = totalDirection = -1.0f * totalDirection;
+	this->direction = this->totalDirection = -1.0f * this->totalDirection;
 }
 
-MoveSpline *MoveSpline::clone()
+bool MoveSpline::onMouseMove(QMouseEvent *event)
 {
-	return new MoveSpline(*this);
+	QPoint point = event->pos();
+	float x = point.x() + clickOffset[0];
+	float y = point.y() + clickOffset[1];
+	set(camera->getRay(x, y), camera->getDirection());
+	setParallelTangents(false);
+	execute();
+	return true;
+}
+
+bool MoveSpline::onMousePress(QMouseEvent *)
+{
+	return false;
+}
+
+bool MoveSpline::onMouseRelease(QMouseEvent *)
+{
+	done = true;
+	return false;
+}
+
+bool MoveSpline::onKeyPress(QKeyEvent *)
+{
+	return false;
 }

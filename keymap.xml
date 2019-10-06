@@ -1,0 +1,58 @@
+<keymap>
+	<command>
+		<name>Add Leaf</name>
+		<key>L</key>
+	</command>
+	<command>
+		<name>Add Stem</name>
+		<key>S</key>
+	</command>
+	<command>
+		<name>Extrude</name>
+		<key>E</key>
+	</command>
+	<command>
+		<name>Move Point</name>
+		<key>G</key>
+	</command>
+	<command>
+		<name>Move Stem</name>
+		<key>H</key>
+	</command>
+	<command>
+		<name>Remove</name>
+		<key>DEL</key>
+	</command>
+	<command>
+		<name>Rotate</name>
+		<key>R</key>
+	</command>
+	<command>
+		<name>Reduce To Ancestors</name>
+		<key>CTRL+T</key>
+	</command>
+	<command>
+		<name>Select All</name>
+		<key>A</key>
+	</command>
+	<command>
+		<name>Select All Points</name>
+		<key>CTRL+A</key>
+	</command>
+	<command>
+		<name>Select Children</name>
+		<key>C</key>
+	</command>
+	<command>
+		<name>Select Previous Points</name>
+		<key>CTRL+P</key>
+	</command>
+	<command>
+		<name>Select Next Points</name>
+		<key>P</key>
+	</command>
+	<command>
+		<name>Select Siblings</name>
+		<key>CTRL+I</key>
+	</command>
+</keymap>

@@ -40,18 +40,23 @@ MaterialEditor::MaterialEditor(SharedResources *shared, QWidget *parent) :
 	columns->addLayout(topRow);
 
 	materialViewer = new MaterialViewer(shared, this);
+	materialViewer->setMinimumHeight(200);
 	columns->addWidget(materialViewer);
 
 	QFormLayout *form = new QFormLayout();
 	form->setMargin(10);
-	form->setSpacing(3);
+	form->setSpacing(2);
 	initFields(form);
 	columns->addLayout(form);
 	columns->addStretch(1);
 
 	connect(this, SIGNAL(materialChanged(ShaderParams)), materialViewer,
 		SLOT(updateMaterial(ShaderParams)));
-	connect(materialViewer, SIGNAL(ready()), this, SLOT(addMaterial()));
+}
+
+QSize MaterialEditor::sizeHint() const
+{
+	return QSize(350, 200);
 }
 
 void MaterialEditor::initFields(QFormLayout *form)
@@ -112,6 +117,11 @@ void MaterialEditor::initTopRow(QHBoxLayout *topRow)
 	connect(removeButton, SIGNAL(clicked()), this, SLOT(removeMaterial()));
 	connect(materialBox, SIGNAL(currentIndexChanged(int)), this,
 		SLOT(selectMaterial()));
+}
+
+const MaterialViewer *MaterialEditor::getViewer() const
+{
+	return materialViewer;
 }
 
 void MaterialEditor::addMaterial(pg::Material material)

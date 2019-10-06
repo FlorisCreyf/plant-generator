@@ -25,6 +25,12 @@ pg::Geometry::Geometry()
 	id = counter++;
 }
 
+void pg::Geometry::clear()
+{
+	points.clear();
+	indices.clear();
+}
+
 unsigned pg::Geometry::getId() const
 {
 	return id;

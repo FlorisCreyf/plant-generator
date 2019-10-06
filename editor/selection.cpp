@@ -69,6 +69,12 @@ void Selection::addLeaf(pg::Stem *stem, unsigned leaf)
 
 void Selection::select(QMouseEvent *event)
 {
+	if (!selectPoint(event))
+		selectStem(event);
+}
+
+bool Selection::selectPoint(QMouseEvent *event)
+{
 	int point = -1;
 
 	/* Try to select a point from an already selected stem. */
@@ -88,43 +94,45 @@ void Selection::select(QMouseEvent *event)
 		}
 	}
 
-	if (point < 0) {
-		QPoint point = event->pos();
-		pg::Ray ray = camera->getRay(point.x(), point.y());
-		std::pair<float, Stem *> sp = getStem(ray, plant->getRoot());
-		std::pair<float, pg::Segment> lp = getLeaf(ray);
+	return point >= 0;
+}
 
-		/* Remove previous selections if no modifier key is pressed. */
-		if (!(event->modifiers() & Qt::ControlModifier)) {
-			stems.clear();
-			leaves.clear();
-		}
+void Selection::selectStem(QMouseEvent *event)
+{
+	QPoint point = event->pos();
+	pg::Ray ray = camera->getRay(point.x(), point.y());
+	std::pair<float, Stem *> sp = getStem(ray, plant->getRoot());
+	std::pair<float, pg::Segment> lp = getLeaf(ray);
 
-		if (sp.second && sp.first < lp.first) {
-			auto it = stems.find(sp.second);
-			if (it != stems.end())
-				stems.erase(it);
-			else
-				addStem(sp.second);
-		} else if (lp.second.stem && lp.first < sp.first) {
-			unsigned leaf = lp.second.leaf;
-			Stem *stem = lp.second.stem;
-			auto it = leaves.find(stem);
-			if (it != leaves.end()) {
-				auto leafIt = it->second.find(leaf);
-				if (leafIt != it->second.end())
-					it->second.erase(leafIt);
-				else
-					addLeaf(stem, leaf);
-			} else
-				addLeaf(stem, leaf);
-		} else {
-			/* Clear the selection if nothing was clicked on. */
-			stems.clear();
-			leaves.clear();
-		}
+	/* Remove previous selections if no modifier key is pressed. */
+	if (!(event->modifiers() & Qt::ControlModifier)) {
+		stems.clear();
+		leaves.clear();
 	}
 
+	if (sp.second && sp.first < lp.first) {
+		auto it = stems.find(sp.second);
+		if (it != stems.end())
+			stems.erase(it);
+		else
+			addStem(sp.second);
+	} else if (lp.second.stem && lp.first < sp.first) {
+		unsigned leaf = lp.second.leaf;
+		Stem *stem = lp.second.stem;
+		auto it = leaves.find(stem);
+		if (it != leaves.end()) {
+			auto leafIt = it->second.find(leaf);
+			if (leafIt != it->second.end())
+				it->second.erase(leafIt);
+			else
+				addLeaf(stem, leaf);
+		} else
+			addLeaf(stem, leaf);
+	} else {
+		/* Clear the selection if nothing was clicked on. */
+		stems.clear();
+		leaves.clear();
+	}
 }
 
 void Selection::setInstances(std::map<pg::Stem *, PointSelection> instances)
@@ -158,7 +166,7 @@ std::pair<float, Stem *> Selection::getStem(pg::Ray &ray, Stem *stem)
 	std::pair<float, Stem *> selection2(max, nullptr);
 
 	if (stem != nullptr) {
-		pg::VolumetricPath path = stem->getPath();
+		pg::Path path = stem->getPath();
 
 		for (int i = 0, j = 1; i < path.getSize()-1; i++, j++) {
 			pg::Vec3 direction = path.getDirection(i);
@@ -381,7 +389,7 @@ void Selection::getTotalLeafPosition(pg::Vec3 &position, int &count) const
 {
 	for (auto &instance : leaves) {
 		pg::Stem *stem = instance.first;
-		pg::VolumetricPath path = stem->getPath();
+		pg::Path path = stem->getPath();
 		for (unsigned id : instance.second) {
 			pg::Leaf *leaf = stem->getLeaf(id);
 			position += stem->getLocation();

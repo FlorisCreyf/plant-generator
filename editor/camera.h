@@ -34,7 +34,8 @@ public:
 	void setDistance(float distance);
 	void setTarget(pg::Vec3 target);
 	void setAction(Action action);
-	void executeAction(float x, float y);
+	/** Returns true if an action was executed. */
+	bool executeAction(float x, float y);
 	void setStartCoordinates(float x, float y);
 	void setPan(float x, float y);
 	void setCoordinates(float x, float y);
@@ -42,15 +43,16 @@ public:
 	void setPerspective(float fovy, float near, float far, float aspect);
 	void setWindowSize(int width, int height);
 	void zoom(float y);
-	pg::Vec3 getPosition();
-	pg::Vec3 getDirection();
-	pg::Vec3 getTarget();
-	pg::Mat4 getVP();
-	pg::Vec3 toScreenSpace(pg::Vec3 point);
-	pg::Ray getRay(int x, int y);
-	pg::Vec3 getFar();
-	pg::Vec3 getNear();
-	bool isPerspective();
+	pg::Vec3 getPosition() const;
+	pg::Vec3 getDirection() const;
+	pg::Vec3 getTarget() const;
+	pg::Mat4 getVP() const;
+	pg::Mat4 updateVP();
+	pg::Vec3 toScreenSpace(pg::Vec3 point) const;
+	pg::Ray getRay(int x, int y) const;
+	pg::Vec3 getFar() const;
+	pg::Vec3 getNear() const;
+	bool isPerspective() const;
 
 private:
 	struct Point {
@@ -82,14 +84,14 @@ private:
 	float scroll;
 	float prevY;
 
-	pg::Vec3 getCameraPosition();
-	pg::Mat4 getInverseVP();
-	pg::Mat4 getInverseOrthographic();
-	pg::Mat4 getInversePerspective();
-	pg::Mat4 getInverseLookAt();
-	pg::Mat4 getLookAtMatrix(pg::Vec3 &eye, pg::Vec3 &target);
-	pg::Ray getOrthographicRay(int x, int y);
-	pg::Ray getPerspectiveRay(int x, int y);
+	pg::Vec3 getCameraPosition() const;
+	pg::Mat4 getInverseVP() const;
+	pg::Mat4 getInverseOrthographic() const;
+	pg::Mat4 getInversePerspective() const;
+	pg::Mat4 getInverseLookAt() const;
+	pg::Mat4 getLookAtMatrix(pg::Vec3 eye, pg::Vec3 target) const;
+	pg::Ray getOrthographicRay(int x, int y) const;
+	pg::Ray getPerspectiveRay(int x, int y) const;
 	void initOrthographic(pg::Vec3 near, pg::Vec3 far);
 };
 

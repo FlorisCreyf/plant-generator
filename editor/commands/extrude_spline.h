@@ -19,7 +19,10 @@
 #define EXTRUDE_SPLINE_H
 
 #include "command.h"
-#include "../point_selection.h"
+#include "move_spline.h"
+#include "editor/camera.h"
+#include "editor/geometry/translation_axes.h"
+#include "editor/point_selection.h"
 #include "plant_generator/spline.h"
 #include <memory>
 
@@ -29,12 +32,18 @@ class ExtrudeSpline : public Command {
 	PointSelection newSelection;
 	pg::Spline *spline;
 	pg::Spline prevSpline;
+	MoveSpline moveSpline;
 
 public:
-	ExtrudeSpline(PointSelection *selection, pg::Spline *spline);
+	ExtrudeSpline(PointSelection *selection, pg::Spline *spline,
+		TranslationAxes *axes, const Camera *camera);
+	void setClickOffset(int x, int y);
 	void execute();
 	void undo();
-	ExtrudeSpline *clone();
+	void redo();
+	bool onMouseMove(QMouseEvent *event);
+	bool onMousePress(QMouseEvent *event);
+	bool onMouseRelease(QMouseEvent *event);
 };
 
 #endif /* EXTRUDE_SPLINE_H */

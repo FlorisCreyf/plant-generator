@@ -27,7 +27,7 @@ class History {
 	std::vector<std::shared_ptr<Command>> future;
 
 public:
-	void add(Command &command);
+	void add(Command *command);
 	void undo();
 	void redo();
 	void clear();

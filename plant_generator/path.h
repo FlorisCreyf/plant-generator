@@ -1,4 +1,4 @@
-/* Copyright 2017-2018 Floris Creyfyt
+/* Copyright 2017-2018 Floris Creyf
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,9 @@ namespace pg {
 		Spline spline;
 		int resolution = 2;
 		int subdivisions = 0;
+		Spline radius;
+		float minRadius = 0.02f;
+		float maxRadius = 0.2f;
 
 		void generate();
 
@@ -40,6 +43,9 @@ namespace pg {
 			ar & spline;
 			ar & resolution;
 			ar & subdivisions;
+			ar & radius;
+			ar & minRadius;
+			ar & maxRadius;
 		}
 
 	public:
@@ -71,6 +77,14 @@ namespace pg {
 		float getDistance(int index) const;
 		/* Get the distance between control points. */
 		float getIntermediateDistance(int index) const;
+
+		void setMaxRadius(float radius);
+		float getMaxRadius();
+		void setMinRadius(float radius);
+		float getMinRadius();
+		void setRadius(Spline spline);
+		Spline getRadius();
+		float getRadius(int index);
 	};
 }
 

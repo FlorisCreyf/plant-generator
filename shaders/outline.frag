@@ -17,16 +17,25 @@ void main()
 		float y = gl_FragCoord.y * dy;
 
 		float v = 0;
+
 		float yy = y - dy * thickness;
+
 		for (int w = 0; w <= 2 * thickness; w++) {
 			float xx = x - dx * thickness;
 			for (int h = 0; h <= 2 * thickness; h++) {
-				v += float(texture(tex, vec2(xx, yy)).r < 0.1);
+				float a = 1 - texture(tex, vec2(xx, yy)).r;
+				if (a > v)
+					v = a;
+
 				xx += dx;
 			}
 			yy += dy;
 		}
-		finalColor = v > 0.0f ? vec4(0.1, 0.1, 0.1, 1.0) : finalColor;
+
+		if (v != 0)
+			finalColor = vec4(0.1, 0.1, 0.1, 1.0);
+		else
+		 	discard;
 	} else
 		finalColor = vec4(1.0, 1.0, 1.0, 1.0);
 }

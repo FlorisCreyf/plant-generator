@@ -80,8 +80,3 @@ void RemoveSpline::undo()
 	*selection = prevSelection;
 	*spline = prevSpline;
 }
-
-RemoveSpline *RemoveSpline::clone()
-{
-	return new RemoveSpline(*this);
-}

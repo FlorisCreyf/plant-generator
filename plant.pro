@@ -2,7 +2,7 @@ TEMPLATE = app
 CONFIG += qt debug object_parallel_to_source c++11 -g
 QMAKE_LFLAGS += -no-pie
 TARGET = plant
-QT = core gui opengl
+QT = core gui opengl xml
 #INCLUDEPATH += /usr/include/boost
 LIBS += /usr/lib/x86_64-linux-gnu/libboost_serialization.a
 
@@ -19,9 +19,9 @@ plant_generator/path.cpp \
 plant_generator/plant.cpp \
 plant_generator/spline.cpp \
 plant_generator/stem.cpp \
-plant_generator/volumetric_path.cpp \
 editor/commands/add_stem.cpp \
 editor/commands/add_leaf.cpp \
+editor/commands/command.cpp \
 editor/commands/extrude_spline.cpp \
 editor/commands/extrude_stem.cpp \
 editor/commands/move_spline.cpp \
@@ -44,6 +44,7 @@ editor/graphics/shared_resources.cpp \
 editor/widgets/curve_button.cpp \
 editor/widgets/curve_editor.cpp \
 editor/widgets/editor.cpp \
+editor/widgets/key_editor.cpp \
 editor/widgets/material_editor.cpp \
 editor/widgets/material_viewer.cpp \
 editor/widgets/mesh_editor.cpp \
@@ -53,6 +54,7 @@ editor/widgets/window.cpp \
 editor/camera.cpp \
 editor/file.cpp \
 editor/history.cpp \
+editor/keymap.cpp \
 editor/main.cpp \
 editor/point_selection.cpp \
 editor/selection.cpp
@@ -71,7 +73,6 @@ plant_generator/patterns.h \
 plant_generator/plant.h \
 plant_generator/spline.h \
 plant_generator/stem.h \
-plant_generator/volumetric_path.h \
 editor/commands/add_stem.h \
 editor/commands/add_leaf.h \
 editor/commands/command.h \
@@ -98,6 +99,7 @@ editor/widgets/curve_button.h \
 editor/widgets/curve_editor.h \
 editor/widgets/editor.h \
 editor/widgets/item_delegate.h \
+editor/widgets/key_editor.h \
 editor/widgets/material_editor.h \
 editor/widgets/mesh_editor.h \
 editor/widgets/mesh_viewer.h \
@@ -107,6 +109,7 @@ editor/widgets/window.h \
 editor/camera.h \
 editor/file.h \
 editor/history.h \
+editor/keymap.h \
 editor/point_selection.h \
 editor/selection.h
 

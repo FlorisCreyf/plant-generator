@@ -40,6 +40,8 @@ class MaterialEditor : public QWidget {
 	QPushButton *addDiffuseButton;
 	QPushButton *removeDiffuseButton;
 
+	QToolBar *toolbar;
+
 	void initFields(QFormLayout *form);
 	void initTopRow(QHBoxLayout *topRow);
 
@@ -47,6 +49,8 @@ public:
 	MaterialEditor(SharedResources *shared, QWidget *parent = 0);
 	void addMaterial(pg::Material material);
 	void clear();
+	QSize sizeHint() const;
+	const MaterialViewer *getViewer() const;
 
 public slots:
 	void addMaterial();

@@ -153,6 +153,20 @@ namespace pg {
 		{
 			return vectors[row];
 		}
+
+		Mat4 &operator*=(Mat4 b)
+		{
+			Mat4 a = *this;
+			for (int row = 0; row < 4; row++)
+				for (int col = 0; col < 4; col++) {
+					float w = a[0][col]*b[row][0];
+					float x = a[1][col]*b[row][1];
+					float y = a[2][col]*b[row][2];
+					float z = a[3][col]*b[row][3];
+					this->vectors[row][col] = w + x + y + z;
+				}
+			return *this;
+		}
 	};
 
 	typedef Vec4 Quat;
@@ -225,29 +239,6 @@ namespace pg {
 	inline std::ostream &operator<<(std::ostream &stream, const Vec3 &v)
 	{
 		stream << "(" << v.x << ", " << v.y << ", " << v.z << ")";
-		return stream;
-	}
-
-	inline std::ostream &operator<<(std::ostream &stream, const Mat4 &m)
-	{
-		stream << std::fixed;
-		stream << "[" << std::setw(10) << m[0].x << " " <<
-			std::setw(10) << m[0].y << " " <<
-			std::setw(10) << m[0].z << " " <<
-			std::setw(10) << m[0].w << "]\n";
-		stream << "[" << std::setw(10) << m[1].x << " " <<
-			std::setw(10) << m[1].y << " " <<
-			std::setw(10) << m[1].z << " " <<
-			std::setw(10) << m[1].w << "]\n";
-		stream << "[" << std::setw(10) << m[2].x << " " <<
-			std::setw(10) << m[2].y << " " <<
-			std::setw(10) << m[2].z << " " <<
-			std::setw(10) << m[2].w << "]\n";
-		stream << "[" << std::setw(10) << m[3].x << " " <<
-			std::setw(10) << m[3].y << " " <<
-			std::setw(10) << m[3].z << " " <<
-			std::setw(10) << m[3].w << "]\n";
-		stream << std::defaultfloat;
 		return stream;
 	}
 
@@ -325,16 +316,8 @@ namespace pg {
 
 	inline Mat4 operator*(const Mat4 &a, const Mat4 &b)
 	{
-		int row = 0;
-		int col = 0;
-		Mat4 m;
-		for (row = 0; row < 4; row++)
-			for (col = 0; col < 4; col++)
-				m[row][col] =
-					a[0][col]*b[row][0] +
-					a[1][col]*b[row][1] +
-					a[2][col]*b[row][2] +
-					a[3][col]*b[row][3];
+		Mat4 m = a;
+		m *= b;
 		return m;
 	}
 

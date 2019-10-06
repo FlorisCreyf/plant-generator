@@ -15,40 +15,35 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
- #include "save_point_selection.h"
+#include "save_point_selection.h"
 
- SavePointSelection::SavePointSelection(PointSelection *selection) :
- 	after(*selection), before(*selection)
- {
- 	this->selection = selection;
- }
+SavePointSelection::SavePointSelection(PointSelection *selection) :
+	after(*selection), before(*selection)
+{
+	this->selection = selection;
+}
 
- bool SavePointSelection::hasChanged() const
- {
- 	return *selection != before;
- }
+bool SavePointSelection::hasChanged() const
+{
+	return *selection != before;
+}
 
- void SavePointSelection::setBefore()
- {
- 	before = *selection;
- }
+void SavePointSelection::setBefore()
+{
+	before = *selection;
+}
 
- void SavePointSelection::setAfter()
- {
- 	after = *selection;
- }
+void SavePointSelection::setAfter()
+{
+	after = *selection;
+}
 
- void SavePointSelection::execute()
- {
- 	*selection = after;
- }
+void SavePointSelection::execute()
+{
+	*selection = after;
+}
 
- void SavePointSelection::undo()
- {
- 	*selection = before;
- }
-
- SavePointSelection *SavePointSelection::clone()
- {
- 	return new SavePointSelection(*this);
- }
+void SavePointSelection::undo()
+{
+	*selection = before;
+}
