@@ -19,440 +19,398 @@
 
 using pg::Vec3;
 using pg::Mat4;
+using pg::Stem;
+using pg::Segment;
+using pg::Mesh;
+using std::vector;
 
-pg::Mesh::Mesh(pg::Plant *plant)
+Mesh::Mesh(pg::Plant *plant)
 {
 	this->plant = plant;
-	defaultLeaf.setPerpendicularPlanes();
+	this->defaultLeaf.setPerpendicularPlanes();
 }
 
-void pg::Mesh::generate()
+void Mesh::generate()
 {
-	Stem *stem = plant->getRoot();
-	stemSegments.clear();
-	leafSegments.clear();
-	vertices.clear();
-	indices.clear();
-	meshes.clear();
-	materials.clear();
-	mesh = 0;
-	addStem(stem, 0);
-
-#ifndef PG_NO_UNIFIED_INDICES
-	/* Assumes that all meshes will be stored in the same buffer in the
-	 * following order. */
-	if (!indices.empty()) {
-		unsigned vsize = vertices[0].size();
-		unsigned isize = indices[0].size();
-		unsigned ioffset = vsize / vertexSize;
-		for (unsigned mesh = 1; mesh < indices.size(); mesh++) {
-			for (unsigned &index : indices[mesh])
-				index += ioffset;
-			for (Segment &s : stemSegments[mesh]) {
-				s.vertexStart += vsize;
-				s.indexStart += isize;
-			}
-			for (Segment &s : leafSegments[mesh]) {
-				s.vertexStart += vsize;
-				s.indexStart += isize;
-			}
-			vsize += vertices[mesh].size();
-			isize += indices[mesh].size();
-			ioffset = vsize / vertexSize;
-		}
-	}
-#endif
+	Stem *stem = this->plant->getRoot();
+	initBuffer();
+	addStem(stem);
+	updateSegments();
 }
 
-std::vector<float> pg::Mesh::getVertices() const
+Segment Mesh::addStem(Stem *stem)
 {
-	std::vector<float> object;
-	for (auto it = vertices.begin(); it != vertices.end(); it++)
-		object.insert(object.end(), it->begin(), it->end());
-	return object;
-}
-
-std::vector<unsigned> pg::Mesh::getIndices() const
-{
-	std::vector<unsigned> object;
-	for (auto it = indices.begin(); it != indices.end(); it++)
-		object.insert(object.end(), it->begin(), it->end());
-	return object;
-}
-
-const std::vector<float> *pg::Mesh::getVertices(int mesh) const
-{
-	return &vertices[mesh];
-}
-
-const std::vector<unsigned> *pg::Mesh::getIndices(int mesh) const
-{
-	return &indices[mesh];
-}
-
-const std::vector<pg::Segment> *pg::Mesh::getStemSegments(int mesh) const
-{
-	return &stemSegments[mesh];
-}
-
-const std::vector<pg::Segment> *pg::Mesh::getLeafSegments(int mesh) const
-{
-	return &leafSegments[mesh];
-}
-
-pg::Segment pg::Mesh::findStem(pg::Stem *stem) const
-{
-	Segment segment = {};
-	for (size_t i = 0; i < stemSegments.size(); i++) {
-		for (size_t j = 0; j < stemSegments[i].size(); j++) {
-			if (stemSegments[i][j].stem == stem) {
-				segment = stemSegments[i][j];
-				break;
-			}
-		}
-	}
-	return segment;
-}
-
-pg::Segment pg::Mesh::findLeaf(Stem *stem, unsigned leaf) const
-{
-	Segment segment = {};
-	for (size_t i = 0; i < leafSegments.size(); i++) {
-		for (size_t j = 0; j < leafSegments[i].size(); j++) {
-			unsigned l = leafSegments[i][j].leaf;
-			Stem *s = leafSegments[i][j].stem;
-			if (l == leaf && s == stem) {
-				segment = leafSegments[i][j];
-				break;
-			}
-		}
-	}
-	return segment;
-}
-
-pg::Segment pg::Mesh::getLeaf(int mesh, int index) const
-{
-	return leafSegments[mesh][index];
-}
-
-int pg::Mesh::getLeafCount(int mesh) const
-{
-	return leafSegments[mesh].size();
-}
-
-Mat4 pg::Mesh::getSectionTransform(Stem *stem, size_t section, float offset)
-{
-	Vec3 up = {0.0f, 1.0f, 0.0f};
-	Vec3 point = stem->getPath().get(section);
-	Vec3 direction = stem->getPath().getAverageDirection(section);
-	Vec3 location = stem->getLocation() + point + offset * direction;
-	Mat4 rotation = pg::rotateIntoVec(up, direction);
-	Mat4 translation = pg::translate(location);
-	return translation * rotation;
-}
-
-void pg::Mesh::addSection(Stem *stem, size_t section, float &textureOffset,
-	float pathOffset)
-{
-	Mat4 transform = getSectionTransform(stem, section, pathOffset);
-	float radius = stem->getPath().getRadius(section);
-	float length = stem->getPath().getIntermediateDistance(section);
-	const float rotation = 2.0f * M_PI / stem->getResolution();
-	const float uSegment = 1.0f / stem->getResolution();
-	float angle = 0.0f;
-	Vec2 uv = {1.0f, -length/(radius * 2.0f * (float)M_PI) + textureOffset};
-	textureOffset = uv.y;
-
-#ifdef PG_NO_VERTEX_SEAM
-	for (int i = 0; i < stem->getResolution(); i++) {
-#else
-	for (int i = 0; i <= stem->getResolution(); i++) {
-#endif
-		Vec3 point = {std::cos(angle), 0.0f, std::sin(angle)};
-		Vec3 normal = pg::normalize(point);
-		point = radius * point;
-
-		point = pg::toVec3(transform * pg::toVec4(point, 1.0f));
-		normal = pg::toVec3(transform * pg::toVec4(normal, 0.0f));
-		normal = pg::normalize(normal);
-		addPoint(point, normal, uv);
-		uv.x -= uSegment;
-		angle += rotation;
-	}
-}
-
-void pg::Mesh::addRectangle(size_t *s1, size_t *s2)
-{
-	indices[mesh].push_back(*s2);
-	indices[mesh].push_back(++(*s2));
-	indices[mesh].push_back(*s1);
-
-	indices[mesh].push_back(*s1);
-	indices[mesh].push_back(*s2);
-	indices[mesh].push_back(++(*s1));
-}
-
-void pg::Mesh::addLastRectangle(size_t a, size_t b, size_t iA, size_t iB)
-{
-	addTriangle(iB, iA, a);
-	addTriangle(a, b, iB);
-}
-
-void pg::Mesh::addTriangleRing(size_t csA, size_t csB, int divisions)
-{
-#ifdef PG_NO_VERTEX_SEAM
-	size_t initCsA = csA;
-	size_t initCsB = csB;
-#endif
-
-	for (int i = 0; i <= divisions - 1; i++)
-		addRectangle(&csA, &csB);
-
-#ifdef PG_NO_VERTEX_SEAM
-	addLastRectangle(csA, csB, initCsA, initCsB);
-#endif
-}
-
-void pg::Mesh::addRectangles(size_t csA, size_t csB, int start, int end,
-	int divisions)
-{
-	size_t initCsA = csA;
-	size_t initCsB = csB;
-	int i;
-
-	for (i = 0; i < divisions-1; i++)
-		if (i >= start && i <= end)
-			addRectangle(&csA, &csB);
-		else {
-			csA++;
-			csB++;
-		}
-
-	if (i >= start && i <= end) {
-		csA = initCsA + divisions - 1;
-		csB = initCsB + divisions - 1;
-		addLastRectangle(csA, csB, initCsA, initCsB);
-	}
-}
-
-void pg::Mesh::capStem(Stem *stem, int stemMesh, size_t section)
-{
-	int divisions = stem->getResolution();
-	int index;
-
-#ifndef PG_NO_VERTEX_SEAM
-	const float rotation = 2.0f * M_PI / divisions;
-	float angle = 0.0f;
-	index = section;
-	section = vertices[mesh].size();
-	for (int i = 0; i <= divisions; i++) {
-		Vec3 point;
-		Vec3 normal;
-		Vec2 tex;
-		point.x = vertices[stemMesh][index];
-		point.y = vertices[stemMesh][index+1];
-		point.z = vertices[stemMesh][index+2];
-		normal.x = vertices[stemMesh][index+3];
-		normal.y = vertices[stemMesh][index+4];
-		normal.z = vertices[stemMesh][index+5];
-		tex.x = std::cos(angle) * 0.5f + 0.5f;
-		tex.y = std::sin(angle) * 0.5f + 0.5f;
-		angle += rotation;
-		addPoint(point, normal, tex);
-		index += vertexSize;
-	}
-#endif /* PG_NO_VERTEX_SEAM */
-
-	size_t vertex = section / vertexSize;
-	for (index = 0; index < divisions/2 - 1; index++) {
-		indices[mesh].push_back(vertex + index);
-		indices[mesh].push_back(vertex + divisions - index - 1);
-		indices[mesh].push_back(vertex + index + 1);
-
-		indices[mesh].push_back(vertex + index + 1);
-		indices[mesh].push_back(vertex + divisions - index - 1);
-		indices[mesh].push_back(vertex + divisions - index - 2);
-	}
-
-	if ((divisions & 1) != 0 /* is odd */) {
-		indices[mesh].push_back(vertex + index);
-		indices[mesh].push_back(vertex + index + 2);
-		indices[mesh].push_back(vertex + index + 1);
-	}
-}
-
-void pg::Mesh::addStem(Stem *stem, int mesh, float pathOffset)
-{
+	/* Hide stems with invalid locations. */
 	if (std::isnan(stem->getLocation().x))
-		return;
+		return (Segment){};
 
-	mesh = selectBuffer(stem->getMaterial(Stem::Outer), mesh);
+	int mesh = selectBuffer(stem->getMaterial(Stem::Outer));
 	this->mesh = mesh;
 
-	float textureOffset = 0.0f;
-	pg::Segment stemSegment;
+	Segment stemSegment;
 	stemSegment.stem = stem;
 	stemSegment.vertexStart = vertices[mesh].size();
 	stemSegment.indexStart = indices[mesh].size();
+	float uvOffset = 0.0f;
+	int lastSection = stem->getPath().getSize() - 1;
 
-	{ /* first cross section */
-		size_t origIndex = vertices[mesh].size() / vertexSize;
-		addSection(stem, 0, textureOffset, pathOffset);
-		size_t currentIndex = vertices[mesh].size() / vertexSize;
-		addTriangleRing(origIndex, currentIndex, stem->getResolution());
+	size_t prevIndex = vertices[mesh].size();
+	addSection(stem, 0, uvOffset);
+	size_t currentIndex = vertices[mesh].size();
+	addTriangleRing(prevIndex, currentIndex, stem->getResolution());
+
+	for (int section = 1; section < lastSection; section++) {
+		size_t prevIndex = vertices[mesh].size();
+		addSection(stem, section, uvOffset);
+		size_t currentIndex = vertices[mesh].size();
+		addTriangleRing(prevIndex, currentIndex, stem->getResolution());
 	}
 
-	for (int i = 1; i < stem->getPath().getSize() - 1; i++) {
-		size_t origIndex = vertices[mesh].size() / vertexSize;
-		addSection(stem, i, textureOffset);
-		size_t currentIndex = vertices[mesh].size() / vertexSize;
-		addTriangleRing(origIndex, currentIndex, stem->getResolution());
-	}
-
-	{ /* last cross section */
-		size_t lastSection = vertices[mesh].size();
-		int i = stem->getPath().getSize() - 1;
-		addSection(stem, i, textureOffset);
-
-		int capMesh = stem->getMaterial(Stem::Inner);
-		this->mesh = selectBuffer(capMesh, mesh);
-		capStem(stem, mesh, lastSection);
-	}
+	size_t lastSectionIndex = vertices[mesh].size();
+	addSection(stem, lastSection, uvOffset);
+	this->mesh = selectBuffer(stem->getMaterial(Stem::Inner));
+	capStem(stem, mesh, lastSectionIndex);
 
 	stemSegment.vertexCount = vertices[mesh].size();
 	stemSegment.vertexCount -= stemSegment.vertexStart;
 	stemSegment.indexCount = indices[mesh].size();
 	stemSegment.indexCount -= stemSegment.indexStart;
-	stemSegments[mesh].push_back(stemSegment);
+	this->stemSegments[mesh].push_back(stemSegment);
 
 	addLeaves(stem);
 
-	{
-		Stem *child = stem->getChild();
-		while (child != nullptr) {
-			addStem(child, 0.0f);
-			child = child->getSibling();
-		}
+	Stem *child = stem->getChild();
+	while (child != nullptr) {
+		addStem(child);
+		child = child->getSibling();
+	}
+
+	return stemSegment;
+}
+
+/**
+ * Generate a cross-section for a point in the stem's path. Indices are added
+ * at a latter stage (two cross-sections are required to form a ring of
+ * triangles).
+ */
+void Mesh::addSection(Stem *stem, size_t section, float &uvOffset)
+{
+	Mat4 transform = getSectionTransform(stem, section);
+	float radius = stem->getPath().getRadius(section);
+	float length = stem->getPath().getIntermediateDistance(section);
+	float angle = 0.0f;
+	float rotation = 2.0f * M_PI / stem->getResolution();
+	float uOffset = 1.0f / stem->getResolution();
+
+	Vertex vertex;
+	vertex.uv = {1.0f, -length/(radius * 2.0f * (float)M_PI) + uvOffset};
+	uvOffset = vertex.uv.y;
+
+	for (int i = 0; i <= stem->getResolution(); i++) {
+		vertex.position = {std::cos(angle), 0.0f, std::sin(angle)};
+		vertex.normal = normalize(vertex.position);
+		vertex.position = radius * vertex.position;
+		vertex.position = transform.apply(vertex.position, 1.0f);
+		vertex.normal = transform.apply(vertex.normal, 0.0f);
+		vertex.normal = normalize(vertex.normal);
+
+		this->vertices[this->mesh].push_back(vertex);
+
+		vertex.uv.x -= uOffset;
+		angle += rotation;
 	}
 }
 
-void pg::Mesh::addLeaves(Stem *stem)
+/**
+ * Transform points in the cross-section so that they face the direction of
+ * the stem's path.
+ */
+Mat4 Mesh::getSectionTransform(Stem *stem, size_t section)
 {
-	int initMesh = this->mesh;
+	Vec3 up = {0.0f, 1.0f, 0.0f};
+	Vec3 point = stem->getPath().get(section);
+	Vec3 direction = stem->getPath().getAverageDirection(section);
+	Vec3 location = stem->getLocation() + point;
+	Mat4 rotation = rotateIntoVec(up, direction);
+	Mat4 translation = translate(location);
+	return translation * rotation;
+}
+
+/**
+ * Compute indices between the cross-section just generated (starting at the
+ * previous index) and the cross-section that still needs to be generated
+ * (which will start at the current index).
+ */
+void Mesh::addTriangleRing(size_t prevIndex, size_t index, int divisions)
+{
+	for (int i = 0; i <= divisions - 1; i++) {
+		addTriangle(index, index + 1, prevIndex);
+		index++;
+		addTriangle(prevIndex, index, prevIndex + 1);
+		prevIndex++;
+	}
+}
+
+void Mesh::capStem(Stem *stem, int stemMesh, size_t section)
+{
+	int index = section;
+	int divisions = stem->getResolution();
+	float rotation = 2.0f * M_PI / divisions;
+	float angle = 0.0f;
+	section = this->vertices[this->mesh].size();
+
+	for (int i = 0; i <= divisions; i++, index++, angle += rotation) {
+		Vertex vertex = this->vertices[stemMesh][index];
+		vertex.uv.x = std::cos(angle) * 0.5f + 0.5f;
+		vertex.uv.y = std::sin(angle) * 0.5f + 0.5f;
+		this->vertices[this->mesh].push_back(vertex);
+	}
+
+	for (index = 0; index < divisions/2 - 1; index++) {
+		addTriangle(
+			section + index,
+			section + divisions - index - 1,
+			section + index + 1);
+		addTriangle(
+			section + index + 1,
+			section + divisions - index - 1,
+			section + divisions - index - 2);
+	}
+
+	if ((divisions & 1) != 0) { /* is odd */
+		size_t lastSection = section + index;
+		addTriangle(lastSection, lastSection + 2, lastSection + 1);
+	}
+}
+
+void Mesh::addLeaves(Stem *stem)
+{
 	auto leaves = stem->getLeaves();
 	for (auto it = leaves.begin(); it != leaves.end(); it++) {
 		Leaf *leaf = stem->getLeaf(it->first);
-		this->mesh = selectBuffer(leaf->getMaterial(), initMesh);
-
-		Segment leafSegment;
-		leafSegment.leaf = leaf->getId();
-		leafSegment.stem = stem;
-		leafSegment.vertexStart = vertices[mesh].size();
-		leafSegment.indexStart = indices[mesh].size();
-
-		Path path = stem->getPath();
-		Vec3 location = stem->getLocation();
-		float position = leaf->getPosition();
-		Vec3 dir;
-		Quat rot;
-
-		if (position >= 0.0f && position < path.getLength()) {
-			dir = path.getIntermediateDirection(position);
-			location += path.getIntermediate(position);
-		} else {
-			dir = path.getDirection(path.getSize() - 1);
-			location += path.get().back();
-		}
-
-		Geometry geom = defaultLeaf;
-		if (leaf->getMesh() != 0)
-			geom = plant->getLeafMesh(leaf->getMesh());
-		rot = leaf->getDefaultOrientation(dir) * leaf->getRotation();
-		geom.transform(rot, leaf->getScale(), location);
-
-		size_t index = vertices[mesh].size() / vertexSize;
-		for (Geometry::Point p : geom.getPoints())
-			addPoint(p.position, p.normal, p.uv);
-		for (unsigned i : geom.getIndices())
-			indices[mesh].push_back(i + index);
-
-		leafSegment.vertexCount = vertices[mesh].size();
-		leafSegment.vertexCount -= leafSegment.vertexStart;
-		leafSegment.indexCount = indices[mesh].size();
-		leafSegment.indexCount -= leafSegment.indexStart;
-		leafSegments[mesh].push_back(leafSegment);
+		this->mesh = selectBuffer(leaf->getMaterial());
+		addLeaf(leaf, stem);
 	}
 }
 
-void pg::Mesh::addPoint(Vec3 point, Vec3 normal, Vec2 texture)
+void Mesh::addLeaf(Leaf *leaf, Stem *stem)
 {
-	vertices[mesh].push_back(point.x);
-	vertices[mesh].push_back(point.y);
-	vertices[mesh].push_back(point.z);
-	vertices[mesh].push_back(normal.x);
-	vertices[mesh].push_back(normal.y);
-	vertices[mesh].push_back(normal.z);
-	vertices[mesh].push_back(texture.x);
-	vertices[mesh].push_back(texture.y);
+	Segment leafSegment;
+	leafSegment.leaf = leaf->getId();
+	leafSegment.stem = stem;
+	leafSegment.vertexStart = this->vertices[this->mesh].size();
+	leafSegment.indexStart = this->indices[this->mesh].size();
+
+	Path path = stem->getPath();
+	Vec3 location = stem->getLocation();
+	float position = leaf->getPosition();
+	Vec3 direction;
+	Quat rotation;
+
+	if (position >= 0.0f && position < path.getLength()) {
+		direction = path.getIntermediateDirection(position);
+		location += path.getIntermediate(position);
+	} else {
+		direction = path.getDirection(path.getSize() - 1);
+		location += path.get().back();
+	}
+
+	Geometry geom = this->defaultLeaf;
+	if (leaf->getMesh() != 0)
+		geom = this->plant->getLeafMesh(leaf->getMesh());
+	rotation = leaf->getDefaultOrientation(direction);
+	rotation *= leaf->getRotation();
+	geom.transform(rotation, leaf->getScale(), location);
+
+	size_t index = this->vertices[this->mesh].size();
+	for (Vertex vertex : geom.getPoints())
+		this->vertices[this->mesh].push_back(vertex);
+	for (unsigned i : geom.getIndices())
+		indices[mesh].push_back(i + index);
+
+	leafSegment.vertexCount = vertices[mesh].size();
+	leafSegment.vertexCount -= leafSegment.vertexStart;
+	leafSegment.indexCount = indices[mesh].size();
+	leafSegment.indexCount -= leafSegment.indexStart;
+	leafSegments[this->mesh].push_back(leafSegment);
 }
 
-void pg::Mesh::addTriangle(int a, int b, int c)
+void Mesh::addTriangle(int a, int b, int c)
 {
-	indices[mesh].push_back(a);
-	indices[mesh].push_back(b);
-	indices[mesh].push_back(c);
+	this->indices[this->mesh].push_back(a);
+	this->indices[this->mesh].push_back(b);
+	this->indices[this->mesh].push_back(c);
 }
 
-int pg::Mesh::selectBuffer(int material, int mesh)
+/**
+ * Different buffers are used for different materials. This is done to keep
+ * geometry with identical materials together and simplify draw calls.
+ */
+int Mesh::selectBuffer(int material)
 {
+	auto it = this->meshes.find(material);
+	int mesh = it != this->meshes.end() ? it->first : 0;
 	if (material != 0) {
-		auto it = meshes.find(material);
-		if (it == meshes.end()) {
-			vertices.push_back(std::vector<float>());
-			indices.push_back(std::vector<unsigned>());
-			stemSegments.push_back(std::vector<Segment>());
-			leafSegments.push_back(std::vector<Segment>());
-			meshes[material] = indices.size() - 1;
-			materials.push_back(material);
+		if (it == this->meshes.end()) {
+			this->vertices.push_back(vector<Vertex>());
+			this->indices.push_back(vector<unsigned>());
+			this->stemSegments.push_back(vector<Segment>());
+			this->leafSegments.push_back(vector<Segment>());
+			this->meshes[material] = this->indices.size() - 1;
+			this->materials.push_back(material);
 		}
-		mesh = meshes[material];
-	} else if (materials.empty()) {
-		materials.push_back(0);
-		vertices.push_back(std::vector<float>());
-		indices.push_back(std::vector<unsigned>());
-		stemSegments.push_back(std::vector<Segment>());
-		leafSegments.push_back(std::vector<Segment>());
+		mesh = this->meshes[material];
 	}
 	return mesh;
 }
 
-int pg::Mesh::getMeshCount() const
+void Mesh::initBuffer()
+{
+	this->materials.clear();
+	this->vertices.clear();
+	this->indices.clear();
+	this->meshes.clear();
+	this->stemSegments.clear();
+	this->leafSegments.clear();
+
+	this->materials.push_back(0);
+	this->vertices.push_back(vector<Vertex>());
+	this->indices.push_back(vector<unsigned>());
+	this->stemSegments.push_back(vector<Segment>());
+	this->leafSegments.push_back(vector<Segment>());
+}
+
+/**
+ * Geometry is divided into different groups depending on its material.
+ * Geometry is latter on stored in the same vertex buffer, but is seperated
+ * based on material to minimize draw calls. This method updates the indices
+ * to what they should be in the final merged vertex buffer.
+ */
+void Mesh::updateSegments()
+{
+	if (!this->indices.empty()) {
+		unsigned vsize = this->vertices[0].size();
+		unsigned isize = this->indices[0].size();
+		for (unsigned mesh = 1; mesh < this->indices.size(); mesh++) {
+			for (unsigned &index : this->indices[mesh])
+				index += vsize;
+			for (Segment &segment : this->stemSegments[mesh]) {
+				segment.vertexStart += vsize;
+				segment.indexStart += isize;
+			}
+			for (Segment &segment : this->leafSegments[mesh]) {
+				segment.vertexStart += vsize;
+				segment.indexStart += isize;
+			}
+			vsize += this->vertices[mesh].size();
+			isize += this->indices[mesh].size();
+		}
+	}
+}
+
+int Mesh::getMeshCount() const
 {
 	return indices.size();
 }
 
-int pg::Mesh::getVertexCount() const
+int Mesh::getVertexCount() const
 {
 	int size = 0;
-	for (auto &mesh : vertices)
+	for (auto &mesh : this->vertices)
 		size += mesh.size();
 	return size;
 }
 
-int pg::Mesh::getIndexCount() const
+int Mesh::getIndexCount() const
 {
 	int size = 0;
-	for (auto &mesh : indices)
+	for (auto &mesh : this->indices)
 		size += mesh.size();
 	return size;
 }
 
-unsigned pg::Mesh::getMaterialId(int mesh) const
+unsigned Mesh::getMaterialId(int mesh) const
 {
-	return materials.at(mesh);
+	return this->materials.at(mesh);
 }
 
-int pg::Mesh::getVertexSize() const
+vector<pg::Vertex> Mesh::getVertices() const
 {
-	return vertexSize;
+	vector<Vertex> object;
+	for (auto it = this->vertices.begin(); it != this->vertices.end(); it++)
+		object.insert(object.end(), it->begin(), it->end());
+	return object;
+}
+
+vector<unsigned> Mesh::getIndices() const
+{
+	vector<unsigned> object;
+	for (auto it = this->indices.begin(); it != this->indices.end(); it++)
+		object.insert(object.end(), it->begin(), it->end());
+	return object;
+}
+
+const vector<pg::Vertex> *Mesh::getVertices(int mesh) const
+{
+	return &this->vertices[mesh];
+}
+
+const vector<unsigned> *Mesh::getIndices(int mesh) const
+{
+	return &this->indices[mesh];
+}
+
+const vector<Segment> *Mesh::getStemSegments(int mesh) const
+{
+	return &this->stemSegments[mesh];
+}
+
+const vector<Segment> *Mesh::getLeafSegments(int mesh) const
+{
+	return &this->leafSegments[mesh];
+}
+
+Segment Mesh::getLeaf(int mesh, int index) const
+{
+	return this->leafSegments[mesh][index];
+}
+
+int Mesh::getLeafCount(int mesh) const
+{
+	return this->leafSegments[mesh].size();
+}
+
+/** Find the location of a stem in the buffer. */
+Segment Mesh::findStem(Stem *stem) const
+{
+	Segment segment = {};
+	for (size_t i = 0; i < this->stemSegments.size(); i++) {
+		for (size_t j = 0; j < this->stemSegments[i].size(); j++) {
+			if (this->stemSegments[i][j].stem == stem) {
+				segment = this->stemSegments[i][j];
+				break;
+			}
+		}
+	}
+	return segment;
+}
+
+/**
+ * Find index information for a leaf. This information could be useful for
+ * drawing an outline around a specific leaf.
+ */
+Segment Mesh::findLeaf(Stem *stem, unsigned leaf) const
+{
+	Segment segment = {};
+	for (size_t i = 0; i < this->leafSegments.size(); i++) {
+		for (size_t j = 0; j < this->leafSegments[i].size(); j++) {
+			bool sameLeaf = this->leafSegments[i][j].leaf == leaf;
+			bool sameStem = this->leafSegments[i][j].stem == stem;
+			if (sameLeaf && sameStem) {
+				segment = this->leafSegments[i][j];
+				break;
+			}
+		}
+	}
+	return segment;
 }

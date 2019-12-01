@@ -20,6 +20,7 @@
 
 #include "plant_generator/math/math.h"
 #include "plant_generator/spline.h"
+#include "plant_generator/vertex.h"
 #include <vector>
 
 /**
@@ -27,7 +28,7 @@
  * {Vec3 (location), Vec3 (normal or color), unsigned int (texture)}
  */
 class Geometry {
- 	std::vector<float> points;
+ 	std::vector<pg::Vertex> points;
 	std::vector<unsigned> indices;
 
 public:
@@ -42,7 +43,8 @@ public:
 	void clear();
 	/** Used in conjunction with addPoint for line strips. */
 	void addIndex(unsigned index);
-	void addPoint(pg::Vec3 point, pg::Vec3 color,
+	void addPoint(
+		pg::Vec3 point, pg::Vec3 color,
 		pg::Vec2 texture = {0.0f, 0.0f});
 	void addLine(pg::Vec3 line[2], pg::Vec3 color);
 	void addCircle(float radius, int points, pg::Vec3 color);
@@ -56,10 +58,8 @@ public:
 	Segment getSegment() const;
 	Segment append(const Geometry &geometry);
 
-	const std::vector<float> *getPoints() const;
+	const std::vector<pg::Vertex> *getPoints() const;
 	const std::vector<unsigned> *getIndices() const;
-
-	int getPointSize() const;
 };
 
 #endif /* GEOMETRY_H */

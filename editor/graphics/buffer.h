@@ -21,6 +21,7 @@
 #define GL_GLEXT_PROTOTYPES
 
 #include "editor/geometry/geometry.h"
+#include "plant_generator/vertex.h"
 #include <QOpenGLFunctions>
 
 class Buffer : protected QOpenGLFunctions {
@@ -37,17 +38,19 @@ public:
 	 * buffer can't be changed until the VAO is bound.
 	 */
 	void load(const Geometry &geometry);
-	void load(const float *points, int psize, const unsigned *indices,
-		int isize);
+	void load(
+		const pg::Vertex *points, int psize,
+		const unsigned *indices, int isize);
 	/** Reduces reallocations and should be used for dynamic meshes. */
 	void update(const Geometry &geometry);
-	void update(const float *points, int psize, const unsigned *indices,
-		int isize);
+	void update(
+		const pg::Vertex *points, int psize,
+		const unsigned *indices, int isize);
 	/**
 	 * The buffer should be bound prior to calling update. The method
 	 * returns false if the buffer is too small.
 	 */
-	bool update(const float *points, int start, int size);
+	bool update(const pg::Vertex *points, int start, int size);
 	/**
 	 * The buffer should be bound prior to calling update. The method
 	 * returns false if the buffer is too small.

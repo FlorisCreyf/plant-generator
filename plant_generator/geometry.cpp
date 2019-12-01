@@ -17,6 +17,7 @@
 
 using pg::Vec3;
 using pg::Quat;
+using pg::Vertex;
 
 unsigned pg::Geometry::counter = 1;
 
@@ -48,7 +49,7 @@ void pg::Geometry::setName(std::string name)
 
 void pg::Geometry::setPlane()
 {
-	Point p;
+	Vertex p;
 	p.normal = {0.0f, 1.0f, 0.0f};
 	points.clear();
 	indices.clear();
@@ -77,7 +78,7 @@ void pg::Geometry::setPlane()
 
 void pg::Geometry::setPerpendicularPlanes()
 {
-	Point p;
+	Vertex p;
 	p.normal = {0.0f, 1.0f, 0.0f};
 
 	setPlane();
@@ -104,7 +105,7 @@ void pg::Geometry::setPerpendicularPlanes()
 	indices.push_back(7);
 }
 
-void pg::Geometry::setPoints(std::vector<pg::Geometry::Point> points)
+void pg::Geometry::setPoints(std::vector<Vertex> points)
 {
 	this->points = points;
 }
@@ -114,7 +115,7 @@ void pg::Geometry::setIndices(std::vector<unsigned> indices)
 	this->indices = indices;
 }
 
-const std::vector<pg::Geometry::Point> &pg::Geometry::getPoints() const
+const std::vector<Vertex> &pg::Geometry::getPoints() const
 {
 	return points;
 }
@@ -131,8 +132,8 @@ void pg::Geometry::transform(Quat rotation, Vec3 scale, Vec3 translation)
 		point.position.y *= scale.y;
 		point.position.z *= scale.z;
 
-		Quat p = toVec4(point.position, 1.0f);
-		Quat n = toVec4(point.normal, 1.0f);
+		Quat p = toQuat(point.position, 1.0f);
+		Quat n = toQuat(point.normal, 1.0f);
 		point.position = toVec3(rotation * p * conjugate(rotation));
 		point.normal = toVec3(rotation * n * conjugate(rotation));
 

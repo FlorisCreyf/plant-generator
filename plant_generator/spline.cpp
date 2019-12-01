@@ -190,11 +190,12 @@ void pg::Spline::adjust(int degree)
 {
 	if (degree == 1) {
 		for (size_t i = 0; i + 3 < controls.size(); i++)
-			controls.erase(controls.begin() + 1 + i,
+			controls.erase(
+				controls.begin() + 1 + i,
 				controls.begin() + 3 + i);
 	} else if (degree == 3) {
 		{
-			Vec3 direction = normalize(controls[1] - controls[0]);
+			Vec3 direction = (controls[1] - controls[0]);
 			float t = magnitude(controls[1] - controls[0]) / 4.0f;
 			Vec3 point = controls[0] + t * direction;
 			controls.insert(controls.begin() + 1, point);

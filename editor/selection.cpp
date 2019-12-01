@@ -20,7 +20,12 @@
 #include <limits>
 #include <utility>
 
+using pg::Leaf;
+using pg::Path;
+using pg::Quat;
+using pg::Spline;
 using pg::Stem;
+using pg::Vec3;
 
 Selection::Selection(Camera *camera, pg::Plant *plant, pg::Mesh *mesh)
 {
@@ -39,7 +44,7 @@ bool Selection::operator!=(const Selection &obj) const
 	return !(*this == obj);
 }
 
-void Selection::removeStem(pg::Stem *stem)
+void Selection::removeStem(Stem *stem)
 {
 	stems.erase(stem);
 }
@@ -49,22 +54,21 @@ void Selection::removeLeaves()
 	leaves.clear();
 }
 
-void Selection::addStem(pg::Stem *stem)
+void Selection::addStem(Stem *stem)
 {
 	PointSelection ps(camera);
 	stems.emplace(stem, ps);
 }
 
-void Selection::addLeaf(pg::Stem *stem, unsigned leaf)
+void Selection::addLeaf(Stem *stem, unsigned leaf)
 {
 	auto it = leaves.find(stem);
 	if (it == leaves.end()) {
 		std::set<unsigned> ids;
 		ids.insert(leaf);
 		leaves.emplace(stem, ids);
-	} else {
+	} else
 		it->second.insert(leaf);
-	}
 }
 
 void Selection::select(QMouseEvent *event)
@@ -81,8 +85,8 @@ bool Selection::selectPoint(QMouseEvent *event)
 	for (auto &instance : stems) {
 		Stem *stem = instance.first;
 		PointSelection &ps = instance.second;
-		pg::Spline spline = stem->getPath().getSpline();
-		pg::Vec3 location = stem->getLocation();
+		Spline spline = stem->getPath().getSpline();
+		Vec3 location = stem->getLocation();
 		point = ps.selectPoint(event, spline, location);
 		if (point >= 0) {
 			if (!(event->modifiers() & Qt::ControlModifier)) {
@@ -135,17 +139,17 @@ void Selection::selectStem(QMouseEvent *event)
 	}
 }
 
-void Selection::setInstances(std::map<pg::Stem *, PointSelection> instances)
+void Selection::setInstances(std::map<Stem *, PointSelection> instances)
 {
 	this->stems = instances;
 }
 
-std::map<pg::Stem *, PointSelection> Selection::getStemInstances()
+std::map<Stem *, PointSelection> Selection::getStemInstances()
 {
 	return stems;
 }
 
-std::map<pg::Stem *, std::set<unsigned>> Selection::getLeafInstances()
+std::map<Stem *, std::set<unsigned>> Selection::getLeafInstances()
 {
 	return leaves;
 }
@@ -166,17 +170,17 @@ std::pair<float, Stem *> Selection::getStem(pg::Ray &ray, Stem *stem)
 	std::pair<float, Stem *> selection2(max, nullptr);
 
 	if (stem != nullptr) {
-		pg::Path path = stem->getPath();
+		Path path = stem->getPath();
 
 		for (int i = 0, j = 1; i < path.getSize()-1; i++, j++) {
-			pg::Vec3 direction = path.getDirection(i);
-			pg::Vec3 line[2] = {path.get(i), path.get(j)};
+			Vec3 direction = path.getDirection(i);
+			Vec3 line[2] = {path.get(i), path.get(j)};
 			line[0] = line[0] + stem->getLocation();
 			line[1] = line[1] + stem->getLocation();
 			float length = pg::magnitude(line[1] - line[0]);
 			float r[2] = {path.getRadius(i), path.getRadius(j)};
-			float t = pg::intersectsTaperedCylinder(ray, line[0],
-				direction, length, r[0], r[1]);
+			float t = pg::intersectsTaperedCylinder(
+				ray, line[0], direction, length, r[0], r[1]);
 			if (t > 0 && selection1.first > t) {
 				selection1.first = t;
 				selection1.second = stem;
@@ -196,7 +200,6 @@ std::pair<float, Stem *> Selection::getStem(pg::Ray &ray, Stem *stem)
 
 std::pair<float, pg::Segment> Selection::getLeaf(pg::Ray ray)
 {
-	int vertexSize = mesh->getVertexSize();
 	unsigned indexOffset = 0;
 	unsigned vertexOffset = 0;
 
@@ -214,23 +217,16 @@ std::pair<float, pg::Segment> Selection::getLeaf(pg::Ray ray)
 			unsigned len = ls.indexStart + ls.indexCount;
 			for (unsigned j = ls.indexStart; j < len; j += 3) {
 				unsigned triangle[3];
-				triangle[0] = (*indices)[j] * vertexSize;
-				triangle[1] = (*indices)[j+1] * vertexSize;
-				triangle[2] = (*indices)[j+2] * vertexSize;
+				triangle[0] = (*indices)[j];
+				triangle[1] = (*indices)[j+1];
+				triangle[2] = (*indices)[j+2];
 				triangle[0] -= vertexOffset;
 				triangle[1] -= vertexOffset;
 				triangle[2] -= vertexOffset;
 
-				pg::Vec3 v1, v2, v3;
-				v1.x = (*vertices)[triangle[0]];
-				v1.y = (*vertices)[triangle[0]+1];
-				v1.z = (*vertices)[triangle[0]+2];
-				v2.x = (*vertices)[triangle[1]];
-				v2.y = (*vertices)[triangle[1]+1];
-				v2.z = (*vertices)[triangle[1]+2];
-				v3.x = (*vertices)[triangle[2]];
-				v3.y = (*vertices)[triangle[2]+1];
-				v3.z = (*vertices)[triangle[2]+2];
+				Vec3 v1 = (*vertices)[triangle[0]].position;
+				Vec3 v2 = (*vertices)[triangle[1]].position;
+				Vec3 v3 = (*vertices)[triangle[2]].position;
 
 				float t;
 				t = pg::intersectsTriangle(ray, v1, v2, v3);
@@ -282,12 +278,12 @@ void Selection::selectChildren()
 
 void Selection::reduceToAncestors()
 {
-	std::map<pg::Stem *, PointSelection> newSelection;
+	std::map<Stem *, PointSelection> newSelection;
 	for (auto &instance : stems) {
-		pg::Stem *stem1 = instance.first;
+		Stem *stem1 = instance.first;
 		bool valid = true;
 		for (auto instance : stems) {
-			pg::Stem *stem2 = instance.first;
+			Stem *stem2 = instance.first;
 			if (stem1->isDescendantOf(stem2)) {
 				valid = false;
 				break;
@@ -331,7 +327,7 @@ bool Selection::hasLeaves() const
 	return !leaves.empty();
 }
 
-bool Selection::contains(pg::Stem *stem) const
+bool Selection::contains(Stem *stem) const
 {
 	return stems.find(stem) != stems.end();
 }
@@ -358,12 +354,12 @@ void Selection::selectPreviousPoints()
 
 void Selection::selectAllPoints()
 {
-	if (hasPoints())
+	if (hasPoints()) {
 		for (auto &instance : stems)
 			instance.second.clear();
-	else {
+	} else {
 		for (auto &instance : stems) {
-			pg::Stem *stem = instance.first;
+			Stem *stem = instance.first;
 			int size = stem->getPath().getSpline().getSize();
 			instance.second.selectAll(size);
 		}
@@ -372,9 +368,8 @@ void Selection::selectAllPoints()
 
 void Selection::selectFirstPoints()
 {
-	for (auto &instance : stems) {
+	for (auto &instance : stems)
 		instance.second.select(0);
-	}
 }
 
 void Selection::selectLastPoints()
@@ -385,13 +380,13 @@ void Selection::selectLastPoints()
 	}
 }
 
-void Selection::getTotalLeafPosition(pg::Vec3 &position, int &count) const
+void Selection::getTotalLeafPosition(Vec3 &position, int &count) const
 {
 	for (auto &instance : leaves) {
-		pg::Stem *stem = instance.first;
-		pg::Path path = stem->getPath();
+		Stem *stem = instance.first;
+		Path path = stem->getPath();
 		for (unsigned id : instance.second) {
-			pg::Leaf *leaf = stem->getLeaf(id);
+			Leaf *leaf = stem->getLeaf(id);
 			position += stem->getLocation();
 			position += path.getIntermediate(leaf->getPosition());
 			count++;
@@ -399,17 +394,17 @@ void Selection::getTotalLeafPosition(pg::Vec3 &position, int &count) const
 	}
 }
 
-pg::Vec3 Selection::getAveragePosition() const
+Vec3 Selection::getAveragePosition() const
 {
-	pg::Vec3 position = {0.0f, 0.0f, 0.0f};
+	Vec3 position = {0.0f, 0.0f, 0.0f};
 	int count = 0;
 	for (auto &instance : stems) {
 		const PointSelection &ps = instance.second;
-		pg::Stem *stem = instance.first;
+		Stem *stem = instance.first;
 		int size = instance.second.getPoints().size();
 		if (size > 0) {
-			pg::Spline spline = stem->getPath().getSpline();
-			pg::Vec3 l = stem->getLocation();
+			Spline spline = stem->getPath().getSpline();
+			Vec3 l = stem->getLocation();
 			position += ps.getAveragePosition(spline, l);
 			count++;
 		}
@@ -419,17 +414,17 @@ pg::Vec3 Selection::getAveragePosition() const
 	return position;
 }
 
-pg::Vec3 Selection::getAveragePositionFP() const
+Vec3 Selection::getAveragePositionFP() const
 {
-	pg::Vec3 position = {0.0f, 0.0f, 0.0f};
+	Vec3 position = {0.0f, 0.0f, 0.0f};
 	int count = 0;
 	for (auto &instance : stems) {
-		pg::Stem *stem = instance.first;
+		Stem *stem = instance.first;
 		int size = instance.second.getPoints().size();
 		if (size > 0) {
 			int point = *instance.second.getPoints().begin();
-			pg::Spline spline = stem->getPath().getSpline();
-			pg::Vec3 l = stem->getLocation();
+			Spline spline = stem->getPath().getSpline();
+			Vec3 l = stem->getLocation();
 			position += l + spline.getControls()[point];
 			count++;
 		} else {
@@ -442,13 +437,13 @@ pg::Vec3 Selection::getAveragePositionFP() const
 	return position;
 }
 
-pg::Vec3 Selection::getAverageDirectionFP() const
+Vec3 Selection::getAverageDirectionFP() const
 {
-	pg::Vec3 dir = {0.0f, 0.0f, 0.0f};
+	Vec3 dir = {0.0f, 0.0f, 0.0f};
 	int count = 0;
 
 	for (auto &instance : stems) {
-		pg::Stem *stem = instance.first;
+		Stem *stem = instance.first;
 		const PointSelection &ps = instance.second;
 		int size = ps.getPoints().size();
 		if (size > 0) {
@@ -462,11 +457,11 @@ pg::Vec3 Selection::getAverageDirectionFP() const
 	}
 
 	for (auto &instance : leaves) {
-		pg::Stem *stem = instance.first;
+		Stem *stem = instance.first;
 		for (unsigned id : instance.second) {
-			pg::Leaf *leaf = stem->getLeaf(id);
-			pg::Quat q = leaf->getRotation();
-			pg::Quat k = {0.0f, 0.0f, 1.0f, 0.0f};
+			Leaf *leaf = stem->getLeaf(id);
+			Quat q = leaf->getRotation();
+			Quat k = {0.0f, 0.0f, 1.0f, 0.0f};
 			dir += pg::toVec3(q * k * pg::conjugate(q));
 			count++;
 		}

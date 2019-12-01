@@ -1,4 +1,4 @@
-/* Copyright 2017-2018 Floris Creyf
+/* Copyright 2019 Floris Creyf
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,32 @@
  * limitations under the License.
  */
 
-#ifndef PG_MATH_H
-#define PG_MATH_H
+#ifndef PG_VERTEX_H
+#define PG_VERTEX_H
 
-#include "mat4.h"
-#include "quat.h"
-#include "vec2.h"
-#include "vec3.h"
-#include "vec4.h"
+#include <boost/archive/text_oarchive.hpp>
+
+namespace pg {
+	struct Vertex {
+		Vec3 position;
+		union {
+			Vec3 normal;
+			Vec3 color;
+		};
+		Vec2 uv;
+
+	private:
+		friend class boost::serialization::access;
+
+		template<class Archive>
+		void serialize(Archive &ar, const unsigned int version)
+		{
+			(void)version;
+			ar & position;
+			ar & normal;
+			ar & uv;
+		}
+	};
+}
 
 #endif

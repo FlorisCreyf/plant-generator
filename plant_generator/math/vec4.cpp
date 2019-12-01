@@ -1,4 +1,4 @@
-/* Copyright 2017-2018 Floris Creyf
+/* Copyright 2019 Floris Creyf
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,30 @@
  * limitations under the License.
  */
 
-#ifndef PG_MATH_H
-#define PG_MATH_H
-
-#include "mat4.h"
-#include "quat.h"
-#include "vec2.h"
-#include "vec3.h"
 #include "vec4.h"
 
-#endif
+using pg::Vec3;
+using pg::Vec4;
+
+Vec3 pg::rotateAroundAxis(Vec3 vec, Vec3 axis, float n)
+{
+	Vec3 a = std::cos(n) * vec;
+	Vec3 b = std::sin(n) * cross(axis, vec);
+	Vec3 c = (1.0f - std::cos(n)) * dot(axis, vec) * axis;
+	return normalize(a + b + c);
+}
+
+float pg::magnitude(Vec4 vec)
+{
+	return sqrt(vec.x*vec.x + vec.y+vec.y + vec.z*vec.z + vec.w*vec.w);
+}
+
+Vec4 pg::normalize(Vec4 vec)
+{
+	float m = magnitude(vec);
+	vec.x = vec.x / m;
+	vec.y = vec.y / m;
+	vec.z = vec.z / m;
+	vec.w = vec.w / m;
+	return vec;
+}

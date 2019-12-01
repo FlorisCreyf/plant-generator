@@ -1,4 +1,4 @@
-/* Copyright 2017-2018 Floris Creyf
+/* Copyright 2019 Floris Creyf
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,32 @@
  * limitations under the License.
  */
 
-#ifndef PG_MATH_H
-#define PG_MATH_H
-
-#include "mat4.h"
-#include "quat.h"
 #include "vec2.h"
-#include "vec3.h"
-#include "vec4.h"
+#include <cmath>
 
-#endif
+using pg::Vec2;
+
+Vec2 pg::perp(Vec2 vec)
+{
+	Vec2 result = {-vec.y, vec.x};
+	return result;
+}
+
+float pg::magnitude(Vec2 vec)
+{
+	return std::sqrt(vec.x*vec.x + vec.y*vec.y);
+}
+
+Vec2 pg::normalize(Vec2 vec)
+{
+	Vec2 result;
+	float m = magnitude(vec);
+	result.x = vec.x / m;
+	result.y = vec.y / m;
+	return result;
+}
+
+float pg::dot(Vec2 a, Vec2 b)
+{
+	return a.x*b.x + a.y*b.y;
+}

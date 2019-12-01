@@ -76,9 +76,6 @@ float pg::Generator::getRadius(Stem *stem)
 
 void pg::Generator::setPath(Stem *stem, Vec3 direction)
 {
-	Path path;
-	Spline spline;
-
 	std::vector<Vec3> controls;
 	Vec3 control = {0.0f, 0.0f, 0.0f};
 	Vec3 variance = {0.02f, -0.05f, 0.01f};
@@ -87,6 +84,7 @@ void pg::Generator::setPath(Stem *stem, Vec3 direction)
 	int divisions = stem->getDepth() == 0 ? 2 : 1;
 	int points = stem->getParent() ? 3 : 4;
 
+	Path path;
 	path.setMaxRadius(radius);
 	path.setRadius(getDefaultCurve(0));
 	path.setResolution(divisions);
@@ -94,14 +92,14 @@ void pg::Generator::setPath(Stem *stem, Vec3 direction)
 	for (int i = 0; i < points; i++) {
 		controls.push_back(control);
 		control = control + length * direction;
-		direction = direction + variance;
-		direction = pg::normalize(direction);
+		direction = normalize(direction + variance);
 	}
 
 	/* Thinner stems are more flexible and should bend more towards
 	 * the light source. */
 	controls.back().y += 0.1f;
 
+	Spline spline;
 	spline.setDegree(1);
 	spline.setControls(controls);
 	path.setSpline(spline);

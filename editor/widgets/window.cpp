@@ -166,7 +166,7 @@ void Window::initMaterialEditor()
 void Window::updateStatus()
 {
 	const pg::Mesh *mesh = editor->getMesh();
-	unsigned vertices = mesh->getVertexCount() / mesh->getVertexSize();
+	unsigned vertices = mesh->getVertexCount();
 	unsigned triangles = mesh->getIndexCount() / 3;
 	unsigned materials = mesh->getMeshCount();
 
@@ -231,7 +231,7 @@ void Window::openDialogBox()
 {
 	QString filename = QFileDialog::getOpenFileName(
 		this, tr("Open File"), "", tr("Plant (*.plant)"));
-		
+
 	if (!filename.isNull() || !filename.isEmpty()) {
 		meshEditor->clear();
 		materialEditor->clear();

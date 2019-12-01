@@ -22,8 +22,12 @@
 #include <string>
 #include <map>
 
+using pg::Vertex;
+using pg::Vec2;
+using pg::Vec3;
+
 void File::exportObj(const char *filename,
-	const std::vector<float> &vertices,
+	const std::vector<Vertex> &vertices,
 	const std::vector<unsigned> &indices)
 {
 	FILE *f = fopen(filename, "w");
@@ -31,24 +35,19 @@ void File::exportObj(const char *filename,
 	if (f == nullptr)
 		return;
 
-	for (unsigned i = 0; i < vertices.size(); i += 8) {
-		float x = vertices[i];
-		float y = vertices[i+1];
-		float z = vertices[i+2];
-		fprintf(f, "v %f %f %f\n", x, y, z);
+	for (unsigned i = 0; i < vertices.size(); i++) {
+		Vec3 position = vertices[i].position;
+		fprintf(f, "v %f %f %f\n", position.x, position.y, position.z);
 	}
 
-	for (unsigned i = 0; i < vertices.size(); i += 8) {
-		float u = vertices[i+6];
-		float v = vertices[i+7];
-		fprintf(f, "vt %f %f\n", u, v);
+	for (unsigned i = 0; i < vertices.size(); i++) {
+		Vec2 uv = vertices[i].uv;
+		fprintf(f, "vt %f %f\n", uv.x, uv.y);
 	}
 
-	for (unsigned i = 0; i < vertices.size(); i += 8) {
-		float x = vertices[i+3];
-		float y = vertices[i+4];
-		float z = vertices[i+5];
-		fprintf(f, "vn %f %f %f\n", x, y, z);
+	for (unsigned i = 0; i < vertices.size(); i++) {
+		Vec3 normal = vertices[i].normal;
+		fprintf(f, "vn %f %f %f\n", normal.x, normal.y, normal.z);
 	}
 
 	for (size_t i = 0; i < indices.size(); i += 3)
@@ -65,7 +64,7 @@ void File::importObj(const char *filename, pg::Geometry *geom)
 	std::ifstream file(filename);
 	std::string line;
 
-	std::vector<pg::Geometry::Point> points;
+	std::vector<Vertex> points;
 	std::vector<unsigned> indices;
 
 	std::vector<pg::Vec3> vs;
@@ -109,12 +108,13 @@ void File::importObj(const char *filename, pg::Geometry *geom)
 			while (iss >> field) {
 				auto it = fields.find(field);
 				if (it == fields.end()) {
-					pg::Geometry::Point p;
+					Vertex p;
 					shape.push_back(index);
 					fields.emplace(field, index++);
 
 					unsigned s[3] = {0};
-					std::sscanf(field.c_str(), "%u/%u/%u",
+					std::sscanf(
+						field.c_str(), "%u/%u/%u",
 						&s[0], &s[1], &s[2]);
 
 					if (s[0] <= vs.size())

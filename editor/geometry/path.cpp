@@ -51,11 +51,12 @@ void Path::set(std::vector<Segment> segments)
 	lineStart.clear();
 	resolution.clear();
 	degree.clear();
+
 	for (auto &segment : segments) {
 		this->resolution.push_back(segment.resolution);
 		this->degree.push_back(segment.spline.getDegree());
 	}
-	
+
 	index = setPoints(segments, index);
 	setControls(segments, index);
 }
@@ -64,7 +65,7 @@ int Path::setPoints(const std::vector<Path::Segment> &segments, int index)
 {
 	for (Segment s : segments) {
 		lineStart.push_back(index);
-		
+
 		std::vector<Vec3> points;
 		float step = 1.0f / s.resolution;
 		int curves = s.spline.getCurveCount();
@@ -73,19 +74,19 @@ int Path::setPoints(const std::vector<Path::Segment> &segments, int index)
 			for (int i = 0; i < s.resolution; i++, t += step) {
 				Vec3 p = s.spline.getPoint(curve, t);
 				points.push_back(s.location + p);
-		
+
 			}
 		}
 		Vec3 lastPoint = s.spline.getPoint(curves - 1, 1.0f);
 		points.push_back(s.location + lastPoint);
-		
+
 		/* curve */
 		int size = index + points.size();
 		for (int i = 0; index < size; i++) {
 			path.addPoint(points[i], curveColor);
 			path.addIndex(index++);
 		}
-		
+
 		path.addIndex(Geometry::primitiveReset);
 	}
 	return index;
@@ -97,7 +98,7 @@ void Path::setControls(const std::vector<Path::Segment> &segments, int index)
 	for (Segment s : segments) {
 		if (degree[curve++] == 3) {
 			controlStart.push_back(index);
-			
+
 			std::vector<Vec3> controls = getControls(s);
 
 			/* control lines */
@@ -128,13 +129,13 @@ void Path::setControls(const std::vector<Path::Segment> &segments, int index)
 		}
 	}
 	lineSegment = path.getSegment();
-	
+
 	int size = 0;
 	for (Segment s : segments) {
 		pointStart.push_back(index);
-		
+
 		std::vector<Vec3> controls = getControls(s);
-		
+
 		/* control points */
 		for (size_t i = 0; i < controls.size(); i++) {
 			path.addPoint(controls[i], controlColor);
@@ -170,11 +171,10 @@ void Path::setSelectedPoints(PointSelection &selection, int index)
 void Path::colorLinear(const std::set<int> &points, int index)
 {
 	std::set<int>::iterator it;
-	
+
 	for (it = points.begin(); it != points.end(); ++it) {
 		int offset = pointStart[index] + *it;
-		
-		path.changeColor(offset * path.getPointSize(), selectionColor);
+		path.changeColor(offset, selectionColor);
 		if (std::next(it) != points.end() && *std::next(it) == *it + 1)
 			colorLine(*it, index);
 	}
@@ -188,7 +188,7 @@ void Path::colorBezier(const std::set<int> &points, int index)
 
 		/* Change color of points. */
 		int offset = pointStart[index] + p;
-		path.changeColor(offset * path.getPointSize(), selectionColor);
+		path.changeColor(offset, selectionColor);
 
 		/* Change color of lines between selected points. */
 		auto nx = std::next(it);
@@ -197,11 +197,9 @@ void Path::colorBezier(const std::set<int> &points, int index)
 			colorLine(p/3, index);
 		} else if (p % 3 == 1 && it != points.begin() && *pv == p - 1) {
 			int i = (controlStart[index] + p);
-			i *= path.getPointSize();
 			path.changeColor(i, selectionColor);
 		} else if (p % 3 == 2 && nx != points.end() && *nx == p + 1) {
 			int i = (1 + controlStart[index] + p);
-			i *= path.getPointSize();
 			path.changeColor(i, selectionColor);
 		}
 	}
@@ -209,10 +207,9 @@ void Path::colorBezier(const std::set<int> &points, int index)
 
 void Path::colorLine(int point, int index)
 {
-	for (int i = 1; i <= resolution[index]; i++) {
-		int l = lineStart[index] + resolution[index] * point + i;
-		path.changeColor(l * path.getPointSize(), selectionColor);
-	}
+	int offset = lineStart[index] + resolution[index] * point;
+	for (int i = 1; i <= resolution[index]; i++)
+		path.changeColor(offset + i, selectionColor);
 }
 
 const Geometry *Path::getGeometry()

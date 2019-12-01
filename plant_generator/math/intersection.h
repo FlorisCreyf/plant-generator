@@ -17,6 +17,7 @@
 #define PG_INTERSECTION_H
 
 #include "math.h"
+#include "plant_generator/vertex.h"
 #include <cstddef>
 
 namespace pg {
@@ -46,13 +47,14 @@ namespace pg {
 		Vec3 normal;
 	};
 
-	Aabb createAABB(const float *buffer, size_t size);
+	Aabb createAABB(const pg::Vertex *buffer, size_t size);
 	float intersectsOBB(Ray &ray, Obb &obb);
 	float intersectsAABB(Ray &ray, Aabb &aabb);
 	float intersectsTriangle(Ray &ray, Vec3 p1, Vec3 p2, Vec3 p3);
 	float intersectsPlane(Ray &ray, Plane &plane);
 	float intersectsSphere(Ray &ray, Vec3 position, float radius);
-	float intersectsTaperedCylinder(Ray ray, Vec3 start, Vec3 direction,
+	float intersectsTaperedCylinder(
+		Ray ray, Vec3 start, Vec3 direction,
 		float height, float r1, float r2);
 	float intersectsLine(pg::Ray2 a, pg::Ray2 b);
 }

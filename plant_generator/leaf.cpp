@@ -73,12 +73,12 @@ pg::Quat pg::Leaf::getDefaultOrientation(pg::Vec3 stemDirection)
 {
 	Vec3 normal = {0.0f, 1.0f, 0.0f};
 	Vec3 d = {0.0f, 0.0f, 1.0f};
-	Vec3 leafDirection = pg::normalize(pg::cross(stemDirection, normal));
+	Vec3 leafDirection = normalize(pg::cross(stemDirection, normal));
 	Quat q = pg::rotateIntoVecQ(d, leafDirection);
 	Vec3 up = {0.0f, -1.0f, 0.0f};
 	d = pg::cross(up, stemDirection);
 	d = pg::cross(d, stemDirection);
-	d = pg::normalize(d);
+	d = normalize(d);
 	Quat k = pg::rotateIntoVecQ(normal, d);
 	return k * q;
 }

@@ -390,7 +390,8 @@ void Editor::resizeGL(int width, int height)
 	updateCamera(width, height);
 	translationAxes.setScale(600.0f / height);
 	glBindTexture(GL_TEXTURE_2D, outlineColorMap);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
+	glTexImage2D(
+		GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
 		GL_UNSIGNED_BYTE, NULL);
 }
 
@@ -579,6 +580,7 @@ void Editor::paintAxes()
 	}
 }
 
+/** Determine what regions in the buffer are the selection. */
 void Editor::updateSelection()
 {
 	meshes.clear();
@@ -618,6 +620,7 @@ void Editor::updateSelection()
 	}
 }
 
+/** Update the graphics buffer. */
 void Editor::change()
 {
 	if (!isValid())
@@ -633,7 +636,7 @@ void Editor::change()
 	int pointOffset = 0;
 	int indexOffset = 0;
 	for (int m = 0; m < mesh.getMeshCount(); m++) {
-		const std::vector<float> *v = mesh.getVertices(m);
+		const std::vector<pg::Vertex> *v = mesh.getVertices(m);
 		const std::vector<unsigned> *i = mesh.getIndices(m);
 		if (!plantBuffer.update(v->data(), pointOffset, v->size())) {
 			printf("Failed to update vertices\n");

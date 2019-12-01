@@ -17,6 +17,7 @@
 #define PG_GEOMETRY_H
 
 #include "math/math.h"
+#include "vertex.h"
 #include <vector>
 #include <string>
 #include <boost/archive/text_oarchive.hpp>
@@ -24,33 +25,15 @@
 namespace pg {
 	class Geometry {
 	public:
-		struct Point {
-			pg::Vec3 position;
-			pg::Vec3 normal;
-			pg::Vec2 uv;
-
-		private:
-			friend class boost::serialization::access;
-
-			template<class Archive>
-			void serialize(Archive &ar, const unsigned int version)
-			{
-				(void)version;
-				ar & position;
-				ar & normal;
-				ar & uv;
-			}
-		};
-
 		Geometry();
 		unsigned getId() const;
 		std::string getName() const;
 		void setName(std::string name);
 		void setPlane();
 		void setPerpendicularPlanes();
-		void setPoints(std::vector<Point> points);
+		void setPoints(std::vector<Vertex> points);
 		void setIndices(std::vector<unsigned> indices);
-		const std::vector<Point> &getPoints() const;
+		const std::vector<Vertex> &getPoints() const;
 		const std::vector<unsigned> &getIndices() const;
 		void transform(Quat rotation, Vec3 scale, Vec3 translation);
 		void toCenter();
@@ -59,7 +42,7 @@ namespace pg {
 	private:
 		friend class boost::serialization::access;
 
-		std::vector<Point> points;
+		std::vector<Vertex> points;
 		std::vector<unsigned> indices;
 		static unsigned counter;
 		unsigned id;

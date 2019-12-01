@@ -18,9 +18,13 @@
 #include "geometry.h"
 #include <cmath>
 
+using pg::Vertex;
 using pg::Vec2;
 using pg::Vec3;
 using pg::Mat4;
+using std::cos;
+using std::sin;
+using std::vector;
 
 void Geometry::clear()
 {
@@ -33,32 +37,32 @@ void Geometry::addIndex(unsigned index)
 	indices.push_back(index);
 }
 
-void Geometry::addPoint(Vec3 point, Vec3 color, Vec2 texture)
+void Geometry::addPoint(Vec3 point, Vec3 color, Vec2 uv)
 {
-	points.push_back(point.x);
-	points.push_back(point.y);
-	points.push_back(point.z);
-	points.push_back(color.x);
-	points.push_back(color.y);
-	points.push_back(color.z);
-	points.push_back(texture.x);
-	points.push_back(texture.y);
+	Vertex vertex;
+	vertex.position = point;
+	vertex.color = color;
+	vertex.uv = uv;
+	this->points.push_back(vertex);
 }
 
 void Geometry::addLine(Vec3 line[2], Vec3 color)
 {
-	addPoint(line[0], color);
-	addPoint(line[1], color);
+	Vertex vertex;
+	vertex.color = color;
+	vertex.position = line[0];
+	this->points.push_back(vertex);
+	vertex.position = line[1];
+	this->points.push_back(vertex);
 }
 
-void Geometry::addCircle(float radius, int points, pg::Vec3 color)
+void Geometry::addCircle(float radius, int points, Vec3 color)
 {
 	float angle = 0.0f;
 	float rotation = 2.0f * M_PI / points;
 	for (int i = 0; i < points; i++) {
-		pg::Vec3 v = {std::cos(angle), 0.0f, std::sin(angle)};
-		v *= radius;
-		addPoint(v, color);
+		Vec3 point = {cos(angle)*radius, 0.0f, sin(angle)*radius};
+		addPoint(point, color);
 		angle += rotation;
 	}
 }
@@ -90,12 +94,11 @@ void Geometry::addPlane(Vec3 a, Vec3 b, Vec3 c, Vec3 color)
 
 void Geometry::addCone(float radius, float height, int points, Vec3 color)
 {
-	unsigned pointStart = this->points.size() / getPointSize();
+	unsigned pointStart = this->points.size();
 
 	for (int i = 0; i < points; i++) {
 		float r = i * 2.0f * M_PI / points;
-		Vec3 point = {std::cos(r)*radius, 0.0f, std::sin(r)*radius};
-		addPoint(point, color);
+		addPoint({cos(r)*radius, 0.0f, sin(r)*radius}, color);
 
 		indices.push_back(pointStart + i);
 		indices.push_back(pointStart + points);
@@ -124,7 +127,6 @@ void Geometry::addGrid(int size, pg::Vec3 pcolor[2], pg::Vec3 scolor)
 
 	for (int i = 1; i <= size; i++) {
 		float j = static_cast<float>(i);
-
 		line[0] = {j, 0.0f, bound};
 		line[1] = {j, 0.0f, -bound};
 		addLine(line, scolor);
@@ -142,62 +144,49 @@ void Geometry::addGrid(int size, pg::Vec3 pcolor[2], pg::Vec3 scolor)
 
 void Geometry::transform(size_t start, size_t count, const Mat4 &transform)
 {
-	const int vertexSize = getPointSize();
-	const int length = (start + count) * vertexSize;
-	for (int i = start * vertexSize; i < length; i += vertexSize) {
-		Vec3 v = {points[i], points[i+1], points[i+2]};
-		v = pg::toVec3(transform * pg::toVec4(v, 1.0f));
-		points[i+0] = v.x;
-		points[i+1] = v.y;
-		points[i+2] = v.z;
-	}
+	const int length = start + count;
+	for (int i = start; i < length; i++)
+		points[i].position = transform.apply(points[i].position, 1.0f);
 }
 
-void Geometry::changeColor(size_t start, Vec3 color)
+void Geometry::changeColor(size_t index, Vec3 color)
 {
-	points[start+3] = color.x;
-	points[start+4] = color.y;
-	points[start+5] = color.z;
+	points[index].color = color;
 }
 
 Geometry::Segment Geometry::getSegment() const
 {
-	Segment s;
-	s.pstart = 0;
-	s.pcount = points.size() / getPointSize();
-	s.istart = 0;
-	s.icount = indices.size();
-	return s;
+	Segment segment;
+	segment.pstart = 0;
+	segment.pcount = points.size();
+	segment.istart = 0;
+	segment.icount = indices.size();
+	return segment;
 }
 
 Geometry::Segment Geometry::append(const Geometry &geometry)
 {
 	auto ps = geometry.points;
 	auto is = geometry.indices;
-	Segment s = geometry.getSegment();
-	s.pstart = points.size() / getPointSize();
-	s.pcount = ps.size() /  getPointSize();
-	s.istart = indices.size();
-	s.icount = is.size();
+	Segment segment = geometry.getSegment();
+	segment.pstart = points.size();
+	segment.pcount = ps.size();
+	segment.istart = indices.size();
+	segment.icount = is.size();
 	for (size_t i = 0; i < is.size(); i++)
 		if (is[i] != primitiveReset)
-			is[i] += s.pstart;
-	points.insert(points.end(), ps.begin(), ps.end());
-	indices.insert(indices.end(), is.begin(), is.end());
-	return s;
+			is[i] += segment.pstart;
+	this->points.insert(this->points.end(), ps.begin(), ps.end());
+	this->indices.insert(this->indices.end(), is.begin(), is.end());
+	return segment;
 }
 
-const std::vector<float> *Geometry::getPoints() const
+const vector<pg::Vertex> *Geometry::getPoints() const
 {
 	return &points;
 }
 
-const std::vector<unsigned> *Geometry::getIndices() const
+const vector<unsigned> *Geometry::getIndices() const
 {
 	return &indices;
-}
-
-int Geometry::getPointSize() const
-{
-	return 8;
 }

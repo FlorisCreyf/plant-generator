@@ -113,7 +113,7 @@ pg::Vec3 pg::Path::getIntermediate(float distance) const
 	float total = 0.0f;
 
 	for (size_t i = 0; i < path.size() - 1; i++) {
-		float length = pg::magnitude(path[i + 1] - path[i]);
+		float length = magnitude(path[i + 1] - path[i]);
 		if (total + length >= distance) {
 			point = (distance - total) * getDirection(i) + path[i];
 			total += length;
@@ -132,16 +132,16 @@ float pg::Path::getLength() const
 {
 	float length = 0.0f;
 	for (size_t i = 0; i < path.size() - 1; i++)
-		length += pg::magnitude(path[i + 1] - path[i]);
+		length += magnitude(path[i + 1] - path[i]);
 	return length;
 }
 
 pg::Vec3 pg::Path::getDirection(size_t index) const
 {
 	if (index == path.size() - 1)
-		return pg::normalize(path[index] - path[index - 1]);
+		return normalize(path[index] - path[index - 1]);
 	else
-		return pg::normalize(path[index + 1] - path[index]);
+		return normalize(path[index + 1] - path[index]);
 }
 
 pg::Vec3 pg::Path::getAverageDirection(size_t index) const
@@ -182,7 +182,7 @@ float pg::Path::getDistance(int index) const
 			// TODO probably not correct
 			if (path[j] == controls[i])
 				break;
-			distance += pg::magnitude(path[j + 1] - path[j]);
+			distance += magnitude(path[j + 1] - path[j]);
 		}
 	}
 
@@ -194,7 +194,7 @@ float pg::Path::getIntermediateDistance(int index) const
 	if (index == 0)
 		return 0.0f;
 	else
-		return pg::magnitude(path[index] - path[index-1]);
+		return magnitude(path[index] - path[index-1]);
 }
 
 void pg::Path::setMaxRadius(float radius)

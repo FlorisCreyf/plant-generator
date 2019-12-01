@@ -20,6 +20,7 @@
 
 using pg::Vec3;
 using pg::Vec4;
+using pg::Quat;
 
 RotateStem::RotateStem(
 	Selection *selection, RotationAxes *axes,
@@ -88,7 +89,7 @@ pg::Quat RotateStem::getTransformation(pg::Quat q)
 		normal.x = 1.0f;
 		normal.y = 0.0f;
 		normal.z = 0.0f;
-		Vec4 r = q * pg::toVec4(normal, 0.0f) * pg::conjugate(q);
+		Quat r = q * pg::toQuat(normal, 0.0f) * pg::conjugate(q);
 		Vec3 v = pg::toVec3(r);
 		if (pg::dot(v, planeNormal) < 0)
 			normal.x *= -1.0f;
@@ -96,7 +97,7 @@ pg::Quat RotateStem::getTransformation(pg::Quat q)
 		normal.x = 0.0f;
 		normal.y = 1.0f;
 		normal.z = 0.0f;
-		Vec4 r = q * pg::toVec4(normal, 0.0f) * pg::conjugate(q);
+		Quat r = q * pg::toQuat(normal, 0.0f) * pg::conjugate(q);
 		Vec3 v = pg::toVec3(r);
 		if (pg::dot(v, planeNormal) < 0)
 			normal.y *= -1.0f;
@@ -104,7 +105,7 @@ pg::Quat RotateStem::getTransformation(pg::Quat q)
 		normal.x = 0.0f;
 		normal.y = 0.0f;
 		normal.z = 1.0f;
-		Vec4 r = q * pg::toVec4(normal, 0.0f) * pg::conjugate(q);
+		Quat r = q * pg::toQuat(normal, 0.0f) * pg::conjugate(q);
 		Vec3 v = pg::toVec3(r);
 		if (pg::dot(v, planeNormal) < 0)
 			normal.z *= -1.0f;
@@ -112,8 +113,8 @@ pg::Quat RotateStem::getTransformation(pg::Quat q)
 		normal = planeNormal;
 
 	pg::Quat t = pg::rotateIntoVecQ(planeNormal, normal);
-	pg::Quat a = t * pg::toVec4(direction, 0.0f) * pg::conjugate(t);
-	pg::Quat b = t * pg::toVec4(lastDirection, 0.0f) * pg::conjugate(t);
+	pg::Quat a = t * pg::toQuat(direction, 0.0f) * pg::conjugate(t);
+	pg::Quat b = t * pg::toQuat(lastDirection, 0.0f) * pg::conjugate(t);
 	return pg::rotateIntoVecQ(pg::toVec3(b), pg::toVec3(a));
 }
 
@@ -125,7 +126,7 @@ void RotateStem::rotateChild(pg::Stem *stem, pg::Quat t, float distance)
 			pg::Spline spline = path.getSpline();
 			std::vector<pg::Vec3> controls = spline.getControls();
 			for (size_t i = 0; i < controls.size(); i++) {
-				pg::Vec4 a = pg::toVec4(controls[i], 0.0f);
+				Quat a = pg::toQuat(controls[i], 0.0f);
 				controls[i] = pg::toVec3(t * a * conjugate(t));
 			}
 			spline.setControls(controls);
@@ -154,13 +155,15 @@ void RotateStem::rotate()
 		if (spline.getDegree() == 3 && point % 3 == 0 && point > 0) {
 			size_t i = point - 1;
 			pg::Vec3 p = controls[i] - controls[point];
-			controls[i] = toVec3(t * toVec4(p, 0.f) * conjugate(t));
+			pg::Quat q = pg::toQuat(p, 0.0f);
+			controls[i] = pg::toVec3(t * q * pg::conjugate(t));
 			controls[i] += controls[point];
 		}
 
 		for (size_t i = point + 1; i < controls.size(); i++) {
 			pg::Vec3 p = controls[i] - controls[point];
-			controls[i] = toVec3(t * toVec4(p, 0.f) * conjugate(t));
+			pg::Quat q = pg::toQuat(p, 0.0f);
+			controls[i] = pg::toVec3(t * q * pg::conjugate(t));
 			controls[i] += controls[point];
 		}
 

@@ -25,7 +25,9 @@
 
 class File {
 public:
-	void exportObj(const char *filename, const std::vector<float> &vertices,
+	void exportObj(
+		const char *filename,
+		const std::vector<pg::Vertex> &vertices,
 		const std::vector<unsigned> &indices);
 	void importObj(const char *filename, pg::Geometry *geom);
 };

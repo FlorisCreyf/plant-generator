@@ -19,6 +19,7 @@
 
 using pg::Mat4;
 using pg::Vec3;
+using pg::Vertex;
 
 MeshViewer::MeshViewer(SharedResources *shared, QWidget *parent) :
 	QOpenGLWidget(parent)
@@ -102,16 +103,16 @@ void MeshViewer::mouseReleaseEvent(QMouseEvent *event)
 
 void MeshViewer::mouseMoveEvent(QMouseEvent *event)
 {
-	QPoint p = event->pos();
-	camera.executeAction(p.x(), p.y());
+	QPoint pos = event->pos();
+	camera.executeAction(pos.x(), pos.y());
 	update();
 }
 
 void MeshViewer::wheelEvent(QWheelEvent *event)
 {
-	QPoint a = event->angleDelta();
-	if (!a.isNull()) {
-		float y = a.y() / 10.0f;
+	QPoint angleDelta = event->angleDelta();
+	if (!angleDelta.isNull()) {
+		float y = angleDelta.y() / 10.0f;
 		if (y != 0.0f) {
 			camera.zoom(y);
 			update();
@@ -123,20 +124,14 @@ void MeshViewer::wheelEvent(QWheelEvent *event)
 void MeshViewer::updateMesh(pg::Geometry mesh)
 {
 	mesh.toCenter();
-	std::vector<float> p;
-	for (auto a : mesh.getPoints()) {
-		p.push_back(a.position.x);
-		p.push_back(a.position.y);
-		p.push_back(a.position.z);
-		p.push_back(a.normal.x);
-		p.push_back(a.normal.y);
-		p.push_back(a.normal.z);
-		p.push_back(a.uv.x);
-		p.push_back(a.uv.y);
-	}
+	std::vector<Vertex> points;
+	for (Vertex vertex : mesh.getPoints())
+		points.push_back(vertex);
 
 	unsigned indexCount = mesh.getIndices().size();
-	buffer.update(p.data(), p.size(), mesh.getIndices().data(), indexCount);
+	buffer.update(
+		points.data(), points.size(),
+		mesh.getIndices().data(), indexCount);
 	count = indexCount;
 	update();
 }
