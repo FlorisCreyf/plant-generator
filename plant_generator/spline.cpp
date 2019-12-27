@@ -16,49 +16,50 @@
 #include "spline.h"
 #include "math/curve.h"
 
+using pg::Spline;
 using pg::Vec3;
 
-bool pg::Spline::operator==(const pg::Spline &spline) const
+bool Spline::operator==(const Spline &spline) const
 {
 	return controls == spline.controls && degree == spline.degree;
 }
 
-bool pg::Spline::operator!=(const pg::Spline &spline) const
+bool Spline::operator!=(const Spline &spline) const
 {
 	return controls != spline.controls || degree != spline.degree;
 }
 
-void pg::Spline::setControls(std::vector<Vec3> controls)
+void Spline::setControls(std::vector<Vec3> controls)
 {
 	this->controls = controls;
 }
 
-std::vector<Vec3> pg::Spline::getControls() const
+std::vector<Vec3> Spline::getControls() const
 {
 	return controls;
 }
 
-int pg::Spline::getSize() const
+int Spline::getSize() const
 {
 	return controls.size();
 }
 
-int pg::Spline::getCurveCount() const
+int Spline::getCurveCount() const
 {
 	return controls.size() == 0 ? 0 : (controls.size() - 1) / degree;
 }
 
-void pg::Spline::setDegree(int degree)
+void Spline::setDegree(int degree)
 {
 	this->degree = degree;
 }
 
-int pg::Spline::getDegree() const
+int Spline::getDegree() const
 {
 	return degree;
 }
 
-Vec3 pg::Spline::getPoint(float t) const
+Vec3 Spline::getPoint(float t) const
 {
 	Vec3 point;
 	for (size_t i = 0; i < controls.size()-degree; i += degree) {
@@ -72,13 +73,13 @@ Vec3 pg::Spline::getPoint(float t) const
 	return point;
 }
 
-Vec3 pg::Spline::getPoint(int curve, float t) const
+Vec3 Spline::getPoint(int curve, float t) const
 {
 	int index = degree * curve;
 	return getBezier(t, &controls[index], (degree + 1));
 }
 
-Vec3 pg::Spline::getDirection(unsigned index)
+Vec3 Spline::getDirection(unsigned index)
 {
 	if (index == controls.size() - 1)
 		return pg::normalize(controls[index] - controls[index - 1]);
@@ -86,7 +87,7 @@ Vec3 pg::Spline::getDirection(unsigned index)
 		return pg::normalize(controls[index + 1] - controls[index]);
 }
 
-int pg::Spline::insert(unsigned index, Vec3 point)
+int Spline::insert(unsigned index, Vec3 point)
 {
 	if (degree == 1) {
 		controls.insert(controls.begin() + index + 1, point);
@@ -97,7 +98,7 @@ int pg::Spline::insert(unsigned index, Vec3 point)
 		return 0;
 }
 
-int pg::Spline::insertCubic(int index, Vec3 point)
+int Spline::insertCubic(int index, Vec3 point)
 {
 	Vec3 curve[3];
 	int center;
@@ -161,128 +162,144 @@ int pg::Spline::insertCubic(int index, Vec3 point)
 	return center;
 }
 
-void pg::Spline::remove(unsigned index)
+void Spline::remove(unsigned index)
 {
-	std::vector<Vec3> copy;
-
 	if (degree == 1)
 		controls.erase(controls.begin() + index);
-	else if (degree == 3) {
-		if (controls.size() == 4) {
-			controls.clear();
-		} else if (index < 2) {
-			controls.erase(controls.begin(), controls.begin() + 2);
-		} else if (index > controls.size() - 3) {
-			controls.erase(controls.end() - 3, controls.end());
-		} else {
-			if (index % 3 == 0)
-				index -= 1;
-			else if (index % 3 == 1)
-				index -= 2;
-			auto first = controls.begin() + index;
-			auto last = controls.begin() + index + 3;
-			controls.erase(first, last);
-		}
+	else if (degree == 3)
+		removeCubic(index);
+}
+
+void Spline::removeCubic(unsigned index)
+{
+	if (controls.size() == 4) {
+		controls.clear();
+	} else if (index < 2) {
+		controls.erase(controls.begin(), controls.begin() + 2);
+	} else if (index > controls.size() - 3) {
+		controls.erase(controls.end() - 3, controls.end());
+	} else {
+		if (index % 3 == 0)
+			index -= 1;
+		else if (index % 3 == 1)
+			index -= 2;
+		auto first = controls.begin() + index;
+		auto last = controls.begin() + index + 3;
+		controls.erase(first, last);
 	}
 }
 
-void pg::Spline::adjust(int degree)
+void Spline::adjust(int degree)
 {
-	if (degree == 1) {
-		for (size_t i = 0; i + 3 < controls.size(); i++)
-			controls.erase(
-				controls.begin() + 1 + i,
-				controls.begin() + 3 + i);
-	} else if (degree == 3) {
-		{
-			Vec3 direction = (controls[1] - controls[0]);
-			float t = magnitude(controls[1] - controls[0]) / 4.0f;
-			Vec3 point = controls[0] + t * direction;
-			controls.insert(controls.begin() + 1, point);
-		}
-
-		for (size_t i = 2; i < controls.size()-1; i += 3) {
-			Vec3 d1 = controls[i-2] - controls[i];
-			Vec3 d2 = controls[i] - controls[i+1];
-			float t1 = magnitude(d1) / 4.0f;
-			float t2 = -magnitude(d2) / 4.0f;
-			Vec3 direction = normalize(d1 + d2);
-
-			Vec3 points[2];
-			points[0] = controls[i] + t1 * direction;
-			points[1] = controls[i] + t2 * direction;
-			controls.insert(controls.begin() + i + 1, points[1]);
-			controls.insert(controls.begin() + i, points[0]);
-		}
-
-		{
-			int l = controls.size() - 1;
-			Vec3 direction = normalize(controls[l] - controls[l-1]);
-			float t = magnitude(controls[l] - controls[l-2]) / 4.0f;
-			Vec3 point = controls[l] - t * direction;
-			controls.insert(controls.end() - 1, point);
-		}
-	}
-
+	if (degree == 1)
+		adjustLinear();
+	else if (degree == 3)
+		adjustCubic();
 	this->degree = degree;
 }
 
-void pg::Spline::move(unsigned index, Vec3 location, bool parallel)
+void Spline::adjustLinear()
 {
-	if (degree == 3) {
-		if (index % 3 == 0) {
-			if (index != 0) {
-				controls[index-1] -= controls[index];
-				controls[index-1] += location;
-			}
-			if (index != controls.size() - 1) {
-				controls[index+1] -= controls[index];
-				controls[index+1] += location;
-			}
-			controls[index] = location;
-		} else if (index % 3 == 1) {
-			controls[index] = location;
-			if (parallel)
-				parallelize(index);
-		} else if (index % 3 == 2) {
-			controls[index] = location;
-			if (parallel)
-				parallelize(index);
-		}
-	} else
-		controls[index] = location;
-}
-
-void pg::Spline::parallelize(unsigned index)
-{
-	if (degree == 3) {
-		if (index % 3 && index > 1) {
-			Vec3 d = controls[index-1] - controls[index-2];
-			float m = magnitude(d);
-			if (m == 0.0f)
-				m = 1.0f;
-			d = controls[index-1] - controls[index];
-			/* Arbitrary default value because zero vectors
-			 * cannot be normalized. */
-			if (isZero(d))
-				d.z = 1.0f;
-			d = m * normalize(d) + controls[index-1];
-			controls[index-2] = d;
-		} else if (index % 3 && index < controls.size() - 2) {
-			Vec3 d = controls[index+2] - controls[index+1];
-			float m = magnitude(d);
-			if (m == 0.0f)
-				m = 1.0f;
-			d = controls[index+1] - controls[index];
-			if (isZero(d))
-				d.z = 1.0f;
-			d = m * normalize(d) + controls[index+1];
-			controls[index+2] = d;
-		}
+	for (size_t i = 0; i + 3 < controls.size(); i++) {
+		auto begin = controls.begin();
+		controls.erase(begin + 1 + i, begin + 3 + i);
 	}
 }
 
-void pg::Spline::clear()
+void Spline::adjustCubic()
+{
+	{
+		Vec3 direction = (controls[1] - controls[0]);
+		float t = magnitude(controls[1] - controls[0]) / 4.0f;
+		Vec3 point = controls[0] + t * direction;
+		controls.insert(controls.begin() + 1, point);
+	}
+
+	for (size_t i = 2; i < controls.size()-1; i += 3) {
+		Vec3 d1 = controls[i-2] - controls[i];
+		Vec3 d2 = controls[i] - controls[i+1];
+		float t1 = magnitude(d1) / 4.0f;
+		float t2 = -magnitude(d2) / 4.0f;
+		Vec3 direction = normalize(d1 + d2);
+
+		Vec3 points[2];
+		points[0] = controls[i] + t1 * direction;
+		points[1] = controls[i] + t2 * direction;
+		controls.insert(controls.begin() + i + 1, points[1]);
+		controls.insert(controls.begin() + i, points[0]);
+	}
+
+	{
+		int l = controls.size() - 1;
+		Vec3 direction = normalize(controls[l] - controls[l-1]);
+		float t = magnitude(controls[l] - controls[l-2]) / 4.0f;
+		Vec3 point = controls[l] - t * direction;
+		controls.insert(controls.end() - 1, point);
+	}
+}
+
+void Spline::move(unsigned index, Vec3 location, bool parallel)
+{
+	if (degree == 3)
+		moveCubic(index, location, parallel);
+	else
+		controls[index] = location;
+}
+
+void Spline::moveCubic(unsigned index, Vec3 location, bool parallel)
+{
+	if (index % 3 == 0) {
+		if (index != 0) {
+			controls[index-1] -= controls[index];
+			controls[index-1] += location;
+		}
+		if (index != controls.size() - 1) {
+			controls[index+1] -= controls[index];
+			controls[index+1] += location;
+		}
+		controls[index] = location;
+	} else if (index % 3 == 1) {
+		controls[index] = location;
+		if (parallel)
+			parallelize(index);
+	} else if (index % 3 == 2) {
+		controls[index] = location;
+		if (parallel)
+			parallelize(index);
+	}
+}
+
+void Spline::parallelize(unsigned index)
+{
+	if (degree != 3)
+	 	return;
+
+	if (index % 3 == 1 && index > 1) {
+		Vec3 diff = controls[index-1] - controls[index-2];
+		float length = magnitude(diff);
+		if (length == 0.0f)
+			length = 1.0f;
+		diff = controls[index-1] - controls[index];
+		/* Arbitrary default value because zero vectors cannot be
+		 * normalized. */
+		if (isZero(diff))
+			diff.z = 1.0f;
+		diff = length * normalize(diff) + controls[index-1];
+		controls[index-2] = diff;
+	} else if (index % 3 == 2 && index < controls.size() - 2) {
+		Vec3 diff = controls[index+2] - controls[index+1];
+		float length = magnitude(diff);
+		if (length == 0.0f)
+			length = 1.0f;
+		diff = controls[index+1] - controls[index];
+		if (isZero(diff))
+			diff.z = 1.0f;
+		diff = length * normalize(diff) + controls[index+1];
+		controls[index+2] = diff;
+	}
+}
+
+void Spline::clear()
 {
 	controls.clear();
 }

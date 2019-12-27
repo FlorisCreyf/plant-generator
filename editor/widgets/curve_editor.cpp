@@ -253,9 +253,7 @@ void CurveEditor::extrude()
 		&this->camera);
 	pg::Vec3 s = this->camera.toScreenSpace(avg);
 	QPoint pos = mapFromGlobal(QCursor::pos());
-	extrude->setClickOffset(
-		s.x - pos.x(),
-		s.y - pos.y() - this->toolBarHeight);
+	extrude->setClickOffset(s.x - pos.x(), s.y - pos.y());
 	extrude->execute();
 	this->command = extrude;
 	this->spline = this->origSpline;
@@ -290,7 +288,6 @@ void CurveEditor::mousePressEvent(QMouseEvent *event)
 			event->button(), event->buttons(), event->modifiers());
 		this->selection.selectPoint(
 			&modifiedEvent, this->spline, pg::getZeroVec3());
-
 		if (selectionCopy->hasChanged()) {
 			selectionCopy->setAfter();
 			this->history.add(selectionCopy);

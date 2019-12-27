@@ -39,6 +39,11 @@ namespace pg {
 			ar & degree;
 		}
 
+		void adjustCubic();
+		void adjustLinear();
+		void moveCubic(unsigned, Vec3, bool);
+		void removeCubic(unsigned);
+
 	public:
 		bool operator==(const Spline &spline) const;
 		bool operator!=(const Spline &spline) const;
