@@ -54,9 +54,9 @@ void MoveSpline::set(pg::Ray ray, pg::Vec3 cameraDirection)
 
 	if (axes->getSelection() == Axes::XAxis)
 		plane.normal.x = 0.0f;
-	else if (axes->getSelection() == Axes::XAxis)
+	else if (axes->getSelection() == Axes::YAxis)
 		plane.normal.y = 0.0f;
-	else if (axes->getSelection() == Axes::XAxis)
+	else if (axes->getSelection() == Axes::ZAxis)
 		plane.normal.z = 0.0f;
 
 	plane.normal = pg::normalize(plane.normal);
@@ -66,10 +66,10 @@ void MoveSpline::set(pg::Ray ray, pg::Vec3 cameraDirection)
 	if (axes->getSelection() == Axes::XAxis) {
 		position.y = plane.point.y;
 		position.z = plane.point.z;
-	} else if (axes->getSelection() == Axes::XAxis) {
+	} else if (axes->getSelection() == Axes::YAxis) {
 		position.x = plane.point.x;
 		position.z = plane.point.z;
-	} else if (axes->getSelection() == Axes::XAxis) {
+	} else if (axes->getSelection() == Axes::ZAxis) {
 		position.x = plane.point.x;
 		position.y = plane.point.y;
 	}
