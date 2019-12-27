@@ -30,7 +30,6 @@ class RotateStem : public Command {
 	RotationAxes *axes;
 	const Camera *camera;
 	Axes::Axis axis;
-	Axes::Axis updatedAxis;
 	pg::Vec3 firstDirection;
 	pg::Vec3 lastDirection;
 	pg::Vec3 direction;
@@ -38,13 +37,16 @@ class RotateStem : public Command {
 	pg::Vec3 planeNormal;
 	bool valid;
 
-	void rotateChild(pg::Stem *stem, pg::Quat t, float distance);
-	void rotate();
-	pg::Quat getTransformation(pg::Quat q);
 	void checkValidity();
+	void rotateChild(pg::Stem *stem, pg::Quat t, float distance);
+	void rotateStems();
+	void rotateLeaves();
+	void resetRotation();
+	pg::Quat getTransformation(pg::Quat q);
 
 public:
-	RotateStem(Selection *selection, RotationAxes *axes,
+	RotateStem(
+		Selection *selection, RotationAxes *axes,
 		const Camera *camera, float x, float y);
 	bool isValid();
 	void set(pg::Ray ray, pg::Vec3 planeNormal);

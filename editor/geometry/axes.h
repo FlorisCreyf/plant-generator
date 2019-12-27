@@ -46,7 +46,7 @@ public:
 protected:
 	float scale = 1.0f;
 	pg::Vec3 position = {0.0f, 0.0f, 0.0f};
-	Axis selection;
+	Axis selection = None;
 	bool scalable = true;
 };
 
