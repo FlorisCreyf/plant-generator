@@ -210,29 +210,28 @@ std::pair<float, pg::Segment> Selection::getLeaf(pg::Ray ray)
 	for (int m = 0; m < mesh->getMeshCount(); m++) {
 		auto vertices = mesh->getVertices(m);
 		auto indices = mesh->getIndices(m);
-		for (int i = 0; i < mesh->getLeafCount(m); i++) {
-			pg::Segment ls = mesh->getLeaf(m, i);
-			ls.indexStart -= indexOffset;
+		auto leaves = mesh->getLeaves(m);
+		for (auto pair : leaves) {
+			pg::Segment segment = pair.second;
+			segment.indexStart -= indexOffset;
 
-			unsigned len = ls.indexStart + ls.indexCount;
-			for (unsigned j = ls.indexStart; j < len; j += 3) {
+			unsigned len = segment.indexStart + segment.indexCount;
+			for (unsigned i = segment.indexStart; i < len; i += 3) {
 				unsigned triangle[3];
-				triangle[0] = (*indices)[j];
-				triangle[1] = (*indices)[j+1];
-				triangle[2] = (*indices)[j+2];
-				triangle[0] -= vertexOffset;
-				triangle[1] -= vertexOffset;
-				triangle[2] -= vertexOffset;
+				triangle[0] = (*indices)[i] - vertexOffset;
+				triangle[1] = (*indices)[i+1] - vertexOffset;
+				triangle[2] = (*indices)[i+2] - vertexOffset;
 
 				Vec3 v1 = (*vertices)[triangle[0]].position;
 				Vec3 v2 = (*vertices)[triangle[1]].position;
 				Vec3 v3 = (*vertices)[triangle[2]].position;
 
-				float t;
-				t = pg::intersectsTriangle(ray, v1, v2, v3);
-				if (t > 0 && t < selection.first) {
-					selection.first = t;
-					selection.second = ls;
+				float minDistance = selection.first;
+				float distance = pg::intersectsTriangle(
+					ray, v1, v2, v3);
+				if (distance > 0 && distance < minDistance) {
+					selection.first = distance;
+					selection.second = segment;
 				}
 			}
 		}

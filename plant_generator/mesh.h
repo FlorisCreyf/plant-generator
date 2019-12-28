@@ -41,8 +41,8 @@ namespace pg {
 		std::vector<unsigned> materials;
 		std::vector<std::vector<Vertex>> vertices;
 		std::vector<std::vector<unsigned>> indices;
-		std::vector<std::vector<Segment>> stemSegments;
-		std::vector<std::vector<Segment>> leafSegments;
+		std::vector<std::map<unsigned, Segment>> stemSegments;
+		std::vector<std::map<unsigned, Segment>> leafSegments;
 
 		Mat4 getSectionTransform(Stem *, size_t);
 		void addSection(Stem *, size_t, float &);
@@ -63,11 +63,9 @@ namespace pg {
 		std::vector<unsigned> getIndices() const;
 		const std::vector<Vertex> *getVertices(int mesh) const;
 		const std::vector<unsigned> *getIndices(int mesh) const;
-		const std::vector<Segment> *getStemSegments(int mesh) const;
-		const std::vector<Segment> *getLeafSegments(int mesh) const;
 		Segment findStem(Stem *stem) const;
-		Segment findLeaf(Stem *stem, unsigned leaf) const;
-		Segment getLeaf(int mesh, int index) const;
+		Segment findLeaf(unsigned leaf) const;
+		std::map<unsigned, Segment> getLeaves(int mesh) const;
 		int getLeafCount(int mesh) const;
 		int getVertexCount() const;
 		int getIndexCount() const;

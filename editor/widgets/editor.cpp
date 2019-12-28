@@ -589,9 +589,8 @@ void Editor::updateSelection()
 		meshes.push_back(mesh.findStem(instance.first));
 	auto leafInstances = selection.getLeafInstances();
 	for (auto &instance : leafInstances) {
-		pg::Stem *stem = instance.first;
 		for (auto &leaf : instance.second)
-			meshes.push_back(mesh.findLeaf(stem, leaf));
+			meshes.push_back(mesh.findLeaf(leaf));
 	}
 
 	if (!stemInstances.empty()) {
