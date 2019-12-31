@@ -24,28 +24,12 @@
 
 namespace pg {
 	class Geometry {
-	public:
-		Geometry();
-		unsigned getId() const;
-		std::string getName() const;
-		void setName(std::string name);
-		void setPlane();
-		void setPerpendicularPlanes();
-		void setPoints(std::vector<Vertex> points);
-		void setIndices(std::vector<unsigned> indices);
-		const std::vector<Vertex> &getPoints() const;
-		const std::vector<unsigned> &getIndices() const;
-		void transform(Quat rotation, Vec3 scale, Vec3 translation);
-		void toCenter();
-		void clear();
-
-	private:
 		friend class boost::serialization::access;
 
 		std::vector<Vertex> points;
 		std::vector<unsigned> indices;
-		static unsigned counter;
-		unsigned id;
+		static long counter;
+		long id;
 		std::string name;
 
 		template<class Archive>
@@ -58,6 +42,21 @@ namespace pg {
 			ar & points;
 			ar & indices;
 		}
+
+	public:
+		Geometry();
+		long getID() const;
+		std::string getName() const;
+		void setName(std::string name);
+		void setPlane();
+		void setPerpendicularPlanes();
+		void setPoints(std::vector<Vertex> points);
+		void setIndices(std::vector<unsigned> indices);
+		const std::vector<Vertex> &getPoints() const;
+		const std::vector<unsigned> &getIndices() const;
+		void transform(Quat rotation, Vec3 scale, Vec3 translation);
+		void toCenter();
+		void clear();
 	};
 }
 

@@ -368,7 +368,7 @@ void PropertyBox::setStemFields(map<pg::Stem *, PointSelection> instances)
 	stemG->blockSignals(false);
 }
 
-void PropertyBox::setLeafFields(map<pg::Stem *, set<unsigned>> instances)
+void PropertyBox::setLeafFields(map<pg::Stem *, set<long>> instances)
 {
 	pg::Stem *stem = instances.rbegin()->first;
 	unsigned index = *instances.rbegin()->second.begin();
@@ -408,8 +408,8 @@ void PropertyBox::setLeafFields(map<pg::Stem *, set<unsigned>> instances)
 		pg::Stem *stem = it->first;
 		for (auto &id : it->second) {
 			pg::Leaf *l = stem->getLeaf(id);
-			unsigned material = l->getMaterial();
-			unsigned mesh = l->getMesh();
+			long material = l->getMaterial();
+			long mesh = l->getMesh();
 			if (material != leaf->getMaterial())
 				indicateDifferences(leafMaterialL);
 			if (mesh != leaf->getMesh())
@@ -446,9 +446,12 @@ void PropertyBox::addMaterial(ShaderParams params)
 	QString name;
 	name = QString::fromStdString(params.getName());
 	if (stemMaterialV->findText(name) < 0) {
-		stemMaterialV->addItem(name, QVariant(params.getId()));
-		capMaterialV->addItem(name, QVariant(params.getId()));
-		leafMaterialV->addItem(name, QVariant(params.getId()));
+		stemMaterialV->addItem(
+			name, QVariant((qlonglong)params.getID()));
+		capMaterialV->addItem(
+			name, QVariant((qlonglong)params.getID()));
+		leafMaterialV->addItem(
+			name, QVariant((qlonglong)params.getID()));
 		editor->getPlant()->addMaterial(params.getMaterial());
 	}
 	editor->change();
@@ -457,9 +460,8 @@ void PropertyBox::addMaterial(ShaderParams params)
 void PropertyBox::removeMaterial(QString name)
 {
 	int index = stemMaterialV->findText(name);
-	int id;
 	if (index != 0) {
-		id = stemMaterialV->itemData(index).toInt();
+		long id = stemMaterialV->itemData(index).toInt();
 		editor->getPlant()->removeMaterial(id);
 		stemMaterialV->removeItem(index);
 		index = capMaterialV->findText(name);
@@ -486,7 +488,7 @@ void PropertyBox::addMesh(pg::Geometry geom)
 	QString name;
 	name = QString::fromStdString(geom.getName());
 	if (leafMeshV->findText(name) < 0)
-		leafMeshV->addItem(name, QVariant(geom.getId()));
+		leafMeshV->addItem(name, QVariant((qlonglong)geom.getID()));
 	editor->change();
 }
 

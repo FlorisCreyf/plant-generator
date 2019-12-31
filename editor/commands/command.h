@@ -22,10 +22,17 @@
 #include <QKeyEvent>
 
 class Command {
+	/**
+	 * Commands should not be copied if it makes ownership of stems and
+	 * other resources unclear.
+	 */
+	Command(const Command &);
+
 protected:
 	bool done = false;
 
 public:
+	Command();
 	virtual void execute() = 0;
 	virtual void undo() = 0;
 	virtual void redo();

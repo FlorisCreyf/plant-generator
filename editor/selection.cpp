@@ -60,11 +60,11 @@ void Selection::addStem(Stem *stem)
 	stems.emplace(stem, ps);
 }
 
-void Selection::addLeaf(Stem *stem, unsigned leaf)
+void Selection::addLeaf(Stem *stem, long leaf)
 {
 	auto it = leaves.find(stem);
 	if (it == leaves.end()) {
-		std::set<unsigned> ids;
+		std::set<long> ids;
 		ids.insert(leaf);
 		leaves.emplace(stem, ids);
 	} else
@@ -121,7 +121,7 @@ void Selection::selectStem(QMouseEvent *event)
 		else
 			addStem(sp.second);
 	} else if (lp.second.stem && lp.first < sp.first) {
-		unsigned leaf = lp.second.leaf;
+		long leaf = lp.second.leaf;
 		Stem *stem = lp.second.stem;
 		auto it = leaves.find(stem);
 		if (it != leaves.end()) {
@@ -149,7 +149,7 @@ std::map<Stem *, PointSelection> Selection::getStemInstances()
 	return stems;
 }
 
-std::map<Stem *, std::set<unsigned>> Selection::getLeafInstances()
+std::map<Stem *, std::set<long>> Selection::getLeafInstances()
 {
 	return leaves;
 }
@@ -384,7 +384,7 @@ void Selection::getTotalLeafPosition(Vec3 &position, int &count) const
 	for (auto &instance : leaves) {
 		Stem *stem = instance.first;
 		Path path = stem->getPath();
-		for (unsigned id : instance.second) {
+		for (long id : instance.second) {
 			Leaf *leaf = stem->getLeaf(id);
 			position += stem->getLocation();
 			position += path.getIntermediate(leaf->getPosition());
@@ -457,7 +457,7 @@ Vec3 Selection::getAverageDirectionFP() const
 
 	for (auto &instance : leaves) {
 		Stem *stem = instance.first;
-		for (unsigned id : instance.second) {
+		for (long id : instance.second) {
 			Leaf *leaf = stem->getLeaf(id);
 			Quat q = leaf->getRotation();
 			Quat k = {0.0f, 0.0f, 1.0f, 0.0f};

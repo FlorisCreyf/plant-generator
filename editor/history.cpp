@@ -22,7 +22,7 @@ using std::vector;
 void History::add(Command *command)
 {
 	future.clear();
-	std::shared_ptr<Command> cmd(command);
+	std::unique_ptr<Command> cmd(command);
 	past.push_back(std::move(cmd));
 }
 
@@ -30,7 +30,7 @@ void History::undo()
 {
 	if (!past.empty()) {
 		past.back()->undo();
-		future.push_back(past.back());
+		future.push_back(std::move(past.back()));
 		past.pop_back();
 	}
 }
@@ -39,7 +39,7 @@ void History::redo()
 {
 	if (!future.empty()) {
 		future.back()->redo();
-		past.push_back(future.back());
+		past.push_back(std::move(future.back()));
 		future.pop_back();
 	}
 }

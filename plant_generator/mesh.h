@@ -25,7 +25,7 @@
 namespace pg {
 	struct Segment {
 		Stem *stem;
-		unsigned leaf;
+		long leaf;
 	 	unsigned vertexStart;
 	 	unsigned indexStart;
 	 	unsigned vertexCount;
@@ -37,12 +37,12 @@ namespace pg {
 		Geometry defaultLeaf;
 
 		int mesh;
-		std::map<unsigned, unsigned> meshes;
-		std::vector<unsigned> materials;
+		std::map<long, int> meshes;
+		std::vector<long> materials;
 		std::vector<std::vector<Vertex>> vertices;
 		std::vector<std::vector<unsigned>> indices;
-		std::vector<std::map<unsigned, Segment>> stemSegments;
-		std::vector<std::map<unsigned, Segment>> leafSegments;
+		std::vector<std::map<long, Segment>> stemSegments;
+		std::vector<std::map<long, Segment>> leafSegments;
 
 		Mat4 getSectionTransform(Stem *, size_t);
 		void addSection(Stem *, size_t, float &);
@@ -64,13 +64,13 @@ namespace pg {
 		const std::vector<Vertex> *getVertices(int mesh) const;
 		const std::vector<unsigned> *getIndices(int mesh) const;
 		Segment findStem(Stem *stem) const;
-		Segment findLeaf(unsigned leaf) const;
-		std::map<unsigned, Segment> getLeaves(int mesh) const;
+		Segment findLeaf(long leaf) const;
+		std::map<long, Segment> getLeaves(int mesh) const;
 		int getLeafCount(int mesh) const;
 		int getVertexCount() const;
 		int getIndexCount() const;
 		int getMeshCount() const;
-		unsigned getMaterialId(int mesh) const;
+		long getMaterialID(int mesh) const;
 	};
 }
 

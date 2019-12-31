@@ -62,7 +62,7 @@ void MoveStem::setLeafOffsets(pg::Vec3 point)
 		pg::Stem *stem = instance.first;
 		pg::Path path = stem->getPath();
 
-		for (unsigned id : instance.second) {
+		for (long id : instance.second) {
 			Vec3 location = stem->getLocation();
 			pg::Leaf *leaf = stem->getLeaf(id);
 			float position = leaf->getPosition();
@@ -168,7 +168,7 @@ void MoveStem::moveLeavesAlongPath()
 			offsets = leafOffsets.at(stem);
 
 		int l = 0;
-		for (unsigned id : instance.second) {
+		for (long id : instance.second) {
 			pg::Leaf *leaf = stem->getLeaf(id);
 			Vec3 point;
 			point.x = cursor.x;

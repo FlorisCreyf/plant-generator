@@ -26,13 +26,13 @@ AddStem::AddStem(
 	movePath(selection, axes, camera)
 {
 	this->selection = selection;
-	canDeleteStem = false;
+	this->undone = false;
 }
 
 AddStem::~AddStem()
 {
-	if (canDeleteStem)
-		pg::Plant::deleteStem(stem);
+	if (!this->undone)
+		delete stem;
 }
 
 void AddStem::create()
@@ -100,16 +100,17 @@ void AddStem::execute()
 void AddStem::undo()
 {
 	pg::Plant *plant = selection->getPlant();
-	plant->release(stem);
+	plant->extractStem(stem);
 	*selection = prevSelection;
-	canDeleteStem = true;
+	this->undone = true;
 }
 
 void AddStem::redo()
 {
 	pg::Plant *plant = selection->getPlant();
-	plant->insert(stem->getParent(), stem);
+	plant->insertStem(stem, stem->getParent());
 	selection->clear();
 	selection->addStem(stem);
 	selection->selectLastPoints();
+	this->undone = false;
 }

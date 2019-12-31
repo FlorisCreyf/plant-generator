@@ -17,9 +17,11 @@
 #include <limits>
 #include <cmath>
 
-unsigned pg::Stem::counter = 1;
+using pg::Stem;
 
-pg::Stem::Stem(pg::Stem *parent)
+long Stem::counter = 1;
+
+Stem::Stem(Stem *parent)
 {
 	id = counter++;
 	this->nextSibling = nullptr;
@@ -34,7 +36,46 @@ pg::Stem::Stem(pg::Stem *parent)
 		depth = parent->depth + 1;
 }
 
-bool pg::Stem::operator==(const pg::Stem &stem) const
+Stem::~Stem()
+{
+	Stem *child = this->child;
+	while (child) {
+		Stem *next = child->nextSibling;
+		delete child;
+		child = next;
+	}
+}
+
+Stem::Stem(const Stem &orignal)
+{
+	/* Set nullptr to prevent temporary copies from deleting children. An
+	 * explicit deep copy method might be more appropiate if necessary. */
+	this->parent = nullptr;
+	this->nextSibling = nullptr;
+	this->prevSibling = nullptr;
+	this->child = nullptr;
+	copy(orignal);
+}
+
+Stem &Stem::operator=(const Stem &stem)
+{
+	copy(stem);
+	return *this;
+}
+
+void Stem::copy(const Stem &stem)
+{
+	this->depth = stem.depth;
+	this->path = stem.path;
+	this->resolution = stem.resolution;
+	this->position = stem.position;
+	this->location = stem.location;
+	this->material[0] = stem.material[0];
+	this->material[1] = stem.material[1];
+	this->leaves = stem.leaves;
+}
+
+bool Stem::operator==(const Stem &stem) const
 {
 	return (
 		nextSibling == stem.nextSibling &&
@@ -52,64 +93,64 @@ bool pg::Stem::operator==(const pg::Stem &stem) const
 	);
 }
 
-bool pg::Stem::operator!=(const pg::Stem &stem) const
+bool Stem::operator!=(const Stem &stem) const
 {
 	return !(*this == stem);
 }
 
-unsigned pg::Stem::getId() const
+long Stem::getID() const
 {
 	return id;
 }
 
-int pg::Stem::addLeaf(const Leaf &leaf)
+int Stem::addLeaf(const Leaf &leaf)
 {
-	leaves.emplace(leaf.getId(), leaf);
+	leaves.emplace(leaf.getID(), leaf);
 	return leaves.size() - 1;
 }
 
-int pg::Stem::getLeafCount()
+int Stem::getLeafCount()
 {
 	return leaves.size();
 }
 
-pg::Leaf *pg::Stem::getLeaf(int id)
+pg::Leaf *Stem::getLeaf(long id)
 {
 	return &leaves.at(id);
 }
 
-const std::map<int, pg::Leaf> &pg::Stem::getLeaves()
+const std::map<long, pg::Leaf> &Stem::getLeaves()
 {
 	return leaves;
 }
 
-void pg::Stem::removeLeaf(int id)
+void Stem::removeLeaf(long id)
 {
 	leaves.erase(leaves.find(id));
 }
 
-void pg::Stem::setResolution(int resolution)
+void Stem::setResolution(int resolution)
 {
 	this->resolution = resolution;
 }
 
-int pg::Stem::getResolution() const
+int Stem::getResolution() const
 {
 	return resolution;
 }
 
-void pg::Stem::setPath(pg::Path &path)
+void Stem::setPath(pg::Path &path)
 {
 	this->path = path;
 	updatePositions(this);
 }
 
-pg::Path pg::Stem::getPath()
+pg::Path Stem::getPath()
 {
 	return path;
 }
 
-void pg::Stem::updatePositions(pg::Stem *stem)
+void Stem::updatePositions(Stem *stem)
 {
 	Stem *child = stem->child;
 	while (child != nullptr) {
@@ -119,7 +160,7 @@ void pg::Stem::updatePositions(pg::Stem *stem)
 	}
 }
 
-void pg::Stem::setPosition(float position)
+void Stem::setPosition(float position)
 {
 	if (parent != nullptr) {
 		Path parentPath = parent->getPath();
@@ -133,42 +174,42 @@ void pg::Stem::setPosition(float position)
 	}
 }
 
-float pg::Stem::getPosition() const
+float Stem::getPosition() const
 {
 	return position;
 }
 
-pg::Vec3 pg::Stem::getLocation() const
+pg::Vec3 Stem::getLocation() const
 {
 	return location;
 }
 
-void pg::Stem::setMaterial(int feature, unsigned material)
+void Stem::setMaterial(int feature, long material)
 {
 	this->material[feature] = material;
 }
 
-unsigned pg::Stem::getMaterial(int feature) const
+long Stem::getMaterial(int feature) const
 {
 	return material[feature];
 }
 
-pg::Stem *pg::Stem::getParent()
+Stem *Stem::getParent()
 {
 	return parent;
 }
 
-pg::Stem *pg::Stem::getSibling()
+Stem *Stem::getSibling()
 {
 	return nextSibling;
 }
 
-pg::Stem *pg::Stem::getChild()
+Stem *Stem::getChild()
 {
 	return child;
 }
 
-bool pg::Stem::isDescendantOf(pg::Stem *stem) const
+bool Stem::isDescendantOf(Stem *stem) const
 {
 	const Stem *descendant = this;
 	if (depth > stem->getDepth()) {
@@ -181,7 +222,7 @@ bool pg::Stem::isDescendantOf(pg::Stem *stem) const
 	return false;
 }
 
-int pg::Stem::getDepth() const
+int Stem::getDepth() const
 {
 	return depth;
 }

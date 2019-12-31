@@ -137,9 +137,7 @@ void pg::Generator::growLateralStem(Stem *stem, float position)
 
 void pg::Generator::grow()
 {
-	plant->removeRoot();
-	plant->setRoot(new Stem(nullptr));
-	Stem *root = plant->getRoot();
+	Stem *root = plant->createRoot();
 	root->setPosition(0.0f);
 	setPath(root, {0.0f, 1.0f, 0.0f});
 	addLateralStems(root, 1.5f);

@@ -33,7 +33,7 @@ class ShaderParams : protected QOpenGLFunctions {
 public:
  	ShaderParams();
 	ShaderParams(pg::Material material);
-	unsigned getId();
+	long getID();
 	void setName(std::string name);
 	std::string getName();
 	GLuint getTexture(int index);

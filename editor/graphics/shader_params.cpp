@@ -30,9 +30,9 @@ ShaderParams::ShaderParams(pg::Material material) : material(material)
 	loadTexture(0, filename);
 }
 
-unsigned ShaderParams::getId()
+long ShaderParams::getID()
 {
-	return material.getId();
+	return material.getID();
 }
 
 void ShaderParams::setName(std::string name)

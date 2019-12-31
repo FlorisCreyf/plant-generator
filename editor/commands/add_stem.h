@@ -30,7 +30,7 @@ class AddStem : public Command {
 	pg::Stem *stem;
 	MoveStem moveStem;
 	MovePath movePath;
-	bool canDeleteStem;
+	bool undone;
 
 	void create();
 

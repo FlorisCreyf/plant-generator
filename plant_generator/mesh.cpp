@@ -76,7 +76,7 @@ Segment Mesh::addStem(Stem *stem)
 	stemSegment.vertexCount -= stemSegment.vertexStart;
 	stemSegment.indexCount = indices[mesh].size();
 	stemSegment.indexCount -= stemSegment.indexStart;
-	this->stemSegments[mesh].emplace(stem->getId(), stemSegment);
+	this->stemSegments[mesh].emplace(stem->getID(), stemSegment);
 
 	addLeaves(stem);
 
@@ -197,7 +197,7 @@ void Mesh::addLeaves(Stem *stem)
 void Mesh::addLeaf(Leaf *leaf, Stem *stem)
 {
 	Segment leafSegment;
-	leafSegment.leaf = leaf->getId();
+	leafSegment.leaf = leaf->getID();
 	leafSegment.stem = stem;
 	leafSegment.vertexStart = this->vertices[this->mesh].size();
 	leafSegment.indexStart = this->indices[this->mesh].size();
@@ -233,7 +233,7 @@ void Mesh::addLeaf(Leaf *leaf, Stem *stem)
 	leafSegment.vertexCount -= leafSegment.vertexStart;
 	leafSegment.indexCount = indices[mesh].size();
 	leafSegment.indexCount -= leafSegment.indexStart;
-	leafSegments[this->mesh].emplace(leaf->getId(), leafSegment);
+	leafSegments[this->mesh].emplace(leaf->getID(), leafSegment);
 }
 
 void Mesh::addTriangle(int a, int b, int c)
@@ -255,8 +255,8 @@ int Mesh::selectBuffer(int material)
 		if (it == this->meshes.end()) {
 			this->vertices.push_back(vector<Vertex>());
 			this->indices.push_back(vector<unsigned>());
-			this->stemSegments.push_back(map<unsigned, Segment>());
-			this->leafSegments.push_back(map<unsigned, Segment>());
+			this->stemSegments.push_back(map<long, Segment>());
+			this->leafSegments.push_back(map<long, Segment>());
 			this->meshes[material] = this->indices.size() - 1;
 			this->materials.push_back(material);
 		}
@@ -277,8 +277,8 @@ void Mesh::initBuffer()
 	this->materials.push_back(0);
 	this->vertices.push_back(vector<Vertex>());
 	this->indices.push_back(vector<unsigned>());
-	this->stemSegments.push_back(map<unsigned, Segment>());
-	this->leafSegments.push_back(map<unsigned, Segment>());
+	this->stemSegments.push_back(map<long, Segment>());
+	this->leafSegments.push_back(map<long, Segment>());
 }
 
 /**
@@ -332,7 +332,7 @@ int Mesh::getIndexCount() const
 	return size;
 }
 
-unsigned Mesh::getMaterialId(int mesh) const
+long Mesh::getMaterialID(int mesh) const
 {
 	return this->materials.at(mesh);
 }
@@ -363,7 +363,7 @@ const vector<unsigned> *Mesh::getIndices(int mesh) const
 	return &this->indices[mesh];
 }
 
-map<unsigned, Segment> Mesh::getLeaves(int mesh) const
+map<long, Segment> Mesh::getLeaves(int mesh) const
 {
 	return this->leafSegments[mesh];
 }
@@ -379,7 +379,7 @@ Segment Mesh::findStem(Stem *stem) const
 	Segment segment = {};
 	for (size_t i = 0; i < this->stemSegments.size(); i++) {
 		try {
-			segment = this->stemSegments[i].at(stem->getId());
+			segment = this->stemSegments[i].at(stem->getID());
 			break;
 		} catch (std::out_of_range) {}
 	}
@@ -387,7 +387,7 @@ Segment Mesh::findStem(Stem *stem) const
 }
 
 /** Find the location of a leaf in the buffer. */
-Segment Mesh::findLeaf(unsigned leaf) const
+Segment Mesh::findLeaf(long leaf) const
 {
 	Segment segment = {};
 	for (size_t i = 0; i < this->leafSegments.size(); i++) {

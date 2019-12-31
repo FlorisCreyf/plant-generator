@@ -110,7 +110,7 @@ private:
 	void indicateDifferences(QWidget *widget);
 	void indicateSimilarities(QWidget *widget);
 	void initProperties();
-	void setLeafFields(std::map<pg::Stem *, std::set<unsigned>> instances);
+	void setLeafFields(std::map<pg::Stem *, std::set<long>> instances);
 	void setStemFields(std::map<pg::Stem *, PointSelection> instances);
 	void setValueWidths(QFormLayout *layout);
 };

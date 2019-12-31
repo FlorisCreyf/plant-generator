@@ -23,8 +23,8 @@ namespace pg {
 	class Material {
 		friend class boost::serialization::access;
 
-		static unsigned counter;
-		unsigned id;
+		static long counter;
+		long id;
 		std::string name;
 		std::string texture;
 		float ratio;
@@ -42,7 +42,7 @@ namespace pg {
 
 	public:
 		Material();
-		unsigned long getId();
+		long getID();
 		void setName(const char *name);
 		void setName(std::string name);
 		std::string getName();

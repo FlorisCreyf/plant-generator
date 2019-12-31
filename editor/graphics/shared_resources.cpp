@@ -220,16 +220,16 @@ GLuint SharedResources::buildProgram(GLuint *shaders, int size)
 
 void SharedResources::addMaterial(ShaderParams params)
 {
-	auto it = materials.find(params.getId());
+	auto it = materials.find(params.getID());
 	if (it != materials.end()) {
 		QString before = QString::fromStdString(it->second.getName());
 		QString after = QString::fromStdString(params.getName());
-		materials[params.getId()] = params;
+		materials[params.getID()] = params;
 		if (before != after)
 			emit materialRenamed(before, after);
 		emit materialModified(params);
 	} else
-		materials[params.getId()] = params;
+		materials[params.getID()] = params;
 
 	emit materialAdded(params);
 }

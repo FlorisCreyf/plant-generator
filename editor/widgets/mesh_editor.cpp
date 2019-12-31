@@ -49,8 +49,8 @@ MeshEditor::MeshEditor(SharedResources *shared, Editor *editor,
 	columns->addLayout(layout);
 	columns->addStretch(1);
 
-	connect(this, SIGNAL(meshChanged(pg::Geometry)), meshViewer,
-		SLOT(updateMesh(pg::Geometry)));
+	connect(this, SIGNAL(meshChanged(pg::Geometry)),
+		meshViewer, SLOT(updateMesh(pg::Geometry)));
 }
 
 QSize MeshEditor::sizeHint() const
@@ -83,8 +83,8 @@ void MeshEditor::initFields(QVBoxLayout *layout)
 
 	connect(customButton, SIGNAL(clicked()), this, SLOT(loadCustom()));
 	connect(planeButton, SIGNAL(clicked()), this, SLOT(loadPlane()));
-	connect(perpPlaneButton, SIGNAL(clicked()), this,
-		SLOT(loadPerpPlane()));
+	connect(perpPlaneButton, SIGNAL(clicked()),
+		this, SLOT(loadPerpPlane()));
 	connect(emptyButton, SIGNAL(clicked()), this, SLOT(loadEmpty()));
 }
 
@@ -108,12 +108,12 @@ void MeshEditor::initTopRow(QHBoxLayout *topRow)
 	topRow->addWidget(addButton);
 	topRow->setAlignment(Qt::AlignTop);
 
-	connect(meshBox, SIGNAL(editTextChanged(const QString &)), this,
-		SLOT(renameMesh(const QString &)));
+	connect(meshBox, SIGNAL(editTextChanged(const QString &)),
+		this, SLOT(renameMesh(const QString &)));
 	connect(addButton, SIGNAL(clicked()), this, SLOT(addMesh()));
 	connect(removeButton, SIGNAL(clicked()), this, SLOT(removeMesh()));
-	connect(meshBox, SIGNAL(currentIndexChanged(int)), this,
-		SLOT(selectMesh()));
+	connect(meshBox, SIGNAL(currentIndexChanged(int)),
+		this, SLOT(selectMesh()));
 }
 
 void MeshEditor::clear()
@@ -151,7 +151,7 @@ void MeshEditor::addMesh(pg::Geometry geom)
 	pg::Plant *plant = editor->getPlant();
 	QString qname = QString::fromStdString(geom.getName());
 	plant->addLeafMesh(geom);
-	meshBox->addItem(qname, QVariant(geom.getId()));
+	meshBox->addItem(qname, QVariant((qlonglong)geom.getID()));
 	meshBox->setCurrentIndex(meshBox->findText(qname));
 	emit meshChanged(geom);
 	emit meshAdded(geom);
@@ -160,8 +160,8 @@ void MeshEditor::addMesh(pg::Geometry geom)
 void MeshEditor::loadCustom()
 {
 	if (meshBox->count() > 0) {
-		QString filename = QFileDialog::getOpenFileName(this,
-			tr("Open File"), "", tr("Wavefront OBJ (*.obj)"));
+		QString filename = QFileDialog::getOpenFileName(
+			this, tr("Open File"), "", tr("Wavefront OBJ (*.obj)"));
 
 		if (!filename.isNull()) {
 			pg::Plant *plant = editor->getPlant();
@@ -170,7 +170,6 @@ void MeshEditor::loadCustom()
 			File file;
 			std::string s = filename.toStdString();
 			file.importObj(s.c_str(), &geom);
-			printf("file = \"%s\"\n", s.c_str());
 			plant->addLeafMesh(geom);
 			emit meshChanged(geom);
 			editor->change();

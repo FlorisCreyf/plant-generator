@@ -28,22 +28,24 @@ namespace pg {
 		friend class Plant;
 		friend class boost::serialization::access;
 
-		static unsigned counter;
-		unsigned id;
+		static long counter;
+		long id;
 
 		Stem *nextSibling;
 		Stem *prevSibling;
 		Stem *child;
 		Stem *parent;
+		std::map<long, Leaf> leaves;
+
 		int depth;
-		std::map<int, Leaf> leaves;
-		Path path;
-		int resolution = 10;
 		float position;
 		Vec3 location;
-		unsigned material[2] = {0};
+		Path path;
+		int resolution = 10;
+		long material[2] = {0};
 
 		void updatePositions(Stem *stem);
+		void copy(const Stem &stem);
 
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned int version)
@@ -68,16 +70,20 @@ namespace pg {
 		enum {Outer, Inner};
 
 		Stem(Stem *parent = nullptr);
+		Stem(const Stem &original);
+		~Stem();
+
+		Stem &operator=(const Stem &stem);
 		bool operator==(const Stem &stem) const;
 		bool operator!=(const Stem &stem) const;
 
-		unsigned getId() const;
+		long getID() const;
 
 		int addLeaf(const Leaf &leaf);
 		int getLeafCount();
-		Leaf *getLeaf(int id);
-		const std::map<int, Leaf> &getLeaves();
-		void removeLeaf(int id);
+		Leaf *getLeaf(long id);
+		const std::map<long, Leaf> &getLeaves();
+		void removeLeaf(long id);
 
 		void setResolution(int resolution);
 		int getResolution() const;
@@ -86,8 +92,8 @@ namespace pg {
 		void setPosition(float position);
 		float getPosition() const;
 		Vec3 getLocation() const;
-		void setMaterial(int feature, unsigned material);
-		unsigned getMaterial(int feature) const;
+		void setMaterial(int feature, long material);
+		long getMaterial(int feature) const;
 
 		Stem *getParent();
 		Stem *getSibling();

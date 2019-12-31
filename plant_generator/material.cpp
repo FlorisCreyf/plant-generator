@@ -15,14 +15,14 @@
 
 #include "material.h"
 
-unsigned pg::Material::counter = 1;
+long pg::Material::counter = 1;
 
 pg::Material::Material()
 {
 	id = counter++;
 }
 
-unsigned long pg::Material::getId()
+long pg::Material::getID()
 {
 	return id;
 }

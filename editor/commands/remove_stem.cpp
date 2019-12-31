@@ -18,110 +18,106 @@
 #include "remove_stem.h"
 #include "remove_spline.h"
 
+using pg::Stem;
+using pg::Path;
+using pg::Spline;
+using pg::Plant;
+
 RemoveStem::RemoveStem(Selection *selection) : prevSelection(*selection)
 {
 	this->selection = selection;
-
-	/* Remember the original splines before removal. */
-	auto instances = selection->getStemInstances();
-	for (auto &instance : instances) {
-		pg::Stem *stem = instance.first;
-		pg::Path path = stem->getPath();
-		pg::Spline spline = path.getSpline();
-		splines.emplace(stem, spline);
-	}
 }
 
 RemoveStem::~RemoveStem()
 {
-	if (!removals.empty()) {
+	if (!this->stems.empty()) {
 		/* Adjust the selection so that descendants are not deleted
 		 * after ancestors have been deleted. */
 		prevSelection.reduceToAncestors();
-		for (auto stem : removals)
-			if (prevSelection.contains(stem))
-				pg::Plant::deleteStem(stem);
+		for (auto stem : this->stems)
+			delete stem;
 	}
 }
 
 /**
  * Should be called after stems are removed. Leaves do not need to be removed
- * from the plant anymore if their stem is removed.
+ * from the plant if their stem is removed.
  */
 void RemoveStem::removeLeaves()
 {
 	auto instances = selection->getLeafInstances();
 	for (auto &instance : instances) {
-		pg::Stem *stem = instance.first;
-		if (selection->getPlant()->contains(stem)) {
-			std::set<unsigned> &ids = instance.second;
-			for (auto it = ids.begin(); it != ids.end(); it++) {
-				leaves.emplace(stem, *(stem->getLeaf(*it)));
-				stem->removeLeaf(*it);
-			}
+		Stem *stem = instance.first;
+		std::set<long> &ids = instance.second;
+		for (auto it = ids.begin(); it != ids.end(); it++) {
+			leaves.emplace(stem, *(stem->getLeaf(*it)));
+			stem->removeLeaf(*it);
 		}
 	}
-	selection->removeLeaves();
 }
 
-void RemoveStem::execute()
+void RemoveStem::removeStems()
 {
-	removals.clear();
 	auto instances = selection->getStemInstances();
 	for (auto &instance : instances) {
-		pg::Stem *stem = instance.first;
-		pg::Path path = stem->getPath();
-		pg::Spline spline = path.getSpline();
+		Stem *stem = instance.first;
+		Path path = stem->getPath();
+		Spline spline = path.getSpline();
 		PointSelection &pointSelection = instance.second;
 		auto points = pointSelection.getPoints();
 
 		int first = spline.getDegree() == 1 ? 0 : 1;
 		if (points.empty() || *points.begin() <= first) {
+			/* Remove the whole stem. */
 			if (stem->getParent()) {
 				points.clear();
-				selection->getPlant()->release(stem);
-				removals.push_back(stem);
+				this->selection->getPlant()->extractStem(stem);
+				this->stems.push_back(stem);
 			}
 		} else {
+			/* Remove points from the stem. */
+			this->splines.emplace(stem, spline);
+
 			RemoveSpline removeSpline(&pointSelection, &spline);
 			removeSpline.setClearable(false);
 			removeSpline.execute();
 			path.setSpline(spline);
 			stem->setPath(path);
 
-			if (pointSelection.hasPoints() && stem->getParent()) {
-				selection->getPlant()->release(stem);
-				removals.push_back(stem);
-			} else
-				pointSelection.clear();
+			if (pointSelection.hasPoints() && stem->getParent())
+				this->selection->getPlant()->extractStem(stem);
 		}
 	}
+}
 
-	selection->setInstances(instances);
-	for (auto stem : removals)
-		selection->removeStem(stem);
-
+void RemoveStem::execute()
+{
+	/* Remove leaves first to avoid checking for deleted stems. */
 	removeLeaves();
+	removeStems();
+	this->selection->clear();
 }
 
 void RemoveStem::undo()
 {
-	for (auto &item : splines) {
-		pg::Stem *stem = item.first;
-		pg::Plant *plant = selection->getPlant();
-		if (plant->contains(stem)) {
-			auto path = stem->getPath();
-			path.setSpline(item.second);
-			stem->setPath(path);
-		} else {
-			plant->insert(stem->getParent(), stem);
-		}
+	for (Stem *stem : this->stems) {
+		Plant *plant = this->selection->getPlant();
+		plant->insertStem(stem, stem->getParent());
+	}
+
+	for (auto &pair : this->splines) {
+		Stem *stem = pair.first;
+		auto path = stem->getPath();
+		path.setSpline(pair.second);
+		stem->setPath(path);
 	}
 
 	for (auto &item : leaves) {
-		pg::Stem *stem = item.first;
+		Stem *stem = item.first;
 		stem->addLeaf(item.second);
 	}
 
-	*selection = prevSelection;
+	this->stems.clear();
+	this->splines.clear();
+	*this->selection = this->prevSelection;
 }

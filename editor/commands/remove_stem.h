@@ -27,9 +27,11 @@ class RemoveStem : public Command {
 	Selection prevSelection;
 	std::map<pg::Stem *, pg::Leaf> leaves;
 	std::map<pg::Stem *, pg::Spline> splines;
-	std::vector<pg::Stem *> removals;
+	std::vector<pg::Stem *> stems;
 
 	void removeLeaves();
+	void removeStems();
+
 public:
 	RemoveStem(Selection *selection);
 	~RemoveStem();

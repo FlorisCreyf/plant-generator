@@ -66,7 +66,7 @@ private:
 	GLuint textures[2];
 	bool initialized = false;
 	ShaderParams defaultMaterial;
-	std::map<unsigned, ShaderParams> materials;
+	std::map<long, ShaderParams> materials;
 
 	void createPrograms();
 	bool isCompiled(GLuint name, const char *filename);

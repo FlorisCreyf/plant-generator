@@ -23,8 +23,8 @@
 #include <memory>
 
 class History {
-	std::vector<std::shared_ptr<Command>> past;
-	std::vector<std::shared_ptr<Command>> future;
+	std::vector<std::unique_ptr<Command>> past;
+	std::vector<std::unique_ptr<Command>> future;
 
 public:
 	void add(Command *command);

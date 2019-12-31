@@ -459,7 +459,7 @@ void Editor::paintGL()
 		glUseProgram(shared->getShader(Shader::Material));
 		glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
 		for (int i = 0; i < mesh.getMeshCount(); i++) {
-			int materialID = mesh.getMaterialId(i);
+			long materialID = mesh.getMaterialID(i);
 			ShaderParams params = shared->getMaterial(materialID);
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, params.getTexture(0));

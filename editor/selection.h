@@ -32,13 +32,13 @@ class Selection {
 	pg::Plant *plant;
 	pg::Mesh *mesh;
 	std::map<pg::Stem *, PointSelection> stems;
-	std::map<pg::Stem *, std::set<unsigned>> leaves;
+	std::map<pg::Stem *, std::set<long>> leaves;
 
-	bool selectPoint(QMouseEvent *event);
-	void selectStem(QMouseEvent *event);
-	std::pair<float, pg::Stem *> getStem(pg::Ray &ray, pg::Stem *stem);
-	std::pair<float, pg::Segment> getLeaf(pg::Ray ray);
-	void selectAll(pg::Stem *stem);
+	bool selectPoint(QMouseEvent *);
+	void selectStem(QMouseEvent *);
+	std::pair<float, pg::Stem *> getStem(pg::Ray &, pg::Stem *);
+	std::pair<float, pg::Segment> getLeaf(pg::Ray);
+	void selectAll(pg::Stem *);
 	void getTotalLeafPosition(pg::Vec3 &, int &) const;
 
 public:
@@ -48,13 +48,13 @@ public:
 
 	void removeStem(pg::Stem *stem);
 	void addStem(pg::Stem *stem);
-	void addLeaf(pg::Stem *stem, unsigned leaf);
+	void addLeaf(pg::Stem *stem, long leaf);
 	void removeLeaves();
 
 	void select(QMouseEvent *event);
 	void setInstances(std::map<pg::Stem *, PointSelection> instances);
 	std::map<pg::Stem *, PointSelection> getStemInstances();
-	std::map<pg::Stem *, std::set<unsigned>> getLeafInstances();
+	std::map<pg::Stem *, std::set<long>> getLeafInstances();
 	pg::Plant *getPlant();
 
 	void clear();

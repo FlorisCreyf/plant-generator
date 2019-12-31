@@ -17,6 +17,16 @@
 
 #include "command.h"
 
+Command::Command()
+{
+
+}
+
+Command::Command(const Command &original)
+{
+	this->done = original.done;
+}
+
 bool Command::onMouseMove(QMouseEvent *)
 {
 	return false;

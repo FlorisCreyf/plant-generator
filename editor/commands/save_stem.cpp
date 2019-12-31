@@ -17,11 +17,11 @@
 
 #include "save_stem.h"
 
-SaveStem::SaveStem(Selection *selection) :
-	before(*selection), after(*selection)
+using pg::Stem;
+
+SaveStem::SaveStem(Selection *selection) : before(*selection), after(*selection)
 {
 	this->selection = selection;
-	undone = false;
 }
 
 bool SaveStem::isSameAsCurrent()
@@ -30,13 +30,13 @@ bool SaveStem::isSameAsCurrent()
 		auto stemInstances = selection->getStemInstances();
 		auto leafInstances = selection->getLeafInstances();
 		for (auto &instance : stemInstances) {
-			pg::Stem *stem = instance.first;
+			Stem *stem = instance.first;
 			auto it = stems.find(stem);
 			if (it == stems.end() || it->second != *stem)
 				return false;
 		}
 		for (auto &instance : leafInstances) {
-			pg::Stem *stem = instance.first;
+			Stem *stem = instance.first;
 			auto it = stems.find(stem);
 			if (it == stems.end() || it->second != *stem)
 				return false;
@@ -47,50 +47,50 @@ bool SaveStem::isSameAsCurrent()
 
 void SaveStem::setNewSelection()
 {
-	after = *selection;
+	this->after = *this->selection;
 }
 
 void SaveStem::execute()
 {
-	if (undone) {
-		swap();
-		*selection = after;
-	} else {
-		before = *selection;
-		auto stemInstances = selection->getStemInstances();
-		auto leafInstances = selection->getLeafInstances();
-		for (auto &instance : stemInstances)
-			stems.emplace(instance.first, *instance.first);
-		for (auto &instance : leafInstances)
-			stems.emplace(instance.first, *instance.first);
-	}
+	this->before = *this->selection;
+	auto stemInstances = selection->getStemInstances();
+	auto leafInstances = selection->getLeafInstances();
+	for (auto &instance : stemInstances)
+		this->stems.emplace(instance.first, *instance.first);
+	for (auto &instance : leafInstances)
+		this->stems.emplace(instance.first, *instance.first);
 }
 
 void SaveStem::undo()
 {
 	swap();
-	*selection = before;
-	undone = true;
+	*this->selection = this->before;
+}
+
+void SaveStem::redo()
+{
+	swap();
+	*this->selection = this->after;
 }
 
 void SaveStem::swap()
 {
-	auto stemInstances = selection->getStemInstances();
-	auto leafInstances = selection->getLeafInstances();
+	auto stemInstances = this->selection->getStemInstances();
+	auto leafInstances = this->selection->getLeafInstances();
 	for (auto instance : stemInstances) {
-		pg::Stem *stem = instance.first;
-		auto it = stems.find(stem);
-		if (it != stems.end()) {
-			pg::Stem s = *stem;
+		Stem *stem = instance.first;
+		auto it = this->stems.find(stem);
+		if (it != this->stems.end()) {
+			Stem s = *stem;
 			*stem = it->second;
 			it->second = s;
 		}
 	}
 	for (auto instance : leafInstances) {
-		pg::Stem *stem = instance.first;
-		auto it = stems.find(stem);
-		if (it != stems.end()) {
-			pg::Stem s = *stem;
+		Stem *stem = instance.first;
+		auto it = this->stems.find(stem);
+		if (it != this->stems.end()) {
+			Stem s = *stem;
 			*stem = it->second;
 			it->second = s;
 		}

@@ -15,9 +15,11 @@
 
 #include "leaf.h"
 
-unsigned pg::Leaf::counter = 1;
+using pg::Leaf;
 
-pg::Leaf::Leaf()
+long Leaf::counter = 1;
+
+Leaf::Leaf()
 {
 	id = counter++;
 	position = -1.0f;
@@ -27,7 +29,7 @@ pg::Leaf::Leaf()
 	rotation = {0.0f, 0.0f, 0.0f, 1.0f};
 }
 
-bool pg::Leaf::operator==(const pg::Leaf &leaf) const
+bool Leaf::operator==(const Leaf &leaf) const
 {
 	return (
 		id == leaf.id &&
@@ -39,37 +41,37 @@ bool pg::Leaf::operator==(const pg::Leaf &leaf) const
 	);
 }
 
-bool pg::Leaf::operator!=(const pg::Leaf &leaf) const
+bool Leaf::operator!=(const Leaf &leaf) const
 {
 	return !(*this == leaf);
 }
 
-unsigned pg::Leaf::getId() const
+long Leaf::getID() const
 {
 	return id;
 }
 
-void pg::Leaf::setPosition(float position)
+void Leaf::setPosition(float position)
 {
 	this->position = position;
 }
 
-float pg::Leaf::getPosition() const
+float Leaf::getPosition() const
 {
 	return position;
 }
 
-void pg::Leaf::setRotation(pg::Quat rotation)
+void Leaf::setRotation(pg::Quat rotation)
 {
 	this->rotation = rotation;
 }
 
-pg::Quat pg::Leaf::getRotation()
+pg::Quat Leaf::getRotation()
 {
 	return rotation;
 }
 
-pg::Quat pg::Leaf::getDefaultOrientation(pg::Vec3 stemDirection)
+pg::Quat Leaf::getDefaultOrientation(pg::Vec3 stemDirection)
 {
 	Vec3 normal = {0.0f, 1.0f, 0.0f};
 	Vec3 d = {0.0f, 0.0f, 1.0f};
@@ -83,32 +85,32 @@ pg::Quat pg::Leaf::getDefaultOrientation(pg::Vec3 stemDirection)
 	return k * q;
 }
 
-void pg::Leaf::setScale(pg::Vec3 scale)
+void Leaf::setScale(pg::Vec3 scale)
 {
 	this->scale = scale;
 }
 
-pg::Vec3 pg::Leaf::getScale() const
+pg::Vec3 Leaf::getScale() const
 {
 	return scale;
 }
 
-void pg::Leaf::setMaterial(unsigned material)
+void Leaf::setMaterial(long material)
 {
 	this->material = material;
 }
 
-unsigned pg::Leaf::getMaterial() const
+long Leaf::getMaterial() const
 {
 	return material;
 }
 
-void pg::Leaf::setMesh(unsigned mesh)
+void Leaf::setMesh(long mesh)
 {
 	this->mesh = mesh;
 }
 
-unsigned pg::Leaf::getMesh() const
+long Leaf::getMesh() const
 {
 	return mesh;
 }

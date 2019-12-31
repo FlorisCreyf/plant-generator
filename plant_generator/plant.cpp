@@ -15,35 +15,41 @@
 
 #include "plant.h"
 
+using pg::Plant;
 using pg::Stem;
+using pg::Geometry;
+using pg::Material;
 
-pg::Plant::Plant()
+Plant::Plant()
 {
-	root = nullptr;
+	this->root = nullptr;
 }
 
-pg::Plant::~Plant()
+Plant::~Plant()
 {
 	removeStem(root);
 }
 
-Stem *pg::Plant::getRoot()
+Stem *Plant::addStem(Stem *parent)
 {
-	return root;
-}
-
-Stem *pg::Plant::addStem(Stem *stem)
-{
-	Stem *firstChild = stem->child;
-	stem->child = new Stem(stem);
+	Stem *stem = new Stem(parent);
+	Stem *firstChild = parent->child;
+	parent->child = stem;
 	if (firstChild)
-		firstChild->prevSibling = stem->child;
-	stem->child->nextSibling = firstChild;
-	stem->child->prevSibling = nullptr;
-	return stem->child;
+		firstChild->prevSibling = stem;
+	stem->nextSibling = firstChild;
+	stem->prevSibling = nullptr;
+	return stem;
 }
 
-void pg::Plant::removeFromTree(pg::Stem *stem)
+Stem *Plant::createRoot()
+{
+	removeStem(this->root);
+	this->root = new Stem(nullptr);
+	return this->root;
+}
+
+Stem *Plant::extractStem(pg::Stem *stem)
 {
 	if (stem->prevSibling)
 		stem->prevSibling->nextSibling = stem->nextSibling;
@@ -55,89 +61,42 @@ void pg::Plant::removeFromTree(pg::Stem *stem)
 		else
 			stem->parent->child = stem->nextSibling;
 	}
+	return stem;
 }
 
-void pg::Plant::deleteStem(Stem *stem)
+Stem *Plant::getRoot()
 {
-	Stem *child = stem->child;
-	while (child) {
-		Stem *next = child->nextSibling;
-		deleteStem(child);
-		child = next;
-	}
-	delete stem;
+	return this->root;
 }
 
-void pg::Plant::removeStem(Stem *stem)
-{
-	if (stem->parent)
-		deleteStem(stem);
-}
-
-void pg::Plant::insert(Stem *parent, Stem *child)
+void Plant::insertStem(Stem *stem, Stem *parent)
 {
 	Stem *firstChild = parent->child;
-	parent->child = child;
+	parent->child = stem;
 	if (firstChild)
 		firstChild->prevSibling = parent->child;
 	parent->child->nextSibling = firstChild;
 	parent->child->prevSibling = nullptr;
 }
 
-void pg::Plant::release(Stem *stem)
+void Plant::removeStem(Stem *stem)
 {
-	if (stem->parent)
-		removeFromTree(stem);
+	if (stem == this->root)
+		this->root = nullptr;
+	delete stem;
 }
 
-bool pg::Plant::contains(Stem *stem)
+void Plant::removeRoot()
 {
-	return contains(stem, root);
+	removeStem(this->root);
 }
 
-bool pg::Plant::contains(Stem *a, Stem *b)
+void Plant::addMaterial(Material material)
 {
-	if (a == b)
-		return true;
-	else if (b == nullptr)
-		return false;
-	else {
-		Stem *child = b->child;
-		while (child) {
-			Stem *next = child->nextSibling;
-			if (contains(a, child))
-				return true;
-			child = next;
-		}
-		return false;
-	}
+	materials[material.getID()] = material;
 }
 
-void pg::Plant::removeRoot()
-{
-	if (root != nullptr) {
-		Stem *child = root->child;
-		while (child) {
-			Stem *next = child->nextSibling;
-			removeStem(child);
-			child = next;
-		}
-		delete root;
-	}
-	root = nullptr;
-}
-
-void pg::Plant::setRoot(Stem *stem)
-{
-	this->root = stem;
-}
-
-void pg::Plant::addMaterial(pg::Material material)
-{
-	materials[material.getId()] = material;
-}
-
-void pg::Plant::removeMaterial(unsigned id)
+void Plant::removeMaterial(long id)
 {
 	if (root) {
 		if (root->getMaterial(Stem::Outer) == id)
@@ -149,7 +108,7 @@ void pg::Plant::removeMaterial(unsigned id)
 	materials.erase(id);
 }
 
-void pg::Plant::removeMaterial(Stem *stem, unsigned id)
+void Plant::removeMaterial(Stem *stem, long id)
 {
 	Stem *child = stem->child;
 	while (child) {
@@ -162,37 +121,37 @@ void pg::Plant::removeMaterial(Stem *stem, unsigned id)
 	}
 }
 
-pg::Material pg::Plant::getMaterial(unsigned id)
+Material Plant::getMaterial(long id)
 {
 	return materials[id];
 }
 
-std::map<unsigned, pg::Material> pg::Plant::getMaterials()
+std::map<long, Material> Plant::getMaterials()
 {
 	return materials;
 }
 
-void pg::Plant::addLeafMesh(pg::Geometry mesh)
+void Plant::addLeafMesh(Geometry mesh)
 {
-	leafMeshes[mesh.getId()] = mesh;
+	leafMeshes[mesh.getID()] = mesh;
 }
 
-pg::Geometry pg::Plant::getLeafMesh(unsigned id)
-{
-	return leafMeshes[id];
-}
-
-void pg::Plant::removeLeafMesh(unsigned id)
+void Plant::removeLeafMesh(long id)
 {
 	leafMeshes.erase(id);
 }
 
-void pg::Plant::removeLeafMeshes()
+void Plant::removeLeafMeshes()
 {
 	leafMeshes.clear();
 }
 
-std::map<unsigned, pg::Geometry> pg::Plant::getLeafMeshes()
+Geometry Plant::getLeafMesh(long id)
+{
+	return leafMeshes[id];
+}
+
+std::map<long, Geometry> Plant::getLeafMeshes()
 {
 	return leafMeshes;
 }

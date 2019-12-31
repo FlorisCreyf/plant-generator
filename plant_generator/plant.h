@@ -27,8 +27,8 @@ namespace pg {
 		friend class boost::serialization::access;
 
 		Stem *root;
-		std::map<unsigned, Material> materials;
-		std::map<unsigned, Geometry> leafMeshes;
+		std::map<long, Material> materials;
+		std::map<long, Geometry> leafMeshes;
 
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned int version)
@@ -39,38 +39,37 @@ namespace pg {
 			ar & leafMeshes;
 		}
 
-		bool contains(Stem *a, Stem *b);
-		void removeFromTree(Stem *stem);
-		void removeMaterial(Stem *stem, unsigned id);
+		void removeMaterial(Stem *, long);
 
 	public:
 		Plant();
 		~Plant();
 
-		/* This method needs to be called some time after calling
-		 * release() to free up memory. */
-		static void deleteStem(Stem *stem);
-
+		/** Add a new stem to the plant at a parent stem. */
+		Stem *addStem(Stem *parent);
+		/** Insert a stem into the plant at parent. */
+		void insertStem(Stem *stem, Stem *parent);
+		/** Remove all stems from the plant and create a new root. */
+		Stem *createRoot();
+		/** Remove a stem from the plant. */
+		Stem *extractStem(Stem *);
+		/** Return the root or trunk of the plant. */
 		Stem *getRoot();
-		Stem *addStem(Stem *stem);
-		void removeStem(Stem *stem);
-		void insert(Stem *parent, Stem *child);
-		/* Remove without deletion.*/
-		void release(Stem *stem);
-		bool contains(Stem *stem);
-		/* Removes the root and sets root to nullptr. */
+		/** Remove all stems in the plant. */
 		void removeRoot();
-		/* This does not delete the previous root. */
-		void setRoot(Stem *stem);
+		/** Remove a stem and its descendants from the plant. */
+		void removeStem(Stem *stem);
+
 		void addMaterial(Material material);
-		void removeMaterial(unsigned id);
-		Material getMaterial(unsigned id);
-		std::map<unsigned, Material> getMaterials();
+		void removeMaterial(long id);
+		Material getMaterial(long id);
+		std::map<long, Material> getMaterials();
+
 		void addLeafMesh(Geometry mesh);
-		Geometry getLeafMesh(unsigned id);
-		void removeLeafMesh(unsigned id);
+		void removeLeafMesh(long id);
 		void removeLeafMeshes();
-		std::map<unsigned, Geometry> getLeafMeshes();
+		Geometry getLeafMesh(long id);
+		std::map<long, Geometry> getLeafMeshes();
 	};
 }
 

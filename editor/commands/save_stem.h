@@ -27,7 +27,6 @@ class SaveStem : public Command {
 	Selection before;
 	Selection after;
 	std::map<pg::Stem *, pg::Stem> stems;
-	bool undone;
 
 	void swap();
 
@@ -41,6 +40,7 @@ public:
 	void setNewSelection();
 	void execute();
 	void undo();
+	void redo();
 };
 
 #endif /* SAVE_STEM_H */

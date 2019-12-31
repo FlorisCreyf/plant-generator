@@ -19,7 +19,7 @@ using pg::Vec3;
 using pg::Quat;
 using pg::Vertex;
 
-unsigned pg::Geometry::counter = 1;
+long pg::Geometry::counter = 1;
 
 pg::Geometry::Geometry()
 {
@@ -32,7 +32,7 @@ void pg::Geometry::clear()
 	indices.clear();
 }
 
-unsigned pg::Geometry::getId() const
+long pg::Geometry::getID() const
 {
 	return id;
 }
