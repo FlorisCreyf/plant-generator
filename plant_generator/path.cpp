@@ -16,7 +16,11 @@
 #include "path.h"
 #include <limits>
 
-bool pg::Path::operator==(const Path &path) const
+using pg::Path;
+using pg::Spline;
+using pg::Vec3;
+
+bool Path::operator==(const Path &path) const
 {
 	return (
 		this->path == path.path &&
@@ -25,15 +29,16 @@ bool pg::Path::operator==(const Path &path) const
 		this->subdivisions == path.subdivisions &&
 		this->radius == path.radius &&
 		this->minRadius == path.minRadius &&
-		this->maxRadius == path.maxRadius);
+		this->maxRadius == path.maxRadius
+	);
 }
 
-bool pg::Path::operator!=(const Path &path) const
+bool Path::operator!=(const Path &path) const
 {
 	return !(*this == path);
 }
 
-void pg::Path::generate()
+void Path::generate()
 {
 	size_t numControls = spline.getControls().size();
 	if (numControls > 0) {
@@ -54,56 +59,56 @@ void pg::Path::generate()
 	}
 }
 
-void pg::Path::setSpline(Spline &spline)
+void Path::setSpline(Spline &spline)
 {
 	this->spline = spline;
 	generate();
 }
 
-pg::Spline pg::Path::getSpline()
+Spline Path::getSpline()
 {
 	return spline;
 }
 
 /** Sets the divisions for each curve in the path. */
-void pg::Path::setResolution(int resolution)
+void Path::setResolution(int resolution)
 {
 	this->resolution = resolution;
 	generate();
 }
 
-int pg::Path::getResolution() const
+int Path::getResolution() const
 {
 	return resolution;
 }
 
-void pg::Path::subdivide(int level)
+void Path::subdivide(int level)
 {
 	subdivisions = level;
 	// TODO subdivide
 }
 
-int pg::Path::getSubdivisions() const
+int Path::getSubdivisions() const
 {
 	return subdivisions;
 }
 
-std::vector<pg::Vec3> pg::Path::get() const
+std::vector<Vec3> Path::get() const
 {
 	return path;
 }
 
-pg::Vec3 pg::Path::get(int index) const
+Vec3 Path::get(int index) const
 {
 	return path[index];
 }
 
-int pg::Path::getSize() const
+int Path::getSize() const
 {
 	return path.size();
 }
 
-pg::Vec3 pg::Path::getIntermediate(float distance) const
+Vec3 Path::getIntermediate(float distance) const
 {
 	Vec3 point = {
 		std::numeric_limits<float>::quiet_NaN(),
@@ -128,7 +133,7 @@ pg::Vec3 pg::Path::getIntermediate(float distance) const
 	return point;
 }
 
-float pg::Path::getLength() const
+float Path::getLength() const
 {
 	float length = 0.0f;
 	for (size_t i = 0; i < path.size() - 1; i++)
@@ -136,7 +141,7 @@ float pg::Path::getLength() const
 	return length;
 }
 
-pg::Vec3 pg::Path::getDirection(size_t index) const
+Vec3 Path::getDirection(size_t index) const
 {
 	if (index == path.size() - 1)
 		return normalize(path[index] - path[index - 1]);
@@ -144,7 +149,7 @@ pg::Vec3 pg::Path::getDirection(size_t index) const
 		return normalize(path[index + 1] - path[index]);
 }
 
-pg::Vec3 pg::Path::getAverageDirection(size_t index) const
+Vec3 Path::getAverageDirection(size_t index) const
 {
 	Vec3 direction;
 	if (index == 0 || index == path.size() - 1)
@@ -156,10 +161,11 @@ pg::Vec3 pg::Path::getAverageDirection(size_t index) const
 	return direction;
 }
 
-pg::Vec3 pg::Path::getIntermediateDirection(float t) const
+Vec3 Path::getIntermediateDirection(float t) const
 {
-	pg::Vec3 direction;
+	Vec3 direction;
 	float s = 0.0f;
+
 	for (size_t i = 0; i < path.size() - 1; i++) {
 		s += magnitude(path[i+1] - path[i]);
 		if (s >= t) {
@@ -167,29 +173,26 @@ pg::Vec3 pg::Path::getIntermediateDirection(float t) const
 			break;
 		}
 	}
+
 	if (s < t)
 		direction = getDirection(path.size() - 1);
+
 	return direction;
 }
 
-float pg::Path::getDistance(int index) const
+float Path::getDistance(int index) const
 {
 	std::vector<Vec3> controls = spline.getControls();
+	int lastIndex = index / spline.getDegree() * this->resolution;
 	float distance = 0.0f;
 
-	for (int i = spline.getDegree(); i <= index; i += spline.getDegree()) {
-		for (size_t j = 0; j < path.size(); j++) {
-			// TODO probably not correct
-			if (path[j] == controls[i])
-				break;
-			distance += magnitude(path[j + 1] - path[j]);
-		}
-	}
+	for (int i = 0; i < lastIndex; i++)
+		distance += magnitude(path[i + 1] - path[i]);
 
 	return distance;
 }
 
-float pg::Path::getIntermediateDistance(int index) const
+float Path::getIntermediateDistance(int index) const
 {
 	if (index == 0)
 		return 0.0f;
@@ -197,37 +200,37 @@ float pg::Path::getIntermediateDistance(int index) const
 		return magnitude(path[index] - path[index-1]);
 }
 
-void pg::Path::setMaxRadius(float radius)
+void Path::setMaxRadius(float radius)
 {
 	maxRadius = radius;
 }
 
-float pg::Path::getMaxRadius()
+float Path::getMaxRadius()
 {
 	return maxRadius;
 }
 
-void pg::Path::setMinRadius(float radius)
+void Path::setMinRadius(float radius)
 {
 	minRadius = radius;
 }
 
-float pg::Path::getMinRadius()
+float Path::getMinRadius()
 {
 	return minRadius;
 }
 
-void pg::Path::setRadius(pg::Spline spline)
+void Path::setRadius(Spline spline)
 {
 	radius = spline;
 }
 
-pg::Spline pg::Path::getRadius()
+Spline Path::getRadius()
 {
 	return radius;
 }
 
-float pg::Path::getRadius(int index)
+float Path::getRadius(int index)
 {
 	float length = 0.0f;
 	for (int i = 0; i < index; i++)
