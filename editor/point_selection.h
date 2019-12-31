@@ -34,15 +34,16 @@ public:
 	bool operator!=(const PointSelection &obj) const;
 
 	/** Returns the index of the point that was clicked on. */
-	int selectPoint(QMouseEvent *event, const pg::Spline &spline,
+	int selectPoint(
+		QMouseEvent *event, const pg::Spline &spline,
 		pg::Vec3 location);
 	void setPoints(std::set<int> points);
 	std::set<int> getPoints() const;
 	bool hasPoints() const;
 	bool contains(int point) const;
 
-	pg::Vec3 getAveragePosition(const pg::Spline &spline,
-		pg::Vec3 location) const;
+	pg::Vec3 getAveragePosition(
+		const pg::Spline &spline, pg::Vec3 location) const;
 
 	void clear();
 	void selectNext(int max);

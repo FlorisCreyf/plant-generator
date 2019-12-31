@@ -39,9 +39,9 @@ MaterialEditor::MaterialEditor(SharedResources *shared, QWidget *parent) :
 	initTopRow(topRow);
 	columns->addLayout(topRow);
 
-	materialViewer = new MaterialViewer(shared, this);
-	materialViewer->setMinimumHeight(200);
-	columns->addWidget(materialViewer);
+	this->materialViewer = new MaterialViewer(shared, this);
+	this->materialViewer->setMinimumHeight(200);
+	columns->addWidget(this->materialViewer);
 
 	QFormLayout *form = new QFormLayout();
 	form->setMargin(10);
@@ -51,7 +51,7 @@ MaterialEditor::MaterialEditor(SharedResources *shared, QWidget *parent) :
 	columns->addStretch(1);
 
 	connect(this, SIGNAL(materialChanged(ShaderParams)),
-		materialViewer, SLOT(updateMaterial(ShaderParams)));
+		this->materialViewer, SLOT(updateMaterial(ShaderParams)));
 }
 
 QSize MaterialEditor::sizeHint() const
@@ -62,80 +62,81 @@ QSize MaterialEditor::sizeHint() const
 void MaterialEditor::initFields(QFormLayout *form)
 {
 	QHBoxLayout *diffuseLayout = new QHBoxLayout();
-	diffuseBox = new QLineEdit(this);
-	diffuseBox->setFixedHeight(22);
-	diffuseBox->setReadOnly(true);
-	addDiffuseButton = new QPushButton("+", this);
-	addDiffuseButton->setFixedWidth(22);
-	addDiffuseButton->setFixedHeight(22);
-	removeDiffuseButton = new QPushButton("-", this);
-	removeDiffuseButton->setFixedWidth(22);
-	removeDiffuseButton->setFixedHeight(22);
+	this->diffuseBox = new QLineEdit(this);
+	this->diffuseBox->setFixedHeight(22);
+	this->diffuseBox->setReadOnly(true);
+	this->addDiffuseButton = new QPushButton("+", this);
+	this->addDiffuseButton->setFixedWidth(22);
+	this->addDiffuseButton->setFixedHeight(22);
+	this->removeDiffuseButton = new QPushButton("-", this);
+	this->removeDiffuseButton->setFixedWidth(22);
+	this->removeDiffuseButton->setFixedHeight(22);
 
 	QWidget *sizeWidget = new QWidget();
 	sizeWidget->setLayout(diffuseLayout);
 	diffuseLayout->setSpacing(0);
 	diffuseLayout->setMargin(0);
-	diffuseLayout->addWidget(diffuseBox);
-	diffuseLayout->addWidget(removeDiffuseButton);
-	diffuseLayout->addWidget(addDiffuseButton);
+	diffuseLayout->addWidget(this->diffuseBox);
+	diffuseLayout->addWidget(this->removeDiffuseButton);
+	diffuseLayout->addWidget(this->addDiffuseButton);
 	form->addRow(tr("Diffuse"), sizeWidget);
 
 	form->setFormAlignment(Qt::AlignRight | Qt::AlignTop);
 	form->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
 	form->setLabelAlignment(Qt::AlignRight | Qt::AlignCenter);
 
-	connect(addDiffuseButton, SIGNAL(clicked()),
+	connect(this->addDiffuseButton, SIGNAL(clicked()),
 		this, SLOT(openDiffuseFile()));
-	connect(removeDiffuseButton, SIGNAL(clicked()),
+	connect(this->removeDiffuseButton, SIGNAL(clicked()),
 		this, SLOT(removeDiffuseFile()));
 }
 
 void MaterialEditor::initTopRow(QHBoxLayout *topRow)
 {
-	addButton = new QPushButton("+", this);
-	addButton->setFixedHeight(22);
-	addButton->setFixedWidth(22);
+	this->addButton = new QPushButton("+", this);
+	this->addButton->setFixedHeight(22);
+	this->addButton->setFixedWidth(22);
 
-	removeButton = new QPushButton("-", this);
-	removeButton->setFixedHeight(22);
-	removeButton->setFixedWidth(22);
+	this->removeButton = new QPushButton("-", this);
+	this->removeButton->setFixedHeight(22);
+	this->removeButton->setFixedWidth(22);
 
-	materialBox = new QComboBox(this);
-	materialBox->setEditable(true);
-	materialBox->setInsertPolicy(QComboBox::NoInsert);
-	materialBox->setItemDelegate(new ItemDelegate());
+	this->materialBox = new QComboBox(this);
+	this->materialBox->setEditable(true);
+	this->materialBox->setInsertPolicy(QComboBox::NoInsert);
+	this->materialBox->setItemDelegate(new ItemDelegate());
 
-	topRow->addWidget(materialBox);;
-	topRow->addWidget(removeButton);
-	topRow->addWidget(addButton);
+	topRow->addWidget(this->materialBox);;
+	topRow->addWidget(this->removeButton);
+	topRow->addWidget(this->addButton);
 	topRow->setAlignment(Qt::AlignTop);
 
-	connect(materialBox, SIGNAL(editTextChanged(const QString &)),
+	connect(this->materialBox, SIGNAL(editTextChanged(const QString &)),
 		this, SLOT(renameMaterial(const QString &)));
-	connect(addButton, SIGNAL(clicked()), this, SLOT(addMaterial()));
-	connect(removeButton, SIGNAL(clicked()), this, SLOT(removeMaterial()));
-	connect(materialBox, SIGNAL(currentIndexChanged(int)),
+	connect(this->addButton, SIGNAL(clicked()), this, SLOT(addMaterial()));
+	connect(this->removeButton, SIGNAL(clicked()),
+		this, SLOT(removeMaterial()));
+	connect(this->materialBox, SIGNAL(currentIndexChanged(int)),
 		this, SLOT(selectMaterial()));
 }
 
 const MaterialViewer *MaterialEditor::getViewer() const
 {
-	return materialViewer;
+	return this->materialViewer;
 }
 
 void MaterialEditor::addMaterial(pg::Material material)
 {
 	ShaderParams params(material);
 	QString qname = QString::fromStdString(params.getName());
-	shared->addMaterial(params);
-	materialBox->addItem(qname, QVariant((qlonglong)params.getID()));
-	materialBox->setCurrentIndex(materialBox->count() - 1);
+	this->shared->addMaterial(params);
+	this->materialBox->addItem(qname, QVariant((qlonglong)params.getID()));
+	this->materialBox->setCurrentIndex(this->materialBox->count() - 1);
 
 	if (!material.getTexture().empty()) {
 		std::string filename = material.getTexture();
 		QString qfilename = QString::fromStdString(filename);
-		diffuseBox->setText(qfilename);
+		this->diffuseBox->setText(qfilename);
 		params.loadTexture(0, qfilename);
 	}
 
@@ -147,85 +148,88 @@ void MaterialEditor::addMaterial()
 	ShaderParams params;
 	std::string name;
 	QString qname;
-	GLuint defaultTex = shared->getTexture(SharedResources::DefaultTexture);
+	GLuint defaultTex = this->shared->getTexture(
+		SharedResources::DefaultTexture);
 
 	for (int i = 1; true; i++) {
 		name = "Material " + std::to_string(i);
 		qname = QString::fromStdString(name);
-		if (materialBox->findText(qname) == -1)
+		if (this->materialBox->findText(qname) == -1)
 			break;
 	}
 
 	params.setName(name);
 	params.setDefaultTexture(0, defaultTex);
-	shared->addMaterial(params);
-	diffuseBox->setText(tr(""));
-	materialBox->addItem(qname, QVariant((qlonglong)params.getID()));
-	materialBox->setCurrentIndex(materialBox->findText(qname));
+	this->shared->addMaterial(params);
+	this->diffuseBox->setText(tr(""));
+	this->materialBox->addItem(qname, QVariant((qlonglong)params.getID()));
+	this->materialBox->setCurrentIndex(this->materialBox->findText(qname));
 	emit materialChanged(params);
 }
 
 void MaterialEditor::clear()
 {
-	shared->clearMaterials();
-	materialBox->clear();
-	diffuseBox->clear();
+	this->shared->clearMaterials();
+	this->materialBox->clear();
+	this->diffuseBox->clear();
 }
 
 void MaterialEditor::renameMaterial(const QString &text)
 {
-	if (!text.isEmpty() && materialBox->findText(text) == -1) {
-		int id = materialBox->currentData().toInt();
-		ShaderParams params = shared->getMaterial(id);
+	if (!text.isEmpty() && this->materialBox->findText(text) == -1) {
+		int id = this->materialBox->currentData().toInt();
+		ShaderParams params = this->shared->getMaterial(id);
 		params.setName(text.toStdString());
-		shared->addMaterial(params);
-		materialBox->setItemText(materialBox->currentIndex(), text);
+		this->shared->addMaterial(params);
+		this->materialBox->setItemText(
+			this->materialBox->currentIndex(), text);
 	}
 }
 
 void MaterialEditor::selectMaterial()
 {
-	int id = materialBox->currentData().toInt();
-	ShaderParams params = shared->getMaterial(id);
+	int id = this->materialBox->currentData().toInt();
+	ShaderParams params = this->shared->getMaterial(id);
 	std::string filename = params.getMaterial().getTexture();
 	QString qfilename = QString::fromStdString(filename);
-	diffuseBox->setText(qfilename);
+	this->diffuseBox->setText(qfilename);
 	emit materialChanged(params);
 }
 
 void MaterialEditor::removeMaterial()
 {
-	if (materialBox->count() > 1) {
-		int id = materialBox->currentData().toInt();
-		shared->removeMaterial(id);
-		materialBox->removeItem(materialBox->currentIndex());
+	if (this->materialBox->count() > 1) {
+		int id = this->materialBox->currentData().toInt();
+		this->shared->removeMaterial(id);
+		this->materialBox->removeItem(
+			this->materialBox->currentIndex());
 		selectMaterial();
 	}
 }
 
 void MaterialEditor::openDiffuseFile()
 {
-	int index = materialBox->currentIndex();
-	long id = materialBox->itemData(index).toInt();
-	ShaderParams params = shared->getMaterial(id);
+	int index = this->materialBox->currentIndex();
+	long id = this->materialBox->itemData(index).toInt();
+	ShaderParams params = this->shared->getMaterial(id);
 	QFileDialog dialog(this, tr("Open File"));
 
 	dialog.exec();
 	QString filename = dialog.selectedFiles().first();
 
 	if (params.loadTexture(0, filename)) {
-		shared->addMaterial(params);
-		diffuseBox->setText(filename);
+		this->shared->addMaterial(params);
+		this->diffuseBox->setText(filename);
 		emit materialChanged(params);
 	}
 }
 
 void MaterialEditor::removeDiffuseFile()
 {
-	int index = materialBox->currentIndex();
-	long id = materialBox->itemData(index).toInt();
-	ShaderParams params = shared->getMaterial(id);
+	int index = this->materialBox->currentIndex();
+	long id = this->materialBox->itemData(index).toInt();
+	ShaderParams params = this->shared->getMaterial(id);
 	params.removeTexture(0);
-	diffuseBox->clear();
+	this->diffuseBox->clear();
 	emit materialChanged(params);
 }

@@ -24,12 +24,12 @@ using pg::Spline;
 PointSelection::PointSelection(Camera *camera)
 {
 	this->camera = camera;
-	location.x = location.y = location.z = 0.0f;
+	this->location.x = this->location.y = this->location.z = 0.0f;
 }
 
 bool PointSelection::operator==(const PointSelection &obj) const
 {
-	return location == obj.location && points == obj.points;
+	return this->location == obj.location && this->points == obj.points;
 }
 
 bool PointSelection::operator!=(const PointSelection &obj) const
@@ -37,8 +37,8 @@ bool PointSelection::operator!=(const PointSelection &obj) const
 	return !(*this == obj);
 }
 
-int PointSelection::selectPoint(QMouseEvent *event, const Spline &spline,
-	pg::Vec3 location)
+int PointSelection::selectPoint(
+	QMouseEvent *event, const Spline &spline, Vec3 location)
 {
 	bool ctrl = event->modifiers() & Qt::ControlModifier;
 	auto controls = spline.getControls();
@@ -49,7 +49,7 @@ int PointSelection::selectPoint(QMouseEvent *event, const Spline &spline,
 	/* Find what point is clicked on. */
 	for (int i = 0; i < size; i++) {
 		Vec3 point = controls[i] + location;
-		point = camera->toScreenSpace(point);
+		point = this->camera->toScreenSpace(point);
 		float sx = std::pow(point.x - event->pos().x(), 2);
 		float sy = std::pow(point.y - event->pos().y(), 2);
 
@@ -70,19 +70,19 @@ int PointSelection::selectPoint(QMouseEvent *event, const Spline &spline,
 
 	/* Remove previous selections if no modifier key is pressed. */
 	if (!ctrl)
-		points.clear();
+		this->points.clear();
 
 	if (selectedPoint >= 0) {
 		/* Remove the point from the selection if it is already
 		 * selected. */
-		std::set<int>::iterator it = points.find(selectedPoint);
-		if (it != points.end())
-			points.erase(it);
+		std::set<int>::iterator it = this->points.find(selectedPoint);
+		if (it != this->points.end())
+			this->points.erase(it);
 		else
-			points.insert(selectedPoint);
+			this->points.insert(selectedPoint);
 	} else if (!ctrl)
 		/* Remove the entire selection if nothing was clicked on. */
-		points.clear();
+		this->points.clear();
 
 	return selectedPoint;
 }
@@ -94,24 +94,24 @@ void PointSelection::setPoints(std::set<int> points)
 
 std::set<int> PointSelection::getPoints() const
 {
-	return points;
+	return this->points;
 }
 
 bool PointSelection::hasPoints() const
 {
-	return !points.empty();
+	return !this->points.empty();
 }
 
 bool PointSelection::contains(int point) const
 {
-	return points.find(point) != points.end();
+	return this->points.find(point) != this->points.end();
 }
 
-Vec3 PointSelection::getAveragePosition(const Spline &spline, pg::Vec3 location)
+Vec3 PointSelection::getAveragePosition(const Spline &spline, Vec3 location)
 	const
 {
 	Vec3 position = {0.0f, 0.0f, 0.0f};
-	for (int point : points)
+	for (int point : this->points)
 		position += spline.getControls()[point];
 	position /= points.size();
 	position += location;
@@ -120,32 +120,30 @@ Vec3 PointSelection::getAveragePosition(const Spline &spline, pg::Vec3 location)
 
 void PointSelection::clear()
 {
-	points.clear();
+	this->points.clear();
 }
 
 void PointSelection::selectNext(int max)
 {
-	if (!points.empty()) {
-		for (int i = *points.begin() + 1; i < max; i++)
-			points.insert(i);
-	}
+	if (!this->points.empty())
+		for (int i = *this->points.begin() + 1; i < max; i++)
+			this->points.insert(i);
 }
 
 void PointSelection::selectPrevious()
 {
-	if (!points.empty()) {
-		for (int i = *points.begin() - 1; i >= 0; i--)
-			points.insert(i);
-	}
+	if (!this->points.empty())
+		for (int i = *this->points.begin() - 1; i >= 0; i--)
+			this->points.insert(i);
 }
 
 void PointSelection::selectAll(int max)
 {
 	for (int i = 0; i < max; i++)
-		points.insert(i);
+		this->points.insert(i);
 }
 
 void PointSelection::select(int point)
 {
-	points.insert(point);
+	this->points.insert(point);
 }

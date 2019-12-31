@@ -33,8 +33,8 @@ class SaveStem : public Command {
 public:
 	SaveStem(Selection *selection);
 	/**
-	 * Determine if the saved stems are the same as the stems in the current
-	 * selection.
+	 * Determine if the saved stems are the same as the stems in the
+	 * current selection.
 	 */
 	bool isSameAsCurrent();
 	void setNewSelection();

@@ -40,8 +40,6 @@ class MaterialEditor : public QWidget {
 	QPushButton *addDiffuseButton;
 	QPushButton *removeDiffuseButton;
 
-	QToolBar *toolbar;
-
 	void initFields(QFormLayout *form);
 	void initTopRow(QHBoxLayout *topRow);
 

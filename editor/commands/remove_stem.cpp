@@ -54,10 +54,12 @@ void RemoveStem::removeLeaves()
 			stem->removeLeaf(*it);
 		}
 	}
+	this->selection->removeLeaves();
 }
 
 void RemoveStem::removeStems()
 {
+	std::vector<Stem *> removals;
 	auto instances = selection->getStemInstances();
 	for (auto &instance : instances) {
 		Stem *stem = instance.first;
@@ -73,6 +75,7 @@ void RemoveStem::removeStems()
 				points.clear();
 				this->selection->getPlant()->extractStem(stem);
 				this->stems.push_back(stem);
+				removals.push_back(stem);
 			}
 		} else {
 			/* Remove points from the stem. */
@@ -84,10 +87,19 @@ void RemoveStem::removeStems()
 			path.setSpline(spline);
 			stem->setPath(path);
 
-			if (pointSelection.hasPoints() && stem->getParent())
+			if (pointSelection.hasPoints() && stem->getParent()) {
 				this->selection->getPlant()->extractStem(stem);
+				removals.push_back(stem);
+			} else
+				pointSelection.clear();
 		}
 	}
+
+	/* Do not remove stems from the selection if only a couple of points
+	 * were removed. */
+	selection->setInstances(instances);
+	for (auto stem : removals)
+		selection->removeStem(stem);
 }
 
 void RemoveStem::execute()
@@ -95,7 +107,6 @@ void RemoveStem::execute()
 	/* Remove leaves first to avoid checking for deleted stems. */
 	removeLeaves();
 	removeStems();
-	this->selection->clear();
 }
 
 void RemoveStem::undo()

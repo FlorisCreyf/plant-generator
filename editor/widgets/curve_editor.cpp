@@ -395,7 +395,7 @@ void CurveEditor::restrictLinearControls()
 		for (auto it = points.rbegin(); it != points.rend(); ++it)
 			restrictLinearControl(controls, *it);
 
-	spline.setControls(controls);
+	this->spline.setControls(controls);
 }
 
 void CurveEditor::restrictLinearControl(std::vector<pg::Vec3>& controls, int i)
@@ -656,25 +656,26 @@ void CurveEditor::paintGL()
 		glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, start);
 	}
 
-	glDrawArrays(GL_LINES,
-		this->gridSegment.pstart, this->gridSegment.pcount);
+	glDrawArrays(GL_LINES, this->gridSegment.pstart,
+		this->gridSegment.pcount);
 
 	if (this->enabled && this->spline.getControls().size() > 0) {
 		glUseProgram(this->shared->getShader(Shader::Line));
 		glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
 		glUniform2f(1, QWidget::width(), QWidget::height());
 
-		Geometry::Segment s = this->path.getLineSegment();
-		GLvoid *start = (GLvoid *)(s.istart * sizeof(unsigned));
-		glDrawElements(GL_LINE_STRIP, s.icount, GL_UNSIGNED_INT, start);
+		Geometry::Segment segment = this->path.getLineSegment();
+		GLvoid *start = (GLvoid *)(segment.istart * sizeof(unsigned));
+		glDrawElements(
+			GL_LINE_STRIP, segment.icount, GL_UNSIGNED_INT, start);
 
-		s = this->path.getPointSegment();
+		segment = this->path.getPointSegment();
 		GLuint texture = this->shared->getTexture(
 			this->shared->DotTexture);
 		glBindTexture(GL_TEXTURE_2D, texture);
 		glUseProgram(shared->getShader(Shader::Point));
 		glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
-		glDrawArrays(GL_POINTS, s.pstart, s.pcount);
+		glDrawArrays(GL_POINTS, segment.pstart, segment.pcount);
 	}
 
 	glFlush();
@@ -725,7 +726,7 @@ void CurveEditor::setDegree(int degree)
 		this->selection.clear();
 		this->history.clear();
 		change();
-		emit curveChanged(this->spline, name);
+		emit curveChanged(this->spline, this->name);
 		emit editingFinished();
 	}
 }

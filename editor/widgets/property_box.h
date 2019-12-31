@@ -102,17 +102,19 @@ private:
 	bool changing = false;
 
 	void beginChanging();
-	void createStemBox(QVBoxLayout *layout);
-	void createLeafBox(QVBoxLayout *layout);
-	void createCapBox(QVBoxLayout *layout);
-	void enableStem(bool enable);
-	void enableLeaf(bool enable);
-	void indicateDifferences(QWidget *widget);
-	void indicateSimilarities(QWidget *widget);
+	void createStemBox(QVBoxLayout *);
+	void createLeafBox(QVBoxLayout *);
+	void createCapBox(QVBoxLayout *);
+	void blockStemSignals(bool);
+	void blockLeafSignals(bool);
+	void enableStem(bool);
+	void enableLeaf(bool);
+	void indicateDifferences(QWidget *);
+	void indicateSimilarities(QWidget *);
 	void initProperties();
-	void setLeafFields(std::map<pg::Stem *, std::set<long>> instances);
-	void setStemFields(std::map<pg::Stem *, PointSelection> instances);
-	void setValueWidths(QFormLayout *layout);
+	void setLeafFields(std::map<pg::Stem *, std::set<long>>);
+	void setStemFields(std::map<pg::Stem *, PointSelection>);
+	void setValueWidths(QFormLayout *);
 };
 
 #endif /* PROPERTY_BOX */

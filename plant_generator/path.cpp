@@ -40,11 +40,11 @@ bool Path::operator!=(const Path &path) const
 
 void Path::generate()
 {
-	size_t numControls = spline.getControls().size();
+	size_t numControls = this->spline.getControls().size();
 	if (numControls > 0) {
-		path.clear();
+		this->path.clear();
 
-		int curves = spline.getCurveCount();
+		int curves = this->spline.getCurveCount();
 		int curve = 0;
 		for (curve = 0; curve < curves; curve++) {
 			float r = 1.0f / resolution;
@@ -52,10 +52,10 @@ void Path::generate()
 			for (int i = 0; i < resolution; i++) {
 				t = r * i;
 				Vec3 point = spline.getPoint(curve, t);
-				path.push_back(point);
+				this->path.push_back(point);
 			}
 		}
-		path.push_back(spline.getControls()[numControls-1]);
+		this->path.push_back(spline.getControls()[numControls-1]);
 	}
 }
 
@@ -67,7 +67,7 @@ void Path::setSpline(Spline &spline)
 
 Spline Path::getSpline()
 {
-	return spline;
+	return this->spline;
 }
 
 /** Sets the divisions for each curve in the path. */
@@ -79,33 +79,33 @@ void Path::setResolution(int resolution)
 
 int Path::getResolution() const
 {
-	return resolution;
+	return this->resolution;
 }
 
 void Path::subdivide(int level)
 {
-	subdivisions = level;
-	// TODO subdivide
+	this->subdivisions = level;
+	/* TODO subdivide */
 }
 
 int Path::getSubdivisions() const
 {
-	return subdivisions;
+	return this->subdivisions;
 }
 
 std::vector<Vec3> Path::get() const
 {
-	return path;
+	return this->path;
 }
 
 Vec3 Path::get(int index) const
 {
-	return path[index];
+	return this->path[index];
 }
 
 int Path::getSize() const
 {
-	return path.size();
+	return this->path.size();
 }
 
 Vec3 Path::getIntermediate(float distance) const
@@ -120,7 +120,8 @@ Vec3 Path::getIntermediate(float distance) const
 	for (size_t i = 0; i < path.size() - 1; i++) {
 		float length = magnitude(path[i + 1] - path[i]);
 		if (total + length >= distance) {
-			point = (distance - total) * getDirection(i) + path[i];
+			point = (distance - total) * getDirection(i);
+			point += this->path[i];
 			total += length;
 			break;
 		}
@@ -128,7 +129,7 @@ Vec3 Path::getIntermediate(float distance) const
 	}
 
 	if (total < distance)
-		point = path.back();
+		point = this->path.back();
 
 	return point;
 }
@@ -136,23 +137,23 @@ Vec3 Path::getIntermediate(float distance) const
 float Path::getLength() const
 {
 	float length = 0.0f;
-	for (size_t i = 0; i < path.size() - 1; i++)
-		length += magnitude(path[i + 1] - path[i]);
+	for (size_t i = 0; i < this->path.size() - 1; i++)
+		length += magnitude(this->path[i + 1] - this->path[i]);
 	return length;
 }
 
 Vec3 Path::getDirection(size_t index) const
 {
-	if (index == path.size() - 1)
-		return normalize(path[index] - path[index - 1]);
+	if (index == this->path.size() - 1)
+		return normalize(this->path[index] - this->path[index - 1]);
 	else
-		return normalize(path[index + 1] - path[index]);
+		return normalize(this->path[index + 1] - this->path[index]);
 }
 
 Vec3 Path::getAverageDirection(size_t index) const
 {
 	Vec3 direction;
-	if (index == 0 || index == path.size() - 1)
+	if (index == 0 || index == this->path.size() - 1)
 		direction = getDirection(index);
 	else {
 		direction = getDirection(index) + getDirection(index - 1);
@@ -166,8 +167,8 @@ Vec3 Path::getIntermediateDirection(float t) const
 	Vec3 direction;
 	float s = 0.0f;
 
-	for (size_t i = 0; i < path.size() - 1; i++) {
-		s += magnitude(path[i+1] - path[i]);
+	for (size_t i = 0; i < this->path.size() - 1; i++) {
+		s += magnitude(this->path[i+1] - this->path[i]);
 		if (s >= t) {
 			direction = getDirection(i);
 			break;
@@ -175,19 +176,19 @@ Vec3 Path::getIntermediateDirection(float t) const
 	}
 
 	if (s < t)
-		direction = getDirection(path.size() - 1);
+		direction = getDirection(this->path.size() - 1);
 
 	return direction;
 }
 
 float Path::getDistance(int index) const
 {
-	std::vector<Vec3> controls = spline.getControls();
-	int lastIndex = index / spline.getDegree() * this->resolution;
+	std::vector<Vec3> controls = this->spline.getControls();
+	int lastIndex = index / this->spline.getDegree() * this->resolution;
 	float distance = 0.0f;
 
 	for (int i = 0; i < lastIndex; i++)
-		distance += magnitude(path[i + 1] - path[i]);
+		distance += magnitude(this->path[i + 1] - this->path[i]);
 
 	return distance;
 }
@@ -197,45 +198,45 @@ float Path::getIntermediateDistance(int index) const
 	if (index == 0)
 		return 0.0f;
 	else
-		return magnitude(path[index] - path[index-1]);
+		return magnitude(this->path[index] - this->path[index-1]);
 }
 
 void Path::setMaxRadius(float radius)
 {
-	maxRadius = radius;
+	this->maxRadius = radius;
 }
 
 float Path::getMaxRadius()
 {
-	return maxRadius;
+	return this->maxRadius;
 }
 
 void Path::setMinRadius(float radius)
 {
-	minRadius = radius;
+	this->minRadius = radius;
 }
 
 float Path::getMinRadius()
 {
-	return minRadius;
+	return this->minRadius;
 }
 
 void Path::setRadius(Spline spline)
 {
-	radius = spline;
+	this->radius = spline;
 }
 
 Spline Path::getRadius()
 {
-	return radius;
+	return this->radius;
 }
 
 float Path::getRadius(int index)
 {
 	float length = 0.0f;
 	for (int i = 0; i < index; i++)
-		length += magnitude(path[i+1] - path[i]);
+		length += magnitude(this->path[i+1] - this->path[i]);
 	float t = length / getLength();
-	float z = radius.getPoint(t).z * maxRadius;
-	return z < minRadius ? minRadius : z;
+	float z = this->radius.getPoint(t).z * this->maxRadius;
+	return z < this->minRadius ? this->minRadius : z;
 }

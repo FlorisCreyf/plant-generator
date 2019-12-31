@@ -22,8 +22,8 @@ RemoveSpline::RemoveSpline(PointSelection *selection, pg::Spline *spline) :
 {
 	this->selection = selection;
 	this->spline = spline;
-	prevSpline = *spline;
-	clearable = false;
+	this->prevSpline = *spline;
+	this->clearable = false;
 }
 
 void RemoveSpline::setClearable(bool clearable)
@@ -33,22 +33,22 @@ void RemoveSpline::setClearable(bool clearable)
 
 void RemoveSpline::execute()
 {
-	auto points = selection->getPoints();
-	int size = spline->getControls().size();
+	auto points = this->selection->getPoints();
+	int size = this->spline->getControls().size();
 
-	if (spline->getDegree() == 1) {
+	if (this->spline->getDegree() == 1) {
 		if (size - points.size() < 2) {
-			if (clearable) {
-				spline->clear();
+			if (this->clearable) {
+				this->spline->clear();
 				points.clear();
 			}
 		} else {
 			int i = 0;
 			for (int index : points)
-				spline->remove(index - i++);
+				this->spline->remove(index - i++);
 			points.clear();
 		}
-	} else if (spline->getDegree() == 3) {
+	} else if (this->spline->getDegree() == 3) {
 		std::set<int> list;
 		for (int index : points) {
 			if (index % 3 == 0)
@@ -60,23 +60,25 @@ void RemoveSpline::execute()
 		}
 
 		if (size - (list.size() * 3) < 4) {
-			if (clearable) {
-				spline->clear();
+			if (this->clearable) {
+				this->spline->clear();
 				points.clear();
 			}
 		} else {
 			std::set<int>::iterator it = list.begin();
-			for (int i = 0; it != list.end(); ++it, ++i)
-				spline->remove(*it - i * spline->getDegree());
+			for (int i = 0; it != list.end(); ++it, ++i) {
+				int degree = this->spline->getDegree();
+				this->spline->remove(*it - i * degree);
+			}
 			points.clear();
 		}
 	}
 
-	selection->setPoints(points);
+	this->selection->setPoints(points);
 }
 
 void RemoveSpline::undo()
 {
-	*selection = prevSelection;
-	*spline = prevSpline;
+	*this->selection = this->prevSelection;
+	*this->spline = this->prevSpline;
 }
