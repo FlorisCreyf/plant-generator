@@ -32,12 +32,12 @@ class MovePath : public Command {
 	const Camera *camera;
 	MoveSpline moveSpline;
 	TranslationAxes *axes;
-	Selection *selection;
+	const Selection *selection;
 	float clickOffset[2];
 	bool undoing;
 
 public:
-	MovePath(Selection *selection, TranslationAxes *axes,
+	MovePath(const Selection *selection, TranslationAxes *axes,
 		const Camera *camera);
 	void setClickOffset(int x, int y);
 	void setParallelTangents(bool parallel);
@@ -47,6 +47,7 @@ public:
 	bool onKeyPress(QKeyEvent *event);
 	void execute();
 	void undo();
+	void redo();
 };
 
 #endif /* MOVE_PATH_H */

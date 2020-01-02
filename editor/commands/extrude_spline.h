@@ -35,7 +35,8 @@ class ExtrudeSpline : public Command {
 	MoveSpline moveSpline;
 
 public:
-	ExtrudeSpline(PointSelection *selection, pg::Spline *spline,
+	ExtrudeSpline(
+		PointSelection *selection, pg::Spline *spline,
 		TranslationAxes *axes, const Camera *camera);
 	void setClickOffset(int x, int y);
 	void execute();

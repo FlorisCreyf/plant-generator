@@ -52,7 +52,7 @@ namespace pg {
 		void addLeaves(Stem *);
 		void addLeaf(Leaf *leaf, Stem *stem);
 		void addTriangle(int, int, int);
-		int selectBuffer(int);
+		int selectBuffer(long);
 		void initBuffer();
 		void updateSegments();
 

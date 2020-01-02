@@ -53,9 +53,9 @@ public:
 
 	void select(QMouseEvent *event);
 	void setInstances(std::map<pg::Stem *, PointSelection> instances);
-	std::map<pg::Stem *, PointSelection> getStemInstances();
-	std::map<pg::Stem *, std::set<long>> getLeafInstances();
-	pg::Plant *getPlant();
+	std::map<pg::Stem *, PointSelection> getStemInstances() const;
+	std::map<pg::Stem *, std::set<long>> getLeafInstances() const;
+	pg::Plant *getPlant() const;
 
 	void clear();
 	void selectSiblings();
@@ -77,15 +77,12 @@ public:
 	bool hasPoint(int point) const;
 
 	pg::Vec3 getAveragePosition() const;
-	/**
-	 * The average position of the first selected points of each stem. The
-	 * location of a selected stem is included if no points are selected.
-	 */
+	/** The average position of the first selected points of each stem. The
+	location of a selected stem is included if no points are selected. */
 	pg::Vec3 getAveragePositionFP() const;
-	/**
-	 * The average direction of the first selected points of each stem. The
-	 * direction of a selected stem is included if no points are selected.
-	 */
+	/** The average direction of the first selected points of each stem.
+	The direction of a selected stem is included if no points are
+	selected. */
 	pg::Vec3 getAverageDirectionFP() const;
 };
 

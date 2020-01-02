@@ -18,8 +18,8 @@
 #include "move_path.h"
 
 MovePath::MovePath(
-	Selection *selection, TranslationAxes *axes, const Camera *camera) :
-	moveSpline(nullptr, nullptr, axes, camera)
+	const Selection *selection, TranslationAxes *axes,
+	const Camera *camera) : moveSpline(nullptr, nullptr, axes, camera)
 {
 	this->camera = camera;
 	this->selection = selection;
@@ -67,7 +67,12 @@ void MovePath::undo()
 {
 	this->undoing = true;
 	execute();
+}
+
+void MovePath::redo()
+{
 	this->undoing = false;
+	execute();
 }
 
 bool MovePath::onMouseMove(QMouseEvent *event)

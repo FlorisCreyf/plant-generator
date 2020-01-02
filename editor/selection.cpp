@@ -147,17 +147,17 @@ void Selection::setInstances(std::map<Stem *, PointSelection> instances)
 	this->stems = instances;
 }
 
-std::map<Stem *, PointSelection> Selection::getStemInstances()
+std::map<Stem *, PointSelection> Selection::getStemInstances() const
 {
 	return this->stems;
 }
 
-std::map<Stem *, std::set<long>> Selection::getLeafInstances()
+std::map<Stem *, std::set<long>> Selection::getLeafInstances() const
 {
 	return this->leaves;
 }
 
-pg::Plant *Selection::getPlant()
+pg::Plant *Selection::getPlant() const
 {
 	return this->plant;
 }

@@ -89,11 +89,9 @@ Segment Mesh::addStem(Stem *stem)
 	return stemSegment;
 }
 
-/**
- * Generate a cross-section for a point in the stem's path. Indices are added
- * at a latter stage (two cross-sections are required to form a ring of
- * triangles).
- */
+/** Generate a cross-section for a point in the stem's path. Indices are added
+at a latter stage (two cross-sections are required to form a ring of
+triangles). */
 void Mesh::addSection(Stem *stem, size_t section, float &uvOffset)
 {
 	Mat4 transform = getSectionTransform(stem, section);
@@ -122,10 +120,8 @@ void Mesh::addSection(Stem *stem, size_t section, float &uvOffset)
 	}
 }
 
-/**
- * Transform points in the cross-section so that they face the direction of
- * the stem's path.
- */
+/** Transform points in the cross-section so that they face the direction of
+the stem's path. */
 Mat4 Mesh::getSectionTransform(Stem *stem, size_t section)
 {
 	Vec3 up = {0.0f, 1.0f, 0.0f};
@@ -137,11 +133,9 @@ Mat4 Mesh::getSectionTransform(Stem *stem, size_t section)
 	return translation * rotation;
 }
 
-/**
- * Compute indices between the cross-section just generated (starting at the
- * previous index) and the cross-section that still needs to be generated
- * (which will start at the current index).
- */
+/** Compute indices between the cross-section just generated (starting at the
+previous index) and the cross-section that still needs to be generated
+(which will start at the current index). */
 void Mesh::addTriangleRing(size_t prevIndex, size_t index, int divisions)
 {
 	for (int i = 0; i <= divisions - 1; i++) {
@@ -227,11 +221,11 @@ void Mesh::addLeaf(Leaf *leaf, Stem *stem)
 	for (Vertex vertex : geom.getPoints())
 		this->vertices[this->mesh].push_back(vertex);
 	for (unsigned i : geom.getIndices())
-		indices[mesh].push_back(i + index);
+		this->indices[this->mesh].push_back(i + index);
 
-	leafSegment.vertexCount = vertices[mesh].size();
+	leafSegment.vertexCount = vertices[this->mesh].size();
 	leafSegment.vertexCount -= leafSegment.vertexStart;
-	leafSegment.indexCount = indices[mesh].size();
+	leafSegment.indexCount = indices[this->mesh].size();
 	leafSegment.indexCount -= leafSegment.indexStart;
 	leafSegments[this->mesh].emplace(leaf->getID(), leafSegment);
 }
@@ -243,11 +237,9 @@ void Mesh::addTriangle(int a, int b, int c)
 	this->indices[this->mesh].push_back(c);
 }
 
-/**
- * Different buffers are used for different materials. This is done to keep
- * geometry with identical materials together and simplify draw calls.
- */
-int Mesh::selectBuffer(int material)
+/** Different buffers are used for different materials. This is done to keep
+geometry with identical materials together and simplify draw calls. */
+int Mesh::selectBuffer(long material)
 {
 	auto it = this->meshes.find(material);
 	int mesh = it != this->meshes.end() ? it->first : 0;
@@ -281,12 +273,10 @@ void Mesh::initBuffer()
 	this->leafSegments.push_back(map<long, Segment>());
 }
 
-/**
- * Geometry is divided into different groups depending on its material.
- * Geometry is latter on stored in the same vertex buffer, but is seperated
- * based on material to minimize draw calls. This method updates the indices
- * to what they should be in the final merged vertex buffer.
- */
+/** Geometry is divided into different groups depending on its material.
+Geometry is latter on stored in the same vertex buffer, but is seperated based
+on material to minimize draw calls. This method updates the indices to what
+they should be in the final merged vertex buffer. */
 void Mesh::updateSegments()
 {
 	if (!this->indices.empty()) {
@@ -300,7 +290,7 @@ void Mesh::updateSegments()
 				segment->vertexStart += vsize;
 				segment->indexStart += isize;
 			}
-			for (auto pair : this->leafSegments[mesh]) {
+			for (auto &pair : this->leafSegments[mesh]) {
 				Segment *segment = &pair.second;
 				segment->vertexStart += vsize;
 				segment->indexStart += isize;

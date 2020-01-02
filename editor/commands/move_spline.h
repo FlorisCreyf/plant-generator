@@ -28,19 +28,25 @@ class MoveSpline : public Command {
 	pg::Vec3 direction;
 	pg::Vec3 totalDirection;
 	TranslationAxes *axes;
-	PointSelection *selection;
+	const PointSelection *selection;
 	pg::Spline *spline;
 	pg::Vec3 planeNormal;
 	pg::Ray ray;
 	bool parallel;
 	const Camera *camera;
 	int clickOffset[2];
+	std::vector<pg::Vec3> positions;
 
 public:
-	MoveSpline(PointSelection *selection, pg::Spline *spline,
+	MoveSpline(
+		const PointSelection *selection, pg::Spline *spline,
 		TranslationAxes *axes, const Camera *camera);
 	void setClickOffset(int x, int y);
-	void setSelection(PointSelection *selection);
+	/** Undo point translations using original points instead of the total
+	translation direction. This is useful if the spline is not reverted
+	to its original updated state before an undo operation. */
+	void preservePositions();
+	void setSelection(const PointSelection *selection);
 	void setSpline(pg::Spline *spline);
 	/** The direction that points will move in. */
 	void set(pg::Ray ray, pg::Vec3 cameraDirection);
@@ -50,6 +56,7 @@ public:
 
 	void execute();
 	void undo();
+	void redo();
 
 	bool onMouseMove(QMouseEvent *event);
 	bool onMousePress(QMouseEvent *event);

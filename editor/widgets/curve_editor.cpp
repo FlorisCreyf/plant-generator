@@ -160,8 +160,8 @@ void CurveEditor::keyPressEvent(QKeyEvent *event)
 	QString command = keymap->getBinding(key, ctrl, shift, alt);
 
 	if (command == tr("Select Previous Points")) {
-		SavePointSelection *selectionCopy = new SavePointSelection(
-			&this->selection);
+		SavePointSelection *selectionCopy =
+			new SavePointSelection(&this->selection);
 		this->selection.selectNext(this->spline.getSize());
 		if (selectionCopy->hasChanged()) {
 			selectionCopy->setAfter();
@@ -169,8 +169,8 @@ void CurveEditor::keyPressEvent(QKeyEvent *event)
 			change();
 		}
 	} else if (command == tr("Select Previous Points")) {
-		SavePointSelection *selectionCopy = new SavePointSelection(
-			&this->selection);
+		SavePointSelection *selectionCopy =
+			new SavePointSelection(&this->selection);
 		this->selection.selectPrevious();
 		if (selectionCopy->hasChanged()) {
 			selectionCopy->setAfter();
@@ -178,8 +178,8 @@ void CurveEditor::keyPressEvent(QKeyEvent *event)
 			change();
 		}
 	} else if (command == tr("Select All Points")) {
-		SavePointSelection *selectionCopy = new SavePointSelection(
-			&this->selection);
+		SavePointSelection *selectionCopy =
+			new SavePointSelection(&this->selection);
 		this->selection.selectAll(this->spline.getSize());
 		if (selectionCopy->hasChanged()) {
 			selectionCopy->setAfter();
@@ -200,19 +200,19 @@ void CurveEditor::keyPressEvent(QKeyEvent *event)
 		}
 		this->selection.setPoints(points);
 
-		RemoveSpline *removeSpline = new RemoveSpline(
-			&this->selection, &this->origSpline);
+		RemoveSpline *removeSpline =
+			new RemoveSpline(&this->selection, &this->origSpline);
 		removeSpline->execute();
 		this->spline = this->origSpline;
 		change();
 		this->history.add(removeSpline);
 		emit curveChanged(this->spline, this->name);
 	} else if (key == Qt::Key_Z && ctrl) {
-		if (event->modifiers() & shift)
-			history.redo();
+		if (event->modifiers() && shift)
+			this->history.redo();
 		else
-			history.undo();
-		spline = origSpline;
+			this->history.undo();
+		this->spline = this->origSpline;
 		applyRestrictions();
 		change();
 		emit curveChanged(spline, name);
@@ -280,8 +280,8 @@ void CurveEditor::mousePressEvent(QMouseEvent *event)
 		else if (event->modifiers() & Qt::ShiftModifier)
 			this->camera.setAction(Camera::Pan);
 	} else if (this->enabled && event->button() == Qt::RightButton) {
-		SavePointSelection *selectionCopy = new SavePointSelection(
-			&selection);
+		SavePointSelection *selectionCopy =
+			new SavePointSelection(&selection);
 		QMouseEvent modifiedEvent(
 			QEvent::MouseMove,
 			QPoint(pos.x(), pos.y() - this->toolBarHeight),
@@ -303,11 +303,12 @@ void CurveEditor::mousePressEvent(QMouseEvent *event)
 			s = this->camera.toScreenSpace(s);
 			int x = s.x - pos.x();
 			int y = s.y - pos.y();
+			initiateMovePoint();
 			MoveSpline *moveSpline = new MoveSpline(
 				&selection, &origSpline, &axes, &camera);
+			moveSpline->preservePositions();
 			moveSpline->setClickOffset(x, y);
 			this->command = moveSpline;
-			initiateMovePoint();
 		}
 	}
 }
@@ -357,13 +358,16 @@ void CurveEditor::initiateMovePoint()
 {
 	this->origSpline = this->spline;
 	/* Restrictions need to be applied from left to right or right to left
-	 * depending on the direction the points are dragged. */
+	depending on the direction the points are dragged. */
 	int point = *this->selection.getPoints().begin();
 	this->origPoint = this->spline.getControls()[point];
 }
 
 void CurveEditor::applyRestrictions()
 {
+	if (this->selection.getPoints().empty())
+		return;
+
 	auto controls = this->spline.getControls();
 	int point = *this->selection.getPoints().begin();
 	this->moveLeft = controls[point].x < this->origPoint.x;
@@ -421,10 +425,8 @@ void CurveEditor::restrictLinearControl(std::vector<pg::Vec3>& controls, int i)
 	}
 }
 
-/**
- * Restrict outer points and keep the tangents the same (the unrestricted
- * points are not bound to x = 0 or x = 1).
- */
+/** Restrict outer points and keep the tangents the same (the unrestricted
+points are not bound to x = 0 or x = 1). */
 void CurveEditor::restrictOuterCubicControls(std::vector<Vec3> &controls)
 {
 	auto last = controls.size() - 1;
@@ -670,8 +672,8 @@ void CurveEditor::paintGL()
 			GL_LINE_STRIP, segment.icount, GL_UNSIGNED_INT, start);
 
 		segment = this->path.getPointSegment();
-		GLuint texture = this->shared->getTexture(
-			this->shared->DotTexture);
+		GLuint texture =
+			this->shared->getTexture(this->shared->DotTexture);
 		glBindTexture(GL_TEXTURE_2D, texture);
 		glUseProgram(shared->getShader(Shader::Point));
 		glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
@@ -711,6 +713,7 @@ void CurveEditor::setCurve(pg::Spline spline, QString name)
 	this->degree->blockSignals(false);
 
 	this->spline = spline;
+	this->origSpline = spline;
 	this->name = name;
 	this->selection.clear();
 	this->history.clear();

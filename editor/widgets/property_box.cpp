@@ -229,8 +229,8 @@ void PropertyBox::createLeafBox(QVBoxLayout *layout)
 
 void PropertyBox::fill()
 {
-	auto leafInstances = editor->getSelection()->getLeafInstances();
-	auto stemInstances = editor->getSelection()->getStemInstances();
+	auto leafInstances = this->editor->getSelection()->getLeafInstances();
+	auto stemInstances = this->editor->getSelection()->getStemInstances();
 
 	if (stemInstances.empty()) {
 		enableStem(false);
@@ -242,6 +242,9 @@ void PropertyBox::fill()
 		enableLeaf(false);
 	else
 		setLeafFields(leafInstances);
+
+	if (this->selectedCurve)
+		toggleCurve(this->selectedCurve);
 }
 
 void PropertyBox::setStemFields(map<Stem *, PointSelection> instances)
@@ -649,7 +652,7 @@ void PropertyBox::changeLeafMaterial()
 	auto instances = this->editor->getSelection()->getLeafInstances();
 	for (auto &instance : instances) {
 		Stem *stem = instance.first;
-		for (auto &leaf : instance.second)
+		for (long leaf : instance.second)
 			stem->getLeaf(leaf)->setMaterial(id);
 	}
 	this->editor->change();
