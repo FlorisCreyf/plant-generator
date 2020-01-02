@@ -22,10 +22,8 @@
 #include <QKeyEvent>
 
 class Command {
-	/**
-	 * Commands should not be copied if it makes ownership of stems and
-	 * other resources unclear.
-	 */
+	/** Commands should not be copied if it makes ownership of stems and
+	other resources unclear. */
 	Command(const Command &);
 
 protected:

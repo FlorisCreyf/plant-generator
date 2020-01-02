@@ -27,10 +27,8 @@ public:
 
 	/** Selects an axis using intersection tests. */
 	Axis selectAxis(pg::Ray ray, float distance);
-	/**
-	 * The position of the camera is needed to keep the size of the axes
-	 * the same.
-	 */
+	/** The position of the camera is needed to keep the size of the axes
+	the same. */
 	pg::Mat4 getTransformation(float distance);
 
 private:

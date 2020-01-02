@@ -32,17 +32,15 @@ RemoveStem::~RemoveStem()
 {
 	if (!this->stems.empty()) {
 		/* Adjust the selection so that descendants are not deleted
-		 * after ancestors have been deleted. */
+		after ancestors have been deleted. */
 		prevSelection.reduceToAncestors();
 		for (auto stem : this->stems)
 			delete stem;
 	}
 }
 
-/**
- * Should be called after stems are removed. Leaves do not need to be removed
- * from the plant if their stem is removed.
- */
+/** Should be called after stems are removed. Leaves do not need to be removed
+from the plant if their stem is removed. */
 void RemoveStem::removeLeaves()
 {
 	auto instances = selection->getLeafInstances();
@@ -96,7 +94,7 @@ void RemoveStem::removeStems()
 	}
 
 	/* Do not remove stems from the selection if only a couple of points
-	 * were removed. */
+	were removed. */
 	selection->setInstances(instances);
 	for (auto stem : removals)
 		selection->removeStem(stem);

@@ -320,10 +320,8 @@ pg::Ray Camera::getRay(int x, int y) const
 		return getOrthographicRay(x, y);
 }
 
-/**
- * The direction of the ray remains constant while the camera remains
- * stationary. The origin of the ray depends on the screen coordinates.
- */
+/** The direction of the ray remains constant while the camera remains
+stationary. The origin of the ray depends on the screen coordinates. */
 pg::Ray Camera::getOrthographicRay(int x, int y) const
 {
 	Mat4 invProj = getInverseOrthographic();
@@ -343,10 +341,8 @@ pg::Ray Camera::getOrthographicRay(int x, int y) const
 	return ray;
 }
 
-/**
- * The direction of the ray depends on the screen coordinates. The origin of
- * the ray remains stationary at the camera position.
- */
+/** The direction of the ray depends on the screen coordinates. The origin of
+the ray remains stationary at the camera position. */
 pg::Ray Camera::getPerspectiveRay(int x, int y) const
 {
 	Mat4 invProj = getInversePerspective();

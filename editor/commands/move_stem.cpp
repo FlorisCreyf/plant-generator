@@ -125,7 +125,7 @@ void MoveStem::getPosition(pg::Stem *parent, size_t &line, float &t, Vec3 point)
 float MoveStem::getLength(pg::Path path, size_t line, float t)
 {
 	/* Add the distances along each segment until the distance where the
-	 * intersection occurred. */
+	intersection occurred. */
 	auto points = path.get();
 	t *= pg::magnitude(points[line] - points[line+1]);
 

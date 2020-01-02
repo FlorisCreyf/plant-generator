@@ -186,9 +186,9 @@ void RotateStem::rotateLeaves()
 			pg::Leaf *leaf = stem->getLeaf(id);
 
 			/* Create a rotation 'q' that transforms the global
-			 * axes into the axes of each leaf. This is needed to
-			 * determine if rotations move in the same direction
-			 * as the cursor. */
+			axes into the axes of each leaf. This is needed to
+			determine if rotations move in the same direction as
+			the cursor. */
 			float position = leaf->getPosition();
 			Vec3 d = path.getIntermediateDirection(position);
 			Quat q = leaf->getDefaultOrientation(d);

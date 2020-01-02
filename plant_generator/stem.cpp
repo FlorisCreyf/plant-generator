@@ -49,7 +49,7 @@ Stem::~Stem()
 Stem::Stem(const Stem &orignal)
 {
 	/* Set nullptr to prevent temporary copies from deleting children. An
-	 * explicit deep copy method might be more appropiate if necessary. */
+	explicit deep copy method might be more appropiate if necessary. */
 	this->parent = nullptr;
 	this->nextSibling = nullptr;
 	this->prevSibling = nullptr;

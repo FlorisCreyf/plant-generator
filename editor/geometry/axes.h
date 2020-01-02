@@ -26,17 +26,13 @@ class Axes {
 public:
 	enum Axis {None, XAxis, YAxis, ZAxis, Center};
 
-	/**
-	 * The size for the axes needs to remain constant. This method is used
-	 * to set what that size should be.
-	 */
+	/** The size for the axes needs to remain constant. This method is used
+	to set what that size should be. */
 	void setScale(float scale);
 	void setPosition(pg::Vec3 position);
 	pg::Vec3 getPosition();
-	/**
-	 * The axes move along a plane parallel to the camera if the center is
-	 * selected.
-	 */
+	/** The axes move along a plane parallel to the camera if the center is
+	selected. */
 	void selectCenter();
 	/** Selects an axis using intersection tests. */
 	Axis getSelection();

@@ -144,10 +144,9 @@ bool SharedResources::isCompiled(GLuint name, const char *filename)
 
 	if (status == GL_FALSE) {
 		GLsizei size;
-		GLchar *log;
 
 		glGetShaderiv(name, GL_INFO_LOG_LENGTH, &size);
-		log = new GLchar[size + 1];
+		GLchar *log = new GLchar[size + 1];
 		glGetShaderInfoLog(name, size, &size, log);
 		fprintf(stderr, BOLDWHITE "%s: " BOLDRED "error:" RESET "\n%s",
 			filename, log);
@@ -187,14 +186,12 @@ bool SharedResources::openFile(const char *filename, GLchar *&buffer, int &size)
 
 GLuint SharedResources::buildShader(GLenum type, const char *filename)
 {
-	GLuint shader;
-	GLchar *buffer;
 	int size;
-
+	GLchar *buffer;
 	if(!openFile(filename, buffer, size))
 		return 0;
 
-	shader = glCreateShader(type);
+	GLuint shader = glCreateShader(type);
 	glShaderSource(shader, 1, (const char**)&buffer, &size);
 	glCompileShader(shader);
 
@@ -234,7 +231,7 @@ void SharedResources::addMaterial(ShaderParams params)
 	emit materialAdded(params);
 }
 
-void SharedResources::removeMaterial(int id)
+void SharedResources::removeMaterial(long id)
 {
 	auto it = materials.find(id);
 	QString name = QString::fromStdString(it->second.getName());
@@ -254,7 +251,7 @@ void SharedResources::clearMaterials()
 	materials[0] = defaultMaterial;
 }
 
-ShaderParams SharedResources::getMaterial(int id)
+ShaderParams SharedResources::getMaterial(long id)
 {
 	return materials[id];
 }

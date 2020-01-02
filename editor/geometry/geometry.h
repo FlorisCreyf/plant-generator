@@ -23,10 +23,6 @@
 #include "plant_generator/vertex.h"
 #include <vector>
 
-/**
- * The format for vertices is:
- * {Vec3 (location), Vec3 (normal or color), unsigned int (texture)}
- */
 class Geometry {
  	std::vector<pg::Vertex> points;
 	std::vector<unsigned> indices;

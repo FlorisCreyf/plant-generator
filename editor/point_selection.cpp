@@ -74,7 +74,7 @@ int PointSelection::selectPoint(
 
 	if (selectedPoint >= 0) {
 		/* Remove the point from the selection if it is already
-		 * selected. */
+		selected. */
 		std::set<int>::iterator it = this->points.find(selectedPoint);
 		if (it != this->points.end())
 			this->points.erase(it);

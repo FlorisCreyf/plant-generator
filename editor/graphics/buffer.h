@@ -32,11 +32,9 @@ public:
 	void initialize(GLenum mode);
 	void allocatePointMemory(int size);
 	void allocateIndexMemory(int size);
-	/**
-	 * Allocates a new buffer.
-	 * Important: Call initialize() or use() before calling load(...). The
-	 * buffer can't be changed until the VAO is bound.
-	 */
+	/** Allocates a new buffer.
+	IMPORTANT: Call initialize() or use() before calling load(...). The
+	buffer can't be changed until the VAO is bound. */
 	void load(const Geometry &geometry);
 	void load(
 		const pg::Vertex *points, int psize,
@@ -46,15 +44,11 @@ public:
 	void update(
 		const pg::Vertex *points, int psize,
 		const unsigned *indices, int isize);
-	/**
-	 * The buffer should be bound prior to calling update. The method
-	 * returns false if the buffer is too small.
-	 */
+	/** The buffer should be bound prior to calling update. The method
+	returns false if the buffer is too small. */
 	bool update(const pg::Vertex *points, int start, int size);
-	/**
-	 * The buffer should be bound prior to calling update. The method
-	 * returns false if the buffer is too small.
-	 */
+	/** The buffer should be bound prior to calling update. The method
+	returns false if the buffer is too small. */
 	bool update(const unsigned *indices, int start, int size);
 	/** The buffer needs to be bound before drawing from it. */
 	void use();

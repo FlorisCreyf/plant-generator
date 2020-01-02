@@ -281,7 +281,7 @@ void Spline::parallelize(unsigned index)
 			length = 1.0f;
 		diff = controls[index-1] - controls[index];
 		/* Arbitrary default value because zero vectors cannot be
-		 * normalized. */
+		normalized. */
 		if (isZero(diff))
 			diff.z = 1.0f;
 		diff = length * normalize(diff) + controls[index-1];

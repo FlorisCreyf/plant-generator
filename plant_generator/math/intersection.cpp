@@ -205,9 +205,9 @@ float pg::intersectsTaperedCylinder(
 		t = roots[0] < roots[1] ? roots[0] : roots[1];
 
 		/* The intersection fails if the intersection falls under the
-		 * y-axis or above the height value. The cone is always along
-		 * the y-axis because the ray is transformed into the object
-		 * space of the cone. */
+		y-axis or above the height value. The cone is always along
+		the y-axis because the ray is transformed into the object
+		space of the cone. */
 		 float y = (t*ray.direction.y + ray.origin.y);
 		 if (y < 0 || y > height)
 		 	t = 0.0f;

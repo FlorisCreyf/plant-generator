@@ -95,8 +95,8 @@ void pg::Generator::setPath(Stem *stem, Vec3 direction)
 		direction = normalize(direction + variance);
 	}
 
-	/* Thinner stems are more flexible and should bend more towards
-	 * the light source. */
+	/* Thinner stems are more flexible and should bend more towards the
+	light source. */
 	controls.back().y += 0.1f;
 
 	Spline spline;

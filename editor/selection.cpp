@@ -162,10 +162,8 @@ pg::Plant *Selection::getPlant() const
 	return this->plant;
 }
 
-/**
- * Performs cylinder intersection tests to determine which stem was clicked on.
- * A stem and the distance to its intersection is returned.
- */
+/** Performs cylinder intersection tests to determine which stem was clicked
+on. A stem and the distance to its intersection is returned. */
 pair<float, Stem *> Selection::getStem(pg::Ray &ray, Stem *stem)
 {
 	float max = std::numeric_limits<float>::max();
