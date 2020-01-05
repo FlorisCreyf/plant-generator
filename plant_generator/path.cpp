@@ -38,31 +38,35 @@ bool Path::operator!=(const Path &path) const
 	return !(*this == path);
 }
 
-void Path::generate()
+void Path::generate(bool linearStart)
 {
 	size_t numControls = this->spline.getControls().size();
-	if (numControls > 0) {
-		this->path.clear();
+	if (numControls == 0)
+	 	return;
 
-		int curves = this->spline.getCurveCount();
-		int curve = 0;
-		for (curve = 0; curve < curves; curve++) {
-			float r = 1.0f / resolution;
-			float t = 0.0f;
-			for (int i = 0; i < resolution; i++) {
-				t = r * i;
-				Vec3 point = spline.getPoint(curve, t);
-				this->path.push_back(point);
-			}
+	int curves = this->spline.getCurveCount();
+	int curve = 0;
+	this->path.clear();
+
+	if (linearStart)
+		this->path.push_back(this->spline.getPoint(curve++, 0.0f));
+
+	for (; curve < curves; curve++) {
+		float r = 1.0f / resolution;
+		float t = 0.0f;
+		for (int i = 0; i < resolution; i++) {
+			t = r * i;
+			Vec3 point = this->spline.getPoint(curve, t);
+			this->path.push_back(point);
 		}
-		this->path.push_back(spline.getControls()[numControls-1]);
 	}
+
+	this->path.push_back(this->spline.getControls()[numControls-1]);
 }
 
 void Path::setSpline(Spline &spline)
 {
 	this->spline = spline;
-	generate();
 }
 
 Spline Path::getSpline()
@@ -74,7 +78,6 @@ Spline Path::getSpline()
 void Path::setResolution(int resolution)
 {
 	this->resolution = resolution;
-	generate();
 }
 
 int Path::getResolution() const

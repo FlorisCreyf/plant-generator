@@ -149,10 +149,9 @@ vector<Vec3> Path::getControls(Segment& segment)
 	return controls;
 }
 
+/** Assumes the color of a point determines the color of the entire line. */
 void Path::setSelectedPoints(PointSelection &selection, int index)
 {
-	/* Assumes the color of a point determines the color of the entire
-	line. */
 	auto points = selection.getPoints();
 	if (!points.empty()) {
 		if (this->degree[index] == 1)

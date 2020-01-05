@@ -17,11 +17,7 @@
 #include <cmath>
 #include <limits>
 
-using pg::Vec3;
-using pg::Mat4;
-using pg::Stem;
-using pg::Segment;
-using pg::Mesh;
+using namespace pg;
 using std::map;
 using std::vector;
 
@@ -41,8 +37,8 @@ void Mesh::generate()
 
 Segment Mesh::addStem(Stem *stem)
 {
-	/* Hide stems with invalid locations. */
 	if (std::isnan(stem->getLocation().x))
+		/* Hide stems with invalid locations. */
 		return (Segment){};
 
 	int mesh = selectBuffer(stem->getMaterial(Stem::Outer));
@@ -53,24 +49,36 @@ Segment Mesh::addStem(Stem *stem)
 	stemSegment.vertexStart = vertices[mesh].size();
 	stemSegment.indexStart = indices[mesh].size();
 	float uvOffset = 0.0f;
+	int section = 1;
 	int lastSection = stem->getPath().getSize() - 1;
 
 	size_t prevIndex = vertices[mesh].size();
 	addSection(stem, 0, uvOffset);
 	size_t currentIndex = vertices[mesh].size();
-	addTriangleRing(prevIndex, currentIndex, stem->getResolution());
 
-	for (int section = 1; section < lastSection; section++) {
-		size_t prevIndex = vertices[mesh].size();
+	if (stem->getParent()) {
+		uvOffset = 0.0f;
+		size_t collarStart = this->vertices[mesh].size();
+		reserveBranchCollarSpace(stem, mesh);
+		prevIndex = this->vertices[mesh].size();
 		addSection(stem, section, uvOffset);
-		size_t currentIndex = vertices[mesh].size();
+		Segment parentSegment = findStem(stem->getParent());
+		createBranchCollar(stemSegment, parentSegment, collarStart);
+	} else {
 		addTriangleRing(prevIndex, currentIndex, stem->getResolution());
+		prevIndex = vertices[mesh].size();
+		addSection(stem, section, uvOffset);
 	}
 
-	size_t lastSectionIndex = vertices[mesh].size();
-	addSection(stem, lastSection, uvOffset);
+	while (section < lastSection) {
+		currentIndex = vertices[mesh].size();
+		addTriangleRing(prevIndex, currentIndex, stem->getResolution());
+		prevIndex = vertices[mesh].size();
+		addSection(stem, ++section, uvOffset);
+	}
+
 	this->mesh = selectBuffer(stem->getMaterial(Stem::Inner));
-	capStem(stem, mesh, lastSectionIndex);
+	capStem(stem, mesh, prevIndex);
 
 	stemSegment.vertexCount = vertices[mesh].size();
 	stemSegment.vertexCount -= stemSegment.vertexStart;
@@ -89,9 +97,187 @@ Segment Mesh::addStem(Stem *stem)
 	return stemSegment;
 }
 
-/** Generate a cross-section for a point in the stem's path. Indices are added
-at a latter stage (two cross-sections are required to form a ring of
-triangles). */
+/** Cross sections are usually created one at a time and then connected with
+triangles. Branch collars are created by connecting cross sections with
+splines which means that many cross sections are created at a time. Reserving
+memory in advance enables offsets to be used to maintain an identical vertex
+layout. */
+void Mesh::reserveBranchCollarSpace(Stem *stem, int mesh)
+{
+	size_t size = getBranchCollarSize(stem) + this->vertices[mesh].size();
+	this->vertices[mesh].resize(size);
+}
+
+/** Return the amount of memory needed for the branch collar. */
+size_t Mesh::getBranchCollarSize(Stem *stem)
+{
+	const int divisions = stem->getPath().getResolution();
+	return (stem->getResolution()+1) * divisions;
+}
+
+/** The first step in generating the branch collar is scaling the first cross
+section of the stem. This method returns the quantity to scale by. */
+Mat4 Mesh::getBranchCollarScale(Stem *child, Stem *parent)
+{
+	float position = child->getPosition();
+	Vec3 yaxis = parent->getPath().getIntermediateDirection(position);
+	Vec3 xaxis = child->getPath().getDirection(0);
+	xaxis = normalize(cross(cross(yaxis, xaxis), yaxis));
+	Vec3 zaxis = normalize(cross(yaxis, xaxis));
+
+	Mat4 axes = identity();
+	axes.vectors[0] = toVec4(xaxis, 0.0f);
+	axes.vectors[1] = toVec4(yaxis, 0.0f);
+	axes.vectors[2] = toVec4(zaxis, 0.0f);
+
+	Mat4 scale = identity();
+	scale[2][2] = 1.5f;
+	scale[1][1] = 3.0f;
+
+	return axes * scale * transpose(axes);
+}
+
+/** Project a point from a cross section on its parent's surface. */
+Vertex Mesh::moveToSurface(Vertex vertex, Ray ray, Segment parent, int mesh)
+{
+	float length = magnitude(ray.direction);
+	ray.direction = normalize(ray.direction);
+
+	float t = std::numeric_limits<float>::max();
+	unsigned i = parent.indexStart;
+	while (i < parent.indexStart + parent.indexCount) {
+		unsigned index;
+		index = this->indices[mesh][i++];
+		Vec3 p1 = this->vertices[mesh][index].position;
+		index = this->indices[mesh][i++];
+		Vec3 p2 = this->vertices[mesh][index].position;
+		index = this->indices[mesh][i++];
+		Vec3 p3 = this->vertices[mesh][index].position;
+
+		float s = -intersectsTriangle(ray, p1, p3, p2);
+		if (s != 0 && s < t) {
+			t = s;
+			vertex.normal = cross(p1-p2, p1-p3);
+		}
+	}
+
+	if (t != std::numeric_limits<float>::max()) {
+		Vec3 offset = (t - length) * ray.direction;
+		vertex.normal = normalize(vertex.normal);
+		vertex.position -= offset;
+	}
+
+	return vertex;
+}
+
+void Mesh::createBranchCollar(Segment child, Segment parent, size_t vertexStart)
+{
+	const int mesh1 = selectBuffer(child.stem->getMaterial(Stem::Outer));
+	const int mesh2 = selectBuffer(parent.stem->getMaterial(Stem::Outer));
+	const int resolution = child.stem->getResolution();
+	const int divisions = child.stem->getPath().getResolution();
+	size_t collarSize = getBranchCollarSize(child.stem);
+	Mat4 scale = getBranchCollarScale(child.stem, parent.stem);
+
+	for (int i = 0; i <= resolution; i++) {
+		size_t index = child.vertexStart + i;
+		size_t nextIndex = index + collarSize + resolution + 1;
+
+		Ray ray;
+		Vec3 location = child.stem->getLocation();
+		Vertex initPoint = this->vertices[mesh1][index];
+		Vertex scaledPoint;
+
+		scaledPoint.position = initPoint.position - location;
+		scaledPoint.position = scale.apply(scaledPoint.position, 1.0f);
+		scaledPoint.position += location;
+		ray.origin = this->vertices[mesh1][nextIndex].position;
+		ray.direction = ray.origin - scaledPoint.position;
+		scaledPoint = moveToSurface(scaledPoint, ray, parent, mesh2);
+		this->vertices[mesh1][index] = scaledPoint;
+
+		ray.direction = ray.origin - initPoint.position;
+		initPoint = moveToSurface(initPoint, ray, parent, mesh2);
+
+		Spline spline;
+		spline.setDegree(3);
+		spline.addControl(scaledPoint.position);
+		spline.addControl(initPoint.position);
+		spline.addControl(initPoint.position);
+		spline.addControl(this->vertices[mesh1][nextIndex].position);
+
+		float delta = 1.0f/(divisions+1);
+		float t = delta;
+		for (int j = 0; j < divisions; j++, t += delta) {
+			Vertex vertex;
+			vertex.position = spline.getPoint(0, t);
+			size_t index = vertexStart + i + (resolution + 1) * j;
+			this->vertices[mesh1][index] = vertex;
+		}
+	}
+
+	size_t index1 = child.vertexStart;
+	size_t index2 = child.vertexStart + resolution + 1;
+	for (int i = 0; i <= divisions; i++) {
+		addTriangleRing(index1, index2, resolution);
+		index1 = index2;
+		index2 += resolution + 1;
+	}
+
+	index1 = child.vertexStart;
+	index2 = vertexStart + collarSize;
+	setBranchCollarNormals(index1, index2, mesh1, resolution, divisions);
+	setBranchCollarUVs(index2, child.stem, mesh1, resolution, divisions);
+}
+
+/** Interpolate normals from the first cross section of the stem with normals
+from the first cross section after the branch collar. */
+void Mesh::setBranchCollarNormals(
+	size_t index1, size_t index2, int mesh, int resolution, int divisions)
+{
+	for (int i = 0; i <= resolution; i++) {
+		Vec3 normal1 = this->vertices[mesh][index1].normal;
+		Vec3 normal2 = this->vertices[mesh][index2].normal;
+
+		for (int j = 1; j <= divisions; j++) {
+			float t = j/static_cast<float>(divisions);
+			Vec3 normal = lerp(normal1, normal2, t);
+			normal = normalize(normal);
+			size_t offset = j * (resolution + 1);
+			this->vertices[mesh][index1 + offset].normal = normal;
+		}
+
+		index1++;
+		index2++;
+	}
+}
+
+/** Normally UV coordinates are generated starting at the first cross section.
+The UV coordinates for branch collars are generated backwards because splines
+are not guaranteed to be the same length. */
+void Mesh::setBranchCollarUVs(
+	size_t lastIndex, Stem *stem, int mesh, int resolution, int divisions)
+{
+	size_t size = resolution + 1;
+	float radius = stem->getPath().getRadius(1);
+
+	for (int i = 0; i <= resolution; i++) {
+		Vec2 uv = this->vertices[mesh][lastIndex + i].uv;
+		size_t index = lastIndex + i;
+
+		for (int j = divisions; j >= 0; j--) {
+			Vec3 p1 = this->vertices[mesh][index].position;
+			index -= size;
+			Vec3 p2 = this->vertices[mesh][index].position;
+			float length = magnitude(p2 - p1);
+			uv.y += length/(radius * 2.0f * (float)M_PI);
+			this->vertices[mesh][index].uv = uv;
+		}
+	}
+}
+
+/** Generate a cross section for a point in the stem's path. Indices are added
+at a latter stage to connect the sections. */
 void Mesh::addSection(Stem *stem, size_t section, float &uvOffset)
 {
 	Mat4 transform = getSectionTransform(stem, section);
@@ -112,7 +298,6 @@ void Mesh::addSection(Stem *stem, size_t section, float &uvOffset)
 		vertex.position = transform.apply(vertex.position, 1.0f);
 		vertex.normal = transform.apply(vertex.normal, 0.0f);
 		vertex.normal = normalize(vertex.normal);
-
 		this->vertices[this->mesh].push_back(vertex);
 
 		vertex.uv.x -= uOffset;
@@ -133,9 +318,9 @@ Mat4 Mesh::getSectionTransform(Stem *stem, size_t section)
 	return translation * rotation;
 }
 
-/** Compute indices between the cross-section just generated (starting at the
+/** Compute indices between the cross section just generated (starting at the
 previous index) and the cross-section that still needs to be generated
-(which will start at the current index). */
+(starting at the current index). */
 void Mesh::addTriangleRing(size_t prevIndex, size_t index, int divisions)
 {
 	for (int i = 0; i <= divisions - 1; i++) {
@@ -273,8 +458,8 @@ void Mesh::initBuffer()
 	this->leafSegments.push_back(map<long, Segment>());
 }
 
-/** Geometry is divided into different groups depending on its material.
-Geometry is latter on stored in the same vertex buffer, but is seperated based
+/** Geometry is divided into different groups depending on material.
+Geometry is latter stored in the same vertex buffer but is separated based
 on material to minimize draw calls. This method updates the indices to what
 they should be in the final merged vertex buffer. */
 void Mesh::updateSegments()
@@ -363,7 +548,6 @@ int Mesh::getLeafCount(int mesh) const
 	return this->leafSegments[mesh].size();
 }
 
-/** Find the location of a stem in the buffer. */
 Segment Mesh::findStem(Stem *stem) const
 {
 	Segment segment = {};
@@ -376,7 +560,6 @@ Segment Mesh::findStem(Stem *stem) const
 	return segment;
 }
 
-/** Find the location of a leaf in the buffer. */
 Segment Mesh::findLeaf(long leaf) const
 {
 	Segment segment = {};

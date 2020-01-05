@@ -31,8 +31,7 @@ using pg::Mat4;
 
 CurveEditor::CurveEditor(
 	SharedResources *shared, KeyMap *keymap, QWidget *parent) :
-	QOpenGLWidget(parent),
-	selection(&camera)
+	QOpenGLWidget(parent), selection(&camera)
 {
 	this->shared = shared;
 	this->keymap = keymap;

@@ -75,6 +75,7 @@ namespace pg {
 	Mat4 rotateXY(float x, float y);
 	Mat4 rotateZYX(float z, float y, float x);
 	Mat4 translate(const Vec3 &vec);
+	Mat4 transpose(const Mat4 &mat);
 }
 
 #endif

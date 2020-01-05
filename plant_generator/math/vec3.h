@@ -124,6 +124,13 @@ namespace pg {
 		return vec;
 	}
 
+	inline Vec3 operator/(const Vec3 &a, float b)
+	{
+		Vec3 vec = a;
+		vec /= b;
+		return vec;
+	}
+
 	float angle(Vec3 a, Vec3 b);
 	Vec3 cross(Vec3 a, Vec3 b);
 	float dot(Vec3 a, Vec3 b);
@@ -133,6 +140,7 @@ namespace pg {
 	float project(Vec3 a, Vec3 b);
 	Vec3 projectOntoPlane(Vec3 vec, Vec3 normal);
 	Vec3 rotateAroundAxis(Vec3 vec, Vec3 axis, float n);
+	Vec3 lerp(Vec3 a, Vec3 b, float t);
 }
 
 #endif

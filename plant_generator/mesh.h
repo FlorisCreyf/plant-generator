@@ -18,6 +18,7 @@
 
 #include "stem.h"
 #include "plant.h"
+#include "math/intersection.h"
 #include "vertex.h"
 #include <vector>
 #include <map>
@@ -49,8 +50,19 @@ namespace pg {
 		void addTriangleRing(size_t, size_t, int);
 		void capStem(Stem *, int, size_t);
 		Segment addStem(Stem *);
+
+		void createBranchCollar(Segment, Segment, size_t);
+		void reserveBranchCollarSpace(Stem *, int);
+		size_t getBranchCollarSize(Stem *);
+		Mat4 getBranchCollarScale(Stem *, Stem *);
+		Vertex moveToSurface(Vertex, Ray, Segment, int);
+		void setBranchCollarNormals(size_t, size_t, int, int, int);
+		void setBranchCollarUVs(size_t, Stem *, int, int, int);
+
 		void addLeaves(Stem *);
 		void addLeaf(Leaf *leaf, Stem *stem);
+
+		float getUVOffset();
 		void addTriangle(int, int, int);
 		int selectBuffer(long);
 		void initBuffer();
@@ -63,7 +75,9 @@ namespace pg {
 		std::vector<unsigned> getIndices() const;
 		const std::vector<Vertex> *getVertices(int mesh) const;
 		const std::vector<unsigned> *getIndices(int mesh) const;
+		/** Find the location of a stem in the buffer. */
 		Segment findStem(Stem *stem) const;
+		/** Find the location of a leaf in the buffer. */
 		Segment findLeaf(long leaf) const;
 		std::map<long, Segment> getLeaves(int mesh) const;
 		int getLeafCount(int mesh) const;

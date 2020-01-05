@@ -68,7 +68,7 @@ float pg::Generator::getRadius(Stem *stem)
 	float radius;
 	if (parent) {
 		radius = stem->getParent()->getPath().getMaxRadius();
-		radius *= 0.5f * std::pow(2.0f, -stem->getPosition()/5.0f);
+		radius *= 0.5f * std::pow(2.0f, -stem->getPosition()/4.0f);
 	} else
 		radius = 0.2f;
 	return radius;
@@ -77,22 +77,26 @@ float pg::Generator::getRadius(Stem *stem)
 void pg::Generator::setPath(Stem *stem, Vec3 direction)
 {
 	std::vector<Vec3> controls;
-	Vec3 control = {0.0f, 0.0f, 0.0f};
 	Vec3 variance = {0.02f, -0.05f, 0.01f};
 	float radius = getRadius(stem);
-	float length = 15.0f * radius;
+	float length = 10.0f * radius;
 	int divisions = stem->getDepth() == 0 ? 2 : 1;
-	int points = stem->getParent() ? 3 : 4;
+	int points = stem->getParent() ? 3 : 5;
 
 	Path path;
 	path.setMaxRadius(radius);
 	path.setRadius(getDefaultCurve(0));
 	path.setResolution(divisions);
 
+	Vec3 control = {0.0f, 0.0f, 0.0f};
+	controls.push_back(control);
+	control = control + length * 0.5f * direction;
+	controls.push_back(control);
+
 	for (int i = 0; i < points; i++) {
-		controls.push_back(control);
 		control = control + length * direction;
 		direction = normalize(direction + variance);
+		controls.push_back(control);
 	}
 
 	/* Thinner stems are more flexible and should bend more towards the
@@ -108,7 +112,7 @@ void pg::Generator::setPath(Stem *stem, Vec3 direction)
 
 void pg::Generator::addLateralStems(Stem *parent, float position)
 {
-	float length = parent->getPath().getLength();
+	float length = parent->getPath().getLength() - 1.0f;
 	float stemDensity = parent->getDepth() == 0 ? 1.0f : 0.0f;
 	float distance = 1.0f / stemDensity;
 

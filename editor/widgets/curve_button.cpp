@@ -21,8 +21,9 @@
 using pg::Vec3;
 using pg::Mat4;
 
-CurveButton::CurveButton(QString name, SharedResources *shared, QWidget *parent)
-		: QOpenGLWidget(parent)
+CurveButton::CurveButton(
+	QString name, SharedResources *shared, QWidget *parent) :
+	QOpenGLWidget(parent)
 {
 	setCursor(Qt::PointingHandCursor);
 	this->name = name;

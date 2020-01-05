@@ -19,8 +19,9 @@
 #include "item_delegate.h"
 #include "editor/file.h"
 
-MeshEditor::MeshEditor(SharedResources *shared, Editor *editor,
-	QWidget *parent) : QWidget(parent)
+MeshEditor::MeshEditor(
+	SharedResources *shared, Editor *editor, QWidget *parent) :
+	QWidget(parent)
 {
 	this->shared = shared;
 	this->editor = editor;

@@ -46,7 +46,7 @@ Stem::~Stem()
 	}
 }
 
-Stem::Stem(const Stem &orignal)
+Stem::Stem(const Stem &original)
 {
 	/* Set nullptr to prevent temporary copies from deleting children. An
 	explicit deep copy method might be more appropiate if necessary. */
@@ -54,7 +54,7 @@ Stem::Stem(const Stem &orignal)
 	this->nextSibling = nullptr;
 	this->prevSibling = nullptr;
 	this->child = nullptr;
-	copy(orignal);
+	copy(original);
 }
 
 Stem &Stem::operator=(const Stem &stem)
@@ -142,6 +142,10 @@ int Stem::getResolution() const
 void Stem::setPath(pg::Path &path)
 {
 	this->path = path;
+	if (this->parent)
+		this->path.generate(true);
+	else
+		this->path.generate(false);
 	updatePositions(this);
 }
 

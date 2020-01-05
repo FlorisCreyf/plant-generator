@@ -30,10 +30,8 @@ namespace pg {
 		int resolution = 2;
 		int subdivisions = 0;
 		Spline radius;
-		float minRadius = 0.02f;
+		float minRadius = 0.015f;
 		float maxRadius = 0.2f;
-
-		void generate();
 
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned int version)
@@ -59,6 +57,9 @@ namespace pg {
 		int getResolution() const;
 		void subdivide(int level);
 		int getSubdivisions() const;
+		/** Evaluate points along the spline. The first curve is
+		always linear if linearStart is true. */
+		void generate(bool linearStart=false);
 
 		std::vector<Vec3> get() const;
 		/** Gets a point on the path. */

@@ -28,9 +28,8 @@ Window::Window(int argc, char **argv)
 	if (argc > 1)
 		this->filename = QString(argv[1]);
 
-	this->editor = new Editor(&shared, &keymap, this);
+	this->editor = new Editor(&this->shared, &this->keymap, this);
 	setCentralWidget(this->editor);
-
 	createEditors();
 	initEditor();
 
@@ -125,7 +124,6 @@ void Window::createEditors()
 	tabifyDockWidget(dockWidget[4], dockWidget[3]);
 	tabifyDockWidget(dockWidget[4], dockWidget[2]);
 	tabifyDockWidget(dockWidget[4], dockWidget[1]);
-	tabifyDockWidget(dockWidget[4], dockWidget[0]);
 }
 
 void Window::initEditor()

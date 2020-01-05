@@ -208,9 +208,9 @@ float pg::intersectsTaperedCylinder(
 		y-axis or above the height value. The cone is always along
 		the y-axis because the ray is transformed into the object
 		space of the cone. */
-		 float y = (t*ray.direction.y + ray.origin.y);
-		 if (y < 0 || y > height)
-		 	t = 0.0f;
+		float y = (t*ray.direction.y + ray.origin.y);
+		if (y < 0 || y > height)
+			t = 0.0f;
 	} else
 		t = 0.0f;
 

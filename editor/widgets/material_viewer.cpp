@@ -21,8 +21,8 @@
 using pg::Vec3;
 using pg::Mat4;
 
-MaterialViewer::MaterialViewer(SharedResources *shared, QWidget *parent)
-	: QOpenGLWidget(parent)
+MaterialViewer::MaterialViewer(SharedResources *shared, QWidget *parent) :
+	QOpenGLWidget(parent)
 {
 	this->shared = shared;
 

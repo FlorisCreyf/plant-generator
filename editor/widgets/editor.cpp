@@ -81,8 +81,8 @@ void Editor::createToolBar()
 	solidAction->toggle();
 	layout->addWidget(toolbar);
 
-	connect(toolbar, SIGNAL(actionTriggered(QAction *)), this,
-		SLOT(change(QAction *)));
+	connect(toolbar, SIGNAL(actionTriggered(QAction *)),
+		this, SLOT(change(QAction *)));
 }
 
 void Editor::initializeGL()
@@ -441,10 +441,18 @@ void Editor::paintGL()
 			start += mesh.getIndices(i)->size() * sizeof(unsigned);
 		}
 	} else if (shader == Shader::Wire) {
-		size_t start = 0;
 		glUseProgram(shared->getShader(Shader::Wire));
 		glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
 		glUniform4f(1, 0.13f, 0.13f, 0.13f, 1.0f);
+
+		glPointSize(4);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
+		for (int i = 0; i < mesh.getMeshCount(); i++) {
+			GLsizei size = mesh.getVertices(i)->size();
+			glDrawArrays(GL_POINTS, 0, size);
+		}
+
+		size_t start = 0;
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		for (int i = 0; i < mesh.getMeshCount(); i++) {
 			GLsizei size = mesh.getIndices(i)->size();
@@ -453,6 +461,7 @@ void Editor::paintGL()
 				GL_UNSIGNED_INT, (GLvoid *)start);
 			start += mesh.getIndices(i)->size() * sizeof(unsigned);
 		}
+
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	} else if (shader == Shader::Material) {
 		size_t start = 0;

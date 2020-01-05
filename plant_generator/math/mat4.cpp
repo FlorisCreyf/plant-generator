@@ -57,6 +57,15 @@ Mat4 pg::translate(const Vec3 &vec)
 	return result;
 }
 
+Mat4 pg::transpose(const Mat4 &mat)
+{
+	Mat4 result;
+	for (int i = 0; i < 4; i++)
+		for (int j = 0; j < 4; j++)
+			result[j][i] = mat[i][j];
+	return result;
+}
+
 Mat4 pg::rotateXY(float x, float y)
 {
 	float sx = std::sin(x);

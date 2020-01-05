@@ -24,7 +24,8 @@ class ItemDelegate : public QStyledItemDelegate {
 	Q_OBJECT
 
 public:
-	QSize sizeHint(const QStyleOptionViewItem &option,
+	QSize sizeHint(
+		const QStyleOptionViewItem &option,
 		const QModelIndex &index) const
 	{
 		(void)option;

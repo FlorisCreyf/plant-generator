@@ -60,3 +60,8 @@ Vec3 pg::cross(Vec3 a, Vec3 b)
 	result.z = a.x*b.y - a.y*b.x;
 	return result;
 }
+
+Vec3 pg::lerp(Vec3 a, Vec3 b, float t)
+{
+	return (1 - t) * a + t * b;
+}

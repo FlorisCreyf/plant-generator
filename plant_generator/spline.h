@@ -48,6 +48,7 @@ namespace pg {
 		bool operator==(const Spline &spline) const;
 		bool operator!=(const Spline &spline) const;
 		void setControls(std::vector<Vec3> controls);
+		void addControl(Vec3 control);
 		std::vector<Vec3> getControls() const;
 		int getSize() const;
 		int getCurveCount() const;
@@ -62,8 +63,10 @@ namespace pg {
 		void remove(unsigned index);
 		/* Changes the degree and modifies the spline. */
 		void adjust(int degree);
-		void move(unsigned index, pg::Vec3 location, bool parallel);
+		void move(unsigned index, Vec3 location, bool parallel);
 		void parallelize(unsigned index);
+		/** Flatten a cubic curve. */
+		void linearize(int curve);
 		void clear();
 	};
 }

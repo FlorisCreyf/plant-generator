@@ -34,6 +34,11 @@ void Spline::setControls(std::vector<Vec3> controls)
 	this->controls = controls;
 }
 
+void Spline::addControl(Vec3 control)
+{
+	this->controls.push_back(control);
+}
+
 std::vector<Vec3> Spline::getControls() const
 {
 	return controls;
@@ -297,6 +302,19 @@ void Spline::parallelize(unsigned index)
 		diff = length * normalize(diff) + controls[index+1];
 		controls[index+2] = diff;
 	}
+}
+
+void Spline::linearize(int curve)
+{
+	if (degree != 3)
+		return;
+
+	unsigned index = curve * 4;
+	Vec3 control1 = this->controls[index + 0];
+	Vec3 control2 = this->controls[index + 3];
+	Vec3 direction = 0.25f * (control2 - control1);
+	this->controls[index + 1] = control1 + direction;
+	this->controls[index + 2] = control2 - direction;
 }
 
 void Spline::clear()
