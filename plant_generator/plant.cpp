@@ -27,7 +27,7 @@ Plant::Plant()
 
 Plant::~Plant()
 {
-	removeStem(root);
+	delete root;
 }
 
 Stem *Plant::addStem(Stem *parent)
@@ -44,7 +44,7 @@ Stem *Plant::addStem(Stem *parent)
 
 Stem *Plant::createRoot()
 {
-	removeStem(this->root);
+	delete this->root;
 	this->root = new Stem(nullptr);
 	return this->root;
 }
@@ -79,16 +79,10 @@ void Plant::insertStem(Stem *stem, Stem *parent)
 	parent->child->prevSibling = nullptr;
 }
 
-void Plant::removeStem(Stem *stem)
-{
-	if (stem == this->root)
-		this->root = nullptr;
-	delete stem;
-}
-
 void Plant::removeRoot()
 {
-	removeStem(this->root);
+	delete this->root;
+	this->root = nullptr;
 }
 
 void Plant::addMaterial(Material material)

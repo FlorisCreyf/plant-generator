@@ -2,8 +2,7 @@
 QMAKE = qmake -qt5
 
 all:
-	${QMAKE} -o qt.mk plant.pro; \
-	make -f qt.mk;
+	${QMAKE} -o qt.mk plant.pro; make -f qt.mk;
 
 install:
 	git submodule update --init --recursive;

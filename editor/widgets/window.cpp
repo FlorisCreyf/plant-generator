@@ -16,7 +16,7 @@
  */
 
 #include "window.h"
-#include "editor/file.h"
+#include "plant_generator/file.h"
 #include <boost/archive/text_iarchive.hpp>
 #include <fstream>
 #include <QFileDialog>
@@ -69,36 +69,46 @@ void Window::createEditors()
 	connect(&shared, SIGNAL(materialRemoved(QString)),
 		this->propertyBox, SLOT(removeMaterial(QString)));
 
-	dockWidget[1] = new QDockWidget(tr("Curves"), this);
-	this->curveEditor = new CurveEditor(&this->shared, &this->keymap, this);
+	scrollArea = new QScrollArea();
+	scrollArea->setWidgetResizable(true);
+	scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+	dockWidget[1] = new QDockWidget(tr("Keys"), this);
+	this->keyEditor = new KeyEditor(&keymap, this);
 	dockWidget[1]->setAllowedAreas(areas);
-	dockWidget[1]->setWidget(this->curveEditor);
+	dockWidget[1]->setWidget(this->keyEditor);
+	dockWidget[1]->setWidget(scrollArea);
+	dockWidget[1]->setMinimumWidth(350);
+	scrollArea->setWidget(this->keyEditor);
 	this->addDockWidget(static_cast<Qt::DockWidgetArea>(1), dockWidget[1]);
 
+	dockWidget[2] = new QDockWidget(tr("Curves"), this);
+	this->curveEditor = new CurveEditor(&this->shared, &this->keymap, this);
+	dockWidget[2]->setAllowedAreas(areas);
+	dockWidget[2]->setWidget(this->curveEditor);
+	this->addDockWidget(static_cast<Qt::DockWidgetArea>(1), dockWidget[2]);
 	this->propertyBox->bind(this->curveEditor);
 
 	scrollArea = new QScrollArea();
 	scrollArea->setWidgetResizable(true);
 	scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-	dockWidget[2] = new QDockWidget(tr("Materials"), this);
+	dockWidget[3] = new QDockWidget(tr("Materials"), this);
 	this->materialEditor = new MaterialEditor(&shared, this);
-	dockWidget[2]->setAllowedAreas(areas);
-	dockWidget[2]->setWidget(scrollArea);
+	dockWidget[3]->setAllowedAreas(areas);
+	dockWidget[3]->setWidget(scrollArea);
 	scrollArea->setWidget(this->materialEditor);
-	this->addDockWidget(static_cast<Qt::DockWidgetArea>(1), dockWidget[2]);
-
+	this->addDockWidget(static_cast<Qt::DockWidgetArea>(1), dockWidget[3]);
 	connect(this->materialEditor->getViewer(), SIGNAL(ready()),
 		this, SLOT(initMaterialEditor()));
 
 	scrollArea = new QScrollArea();
 	scrollArea->setWidgetResizable(true);
 	scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-	dockWidget[3] = new QDockWidget(tr("Meshes"), this);
+	dockWidget[4] = new QDockWidget(tr("Meshes"), this);
 	this->meshEditor = new MeshEditor(&shared, this->editor, this);
-	dockWidget[3]->setAllowedAreas(areas);
-	dockWidget[3]->setWidget(scrollArea);
+	dockWidget[4]->setAllowedAreas(areas);
+	dockWidget[4]->setWidget(scrollArea);
 	scrollArea->setWidget(this->meshEditor);
-	this->addDockWidget(static_cast<Qt::DockWidgetArea>(1), dockWidget[3]);
+	this->addDockWidget(static_cast<Qt::DockWidgetArea>(1), dockWidget[4]);
 
 	connect(this->meshEditor->getViewer(), SIGNAL(ready()),
 		this, SLOT(initMeshEditor()));
@@ -109,21 +119,9 @@ void Window::createEditors()
 	connect(this->meshEditor, SIGNAL(meshRemoved(QString)),
 		this->propertyBox, SLOT(removeMesh(QString)));
 
-	scrollArea = new QScrollArea();
-	scrollArea->setWidgetResizable(true);
-	scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-	dockWidget[4] = new QDockWidget(tr("Keys"), this);
-	this->keyEditor = new KeyEditor(&keymap, this);
-	dockWidget[4]->setAllowedAreas(areas);
-	dockWidget[4]->setWidget(this->keyEditor);
-	dockWidget[4]->setWidget(scrollArea);
-	dockWidget[4]->setMinimumWidth(350);
-	scrollArea->setWidget(this->keyEditor);
-	this->addDockWidget(static_cast<Qt::DockWidgetArea>(1), dockWidget[4]);
-
+	tabifyDockWidget(dockWidget[1], dockWidget[0]);
 	tabifyDockWidget(dockWidget[4], dockWidget[3]);
 	tabifyDockWidget(dockWidget[4], dockWidget[2]);
-	tabifyDockWidget(dockWidget[4], dockWidget[1]);
 }
 
 void Window::initEditor()
@@ -281,7 +279,7 @@ void Window::exportDialogBox()
 		tr("Wavefront OBJ (*.obj)"));
 
 	if (!filename.isEmpty()) {
-		File f;
+		pg::File f;
 		QByteArray b = filename.toLatin1();
 		f.exportObj(b.data(), mesh->getVertices(), mesh->getIndices());
 	}

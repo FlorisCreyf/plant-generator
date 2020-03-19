@@ -72,7 +72,7 @@ void PropertyBox::createStemBox(QVBoxLayout *layout)
 	this->stemG = new QGroupBox(tr("Stem"));
 	QFormLayout *form = new QFormLayout(this->stemG);
 	form->setSpacing(2);
-	form->setMargin(10);
+	form->setMargin(5);
 
 	{
 		QWidget *sizeWidget = new QWidget();
@@ -153,7 +153,7 @@ void PropertyBox::createCapBox(QVBoxLayout *layout)
 	this->capG = new QGroupBox(tr("Cap"));
 	QFormLayout *form = new QFormLayout(capG);
 	form->setSpacing(2);
-	form->setMargin(10);
+	form->setMargin(5);
 
 	this->capMaterialL = new QLabel(tr("Material"));
 	this->capMaterialV = new QComboBox;
@@ -173,7 +173,7 @@ void PropertyBox::createLeafBox(QVBoxLayout *layout)
 	this->leafG = new QGroupBox(tr("Leaf"));
 	QFormLayout *form = new QFormLayout(this->leafG);
 	form->setSpacing(2);
-	form->setMargin(10);
+	form->setMargin(5);
 
 	this->leafScaleXL = new QLabel(tr("X Scale"));
 	this->leafScaleXV = new QDoubleSpinBox;

@@ -17,21 +17,23 @@
 #define PG_LEAF_H
 
 #include "math/math.h"
+
+#ifdef PG_SERIALIZE
 #include <boost/archive/text_oarchive.hpp>
+#endif
 
 namespace pg {
 	class Leaf {
-		friend class boost::serialization::access;
-
 		static long counter;
 		long id;
 		long material;
 		long mesh;
-
 		float position;
 		Vec3 scale;
 		Quat rotation;
 
+		#ifdef PG_SERIALIZE
+		friend class boost::serialization::access;
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned int version)
 		{
@@ -44,6 +46,7 @@ namespace pg {
 			ar & mesh;
 			ar & rotation;
 		}
+		#endif
 
 	public:
 		Leaf();

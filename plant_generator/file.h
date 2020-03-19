@@ -1,4 +1,4 @@
-/* Copyright 2019 Floris Creyf
+/* Copyright 2020 Floris Creyf
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,35 +13,21 @@
  * limitations under the License.
  */
 
-#ifndef PG_VERTEX_H
-#define PG_VERTEX_H
+#ifndef PG_FILE_H
+#define PG_FILE_H
 
-#ifdef PG_SERIALIZE
-#include <boost/archive/text_oarchive.hpp>
-#endif
+#include "geometry.h"
+#include <cstddef>
+#include <vector>
 
 namespace pg {
-	struct Vertex {
-		Vec3 position;
-		union {
-			Vec3 normal;
-			Vec3 color;
-		};
-		Vec2 uv;
-
-	private:
-		#ifdef PG_SERIALIZE
-		friend class boost::serialization::access;
-		template<class Archive>
-		void serialize(Archive &ar, const unsigned int version)
-		{
-			(void)version;
-			ar & position;
-			ar & normal;
-			ar & uv;
-		}
-		#endif
+	class File {
+	public:
+		void exportObj(const char *filename,
+			const std::vector<pg::Vertex> &vertices,
+			const std::vector<unsigned> &indices);
+		void importObj(const char *filename, pg::Geometry *geom);
 	};
 }
 
-#endif
+#endif /* PG_FILE_H */

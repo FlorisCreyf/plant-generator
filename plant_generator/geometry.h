@@ -20,18 +20,21 @@
 #include "vertex.h"
 #include <vector>
 #include <string>
+
+#ifdef PG_SERIALIZE
 #include <boost/archive/text_oarchive.hpp>
+#endif
 
 namespace pg {
 	class Geometry {
-		friend class boost::serialization::access;
-
 		std::vector<Vertex> points;
 		std::vector<unsigned> indices;
 		static long counter;
 		long id;
 		std::string name;
 
+		#ifdef PG_SERIALIZE
+		friend class boost::serialization::access;
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned int version)
 		{
@@ -42,6 +45,7 @@ namespace pg {
 			ar & points;
 			ar & indices;
 		}
+		#endif
 
 	public:
 		Geometry();

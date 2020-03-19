@@ -12,6 +12,7 @@
 *.txt
 *.out
 *.svg
+*.swp
 plant
 resources/
 build/

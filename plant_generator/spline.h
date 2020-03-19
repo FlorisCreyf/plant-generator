@@ -19,18 +19,24 @@
 #include "math/math.h"
 #include <vector>
 #include <set>
+
+#ifdef PG_SERIALIZE
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/vector.hpp>
+#endif
 
 namespace pg {
 	class Spline {
-		friend class boost::serialization::access;
-
+		void adjustCubic();
+		void adjustLinear();
 		std::vector<Vec3> controls;
 		int degree = 3;
-
 		int insertCubic(int index, pg::Vec3 point);
+		void moveCubic(unsigned, Vec3, bool);
+		void removeCubic(unsigned);
 
+		#ifdef PG_SERIALIZE
+		friend class boost::serialization::access;
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned int version)
 		{
@@ -38,11 +44,7 @@ namespace pg {
 			ar & controls;
 			ar & degree;
 		}
-
-		void adjustCubic();
-		void adjustLinear();
-		void moveCubic(unsigned, Vec3, bool);
-		void removeCubic(unsigned);
+		#endif
 
 	public:
 		bool operator==(const Spline &spline) const;

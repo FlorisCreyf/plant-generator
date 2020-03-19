@@ -17,7 +17,10 @@
 #define PG_VEC4_H
 
 #include "vec3.h"
+
+#ifdef PG_SERIALIZE
 #include <boost/archive/text_oarchive.hpp>
+#endif
 
 namespace pg {
 	struct Vec4 {
@@ -48,6 +51,7 @@ namespace pg {
 			}
 		}
 
+		#ifdef PG_SERIALIZE
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned int version)
 		{
@@ -57,6 +61,7 @@ namespace pg {
 			ar & z;
 			ar & w;
 		}
+		#endif
 	};
 
 	inline Vec4 toVec4(const Vec3 &vec, const float w)

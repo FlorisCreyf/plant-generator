@@ -29,6 +29,7 @@ pg::Generator::Generator(pg::Plant *plant)
 	std::random_device rd;
 	randomGenerator.seed(rd());
 	this->plant = plant;
+	this->maxStemDepth = 2;
 }
 
 Vec3 pg::Generator::getStemDirection(Stem *stem)
@@ -44,7 +45,7 @@ Vec3 pg::Generator::getStemDirection(Stem *stem)
 	Mat4 rot = pg::rotateXY(M_PI * 0.6f - angleX, angleY * M_PI * 2.0f);
 	Mat4 tran = pg::rotateIntoVec({0.0f, 1.0f, 0.0f}, direction);
 	tran = tran * rot;
-	return pg::toVec3(tran * pg::toVec4({0.0f, 1.0f, 0.0f}, 1.0f));
+	return tran.apply({0.0f, 1.0f, 0.0f}, 1.0f);
 }
 
 void pg::Generator::getDichotomousDirections(Stem *parent, Vec3 directions[2])
@@ -112,8 +113,8 @@ void pg::Generator::setPath(Stem *stem, Vec3 direction)
 
 void pg::Generator::addLateralStems(Stem *parent, float position)
 {
-	float length = parent->getPath().getLength() - 1.0f;
-	float stemDensity = parent->getDepth() == 0 ? 1.0f : 0.0f;
+	float length = parent->getPath().getLength();
+	float stemDensity = parent->getDepth() == 0 ? 1.0f : 1.5f;
 	float distance = 1.0f / stemDensity;
 
 	while (position < length) {
@@ -135,8 +136,11 @@ void pg::Generator::growLateralStem(Stem *stem, float position)
 
 	Leaf leaf;
 	leaf.setPosition(1.5f);
-	leaf.setScale((Vec3){2.0f, 2.0f, 2.0f});
+	leaf.setScale({2.0f, 2.0f, 2.0f});
 	stem->addLeaf(leaf);
+
+	if (stem->getDepth() < this->maxStemDepth)
+		addLateralStems(stem, 0.5f);
 }
 
 void pg::Generator::grow()
@@ -149,7 +153,7 @@ void pg::Generator::grow()
 
 void pg::Generator::setMaxDepth(int depth)
 {
-	maxStemDepth = depth;
+	this->maxStemDepth = depth;
 }
 
 int pg::Generator::getMaxDepth()

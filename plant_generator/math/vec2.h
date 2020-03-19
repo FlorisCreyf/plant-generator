@@ -18,7 +18,10 @@
 
 #include <iostream>
 #include <iomanip>
+
+#ifdef PG_SERIALZE
 #include <boost/archive/text_oarchive.hpp>
+#endif
 
 namespace pg {
 	struct Vec2 {
@@ -46,6 +49,7 @@ namespace pg {
 			return *this;
 		}
 
+		#ifdef PG_SERIALIZE
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned int version)
 		{
@@ -53,6 +57,7 @@ namespace pg {
 			ar & x;
 			ar & y;
 		}
+		#endif
 	};
 
 	inline bool operator==(const Vec2 &a, const Vec2 &b)

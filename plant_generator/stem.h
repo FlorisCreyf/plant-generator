@@ -20,13 +20,15 @@
 #include "math/math.h"
 #include "math/curve.h"
 #include "path.h"
-#include <boost/archive/text_oarchive.hpp>
 #include <map>
+
+#ifdef PG_SERIALIZE
+#include <boost/archive/text_oarchive.hpp>
+#endif
 
 namespace pg {
 	class Stem {
 		friend class Plant;
-		friend class boost::serialization::access;
 
 		static long counter;
 		long id;
@@ -47,6 +49,8 @@ namespace pg {
 		void updatePositions(Stem *stem);
 		void copy(const Stem &stem);
 
+		#ifdef PG_SERIALIZE
+		friend class boost::serialization::access;
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned int version)
 		{
@@ -65,6 +69,7 @@ namespace pg {
 			ar & location;
 			ar & material;
 		}
+		#endif
 
 	public:
 		enum {Outer, Inner};

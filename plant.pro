@@ -3,7 +3,6 @@ CONFIG += qt debug object_parallel_to_source c++11 -g
 QMAKE_LFLAGS += -no-pie
 TARGET = plant
 QT = core gui opengl xml
-#INCLUDEPATH += /usr/include/boost
 LIBS += /usr/lib/x86_64-linux-gnu/libboost_serialization.a
 
 SOURCES += \
@@ -14,6 +13,7 @@ plant_generator/math/quat.cpp \
 plant_generator/math/vec2.cpp \
 plant_generator/math/vec3.cpp \
 plant_generator/math/vec4.cpp \
+plant_generator/file.cpp \
 plant_generator/generator.cpp \
 plant_generator/geometry.cpp \
 plant_generator/leaf.cpp \
@@ -56,7 +56,6 @@ editor/widgets/mesh_viewer.cpp \
 editor/widgets/property_box.cpp \
 editor/widgets/window.cpp \
 editor/camera.cpp \
-editor/file.cpp \
 editor/history.cpp \
 editor/keymap.cpp \
 editor/main.cpp \
@@ -72,6 +71,7 @@ plant_generator/math/quat.h \
 plant_generator/math/vec2.h \
 plant_generator/math/vec3.h \
 plant_generator/math/vec4.h \
+plant-generator/file.h \
 plant_generator/generator.h \
 plant_generator/geometry.h \
 plant_generator/leaf.h \
@@ -116,7 +116,6 @@ editor/widgets/material_viewer.h \
 editor/widgets/property_box.h \
 editor/widgets/window.h \
 editor/camera.h \
-editor/file.h \
 editor/history.h \
 editor/keymap.h \
 editor/point_selection.h \

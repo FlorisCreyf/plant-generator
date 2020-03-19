@@ -17,7 +17,10 @@
 #define PG_MAT4_H
 
 #include "vec4.h"
+
+#ifdef PG_SERIALIZE
 #include <boost/archive/text_oarchive.hpp>
+#endif
 
 namespace pg {
 	struct Mat4 {

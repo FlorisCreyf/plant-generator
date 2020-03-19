@@ -17,7 +17,7 @@
 #define PG_INTERSECTION_H
 
 #include "math.h"
-#include "plant_generator/vertex.h"
+#include "../vertex.h"
 #include <cstddef>
 
 namespace pg {

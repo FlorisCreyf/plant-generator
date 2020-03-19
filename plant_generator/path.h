@@ -23,8 +23,6 @@
 namespace pg {
 	class Path {
 	protected:
-		friend class boost::serialization::access;
-
 		std::vector<Vec3> path;
 		Spline spline;
 		int resolution = 2;
@@ -33,6 +31,8 @@ namespace pg {
 		float minRadius = 0.015f;
 		float maxRadius = 0.2f;
 
+		#ifdef PG_SERIALIZE
+		friend class boost::serialization::access;
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned int version)
 		{
@@ -45,6 +45,7 @@ namespace pg {
 			ar & minRadius;
 			ar & maxRadius;
 		}
+		#endif
 
 	public:
 		bool operator==(const Path &path) const;

@@ -17,18 +17,21 @@
 #define PG_MATERIAL_H
 
 #include <string>
+
+#ifdef PG_SERIALIZE
 #include <boost/archive/text_oarchive.hpp>
+#endif
 
 namespace pg {
 	class Material {
-		friend class boost::serialization::access;
-
 		static long counter;
 		long id;
 		std::string name;
 		std::string texture;
 		float ratio;
 
+		#ifdef PG_SERIALIZE
+		friend class boost::serialization::access;
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned int version)
 		{
@@ -39,6 +42,7 @@ namespace pg {
 			ar & texture;
 			ar & ratio;
 		}
+		#endif
 
 	public:
 		Material();

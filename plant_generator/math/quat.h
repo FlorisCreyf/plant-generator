@@ -18,7 +18,10 @@
 
 #include "mat4.h"
 #include "vec3.h"
+
+#ifdef PG_SERIALIZE
 #include <boost/archive/text_oarchive.hpp>
+#endif
 
 namespace pg {
 	struct Quat {
@@ -40,6 +43,7 @@ namespace pg {
 			return *this;
 		}
 
+		#ifdef PG_SERIALIZE
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned int version)
 		{
@@ -49,7 +53,7 @@ namespace pg {
 			ar & z;
 			ar & w;
 		}
-
+		#endif
 	};
 
 	inline Quat toQuat(const Vec3 &vec, const float w)

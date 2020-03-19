@@ -45,6 +45,7 @@ namespace pg {
 		std::vector<std::map<long, Segment>> stemSegments;
 		std::vector<std::map<long, Segment>> leafSegments;
 
+		bool hasValidLocation(Stem *stem);
 		Mat4 getSectionTransform(Stem *, size_t);
 		void addSection(Stem *, size_t, float &);
 		void addTriangleRing(size_t, size_t, int);

@@ -21,7 +21,7 @@ KeyEditor::KeyEditor(KeyMap *keymap, QWidget *parent) : QWidget(parent)
 {
 	form = new QFormLayout(this);
 	form->setSpacing(2);
-	form->setMargin(10);
+	form->setMargin(5);
 	form->setLabelAlignment(Qt::AlignRight);
 
 	this->keymap = keymap;

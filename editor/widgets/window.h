@@ -18,6 +18,8 @@
 #ifndef WINDOW_H
 #define WINDOW_H
 
+#define PG_SERIALIZE
+
 #include "editor/keymap.h"
 #include "editor/qt/ui_window.h"
 #include "editor/graphics/shared_resources.h"

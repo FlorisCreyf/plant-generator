@@ -19,17 +19,22 @@
 #include "stem.h"
 #include "material.h"
 #include "geometry.h"
+
+#ifdef PG_SERIALIZE
 #include <boost/serialization/map.hpp>
 #include <boost/archive/text_oarchive.hpp>
+#endif
 
 namespace pg {
 	class Plant {
-		friend class boost::serialization::access;
-
 		Stem *root;
 		std::map<long, Material> materials;
 		std::map<long, Geometry> leafMeshes;
 
+		void removeMaterial(Stem *, long);
+
+		#ifdef PG_SERIALIZE
+		friend class boost::serialization::access;
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned int version)
 		{
@@ -38,8 +43,7 @@ namespace pg {
 			ar & materials;
 			ar & leafMeshes;
 		}
-
-		void removeMaterial(Stem *, long);
+		#endif
 
 	public:
 		Plant();
@@ -57,8 +61,6 @@ namespace pg {
 		Stem *getRoot();
 		/** Remove all stems in the plant. */
 		void removeRoot();
-		/** Remove a stem and its descendants from the plant. */
-		void removeStem(Stem *stem);
 
 		void addMaterial(Material material);
 		void removeMaterial(long id);

@@ -44,7 +44,7 @@ MaterialEditor::MaterialEditor(SharedResources *shared, QWidget *parent) :
 	columns->addWidget(this->materialViewer);
 
 	QFormLayout *form = new QFormLayout();
-	form->setMargin(10);
+	form->setMargin(5);
 	form->setSpacing(2);
 	initFields(form);
 	columns->addLayout(form);

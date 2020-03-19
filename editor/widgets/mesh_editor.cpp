@@ -17,7 +17,7 @@
 
 #include "mesh_editor.h"
 #include "item_delegate.h"
-#include "editor/file.h"
+#include "plant_generator/file.h"
 
 MeshEditor::MeshEditor(
 	SharedResources *shared, Editor *editor, QWidget *parent) :
@@ -44,7 +44,7 @@ MeshEditor::MeshEditor(
 	columns->addWidget(meshViewer);
 
 	QVBoxLayout *layout = new QVBoxLayout();
-	layout->setMargin(10);
+	layout->setMargin(5);
 	layout->setSpacing(2);
 	initFields(layout);
 	columns->addLayout(layout);
@@ -168,7 +168,7 @@ void MeshEditor::loadCustom()
 			pg::Plant *plant = editor->getPlant();
 			int id = meshBox->currentData().toInt();
 			pg::Geometry geom = plant->getLeafMesh(id);
-			File file;
+			pg::File file;
 			std::string s = filename.toStdString();
 			file.importObj(s.c_str(), &geom);
 			plant->addLeafMesh(geom);

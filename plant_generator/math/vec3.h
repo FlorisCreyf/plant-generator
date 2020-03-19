@@ -20,7 +20,10 @@
 #include <cmath>
 #include <iostream>
 #include <iomanip>
+
+#ifdef PG_SERIALIZE
 #include <boost/archive/text_oarchive.hpp>
+#endif
 
 namespace pg {
 	struct Vec3 {
@@ -60,6 +63,7 @@ namespace pg {
 			return *this;
 		}
 
+		#ifdef PG_SERIALIZE
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned int version) {
 			(void)version;
@@ -67,6 +71,7 @@ namespace pg {
 			ar & y;
 			ar & z;
 		}
+		#endif
 	};
 
 	inline pg::Vec3 getZeroVec3()

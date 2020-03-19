@@ -66,7 +66,7 @@ void MeshViewer::paintGL()
 	glClearDepth(1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	Mat4 vp = camera.getVP();
+	Mat4 vp = camera.updateVP();
 	Vec3 cp = camera.getPosition();
 	buffer.use();
 	glUseProgram(shared->getShader(Shader::Model));

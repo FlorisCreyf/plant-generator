@@ -35,12 +35,13 @@ void Mesh::generate()
 	updateSegments();
 }
 
+bool Mesh::hasValidLocation(Stem *stem)
+{
+	return !std::isnan(stem->getLocation().x);
+}
+
 Segment Mesh::addStem(Stem *stem)
 {
-	if (std::isnan(stem->getLocation().x))
-		/* Hide stems with invalid locations. */
-		return (Segment){};
-
 	int mesh = selectBuffer(stem->getMaterial(Stem::Outer));
 	this->mesh = mesh;
 
@@ -90,7 +91,8 @@ Segment Mesh::addStem(Stem *stem)
 
 	Stem *child = stem->getChild();
 	while (child != nullptr) {
-		addStem(child);
+		if (hasValidLocation(child))
+			addStem(child);
 		child = child->getSibling();
 	}
 
@@ -99,7 +101,7 @@ Segment Mesh::addStem(Stem *stem)
 
 /** Cross sections are usually created one at a time and then connected with
 triangles. Branch collars are created by connecting cross sections with
-splines which means that many cross sections are created at a time. Reserving
+splines, which means that many cross sections are created at a time. Reserving
 memory in advance enables offsets to be used to maintain an identical vertex
 layout. */
 void Mesh::reserveBranchCollarSpace(Stem *stem, int mesh)
@@ -305,7 +307,7 @@ void Mesh::addSection(Stem *stem, size_t section, float &uvOffset)
 	}
 }
 
-/** Transform points in the cross-section so that they face the direction of
+/** Transform points in the cross section so that they face the direction of
 the stem's path. */
 Mat4 Mesh::getSectionTransform(Stem *stem, size_t section)
 {

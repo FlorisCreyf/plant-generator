@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1400</width>
-    <height>700</height>
+    <width>1600</width>
+    <height>800</height>
    </rect>
   </property>
   <property name="windowIcon">
@@ -350,7 +350,6 @@ QWidget {
 } QLabel {
 	padding-right:4px;
 }
-
 </string>
   </property>
   <property name="documentMode">

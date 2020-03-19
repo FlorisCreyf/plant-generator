@@ -19,6 +19,7 @@
 #define EDITOR_H
 
 #define GL_GLEXT_PROTOTYPES
+#define PG_SERIALIZE
 
 #include "editor/camera.h"
 #include "editor/history.h"
