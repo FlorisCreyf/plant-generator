@@ -99,7 +99,20 @@ namespace pg {
 		return !(a == b);
 	}
 
-	Quat conjugate(Quat quat);
+	inline Quat conjugate(Quat quat)
+	{
+		quat.x = -quat.x;
+		quat.y = -quat.y;
+		quat.z = -quat.z;
+		return quat;
+	}
+
+	inline Vec3 rotate(Quat rotation, Vec3 point, float w)
+	{
+		Quat q = toQuat(point, w);
+		return toVec3(rotation * q * conjugate(rotation));
+	}
+
 	Quat fromAxisAngle(Vec3 vec, float theta);
 	Quat inverse(Quat quat);
 	float norm(Quat quat);

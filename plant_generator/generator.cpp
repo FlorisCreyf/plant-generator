@@ -29,7 +29,7 @@ pg::Generator::Generator(pg::Plant *plant)
 	std::random_device rd;
 	randomGenerator.seed(rd());
 	this->plant = plant;
-	this->maxStemDepth = 2;
+	this->maxStemDepth = 1;
 }
 
 Vec3 pg::Generator::getStemDirection(Stem *stem)

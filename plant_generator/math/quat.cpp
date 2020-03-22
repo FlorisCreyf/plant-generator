@@ -46,14 +46,6 @@ float pg::norm(Quat quat)
 		quat.w*quat.w);
 }
 
-Quat pg::conjugate(Quat quat)
-{
-	quat.x = -quat.x;
-	quat.y = -quat.y;
-	quat.z = -quat.z;
-	return quat;
-}
-
 Quat pg::inverse(Quat quat)
 {
 	float n = norm(quat);
