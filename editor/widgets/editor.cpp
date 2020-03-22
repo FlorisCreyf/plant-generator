@@ -231,17 +231,18 @@ void Editor::keyPressEvent(QKeyEvent *event)
 			&selection, &rotationAxes, &camera, x, y);
 		currentCommand = rotate;
 		rotating = true;
-	} else if (command == tr("Select All")) {
-		SaveSelection *copy = new SaveSelection(&selection);
-		selection.selectAll();
-		addSelectionToHistory(copy);
-	} else if (command == tr("Select All Points")) {
+	} else if (command == tr("Select Points")) {
 		SaveSelection *copy = new SaveSelection(&selection);
 		selection.selectAllPoints();
 		addSelectionToHistory(copy);
 	} else if (command == tr("Select Children")) {
 		SaveSelection *copy = new SaveSelection(&selection);
 		selection.selectChildren();
+		addSelectionToHistory(copy);
+	} else if (command == tr("Select Leaves")) {
+		SaveSelection *copy = new SaveSelection(&selection);
+		selection.selectLeaves();
+		selection.removeStems();
 		addSelectionToHistory(copy);
 	} else if (command == tr("Select Previous Points")) {
 		SaveSelection *copy = new SaveSelection(&selection);
@@ -254,6 +255,10 @@ void Editor::keyPressEvent(QKeyEvent *event)
 	} else if (command == tr("Select Siblings")) {
 		SaveSelection *copy = new SaveSelection(&selection);
 		selection.selectSiblings();
+		addSelectionToHistory(copy);
+	} else if (command == tr("Select Stems")) {
+		SaveSelection *copy = new SaveSelection(&selection);
+		selection.selectStems();
 		addSelectionToHistory(copy);
 	}
 

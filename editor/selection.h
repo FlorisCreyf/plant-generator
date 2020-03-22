@@ -38,7 +38,7 @@ class Selection {
 	void selectStem(QMouseEvent *);
 	std::pair<float, pg::Stem *> getStem(pg::Ray &, pg::Stem *);
 	std::pair<float, pg::Segment> getLeaf(pg::Ray);
-	void selectAll(pg::Stem *);
+	void selectStems(pg::Stem *);
 	void getTotalLeafPosition(pg::Vec3 &, int &) const;
 
 public:
@@ -47,6 +47,7 @@ public:
 	bool operator!=(const Selection &obj) const;
 
 	void removeStem(pg::Stem *stem);
+	void removeStems();
 	void addStem(pg::Stem *stem);
 	void addLeaf(pg::Stem *stem, long leaf);
 	void removeLeaves();
@@ -61,6 +62,8 @@ public:
 	void selectSiblings();
 	void selectChildren();
 	void selectAll();
+	void selectStems();
+	void selectLeaves();
 	void reduceToAncestors();
 
 	bool hasStems() const;

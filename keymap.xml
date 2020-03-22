@@ -32,16 +32,20 @@
 		<key>CTRL+T</key>
 	</command>
 	<command>
-		<name>Select All</name>
+		<name>Select Stems</name>
 		<key>A</key>
 	</command>
 	<command>
-		<name>Select All Points</name>
+		<name>Select Points</name>
 		<key>CTRL+A</key>
 	</command>
 	<command>
 		<name>Select Children</name>
 		<key>C</key>
+	</command>
+	<command>
+		<name>Select Leaves</name>
+		<key>SHIFT+A</key>
 	</command>
 	<command>
 		<name>Select Previous Points</name>

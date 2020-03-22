@@ -50,6 +50,11 @@ void Selection::removeStem(Stem *stem)
 	this->stems.erase(stem);
 }
 
+void Selection::removeStems()
+{
+	this->stems.clear();
+}
+
 void Selection::removeLeaves()
 {
 	this->leaves.clear();
@@ -296,27 +301,36 @@ void Selection::reduceToAncestors()
 	this->stems = newSelection;
 }
 
-void Selection::selectAll(Stem *stem)
+void Selection::selectStems(Stem *stem)
 {
 	if (stem) {
 		Stem *child = stem->getChild();
 		while (child) {
 			this->stems.emplace(
 				child, PointSelection(this->camera));
-			selectAll(child);
+			selectStems(child);
 			child = child->getSibling();
 		}
 	}
 }
 
-void Selection::selectAll()
+void Selection::selectStems()
 {
 	if (this->stems.empty()) {
 		Stem *stem = this->plant->getRoot();
 		this->stems.emplace(stem, PointSelection(this->camera));
-		selectAll(stem);
+		selectStems(stem);
 	} else
 		this->stems.clear();
+}
+
+void Selection::selectLeaves()
+{
+	for (auto &instance : this->stems) {
+		Stem *stem = instance.first;
+		for (auto &leaf : stem->getLeaves())
+			addLeaf(stem, leaf.first);
+	}
 }
 
 bool Selection::hasStems() const

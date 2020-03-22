@@ -18,6 +18,9 @@
 #include "add_stem.h"
 #include "plant_generator/patterns.h"
 
+using pg::Stem;
+using pg::Plant;
+
 AddStem::AddStem(
 	Selection *selection, TranslationAxes *axes, const Camera *camera,
 	int x, int y) :
@@ -39,9 +42,15 @@ void AddStem::create()
 {
 	auto instances = selection->getStemInstances();
 	if (instances.size() == 1) {
-		pg::Stem *parent = (*instances.begin()).first;
-		pg::Plant *plant = selection->getPlant();
+		Stem *parent = (*instances.begin()).first;
+		Plant *plant = selection->getPlant();
 		stem = plant->addStem(parent);
+
+		stem->setResolution(parent->getResolution());
+		stem->setMaterial(
+			Stem::Outer, parent->getMaterial(Stem::Outer));
+		stem->setMaterial(
+			Stem::Inner, parent->getMaterial(Stem::Inner));
 
 		pg::Path parentPath = parent->getPath();
 		pg::Path path = stem->getPath();
@@ -53,8 +62,12 @@ void AddStem::create()
 		spline.setControls(controls);
 		spline.setDegree(1);
 		path.setSpline(spline);
+		path.setResolution(parentPath.getResolution());
 		path.setMaxRadius(parentPath.getMaxRadius() / 4.0f);
-		path.setMinRadius(parentPath.getMinRadius());
+		if (parentPath.getMinRadius() > path.getMaxRadius())
+			path.setMinRadius(path.getMaxRadius());
+		else
+			path.setMinRadius(parentPath.getMinRadius());
 		path.setRadius(pg::getDefaultCurve(0));
 		stem->setPath(path);
 		stem->setPosition(0.0f);
