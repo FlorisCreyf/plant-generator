@@ -121,9 +121,11 @@ void Mesh::addSection(
 	float angle = 0.0f;
 
 	Vec3 location = stem->getLocation() + stem->getPath().get(section);
-
 	Vertex vertex;
-	vertex.uv = {1.0f, -length/(radius * 2.0f * (float)M_PI) + *uvOffset};
+
+	Material m = this->plant->getMaterial(stem->getMaterial(Stem::Outer));
+	float v = -(length*m.getRatio())/(radius*2.0f*(float)M_PI)+(*uvOffset);
+	vertex.uv = {1.0f, v};
 	*uvOffset = vertex.uv.y;
 
 	for (int i = 0; i <= stem->getResolution(); i++) {

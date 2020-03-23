@@ -57,6 +57,17 @@ Mat4 pg::translate(const Vec3 &vec)
 	return result;
 }
 
+Mat4 pg::scale(const Vec3 &vec)
+{
+	Mat4 result = {
+		vec.x, 0.0f, 0.0f, 0.0f,
+		0.0f, vec.y, 0.0f, 0.0f,
+		0.0f, 0.0f, vec.z, 0.0f,
+		0.0f, 0.0f, 0.0f, 1.0f
+	};
+	return result;
+}
+
 Mat4 pg::transpose(const Mat4 &mat)
 {
 	Mat4 result;

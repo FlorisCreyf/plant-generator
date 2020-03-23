@@ -91,7 +91,13 @@ void MaterialViewer::paintGL()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	camera.updateVP();
-	Mat4 vp = camera.getVP();
+	float aspect = params.getMaterial().getRatio();
+	Mat4 scale;
+	if (aspect < 1.0f)
+		scale = pg::scale({1.0f, 1.0f/aspect, 1.0f});
+	else
+		scale = pg::scale({aspect, 1.0f, 1.0f});
+	Mat4 vp = scale * camera.getVP();
 	buffer.use();
 	glUseProgram(shared->getShader(Shader::Material));
 	glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);

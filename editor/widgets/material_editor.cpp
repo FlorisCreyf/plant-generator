@@ -125,6 +125,7 @@ const MaterialViewer *MaterialEditor::getViewer() const
 	return this->materialViewer;
 }
 
+/** Add an existing material to the material list. */
 void MaterialEditor::addMaterial(pg::Material material)
 {
 	ShaderParams params(material);
@@ -143,6 +144,7 @@ void MaterialEditor::addMaterial(pg::Material material)
 	emit materialChanged(params);
 }
 
+/** Add an empty material with a unique name to the material list. */
 void MaterialEditor::addMaterial()
 {
 	ShaderParams params;

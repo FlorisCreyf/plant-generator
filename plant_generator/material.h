@@ -28,7 +28,7 @@ namespace pg {
 		long id;
 		std::string name;
 		std::string texture;
-		float ratio;
+		float ratio = 1.0f;
 
 		#ifdef PG_SERIALIZE
 		friend class boost::serialization::access;
