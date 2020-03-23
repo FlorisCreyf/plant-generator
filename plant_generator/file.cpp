@@ -17,13 +17,87 @@
 #include <cstdio>
 #include <fstream>
 #include <sstream>
-#include <string>
 #include <map>
 
 using pg::Vertex;
 using pg::Vec2;
 using pg::Vec3;
 using std::vector;
+using std::string;
+
+string pg::File::exportMtl(string filename, const Plant &plant)
+{
+	string name = filename.substr(0, filename.find_first_of("."));
+	filename = name + ".mtl";
+	FILE *f = fopen(filename.c_str(), "w");
+
+	fprintf(f, "newmtl default\n");
+
+	for (auto instance : plant.getMaterials()) {
+		Material material = instance.second;
+		fprintf(f, "newmtl %s\n", material.getName().c_str());
+		string diffuse = material.getTexture();
+		if (!diffuse.empty())
+			fprintf(f, "map_Kd %s\n", diffuse.c_str());
+	}
+
+	fclose(f);
+	return filename;
+}
+
+void pg::File::exportObj(
+	std::string filename, const Mesh &mesh, const Plant &plant)
+{
+	FILE *f = fopen(filename.c_str(), "w");
+	if (f == nullptr)
+		return;
+
+	fprintf(f, "mtllib %s\n", exportMtl(filename, plant).c_str());
+
+	unsigned indexStart = 1;
+	int numMeshes = mesh.getMeshCount();
+	for (int m = 0; m < numMeshes; m++) {
+		const vector<Vertex> *vertices = mesh.getVertices(m);
+		const vector<unsigned> *indices = mesh.getIndices(m);
+
+		long materialID = mesh.getMaterialID(m);
+		if (materialID > 0) {
+			Material material = plant.getMaterial(materialID);
+			fprintf(f, "usemtl %s\n", material.getName().c_str());
+		} else
+			fprintf(f, "usemtl default\n");
+
+		for (size_t i = 0; i < vertices->size(); i++) {
+			Vec3 p = (*vertices)[i].position;
+			fprintf(f, "v %f %f %f\n", p.x, p.y, p.z);
+		}
+
+		for (size_t i = 0; i < vertices->size(); i++) {
+			Vec2 uv = (*vertices)[i].uv;
+			fprintf(f, "vt %f %f\n", uv.x, uv.y);
+		}
+
+		for (size_t i = 0; i < vertices->size(); i++) {
+			Vec3 n = (*vertices)[i].normal;
+			fprintf(f, "vn %f %f %f\n", n.x, n.y, n.z);
+		}
+
+		for (size_t i = 0; i < indices->size(); i += 3)
+			fprintf(f, "f %u/%u/%u %u/%u/%u %u/%u/%u\n",
+				(*indices)[i]+1,
+				(*indices)[i]+1,
+				(*indices)[i]+1,
+				(*indices)[i+1]+1,
+				(*indices)[i+1]+1,
+				(*indices)[i+1]+1,
+				(*indices)[i+2]+1,
+				(*indices)[i+2]+1,
+				(*indices)[i+2]+1);
+
+		indexStart += vertices->size();
+	}
+	fclose(f);
+}
 
 void insertVertexInfo(std::ifstream &file,
 	vector<Vec3> &vs, vector<Vec3> &vns, vector<Vec2> &vts)
@@ -50,38 +124,6 @@ void insertVertexInfo(std::ifstream &file,
 	}
 	file.clear();
 	file.seekg(0, std::ios::beg);
-}
-
-void pg::File::exportObj(const char *filename,
-	const std::vector<Vertex> &vertices,
-	const std::vector<unsigned> &indices)
-{
-	FILE *f = fopen(filename, "w");
-	if (f == nullptr)
-		return;
-
-	for (size_t i = 0; i < vertices.size(); i++) {
-		Vec3 position = vertices[i].position;
-		fprintf(f, "v %f %f %f\n", position.x, position.y, position.z);
-	}
-
-	for (size_t i = 0; i < vertices.size(); i++) {
-		Vec2 uv = vertices[i].uv;
-		fprintf(f, "vt %f %f\n", uv.x, uv.y);
-	}
-
-	for (size_t i = 0; i < vertices.size(); i++) {
-		Vec3 normal = vertices[i].normal;
-		fprintf(f, "vn %f %f %f\n", normal.x, normal.y, normal.z);
-	}
-
-	for (size_t i = 0; i < indices.size(); i += 3)
-		fprintf(f, "f %d/%d/%d %d/%d/%d %d/%d/%d\n",
-			indices[i]+1, indices[i]+1, indices[i]+1,
-			indices[i+1]+1, indices[i+1]+1, indices[i+1]+1,
-			indices[i+2]+1, indices[i+2]+1, indices[i+2]+1);
-
-	fclose(f);
 }
 
 void pg::File::importObj(const char *filename, pg::Geometry *geom)

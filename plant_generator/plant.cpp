@@ -115,12 +115,12 @@ void Plant::removeMaterial(Stem *stem, long id)
 	}
 }
 
-Material Plant::getMaterial(long id)
+Material Plant::getMaterial(long id) const
 {
-	return materials[id];
+	return materials.at(id);
 }
 
-std::map<long, Material> Plant::getMaterials()
+std::map<long, Material> Plant::getMaterials() const
 {
 	return materials;
 }

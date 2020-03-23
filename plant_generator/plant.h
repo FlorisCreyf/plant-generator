@@ -64,8 +64,8 @@ namespace pg {
 
 		void addMaterial(Material material);
 		void removeMaterial(long id);
-		Material getMaterial(long id);
-		std::map<long, Material> getMaterials();
+		Material getMaterial(long id) const;
+		std::map<long, Material> getMaterials() const;
 
 		void addLeafMesh(Geometry mesh);
 		void removeLeafMesh(long id);

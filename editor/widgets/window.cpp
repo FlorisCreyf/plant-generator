@@ -273,6 +273,7 @@ void Window::saveDialogBox()
 void Window::exportDialogBox()
 {
 	const pg::Mesh *mesh = this->editor->getMesh();
+	const pg::Plant *plant = this->editor->getPlant();
 
 	QString filename = QFileDialog::getSaveFileName(
 		this, tr("Export File"), "saved/plant.obj",
@@ -281,7 +282,7 @@ void Window::exportDialogBox()
 	if (!filename.isEmpty()) {
 		pg::File f;
 		QByteArray b = filename.toLatin1();
-		f.exportObj(b.data(), mesh->getVertices(), mesh->getIndices());
+		f.exportObj(b.data(), *mesh, *plant);
 	}
 }
 

@@ -62,12 +62,10 @@ int main(int argc, char **argv)
 	mesh.generate();
 
 	pg::File file;
-	std::vector<unsigned> indices = mesh.getIndices();
-	std::vector<pg::Vertex> vertices = mesh.getVertices();
 	if (argc == 2)
-		file.exportObj(argv[1], vertices, indices);
+		file.exportObj(argv[1], mesh, plant);
 	else
-		file.exportObj(filename.c_str(), vertices, indices);
+		file.exportObj(filename.c_str(), mesh, plant);
 
 	return 0;
 }

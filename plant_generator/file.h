@@ -16,16 +16,21 @@
 #ifndef PG_FILE_H
 #define PG_FILE_H
 
+#include "plant.h"
 #include "geometry.h"
+#include "mesh.h"
 #include <cstddef>
 #include <vector>
+#include <string>
 
 namespace pg {
 	class File {
+		std::string exportMtl(std::string, const Plant &);
+
 	public:
-		void exportObj(const char *filename,
-			const std::vector<pg::Vertex> &vertices,
-			const std::vector<unsigned> &indices);
+		void exportObj(
+			std::string filename, const Mesh &mesh,
+			const Plant &plant);
 		void importObj(const char *filename, pg::Geometry *geom);
 	};
 }
