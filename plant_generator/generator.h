@@ -24,21 +24,21 @@ namespace pg {
 		Plant *plant;
 		std::mt19937 randomGenerator;
 		int maxStemDepth;
+		bool hasLeaves;
 
-		Vec3 getStemDirection(Stem *stem);
-		void getDichotomousDirections(Stem *parent, Vec3 directions[2]);
-		void setPath(Stem *stem, Vec3 direction);
-		float getRadius(Stem *stem);
-		void addLateralStems(Stem *parent, float position);
-		void addDichotomousStems(Stem *stem);
+		Vec3 getStemDirection(Stem *);
+		void getDichotomousDirections(Stem *, Vec3 [2]);
+		void setPath(Stem *, Stem *, Vec3, float);
+		void addLateralStems(Stem *, float);
+		void addDichotomousStems(Stem *);
 
 	public:
 		Generator(Plant *plant);
 		void growLateralStem(Stem *stem, float position);
 		void grow();
-
 		void setMaxDepth(int depth);
 		int getMaxDepth();
+		void disableLeaves(bool disable);
 	};
 }
 

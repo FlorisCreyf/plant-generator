@@ -87,6 +87,7 @@ namespace pg {
 		void setRadius(Spline spline);
 		Spline getRadius();
 		float getRadius(int index);
+		float getIntermediateRadius(float t);
 	};
 }
 

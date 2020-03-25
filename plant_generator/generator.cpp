@@ -30,6 +30,15 @@ pg::Generator::Generator(pg::Plant *plant)
 	randomGenerator.seed(rd());
 	this->plant = plant;
 	this->maxStemDepth = 1;
+	this->hasLeaves = true;
+}
+
+void pg::Generator::grow()
+{
+	Stem *root = plant->createRoot();
+	root->setPosition(0.0f);
+	setPath(root, nullptr, {0.0f, 1.0f, 0.0f}, 0.0f);
+	addLateralStems(root, 1.5f);
 }
 
 Vec3 pg::Generator::getStemDirection(Stem *stem)
@@ -63,54 +72,6 @@ void pg::Generator::getDichotomousDirections(Stem *parent, Vec3 directions[2])
 	directions[1] = pg::rotateAroundAxis(normal, b, -angleX);
 }
 
-float pg::Generator::getRadius(Stem *stem)
-{
-	Stem *parent = stem->getParent();
-	float radius;
-	if (parent) {
-		radius = stem->getParent()->getPath().getMaxRadius();
-		radius *= 0.5f * std::pow(2.0f, -stem->getPosition()/4.0f);
-	} else
-		radius = 0.2f;
-	return radius;
-}
-
-void pg::Generator::setPath(Stem *stem, Vec3 direction)
-{
-	std::vector<Vec3> controls;
-	Vec3 variance = {0.02f, -0.05f, 0.01f};
-	float radius = getRadius(stem);
-	float length = 10.0f * radius;
-	int divisions = stem->getDepth() == 0 ? 2 : 1;
-	int points = stem->getParent() ? 3 : 5;
-
-	Path path;
-	path.setMaxRadius(radius);
-	path.setRadius(getDefaultCurve(0));
-	path.setResolution(divisions);
-
-	Vec3 control = {0.0f, 0.0f, 0.0f};
-	controls.push_back(control);
-	control = control + length * 0.5f * direction;
-	controls.push_back(control);
-
-	for (int i = 0; i < points; i++) {
-		control = control + length * direction;
-		direction = normalize(direction + variance);
-		controls.push_back(control);
-	}
-
-	/* Thinner stems are more flexible and should bend more towards the
-	light source. */
-	controls.back().y += 0.1f;
-
-	Spline spline;
-	spline.setDegree(1);
-	spline.setControls(controls);
-	path.setSpline(spline);
-	stem->setPath(path);
-}
-
 void pg::Generator::addLateralStems(Stem *parent, float position)
 {
 	float length = parent->getPath().getLength();
@@ -128,27 +89,81 @@ void pg::Generator::growLateralStem(Stem *stem, float position)
 {
 	Stem *parent = stem->getParent();
 	stem->setPosition(position);
-	if (parent->getResolution() - 4 < 5)
-		stem->setResolution(5);
-	else
-		stem->setResolution(parent->getResolution() - 4);
-	setPath(stem, getStemDirection(stem));
 
-	Leaf leaf;
-	leaf.setPosition(1.5f);
-	leaf.setScale({2.0f, 2.0f, 2.0f});
-	stem->addLeaf(leaf);
+	if (parent->getResolution() - 4 < 3)
+		stem->setResolution(3);
+	else
+		stem->setResolution(parent->getResolution() - 2);
+
+	setPath(stem, parent, getStemDirection(stem), position);
+
+	if (this->hasLeaves) {
+		Leaf leaf;
+		leaf.setPosition(1.5f);
+		leaf.setScale({2.0f, 2.0f, 2.0f});
+		stem->addLeaf(leaf);
+	}
 
 	if (stem->getDepth() < this->maxStemDepth)
 		addLateralStems(stem, 0.5f);
 }
 
-void pg::Generator::grow()
+void pg::Generator::setPath(
+	Stem *stem, Stem *parent, Vec3 direction, float position)
 {
-	Stem *root = plant->createRoot();
-	root->setPosition(0.0f);
-	setPath(root, {0.0f, 1.0f, 0.0f});
-	addLateralStems(root, 1.5f);
+	std::vector<Vec3> controls;
+	Vec3 variance = {0.02f, -0.05f, 0.01f};
+
+	if (stem->getResolution() == 3)
+		stem->setSwelling({1.0f, 1.0f});
+
+	float radius;
+	float minRadius;
+	if (parent) {
+		float margin = 1.0f / stem->getResolution();
+		radius = parent->getPath().getIntermediateRadius(position);
+		radius /= stem->getSwelling().x + margin;
+		minRadius = radius / 5.0f;
+		if (minRadius < 0.001f)
+			minRadius = 0.001f;
+		else if (minRadius > 0.01f)
+			minRadius = 0.01f;
+	} else {
+		radius = 0.2f;
+		minRadius = 0.01f;
+	}
+
+	float length = radius * 10.0f;
+	int divisions = stem->getDepth() == 0 ? 2 : 1;
+	int points = stem->getParent() ? 4 : 5;
+
+	Path path;
+	path.setMinRadius(minRadius);
+	path.setMaxRadius(radius);
+	path.setRadius(getDefaultCurve(0));
+	path.setResolution(divisions);
+
+	Vec3 control = {0.0f, 0.0f, 0.0f};
+	controls.push_back(control);
+	control = control + length * 0.5f * direction;
+	controls.push_back(control);
+
+	for (int i = 0; i < points; i++) {
+		control = control + length * direction;
+		direction = normalize(direction + variance);
+		controls.push_back(control);
+	}
+
+	Spline spline;
+	spline.setDegree(1);
+	spline.setControls(controls);
+	path.setSpline(spline);
+	stem->setPath(path);
+}
+
+void pg::Generator::disableLeaves(bool disable)
+{
+	this->hasLeaves = !disable;
 }
 
 void pg::Generator::setMaxDepth(int depth)

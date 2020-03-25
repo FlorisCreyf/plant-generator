@@ -33,6 +33,7 @@ class AddStem : public Command {
 	bool undone;
 
 	void create();
+	void setRadius();
 
 public:
 	AddStem(Selection *selection, TranslationAxes *axes,

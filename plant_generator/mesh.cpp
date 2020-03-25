@@ -74,10 +74,12 @@ void Mesh::addSections(Stem *stem, int mesh, Segment segment)
 	Quat prevRotation = {0.0f, 0.0f, 0.0f, 1.0f};
 	size_t sections = stem->getPath().getSize();
 	size_t prevIndex = vertices[mesh].size();
+	bool hasCollar = stem->getParent() &&
+		stem->getSwelling().x > 1.0f && stem->getSwelling().y > 1.0f;
 
 	for (size_t section = 0; section < sections; section++) {
 		size_t collarStart = this->vertices[mesh].size();
-		if (section == 1 && stem->getParent()) {
+		if (section == 1 && hasCollar) {
 			uvOffset = 0.0f;
 			reserveBranchCollarSpace(stem, mesh);
 			prevIndex = this->vertices[mesh].size();
@@ -94,7 +96,7 @@ void Mesh::addSections(Stem *stem, int mesh, Segment segment)
 		prevDirection = direction;
 		addSection(stem, section, rotation, &uvOffset, mesh);
 
-		if (section == 1 && stem->getParent()) {
+		if (section == 1 && hasCollar) {
 			Segment parentSegment = findStem(stem->getParent());
 			createBranchCollar(segment, parentSegment, collarStart);
 		}
@@ -197,8 +199,8 @@ Mat4 Mesh::getBranchCollarScale(Stem *child, Stem *parent)
 	axes.vectors[2] = toVec4(zaxis, 0.0f);
 
 	Mat4 scale = identity();
-	scale[2][2] = 1.5f;
-	scale[1][1] = 3.0f;
+	scale[2][2] = child->getSwelling().x;
+	scale[1][1] = child->getSwelling().y;
 
 	return axes * scale * transpose(axes);
 }

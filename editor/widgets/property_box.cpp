@@ -105,7 +105,7 @@ void PropertyBox::createStemBox(QVBoxLayout *layout)
 
 	this->resolutionL = new QLabel(tr("Resolution"));
 	this->resolutionV = new QSpinBox;
-	this->resolutionV->setMinimum(5);
+	this->resolutionV->setMinimum(3);
 	form->addRow(this->resolutionL, this->resolutionV);
 
 	this->degreeL = new QLabel(tr("Degree"));

@@ -35,7 +35,7 @@ AddStem::AddStem(
 AddStem::~AddStem()
 {
 	if (!this->undone)
-		delete stem;
+		delete this->stem;
 }
 
 void AddStem::create()
@@ -44,16 +44,16 @@ void AddStem::create()
 	if (instances.size() == 1) {
 		Stem *parent = (*instances.begin()).first;
 		Plant *plant = selection->getPlant();
-		stem = plant->addStem(parent);
+		this->stem = plant->addStem(parent);
 
-		stem->setResolution(parent->getResolution());
-		stem->setMaterial(
+		this->stem->setResolution(parent->getResolution());
+		this->stem->setMaterial(
 			Stem::Outer, parent->getMaterial(Stem::Outer));
-		stem->setMaterial(
+		this->stem->setMaterial(
 			Stem::Inner, parent->getMaterial(Stem::Inner));
 
 		pg::Path parentPath = parent->getPath();
-		pg::Path path = stem->getPath();
+		pg::Path path = this->stem->getPath();
 		pg::Spline spline = path.getSpline();
 		std::vector<pg::Vec3> controls;
 		controls.push_back(pg::getZeroVec3());
@@ -63,19 +63,30 @@ void AddStem::create()
 		spline.setDegree(1);
 		path.setSpline(spline);
 		path.setResolution(parentPath.getResolution());
-		path.setMaxRadius(parentPath.getMaxRadius() / 4.0f);
-		if (parentPath.getMinRadius() > path.getMaxRadius())
-			path.setMinRadius(path.getMaxRadius());
-		else
-			path.setMinRadius(parentPath.getMinRadius());
 		path.setRadius(pg::getDefaultCurve(0));
-		stem->setPath(path);
-		stem->setPosition(0.0f);
+		this->stem->setPath(path);
+		this->stem->setPosition(0.0f);
 
 		selection->clear();
-		selection->addStem(stem);
+		selection->addStem(this->stem);
 		selection->selectLastPoints();
 	}
+}
+
+void AddStem::setRadius()
+{
+	pg::Stem *parent = this->stem->getParent();
+	pg::Path path = this->stem->getPath();
+	pg::Path parentPath = parent->getPath();
+	float t = this->stem->getPosition();
+	float radius = parentPath.getIntermediateRadius(t);
+	radius /= stem->getSwelling().x + 0.1;
+	path.setMaxRadius(radius);
+	if (parentPath.getMinRadius() > radius)
+		path.setMinRadius(radius);
+	else
+		path.setMinRadius(parentPath.getMinRadius());
+	this->stem->setPath(path);
 }
 
 bool AddStem::onMouseMove(QMouseEvent *event)
@@ -88,9 +99,10 @@ bool AddStem::onMouseMove(QMouseEvent *event)
 
 bool AddStem::onMousePress(QMouseEvent *event)
 {
-	if (!this->moveStem.isDone())
+	if (!this->moveStem.isDone()) {
+		setRadius();
 		return this->moveStem.onMousePress(event);
-	if (this->moveStem.isDone()) {
+	} if (this->moveStem.isDone()) {
 		bool update = this->movePath.onMouseRelease(event);
 		this->done = this->movePath.isDone();
 		return update;

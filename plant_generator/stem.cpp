@@ -24,6 +24,7 @@ long Stem::counter = 1;
 Stem::Stem(Stem *parent)
 {
 	id = counter++;
+	this->swelling = {1.5, 3.0f};
 	this->nextSibling = nullptr;
 	this->prevSibling = nullptr;
 	this->child = nullptr;
@@ -229,4 +230,14 @@ bool Stem::isDescendantOf(Stem *stem) const
 int Stem::getDepth() const
 {
 	return depth;
+}
+
+void Stem::setSwelling(pg::Vec2 scale)
+{
+	this->swelling = scale;
+}
+
+pg::Vec2 Stem::getSwelling() const
+{
+	return this->swelling;
 }

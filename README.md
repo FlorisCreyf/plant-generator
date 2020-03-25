@@ -35,7 +35,6 @@ make all
 - Branch forking
 - Asymmetrical cross sections
 - Enforce a maximum radius for stems
-- Preserve aspect ratios of textures
 - Roots
 - Light detection
 - Outward stem growth

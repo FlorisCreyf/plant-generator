@@ -1,4 +1,4 @@
-CPPFLAGS += --pedantic -W
+CPPFLAGS += --pedantic -W -g
 BUILDDIR := build
 LIBS = /usr/lib/x86_64-linux-gnu/libboost_program_options.a
 OBJECTS := $(addprefix $(BUILDDIR)/, \

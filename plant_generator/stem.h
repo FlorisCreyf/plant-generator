@@ -45,6 +45,7 @@ namespace pg {
 		Path path;
 		int resolution = 10;
 		long material[2] = {0};
+		Vec2 swelling;
 
 		void updatePositions(Stem *stem);
 		void copy(const Stem &stem);
@@ -68,6 +69,12 @@ namespace pg {
 			ar & position;
 			ar & location;
 			ar & material;
+			try {
+				/* This might be changed so that the scaling
+				is dependent on the angle between the parent
+				and child stem. */
+				ar & swelling;
+			} catch (std::exception) {}
 		}
 		#endif
 
@@ -94,6 +101,8 @@ namespace pg {
 		int getResolution() const;
 		void setPath(Path &path);
 		Path getPath();
+		void setSwelling(Vec2 scale);
+		Vec2 getSwelling() const;
 		void setPosition(float position);
 		float getPosition() const;
 		Vec3 getLocation() const;

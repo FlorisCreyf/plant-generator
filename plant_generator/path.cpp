@@ -29,8 +29,7 @@ bool Path::operator==(const Path &path) const
 		this->subdivisions == path.subdivisions &&
 		this->radius == path.radius &&
 		this->minRadius == path.minRadius &&
-		this->maxRadius == path.maxRadius
-	);
+		this->maxRadius == path.maxRadius);
 }
 
 bool Path::operator!=(const Path &path) const
@@ -51,7 +50,7 @@ void Path::generate(bool linearStart)
 	if (linearStart)
 		this->path.push_back(this->spline.getPoint(curve++, 0.0f));
 
-	for (; curve < curves; curve++) {
+	while (curve < curves) {
 		float r = 1.0f / resolution;
 		float t = 0.0f;
 		for (int i = 0; i < resolution; i++) {
@@ -59,6 +58,7 @@ void Path::generate(bool linearStart)
 			Vec3 point = this->spline.getPoint(curve, t);
 			this->path.push_back(point);
 		}
+		curve++;
 	}
 
 	this->path.push_back(this->spline.getControls()[numControls-1]);
@@ -168,20 +168,20 @@ Vec3 Path::getAverageDirection(size_t index) const
 Vec3 Path::getIntermediateDirection(float t) const
 {
 	Vec3 direction;
-	float s = 0.0f;
+	float dist = 0.0f;
 
 	for (size_t i = 0; i < this->path.size() - 1; i++) {
-		s += magnitude(this->path[i+1] - this->path[i]);
-		if (s >= t) {
+		dist += magnitude(this->path[i+1] - this->path[i]);
+		if (dist >= t) {
 			direction = getDirection(i);
 			break;
 		}
 	}
 
-	if (s < t)
-		direction = getDirection(this->path.size() - 1);
-
-	return direction;
+	if (dist < t)
+		return getDirection(this->path.size() - 1);
+	else
+		return direction;
 }
 
 float Path::getDistance(int index) const
@@ -189,10 +189,8 @@ float Path::getDistance(int index) const
 	std::vector<Vec3> controls = this->spline.getControls();
 	int lastIndex = index / this->spline.getDegree() * this->resolution;
 	float distance = 0.0f;
-
 	for (int i = 0; i < lastIndex; i++)
 		distance += magnitude(this->path[i + 1] - this->path[i]);
-
 	return distance;
 }
 
@@ -241,5 +239,11 @@ float Path::getRadius(int index)
 		length += magnitude(this->path[i+1] - this->path[i]);
 	float t = length / getLength();
 	float z = this->radius.getPoint(t).z * this->maxRadius;
+	return z < this->minRadius ? this->minRadius : z;
+}
+
+float Path::getIntermediateRadius(float t)
+{
+	float z = this->radius.getPoint(t / getLength()).z * this->maxRadius;
 	return z < this->minRadius ? this->minRadius : z;
 }

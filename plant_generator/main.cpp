@@ -26,17 +26,18 @@ namespace po = boost::program_options;
 int main(int argc, char **argv)
 {
 	int depth = 2;
+	bool hasLeaves = true;
 	std::string filename = "plant.obj";
 
+	po::options_description desc("Options");
+	desc.add_options()
+		("help,h", "show help")
+		("out,o", po::value<std::string>(), "set the output file")
+		("depth,d", po::value<int>(), "set the depth of the plant")
+		("has-leaves,l", po::value<bool>(), "enable/disable leaves")
+	;
+
 	try {
-		po::options_description desc("Options");
-		desc.add_options()
-			("help,h", "show help")
-			("out,o", po::value<std::string>(),
-			"set the output file")
-			("depth,d", po::value<int>(),
-			"set the depth of the plant")
-		;
 		po::variables_map vm;
 		po::store(po::parse_command_line(argc, argv, desc), vm);
 		po::notify(vm);
@@ -47,6 +48,8 @@ int main(int argc, char **argv)
 		}
 		if (vm.count("depth"))
 			depth = vm["depth"].as<int>();
+		if (vm.count("has-leaves"))
+			hasLeaves = vm["has-leaves"].as<bool>();
 		if (vm.count("out"))
 			filename = vm["out"].as<std::string>();
 	} catch (std::exception &exc) {
@@ -57,6 +60,7 @@ int main(int argc, char **argv)
 	pg::Plant plant;
 	pg::Generator gen = pg::Generator(&plant);
 	gen.setMaxDepth(depth);
+	gen.disableLeaves(!hasLeaves);
 	gen.grow();
 	pg::Mesh mesh = pg::Mesh(&plant);
 	mesh.generate();
