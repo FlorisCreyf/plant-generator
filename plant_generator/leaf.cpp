@@ -15,7 +15,7 @@
 
 #include "leaf.h"
 
-using pg::Leaf;
+using namespace pg;
 
 long Leaf::counter = 1;
 
@@ -61,36 +61,42 @@ float Leaf::getPosition() const
 	return position;
 }
 
-void Leaf::setRotation(pg::Quat rotation)
+void Leaf::setRotation(Quat rotation)
 {
 	this->rotation = rotation;
 }
 
-pg::Quat Leaf::getRotation()
+Quat Leaf::getRotation() const
 {
 	return rotation;
 }
 
-pg::Quat Leaf::getDefaultOrientation(pg::Vec3 stemDirection)
+Quat Leaf::getDefaultOrientation(Vec3 stemDirection) const
 {
 	Vec3 normal = {0.0f, 1.0f, 0.0f};
-	Vec3 d = {0.0f, 0.0f, 1.0f};
-	Vec3 leafDirection = normalize(pg::cross(stemDirection, normal));
-	Quat q = pg::rotateIntoVecQ(d, leafDirection);
-	Vec3 up = {0.0f, -1.0f, 0.0f};
-	d = pg::cross(up, stemDirection);
-	d = pg::cross(d, stemDirection);
-	d = normalize(d);
-	Quat k = pg::rotateIntoVecQ(normal, d);
-	return k * q;
+	Vec3 planeDirection = {0.0f, 0.0f, 1.0f};
+	Vec3 leafDirection;
+	if (isZero(stemDirection - normal))
+		leafDirection = planeDirection;
+	else
+		leafDirection = normalize(cross(stemDirection, normal));
+	Quat q = rotateIntoVecQ(planeDirection, leafDirection);
+	return q;
 }
 
-void Leaf::setScale(pg::Vec3 scale)
+Vec3 Leaf::getDirection(pg::Vec3 stemDirection) const
+{
+	Vec3 normal = {0.0f, 0.0f, 1.0f};
+	Quat rotation = this->rotation * getDefaultOrientation(stemDirection);
+	return rotate(rotation, normal, 0.0f);
+}
+
+void Leaf::setScale(Vec3 scale)
 {
 	this->scale = scale;
 }
 
-pg::Vec3 Leaf::getScale() const
+Vec3 Leaf::getScale() const
 {
 	return scale;
 }

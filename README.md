@@ -30,11 +30,17 @@ git submodule update --init --recursive
 make all
 ```
 
+## Growth Model
+
+A plant is grown over a certain number of growth cycles, with the first cycle consisting of a seedling. A bounding box is generated at the beginning of each cycle and is used to construct a dome (the sky). Rays (light) originating on the dome intersect leaves to determine the efficiency of each stem in the plant. A stem is efficient if many intersections occur with its leaves and is grown by a random growth factor. Otherwise, if a stem receives no or little ray intersections, then the stem is shedded (known as Cladoptosis) by the plant. Remaining stems will grow in the average direction of the rays that intersected with its leaves.
+
+Each stem develops buds at the beginning of each iteration. Leaves form along the dormant nodes in the current iteration, and stems grow from the nodes in the following iteration. As stems grow older, a branch collar (swelling) forms at the base to secure the stem to the parent stem. Additionally, growth of lateral stems is suppressed by some factor depending on the distance to the apex of the parent stem. This suppression factor is intended to approximate the effects of Auxin hormones, which determine the apical dominance of the plant.
+
 ## TODO
 
 - Branch forking
 - Asymmetrical cross sections
-- Enforce a maximum radius for stems
+- Leaf angle distribution
 - Roots
 - Light detection
 - Outward stem growth

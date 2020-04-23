@@ -14,7 +14,7 @@ plant_generator/math/vec2.cpp \
 plant_generator/math/vec3.cpp \
 plant_generator/math/vec4.cpp \
 plant_generator/file.cpp \
-plant_generator/generator.cpp \
+plant_generator/pseudo_generator.cpp \
 plant_generator/geometry.cpp \
 plant_generator/leaf.cpp \
 plant_generator/material.cpp \
@@ -72,7 +72,7 @@ plant_generator/math/vec2.h \
 plant_generator/math/vec3.h \
 plant_generator/math/vec4.h \
 plant-generator/file.h \
-plant_generator/generator.h \
+plant_generator/pseudo_generator.h \
 plant_generator/geometry.h \
 plant_generator/leaf.h \
 plant_generator/material.h \

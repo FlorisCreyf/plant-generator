@@ -81,13 +81,13 @@ namespace pg {
 		float getIntermediateDistance(int index) const;
 
 		void setMaxRadius(float radius);
-		float getMaxRadius();
+		float getMaxRadius() const;
 		void setMinRadius(float radius);
-		float getMinRadius();
+		float getMinRadius() const;
 		void setRadius(Spline spline);
-		Spline getRadius();
-		float getRadius(int index);
-		float getIntermediateRadius(float t);
+		Spline getRadius() const;
+		float getRadius(int index) const;
+		float getIntermediateRadius(float t) const;
 	};
 }
 

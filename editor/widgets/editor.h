@@ -38,7 +38,7 @@
 #include "editor/graphics/shared_resources.h"
 #include "plant_generator/plant.h"
 #include "plant_generator/mesh.h"
-#include "plant_generator/generator.h"
+#include "plant_generator/pseudo_generator.h"
 #include <QtGui/QOpenGLFunctions>
 #include <QOpenGLWidget>
 #include <QToolBar>
@@ -109,7 +109,7 @@ private:
 	GLuint outlineFrameBuffer;
 	Shader shader;
 
-	pg::Generator generator;
+	pg::PseudoGenerator generator;
 	pg::Mesh mesh;
 	pg::Plant plant;
 	std::vector<pg::Segment> meshes;

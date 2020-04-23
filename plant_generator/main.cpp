@@ -25,16 +25,30 @@ namespace po = boost::program_options;
 
 int main(int argc, char **argv)
 {
-	int depth = 2;
-	bool hasLeaves = true;
+	int cycles = 1;
+	int nodes = 1;
+	int rays = 0;
+	int divisions = 0;
+	float pgr = 0.0f;
+	float sgr = 0.0f;
 	std::string filename = "plant.obj";
 
 	po::options_description desc("Options");
 	desc.add_options()
 		("help,h", "show help")
-		("out,o", po::value<std::string>(), "set the output file")
-		("depth,d", po::value<int>(), "set the depth of the plant")
-		("has-leaves,l", po::value<bool>(), "enable/disable leaves")
+		("out,o", po::value<std::string>(),
+		"set the name of the output file")
+		("nodes,n", po::value<int>(),
+		"set the maximum number of nodes per cycle")
+		("primary-growth-rate,p", po::value<float>(),
+		"set the average length of internodes")
+		("secondary-growth-rate,s", po::value<float>(),
+		"set the average increase in radius")
+		("rays,r", po::value<int>(),
+		"the maximum number of rays at any height")
+		("sky-divisions,d", po::value<int>(),
+		"the number of height increments of the sky")
+		("cycles,c", po::value<int>(), "set the number of cycles")
 	;
 
 	try {
@@ -46,10 +60,18 @@ int main(int argc, char **argv)
 			std::cout << desc << "\n";
 			return 0;
 		}
-		if (vm.count("depth"))
-			depth = vm["depth"].as<int>();
-		if (vm.count("has-leaves"))
-			hasLeaves = vm["has-leaves"].as<bool>();
+		if (vm.count("cycles"))
+			cycles = vm["cycles"].as<int>();
+		if (vm.count("nodes"))
+			nodes = vm["nodes"].as<int>();
+		if (vm.count("primary-growth-rate"))
+			pgr = vm["primary-growth-rate"].as<float>();
+		if (vm.count("secondary-growth-rate"))
+			sgr = vm["secondary-growth-rate"].as<float>();
+		if (vm.count("rays"))
+			rays = vm["rays"].as<int>();
+		if (vm.count("sky-divisions"))
+			divisions = vm["sky-divisions"].as<int>();
 		if (vm.count("out"))
 			filename = vm["out"].as<std::string>();
 	} catch (std::exception &exc) {
@@ -57,19 +79,20 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	pg::Plant plant;
-	pg::Generator gen = pg::Generator(&plant);
-	gen.setMaxDepth(depth);
-	gen.disableLeaves(!hasLeaves);
-	gen.grow();
-	pg::Mesh mesh = pg::Mesh(&plant);
+	pg::Generator gen;
+	gen.setPrimaryGrowthRate(pgr);
+	gen.setSecondaryGrowthRate(sgr);
+	gen.setRayDensity(rays, divisions);
+	gen.grow(cycles, nodes);
+
+	pg::Mesh mesh = pg::Mesh(gen.getPlant());
 	mesh.generate();
 
 	pg::File file;
 	if (argc == 2)
-		file.exportObj(argv[1], mesh, plant);
+		file.exportObj(argv[1], mesh, *gen.getPlant());
 	else
-		file.exportObj(filename.c_str(), mesh, plant);
+		file.exportObj(filename.c_str(), mesh, *gen.getPlant());
 
 	return 0;
 }

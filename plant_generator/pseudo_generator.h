@@ -13,32 +13,32 @@
  * limitations under the License.
  */
 
-#ifndef PG_PATTERNS_H
-#define PG_PATTERNS_H
+#ifndef PG_PSEUDO_GENERATOR_H
+#define PG_PSEUDO_GENERATOR_H
 
-#include "math.h"
-#include "spline.h"
-#include <vector>
+#include "plant.h"
+#include <random>
 
 namespace pg {
-	inline Spline getDefaultCurve(unsigned type)
-	{
-		Spline spline;
-		std::vector<Vec3> controls;
+	class PseudoGenerator {
+		Plant *plant;
+		std::mt19937 randomGenerator;
+		int maxStemDepth;
+		bool hasLeaves;
 
-		switch (type) {
-		case 0:
-			controls.push_back({0.0f, 0.3f, 1.0f});
-			controls.push_back({0.0f, 0.3f, 0.25f});
-			controls.push_back({1.0f, 0.3f, 0.5f});
-			controls.push_back({1.0f, 0.3f, 0.0f});
+		Vec3 getStemDirection(Stem *);
+		void getDichotomousDirections(Stem *, Vec3 [2]);
+		void setPath(Stem *, Stem *, Vec3, float);
+		void addLateralStems(Stem *, float);
 
-			spline.setControls(controls);
-			spline.setDegree(3);
-		}
-
-		return spline;
-	}
+	public:
+		PseudoGenerator(Plant *plant);
+		void growLateralStem(Stem *stem, float position);
+		void grow();
+		void setMaxDepth(int depth);
+		int getMaxDepth();
+		void disableLeaves(bool disable);
+	};
 }
 
-#endif /* PG_PATTERNS_H */
+#endif /* PG_PSEUDO_GENERATOR_H */

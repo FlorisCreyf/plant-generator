@@ -127,11 +127,37 @@ float pg::intersectsTriangle(Ray &ray, Vec3 p1, Vec3 p2, Vec3 p3)
 	return t;
 }
 
+/** The following equations are used to compute 't':
+... ray(t) = origin + t*direction
+... (ray(t) - rectangle_point) `dot` rectangle_normal = 0 */
 float pg::intersectsPlane(Ray &ray, Plane &plane)
 {
 	float a = dot(plane.normal, ray.direction);
 	if (a > 0.0f)
 		return dot(plane.point - ray.origin, plane.normal) / a;
+	else
+		return 0.0f;
+}
+
+/** Intersect a ray with a plane and determine if the intersected point is
+within two edges of the rectangle on that plane. */
+float pg::intersectsRectangle(Ray ray, Vec3 a, Vec3 b, Vec3 d)
+{
+	Plane plane;
+	plane.normal = normalize(cross(b-a, d-a));
+	plane.point = a;
+	float t = intersectsPlane(ray, plane);
+	if (t == 0.0f)
+		return 0.0f;
+
+	Vec3 m = ray.origin + t*ray.direction;
+	Vec3 ab = b - a;
+	Vec3 ad = d - a;
+	Vec3 am = m - a;
+	float k = dot(ab, am);
+	float l = dot(ad, am);
+	if (k > 0 && k < dot(ab, ab) && l > 0 && l < dot(ad, ad))
+		return t;
 	else
 		return 0.0f;
 }

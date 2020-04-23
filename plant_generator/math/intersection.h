@@ -31,11 +31,13 @@ namespace pg {
 		Vec3 direction;
 	};
 
+	/* Axis aligned bounding box (AABB) */
 	struct Aabb {
 		Vec3 a;
 		Vec3 b;
 	};
 
+	/* Oriented bounding box (OBB) */
 	struct Obb {
 		float h[3];
 		Vec3 n[3];
@@ -52,6 +54,7 @@ namespace pg {
 	float intersectsAABB(Ray &ray, Aabb &aabb);
 	float intersectsTriangle(Ray &ray, Vec3 p1, Vec3 p2, Vec3 p3);
 	float intersectsPlane(Ray &ray, Plane &plane);
+	float intersectsRectangle(Ray ray, Vec3 a, Vec3 b, Vec3 d);
 	float intersectsSphere(Ray &ray, Vec3 position, float radius);
 	float intersectsTaperedCylinder(
 		Ray ray, Vec3 start, Vec3 direction,

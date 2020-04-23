@@ -98,6 +98,13 @@ namespace pg {
 	{
 		return !(a == b);
 	}
+	
+	inline std::ostream &operator<<(std::ostream &stream, const Quat &q)
+	{
+		stream << "(" << q.x << ", " << q.y << ", " << q.z << ", ";
+		stream << q.w << ")";
+		return stream;
+	}
 
 	inline Quat conjugate(Quat quat)
 	{

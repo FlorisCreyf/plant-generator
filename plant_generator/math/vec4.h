@@ -17,6 +17,8 @@
 #define PG_VEC4_H
 
 #include "vec3.h"
+#include <iostream>
+#include <iomanip>
 
 #ifdef PG_SERIALIZE
 #include <boost/archive/text_oarchive.hpp>
@@ -86,6 +88,13 @@ namespace pg {
 		return !(a == b);
 	}
 
+	inline std::ostream &operator<<(std::ostream &stream, const Vec4 &v)
+	{
+		stream << "(" << v.x << ", " << v.y << ", " << v.z << ", ";
+		stream << v.w << ")";
+		return stream;
+	}
+        
 	float magnitude(Vec4 vec);
 	Vec4 normalize(Vec4 vec);
 }

@@ -61,7 +61,7 @@ namespace pg {
 		void setBranchCollarUVs(size_t, Stem *, int, int, int);
 
 		void addLeaves(Stem *);
-		void addLeaf(Leaf *leaf, Stem *stem);
+		void addLeaf(const Leaf *leaf, Stem *stem);
 
 		float getUVOffset();
 		void addTriangle(int, int, int, int);
@@ -86,6 +86,9 @@ namespace pg {
 		int getIndexCount() const;
 		int getMeshCount() const;
 		long getMaterialID(int mesh) const;
+
+		static Geometry transformLeaf(
+			const Leaf *, const Stem *, const Plant *);
 	};
 }
 

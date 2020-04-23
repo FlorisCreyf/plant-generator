@@ -70,7 +70,6 @@ void MeshEditor::initFields(QVBoxLayout *layout)
 	emptyButton = new QPushButton("Empty", this);
 	emptyButton->setFixedHeight(22);
 
-
 	QString style = tr("text-align:left;padding:0 5px;");
 	customButton->setStyleSheet(style);
 	planeButton->setStyleSheet(style);
@@ -221,8 +220,10 @@ void MeshEditor::selectMesh()
 {
 	pg::Plant *plant = editor->getPlant();
 	int id = meshBox->currentData().toInt();
-	pg::Geometry geom = plant->getLeafMesh(id);
-	emit meshChanged(geom);
+	if (id != 0) {
+		pg::Geometry geom = plant->getLeafMesh(id);
+		emit meshChanged(geom);
+	}
 }
 
 void MeshEditor::renameMesh(const QString &text)

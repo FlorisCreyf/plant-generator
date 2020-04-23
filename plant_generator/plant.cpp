@@ -69,6 +69,11 @@ Stem *Plant::getRoot()
 	return this->root;
 }
 
+const Stem *Plant::getRoot() const
+{
+	return this->root;
+}
+
 void Plant::insertStem(Stem *stem, Stem *parent)
 {
 	Stem *firstChild = parent->child;
@@ -140,12 +145,18 @@ void Plant::removeLeafMeshes()
 	leafMeshes.clear();
 }
 
-Geometry Plant::getLeafMesh(long id)
+Geometry Plant::getLeafMesh(long id) const
 {
-	return leafMeshes[id];
+	if (id != 0)
+		return leafMeshes.at(id);
+	else {
+		Geometry geom;
+		geom.setPerpendicularPlanes();
+		return geom;
+	}
 }
 
-std::map<long, Geometry> Plant::getLeafMeshes()
+std::map<long, Geometry> Plant::getLeafMeshes() const
 {
 	return leafMeshes;
 }

@@ -1,4 +1,4 @@
-/* Copyright 2017 Floris Creyf
+/* Copyright 2020 Floris Creyf
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,29 +17,51 @@
 #define PG_GENERATOR_H
 
 #include "plant.h"
-#include <random>
+#include "mesh.h"
+#include "math/intersection.h"
+#include <vector>
+#include <map>
 
 namespace pg {
 	class Generator {
-		Plant *plant;
-		std::mt19937 randomGenerator;
-		int maxStemDepth;
-		bool hasLeaves;
+		struct Light {
+			Vec3 direction;
+			int rays;
+		};
+		struct Intersection {
+			Stem *stem;
+			float t;
+		};
+		
+		std::map<Stem *, Light> growth;
+		float primaryGrowthRate;
+                float secondaryGrowthRate;
+		Plant plant;
+                long leafGeomID;
+		float minRadius;
+		int rayCount;
+		int rayLevels;
+		float width;
 
-		Vec3 getStemDirection(Stem *);
-		void getDichotomousDirections(Stem *, Vec3 [2]);
-		void setPath(Stem *, Stem *, Vec3, float);
-		void addLateralStems(Stem *, float);
-		void addDichotomousStems(Stem *);
+		Light propagateGrowth(Stem *stem);
+		void addStems(Stem *stem);
+		void addNodes();
+                void addNode(Stem *, Light);
+                void addLeaves(Stem *, float);
+                Leaf createLeaf();
+                
+		Intersection intersect(Stem *, Ray);
+		std::vector<Ray> getRays();
+		void updateBoundingBox(Vec3 point);
 
 	public:
-		Generator(Plant *plant);
-		void growLateralStem(Stem *stem, float position);
-		void grow();
-		void setMaxDepth(int depth);
-		int getMaxDepth();
-		void disableLeaves(bool disable);
+		Generator();
+		void grow(int cycles, int nodes);
+		void setPrimaryGrowthRate(float rate);
+		void setSecondaryGrowthRate(float rate);
+		void setRayDensity(int baseCount, int levels);
+		Plant *getPlant();
 	};
 }
 
-#endif /* PG_GENERATOR_H */
+#endif

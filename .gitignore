@@ -18,3 +18,4 @@ resources/
 build/
 nbproject/
 saved/
+plant_generator/test

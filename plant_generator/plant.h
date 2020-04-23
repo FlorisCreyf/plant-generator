@@ -59,6 +59,7 @@ namespace pg {
 		Stem *extractStem(Stem *);
 		/** Return the root or trunk of the plant. */
 		Stem *getRoot();
+		const Stem *getRoot() const;
 		/** Remove all stems in the plant. */
 		void removeRoot();
 
@@ -70,8 +71,8 @@ namespace pg {
 		void addLeafMesh(Geometry mesh);
 		void removeLeafMesh(long id);
 		void removeLeafMeshes();
-		Geometry getLeafMesh(long id);
-		std::map<long, Geometry> getLeafMeshes();
+		Geometry getLeafMesh(long id) const;
+		std::map<long, Geometry> getLeafMeshes() const;
 	};
 }
 

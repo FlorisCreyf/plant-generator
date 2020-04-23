@@ -110,7 +110,7 @@ int Stem::addLeaf(const Leaf &leaf)
 	return leaves.size() - 1;
 }
 
-int Stem::getLeafCount()
+int Stem::getLeafCount() const
 {
 	return leaves.size();
 }
@@ -120,7 +120,12 @@ pg::Leaf *Stem::getLeaf(long id)
 	return &leaves.at(id);
 }
 
-const std::map<long, pg::Leaf> &Stem::getLeaves()
+const pg::Leaf *Stem::getLeaf(long id) const
+{
+	return &leaves.at(id);
+}
+
+const std::map<long, pg::Leaf> &Stem::getLeaves() const
 {
 	return leaves;
 }
@@ -150,7 +155,7 @@ void Stem::setPath(pg::Path &path)
 	updatePositions(this);
 }
 
-pg::Path Stem::getPath()
+pg::Path Stem::getPath() const
 {
 	return path;
 }
@@ -204,12 +209,27 @@ Stem *Stem::getParent()
 	return parent;
 }
 
+const Stem *Stem::getParent() const
+{
+	return parent;
+}
+
 Stem *Stem::getSibling()
 {
 	return nextSibling;
 }
 
+const Stem *Stem::getSibling() const
+{
+	return nextSibling;
+}
+
 Stem *Stem::getChild()
+{
+	return child;
+}
+
+const Stem *Stem::getChild() const
 {
 	return child;
 }

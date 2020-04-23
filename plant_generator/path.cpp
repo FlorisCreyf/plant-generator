@@ -40,7 +40,7 @@ bool Path::operator!=(const Path &path) const
 void Path::generate(bool linearStart)
 {
 	size_t numControls = this->spline.getControls().size();
-	if (numControls == 0)
+	if (numControls <= 1)
 	 	return;
 
 	int curves = this->spline.getCurveCount();
@@ -207,7 +207,7 @@ void Path::setMaxRadius(float radius)
 	this->maxRadius = radius;
 }
 
-float Path::getMaxRadius()
+float Path::getMaxRadius() const
 {
 	return this->maxRadius;
 }
@@ -217,7 +217,7 @@ void Path::setMinRadius(float radius)
 	this->minRadius = radius;
 }
 
-float Path::getMinRadius()
+float Path::getMinRadius() const
 {
 	return this->minRadius;
 }
@@ -227,12 +227,12 @@ void Path::setRadius(Spline spline)
 	this->radius = spline;
 }
 
-Spline Path::getRadius()
+Spline Path::getRadius() const
 {
 	return this->radius;
 }
 
-float Path::getRadius(int index)
+float Path::getRadius(int index) const
 {
 	float length = 0.0f;
 	for (int i = 0; i < index; i++)
@@ -242,7 +242,7 @@ float Path::getRadius(int index)
 	return z < this->minRadius ? this->minRadius : z;
 }
 
-float Path::getIntermediateRadius(float t)
+float Path::getIntermediateRadius(float t) const
 {
 	float z = this->radius.getPoint(t / getLength()).z * this->maxRadius;
 	return z < this->minRadius ? this->minRadius : z;

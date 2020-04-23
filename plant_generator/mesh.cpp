@@ -21,10 +21,10 @@ using namespace pg;
 using std::map;
 using std::vector;
 
-Mesh::Mesh(pg::Plant *plant)
+Mesh::Mesh(Plant *plant)
 {
 	this->plant = plant;
-	this->defaultLeaf.setPerpendicularPlanes();
+	this->defaultLeaf.setPlane();
 }
 
 void Mesh::generate()
@@ -74,8 +74,10 @@ void Mesh::addSections(Stem *stem, int mesh, Segment segment)
 	Quat prevRotation = {0.0f, 0.0f, 0.0f, 1.0f};
 	size_t sections = stem->getPath().getSize();
 	size_t prevIndex = vertices[mesh].size();
-	bool hasCollar = stem->getParent() &&
-		stem->getSwelling().x > 1.0f && stem->getSwelling().y > 1.0f;
+	bool hasCollar = 
+		stem->getParent() &&
+		stem->getSwelling().x > 1.0f &&
+		stem->getSwelling().y > 1.0f;
 
 	for (size_t section = 0; section < sections; section++) {
 		size_t collarStart = this->vertices[mesh].size();
@@ -103,8 +105,8 @@ void Mesh::addSections(Stem *stem, int mesh, Segment segment)
 
 		if (section+1 < sections) {
 			size_t index = vertices[mesh].size();
-			addTriangleRing(
-				prevIndex, index, stem->getResolution(), mesh);
+			int resolution = stem->getResolution(); 
+			addTriangleRing(prevIndex, index, resolution, mesh);
 		}
 	}
 
@@ -324,7 +326,8 @@ void Mesh::setBranchCollarNormals(
 The UV coordinates for branch collars are generated backwards because splines
 are not guaranteed to be the same length. */
 void Mesh::setBranchCollarUVs(
-	size_t lastIndex, Stem *stem, int mesh, int resolution, int divisions)
+	size_t lastIndex, Stem *stem, int mesh, int resolution,
+	int divisions)
 {
 	size_t size = resolution + 1;
 	float radius = stem->getPath().getRadius(1);
@@ -384,12 +387,12 @@ void Mesh::addLeaves(Stem *stem)
 {
 	auto leaves = stem->getLeaves();
 	for (auto it = leaves.begin(); it != leaves.end(); it++) {
-		Leaf *leaf = stem->getLeaf(it->first);
+		const Leaf *leaf = stem->getLeaf(it->first);
 		addLeaf(leaf, stem);
 	}
 }
 
-void Mesh::addLeaf(Leaf *leaf, Stem *stem)
+void Mesh::addLeaf(const Leaf *leaf, Stem *stem)
 {
 	int mesh = selectBuffer(leaf->getMaterial());
 
@@ -399,27 +402,7 @@ void Mesh::addLeaf(Leaf *leaf, Stem *stem)
 	leafSegment.vertexStart = this->vertices[mesh].size();
 	leafSegment.indexStart = this->indices[mesh].size();
 
-	Path path = stem->getPath();
-	Vec3 location = stem->getLocation();
-	float position = leaf->getPosition();
-	Vec3 direction;
-	Quat rotation;
-
-	if (position >= 0.0f && position < path.getLength()) {
-		direction = path.getIntermediateDirection(position);
-		location += path.getIntermediate(position);
-	} else {
-		direction = path.getDirection(path.getSize() - 1);
-		location += path.get().back();
-	}
-
-	Geometry geom = this->defaultLeaf;
-	if (leaf->getMesh() != 0)
-		geom = this->plant->getLeafMesh(leaf->getMesh());
-	rotation = leaf->getDefaultOrientation(direction);
-	rotation *= leaf->getRotation();
-	geom.transform(rotation, leaf->getScale(), location);
-
+	Geometry geom = transformLeaf(leaf, stem, this->plant);
 	size_t index = this->vertices[mesh].size();
 	for (Vertex vertex : geom.getPoints())
 		this->vertices[mesh].push_back(vertex);
@@ -431,6 +414,30 @@ void Mesh::addLeaf(Leaf *leaf, Stem *stem)
 	leafSegment.indexCount = indices[mesh].size();
 	leafSegment.indexCount -= leafSegment.indexStart;
 	leafSegments[mesh].emplace(leaf->getID(), leafSegment);
+}
+
+Geometry Mesh::transformLeaf(
+	const Leaf *leaf, const Stem *stem, const Plant *plant)
+{
+	Path path = stem->getPath();
+	Vec3 location = stem->getLocation();
+	float position = leaf->getPosition();
+	Vec3 direction;
+
+	if (position >= 0.0f && position < path.getLength()) {
+		direction = path.getIntermediateDirection(position);
+		location += path.getIntermediate(position);
+	} else {
+		direction = path.getDirection(path.getSize() - 1);
+		location += path.get().back();
+	}
+
+	Geometry geom = plant->getLeafMesh(leaf->getMesh());
+	Quat rotation;
+	rotation = leaf->getDefaultOrientation(direction);
+	rotation *= leaf->getRotation();
+	geom.transform(rotation, leaf->getScale(), location);
+	return geom;
 }
 
 void Mesh::addTriangle(int mesh, int a, int b, int c)
@@ -530,7 +537,7 @@ long Mesh::getMaterialID(int mesh) const
 	return this->materials.at(mesh);
 }
 
-vector<pg::Vertex> Mesh::getVertices() const
+vector<Vertex> Mesh::getVertices() const
 {
 	vector<Vertex> object;
 	for (auto it = this->vertices.begin(); it != this->vertices.end(); it++)
@@ -546,7 +553,7 @@ vector<unsigned> Mesh::getIndices() const
 	return object;
 }
 
-const vector<pg::Vertex> *Mesh::getVertices(int mesh) const
+const vector<Vertex> *Mesh::getVertices(int mesh) const
 {
 	return &this->vertices[mesh];
 }

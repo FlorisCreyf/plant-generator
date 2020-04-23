@@ -13,21 +13,29 @@ file.o \
 generator.o \
 geometry.o \
 leaf.o \
-main.o \
 material.o \
 mesh.o \
 path.o \
 plant.o \
 spline.o \
-stem.o)
+stem.o \
+)
+TEST_OBJECTS := $(addprefix $(BUILDDIR)/, \
+tests/test_math.o \
+)
 
-plant: $(OBJECTS)
-	g++ $(OBJECTS) $(LIBS) -o $@
+plant: $(OBJECTS) $(BUILDDIR)/main.o
+	g++ $(OBJECTS) $(BUILDDIR)/main.o $(LIBS) -o $@
+
+test: $(OBJECTS) $(TEST_OBJECTS)
+	g++ $(OBJECTS) $(TEST_OBJECTS) $(LIBS) -o $@
 
 clean:
 	rm -r build
 
 -include $(OBJECTS:.o=.d)
+-include $(BUILDDIR)/main.d
+-include $(TEST_OBJECTS:.o=.d)
 
 $(BUILDDIR)/.:
 	mkdir -p $@

@@ -92,15 +92,16 @@ namespace pg {
 		long getID() const;
 
 		int addLeaf(const Leaf &leaf);
-		int getLeafCount();
+		int getLeafCount() const;
 		Leaf *getLeaf(long id);
-		const std::map<long, Leaf> &getLeaves();
+		const Leaf *getLeaf(long id) const;
+		const std::map<long, Leaf> &getLeaves() const;
 		void removeLeaf(long id);
 
 		void setResolution(int resolution);
 		int getResolution() const;
 		void setPath(Path &path);
-		Path getPath();
+		Path getPath() const;
 		void setSwelling(Vec2 scale);
 		Vec2 getSwelling() const;
 		void setPosition(float position);
@@ -110,8 +111,11 @@ namespace pg {
 		long getMaterial(int feature) const;
 
 		Stem *getParent();
+		const Stem *getParent() const;
 		Stem *getSibling();
+		const Stem *getSibling() const;
 		Stem *getChild();
+		const Stem *getChild() const;
 
 		bool isDescendantOf(Stem *stem) const;
 		int getDepth() const;
