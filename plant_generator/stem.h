@@ -104,6 +104,7 @@ namespace pg {
 		Path getPath() const;
 		void setSwelling(Vec2 scale);
 		Vec2 getSwelling() const;
+		Vec2 getLimitedSwelling(float limit=1.0f) const;
 		void setPosition(float position);
 		float getPosition() const;
 		Vec3 getLocation() const;

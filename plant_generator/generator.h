@@ -42,6 +42,7 @@ namespace pg {
 		int rayCount;
 		int rayLevels;
 		float width;
+		Vec2 maxSwelling;
 
 		Light propagateGrowth(Stem *stem);
 		void addStems(Stem *stem);

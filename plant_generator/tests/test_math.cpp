@@ -6,6 +6,8 @@
 #include "../geometry.h"
 #include <type_traits>
 
+#define TOLERANCE 0.000001f
+
 using namespace pg;
 namespace bt = boost::unit_test;
 using std::cout;
@@ -38,7 +40,7 @@ BOOST_AUTO_TEST_CASE(test_vec2_magnitude)
 	BOOST_TEST(magnitude(vec) == 2);
 }
 
-BOOST_AUTO_TEST_CASE(test_rectangle_intersection, * bt::tolerance(0.000001f))
+BOOST_AUTO_TEST_CASE(test_rectangle_intersection, * bt::tolerance(TOLERANCE))
 {
 	Ray ray;
 	ray.origin = {0.0f, 2.5f, 0.5f};
@@ -57,7 +59,7 @@ BOOST_AUTO_TEST_CASE(test_rectangle_intersection, * bt::tolerance(0.000001f))
 	BOOST_TEST(intersectsRectangle(ray, a, b, d) == 0.0f);
 }
 
-BOOST_AUTO_TEST_CASE(test_rotate_around_axis, * bt::tolerance(0.000001f))
+BOOST_AUTO_TEST_CASE(test_rotate_around_axis, * bt::tolerance(TOLERANCE))
 {
 	/* Rotate 180 degrees around the y-axis. */
 	Quat rotation1 = fromAxisAngle({0.0f, 1.0f, 0.0f}, M_PI);
@@ -66,10 +68,23 @@ BOOST_AUTO_TEST_CASE(test_rotate_around_axis, * bt::tolerance(0.000001f))
 	BOOST_TEST(rotation1.y == rotation2.y);
 	BOOST_TEST(rotation1.z == rotation2.z);
 	BOOST_TEST(rotation1.w == rotation2.w);
-	
+
 	Vec3 vec = {0.0f, 0.0f, 1.0f};
 	vec = rotate(rotation2, vec, 0.0f);
 	BOOST_TEST(vec.x == 0.0f);
 	BOOST_TEST(vec.y == 0.0f);
 	BOOST_TEST(vec.z == -1.0f);
+}
+
+BOOST_AUTO_TEST_CASE(test_clamp_direction, * bt::tolerance(TOLERANCE))
+{
+	float max = std::sqrt(2.0f)/2.0f;
+	Vec3 a = {0.0f, std::sin(M_PI*0.4f), std::cos(M_PI*0.4f)};
+	Vec3 b = {0.0f, 0.0f, 1.0f};
+	BOOST_TEST(dot(a, b) < max);
+	Vec3 rejection = normalize(a - dot(a, b)*b);
+	Vec3 limited = max*rejection + max*b;
+	BOOST_TEST(limited.x == 0.0f);
+	BOOST_TEST(limited.y == max);
+	BOOST_TEST(limited.z == max);
 }

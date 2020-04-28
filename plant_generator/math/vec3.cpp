@@ -44,7 +44,7 @@ Vec3 pg::projectOntoPlane(Vec3 vector, Vec3 normal)
 
 float pg::angle(Vec3 a, Vec3 b)
 {
-	return acos(dot(a, b) / (magnitude(a) * magnitude(b)));
+	return std::acos(dot(a, b) / (magnitude(a) * magnitude(b)));
 }
 
 float pg::dot(Vec3 a, Vec3 b)
@@ -59,6 +59,18 @@ Vec3 pg::cross(Vec3 a, Vec3 b)
 	result.y = a.z*b.x - a.x*b.z;
 	result.z = a.x*b.y - a.y*b.x;
 	return result;
+}
+
+Vec3 pg::clamp(Vec3 a, Vec3 b, float max)
+{
+	float diff = dot(a, b);
+	if (diff >= 0.999999f || diff <= -0.999999f) {
+		return b;
+	} else if (diff < max) {
+		Vec3 rejection = normalize(a - dot(a, b)*b);
+		return max*rejection + max*b;
+	} else
+		return a;
 }
 
 Vec3 pg::lerp(Vec3 a, Vec3 b, float t)

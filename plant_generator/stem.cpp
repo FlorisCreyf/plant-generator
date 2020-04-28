@@ -261,3 +261,24 @@ pg::Vec2 Stem::getSwelling() const
 {
 	return this->swelling;
 }
+
+pg::Vec2 Stem::getLimitedSwelling(float limit) const
+{
+	if (!this->parent)
+		return this->swelling;
+	Vec2 swelling = this->swelling;
+	Path path = this->parent->getPath();
+	float parentRadius = path.getIntermediateRadius(this->position);
+	float radius = this->path.getMaxRadius();
+	float ratio = parentRadius / radius;
+	if (ratio < limit) {
+		swelling.x = 1.0f;
+		swelling.y = 1.0f;
+	} else if (this->swelling.x > ratio) {
+		swelling.x = ratio;
+		swelling.y /= ratio;
+		if (swelling.y < 1.0f)
+			swelling.y = 1.0f;
+	}
+	return swelling;
+}

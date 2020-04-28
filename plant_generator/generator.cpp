@@ -27,15 +27,16 @@ using std::vector;
 
 Generator::Generator()
 {
-	this->rayCount = 200;
-	this->rayLevels = 100;
+	this->rayCount = 20;
+	this->rayLevels = 10;
 	this->minRadius = 0.001f;
 	this->primaryGrowthRate = 0.1f;
 	this->secondaryGrowthRate = 0.001f;
+	this->maxSwelling = {1.5f, 3.0f};
 
 	Stem *root = this->plant.createRoot();
 	root->setResolution(6);
-	
+
 	Path path;
 	Spline spline;
 	std::vector<Vec3> controls;
@@ -48,6 +49,8 @@ Generator::Generator()
 	path.setMaxRadius(this->minRadius);
 	path.setRadius(getDefaultCurve(0));
 	root->setPath(path);
+	Vec2 swelling = {1.0f, 1.0f};
+	root->setSwelling(swelling);
 
 	Geometry geom;
 	geom.setPlane();
@@ -75,18 +78,22 @@ void Generator::addStems(Stem *stem)
 		addStems(child);
 		child = child->getSibling();
 	}
-	
+
 	std::map<long, Leaf> leaves = stem->getLeaves();
 	for (auto it = leaves.begin(), last = --leaves.end(); it != last;) {
 		long leafID = it->first;
 		Leaf leaf = it->second;
-		
+
 		/* TODO: Not all leaves should be removed. */
 		it = leaves.erase(it);
 		stem->removeLeaf(leafID);
-		
+		if (leaf.getPosition() == 0.0f)
+			continue;
+
 		Stem *child = plant.addStem(stem);
 		child->setPosition(leaf.getPosition());
+		Vec2 swelling = {1.0f, 1.0f};
+		child->setSwelling(swelling);
 		Path path = child->getPath();
 		Spline spline = path.getSpline();
 		spline.addControl({0.0f, 0.0f, 0.0f});
@@ -96,7 +103,7 @@ void Generator::addStems(Stem *stem)
 		path.setMaxRadius(this->minRadius);
 		path.setRadius(getDefaultCurve(0));
 		child->setPath(path);
-		
+
 		Leaf childLeaf = createLeaf();
 		childLeaf.setPosition(0.0f);
 		child->addLeaf(childLeaf);
@@ -121,7 +128,7 @@ void Generator::addNodes()
 			this->growth[stem].rays++;
 		}
 	}
-	
+
 	propagateGrowth(root);
 	for (auto &pair : this->growth)
 		addNode(pair.first, pair.second);
@@ -146,7 +153,7 @@ Generator::Intersection Generator::intersect(Stem *stem, Ray ray)
 		const Leaf *leaf = &pair.second;
 		float radius = leaf->getScale().x * 0.5f;
 		float distance = leaf->getPosition();
-		Vec3 location = stem->getLocation(); 
+		Vec3 location = stem->getLocation();
 		Vec3 direction = {0.0f, 0.0f, 1.0f};
 		if (path.getSize() > 1) {
 			location += path.getIntermediate(distance);
@@ -154,9 +161,9 @@ Generator::Intersection Generator::intersect(Stem *stem, Ray ray)
 		}
 		direction = leaf->getDirection(direction);
 		location += radius * direction;
-		
+
 		float t = intersectsSphere(ray, location, radius);
-		if (t != 0.0f && (!intersection.stem || t < intersection.t)) {			
+		if (t != 0.0f && (!intersection.stem || t < intersection.t)) {
 			intersection.stem = stem;
 			intersection.t = t;
 		}
@@ -168,59 +175,68 @@ Generator::Intersection Generator::intersect(Stem *stem, Ray ray)
 /** Growth of parent stems is dependent on the efficiency of child stems. */
 Generator::Light Generator::propagateGrowth(Stem *stem)
 {
-	Light growth = {};
+	Light light = {};
 	if (this->growth.find(stem) != this->growth.end())
-		growth = this->growth.at(stem);
+		light = this->growth.at(stem);
 
 	Stem *child = stem->getChild();
 	while (child) {
 		Stem *sibling = child->getSibling();
 		Light childGrowth = propagateGrowth(child);
-		growth.direction += childGrowth.direction;
-		growth.rays += childGrowth.rays;
+		light.direction += childGrowth.direction;
+		light.rays += childGrowth.rays;
 		child = sibling;
 	}
-
-	if (growth.rays > 0)
-		this->growth[stem] = growth;
-	else if (stem->getParent()) {
+	
+	if (light.rays > 0 && magnitude(light.direction) > 0.1f) {
+		this->growth[stem] = light;
+	} else if (stem->getParent()) {
 		Path path = stem->getPath();
 		if (path.getSize() > 1) {
-			growth.direction = path.getDirection(path.getSize()-1);
-			growth.rays = 1;
-			this->growth[stem] = growth;	
+			light.direction = path.getDirection(path.getSize()-1);
+			light.rays = 1;
+			this->growth[stem] = light;
 		} else {
 			this->growth.erase(stem);
 			delete plant.extractStem(stem);
 		}
 	} else {
-		growth.direction = {0.0f, -1.0f, 0.0f};
-		growth.rays = 1;
-		this->growth[stem] = growth;
+		light.direction = {0.0f, -1.0f, 0.0f};
+		light.rays = 1;
+		this->growth[stem] = light;
 	}
-	
-	return growth;
+
+	return light;
 }
 
-void Generator::addNode(Stem *stem, Generator::Light growth)
+void Generator::addNode(Stem *stem, Generator::Light light)
 {
-	growth.direction /= growth.rays;
-	growth.direction = normalize(growth.direction);
-	
+	Vec3 a = light.direction;
+	light.direction /= light.rays;
+	light.direction = normalize(light.direction);
+
 	Path path = stem->getPath();
 	Spline spline = path.getSpline();
 	std::vector<Vec3> controls = spline.getControls();
 
-	Vec3 point = controls.back();
-	point += -this->primaryGrowthRate * growth.direction;
+	Vec3 point = controls.back();	
+	Vec3 direction = -1.0f * light.direction;
+	if (path.getSize() > 1) {
+		Vec3 lastDirection = path.getDirection(path.getSize()-1);
+		float max = std::sqrt(2.0f)/2.0f;
+		direction = clamp(direction, lastDirection, max);
+	}
+	point += this->primaryGrowthRate * direction;
 	controls.push_back(point);
 	updateBoundingBox(point + stem->getLocation());
-	
+
 	spline.setControls(controls);
 	path.setSpline(spline);
 	path.setMaxRadius(path.getMaxRadius()+this->secondaryGrowthRate);
 	stem->setPath(path);
-	
+	stem->setSwelling(this->maxSwelling);
+	stem->setSwelling(stem->getLimitedSwelling(1.2f));
+
 	addLeaves(stem, stem->getPath().getLength());
 }
 
@@ -257,14 +273,14 @@ vector<Ray> Generator::getRays()
 	vector<Ray> rays;
 	for (int i = 1; i <= this->rayLevels; i++) {
 		float angle = i / (float)this->rayLevels * PI * 0.5f;
-		int rayCount = (this->rayCount-1) * cos(angle) + 1;
-		float y = sin(angle) * this->width;
-		float radius = this->width * cos(angle);
-		
+		int rayCount = (this->rayCount-1) * std::cos(angle) + 1;
+		float y = std::sin(angle) * this->width;
+		float radius = this->width * std::cos(angle);
+
 		for (int j = 0; j < rayCount; j++) {
 			float angle = j*(2.0f*PI/rayCount);
-			float x = cos(angle) * radius;
-			float z = sin(angle) * radius;
+			float x = std::cos(angle) * radius;
+			float z = std::sin(angle) * radius;
 			Vec3 origin = {-x, 0.0f, -z};
 			Ray ray;
 			ray.origin = {x, y, z};

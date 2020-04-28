@@ -138,6 +138,8 @@ namespace pg {
 
 	float angle(Vec3 a, Vec3 b);
 	Vec3 cross(Vec3 a, Vec3 b);
+	/** Clamp "a" if the dot product is less than "max". */
+	Vec3 clamp(Vec3 a, Vec3 b, float max);
 	float dot(Vec3 a, Vec3 b);
 	float magnitude(Vec3 vec);
 	Vec3 normalize(Vec3 vec);
