@@ -84,7 +84,7 @@ Quat Leaf::getDefaultOrientation(Vec3 stemDirection) const
 	return q;
 }
 
-Vec3 Leaf::getDirection(pg::Vec3 stemDirection) const
+Vec3 Leaf::getDirection(Vec3 stemDirection) const
 {
 	Vec3 normal = {0.0f, 0.0f, 1.0f};
 	Quat rotation = this->rotation * getDefaultOrientation(stemDirection);

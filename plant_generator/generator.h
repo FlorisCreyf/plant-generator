@@ -32,7 +32,7 @@ namespace pg {
 			Stem *stem;
 			float t;
 		};
-		
+
 		std::map<Stem *, Light> growth;
 		float primaryGrowthRate;
                 float secondaryGrowthRate;
@@ -44,15 +44,16 @@ namespace pg {
 		float width;
 		Vec2 maxSwelling;
 
-		Light propagateGrowth(Stem *stem);
+		int propagate(Stem *stem);
 		void addStems(Stem *stem);
-		void addNodes();
-                void addNode(Stem *, Light);
+		void addNodes(int);
+                void addNode(Stem *, Light, int);
                 void addLeaves(Stem *, float);
                 Leaf createLeaf();
-                
+
 		Intersection intersect(Stem *, Ray);
-		std::vector<Ray> getRays();
+		void castRays();
+		void updateGrowth(Ray);
 		void updateBoundingBox(Vec3 point);
 
 	public:

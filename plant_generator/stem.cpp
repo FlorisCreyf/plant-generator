@@ -23,18 +23,18 @@ long Stem::counter = 1;
 
 Stem::Stem(Stem *parent)
 {
-	id = counter++;
+	this->id = counter++;
 	this->swelling = {1.5, 3.0f};
 	this->nextSibling = nullptr;
 	this->prevSibling = nullptr;
 	this->child = nullptr;
 	this->parent = parent;
 	if (parent == nullptr) {
-		depth = 0;
-		position = 0.0f;
-		location = {0.0f, 0.0f, 0.0f};
+		this->depth = 0;
+		this->position = 0.0f;
+		this->location = {0.0f, 0.0f, 0.0f};
 	} else
-		depth = parent->depth + 1;
+		this->depth = parent->depth + 1;
 }
 
 Stem::~Stem()
