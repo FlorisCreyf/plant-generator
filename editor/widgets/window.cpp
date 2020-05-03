@@ -52,22 +52,23 @@ void Window::createEditors()
 	QDockWidget *dockWidget[5];
 
 	dockWidget[0] = new QDockWidget(tr("Properties"), this);
-	this->propertyBox = new PropertyBox(&this->shared, this->editor, this);
+	this->propertyEditor =
+		new PropertyEditor(&this->shared, this->editor, this);
 	dockWidget[0]->setAllowedAreas(areas);
 	scrollArea = new QScrollArea();
 	dockWidget[0]->setWidget(scrollArea);
 	dockWidget[0]->setMinimumWidth(350);
-	scrollArea->setWidget(this->propertyBox);
+	scrollArea->setWidget(this->propertyEditor);
 	scrollArea->setWidgetResizable(true);
 	scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 	this->addDockWidget(static_cast<Qt::DockWidgetArea>(1), dockWidget[0]);
 
 	connect(&shared, SIGNAL(materialAdded(ShaderParams)),
-		this->propertyBox, SLOT(addMaterial(ShaderParams)));
+		this->propertyEditor, SLOT(addMaterial(ShaderParams)));
 	connect(&shared, SIGNAL(materialRenamed(QString, QString)),
-		this->propertyBox, SLOT(renameMaterial(QString, QString)));
+		this->propertyEditor, SLOT(renameMaterial(QString, QString)));
 	connect(&shared, SIGNAL(materialRemoved(QString)),
-		this->propertyBox, SLOT(removeMaterial(QString)));
+		this->propertyEditor, SLOT(removeMaterial(QString)));
 
 	scrollArea = new QScrollArea();
 	scrollArea->setWidgetResizable(true);
@@ -86,7 +87,7 @@ void Window::createEditors()
 	dockWidget[2]->setAllowedAreas(areas);
 	dockWidget[2]->setWidget(this->curveEditor);
 	this->addDockWidget(static_cast<Qt::DockWidgetArea>(1), dockWidget[2]);
-	this->propertyBox->bind(this->curveEditor);
+	this->propertyEditor->bind(this->curveEditor);
 
 	scrollArea = new QScrollArea();
 	scrollArea->setWidgetResizable(true);
@@ -113,11 +114,11 @@ void Window::createEditors()
 	connect(this->meshEditor->getViewer(), SIGNAL(ready()),
 		this, SLOT(initMeshEditor()));
 	connect(this->meshEditor, SIGNAL(meshAdded(pg::Geometry)),
-		this->propertyBox, SLOT(addMesh(pg::Geometry)));
+		this->propertyEditor, SLOT(addMesh(pg::Geometry)));
 	connect(this->meshEditor, SIGNAL(meshRenamed(QString, QString)),
-		this->propertyBox, SLOT(renameMesh(QString, QString)));
+		this->propertyEditor, SLOT(renameMesh(QString, QString)));
 	connect(this->meshEditor, SIGNAL(meshRemoved(QString)),
-		this->propertyBox, SLOT(removeMesh(QString)));
+		this->propertyEditor, SLOT(removeMesh(QString)));
 
 	tabifyDockWidget(dockWidget[1], dockWidget[0]);
 	tabifyDockWidget(dockWidget[4], dockWidget[3]);

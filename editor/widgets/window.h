@@ -28,7 +28,7 @@
 #include "material_editor.h"
 #include "mesh_editor.h"
 #include "key_editor.h"
-#include "property_box.h"
+#include "property_editor.h"
 
 class Window : public QMainWindow {
 	Q_OBJECT
@@ -54,7 +54,7 @@ private:
 	KeyMap keymap;
 
 	Editor *editor;
-	PropertyBox *propertyBox;
+	PropertyEditor *propertyEditor;
 	CurveEditor *curveEditor;
 	MaterialEditor *materialEditor;
 	MeshEditor *meshEditor;

@@ -48,3 +48,5 @@ $(BUILDDIR)%/.:
 $(BUILDDIR)/%.o: %.cpp | $$(@D)/.
 	g++ -M $*.cpp > $(BUILDDIR)/$*.d
 	g++ -c $(CPPFLAGS) $*.cpp -o $(BUILDDIR)/$*.o
+
+.PHONY: clean

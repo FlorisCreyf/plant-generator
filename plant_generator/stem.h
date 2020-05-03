@@ -69,12 +69,7 @@ namespace pg {
 			ar & position;
 			ar & location;
 			ar & material;
-			try {
-				/* This might be changed so that the scaling
-				is dependent on the angle between the parent
-				and child stem. */
-				ar & swelling;
-			} catch (std::exception) {}
+			ar & swelling;
 		}
 		#endif
 

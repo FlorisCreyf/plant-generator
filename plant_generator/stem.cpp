@@ -74,6 +74,7 @@ void Stem::copy(const Stem &stem)
 	this->material[0] = stem.material[0];
 	this->material[1] = stem.material[1];
 	this->leaves = stem.leaves;
+	this->swelling = stem.swelling;
 }
 
 bool Stem::operator==(const Stem &stem) const
@@ -90,6 +91,7 @@ bool Stem::operator==(const Stem &stem) const
 		location == stem.location &&
 		material[0] == stem.material[0] &&
 		material[1] == stem.material[1] &&
+		swelling == stem.swelling &&
 		leaves == stem.leaves
 	);
 }

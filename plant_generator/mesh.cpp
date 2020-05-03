@@ -17,6 +17,8 @@
 #include <cmath>
 #include <limits>
 
+#define PI 3.14159265359f
+
 using namespace pg;
 using std::map;
 using std::vector;
@@ -42,18 +44,17 @@ bool Mesh::hasValidLocation(Stem *stem)
 
 Segment Mesh::addStem(Stem *stem)
 {
-	int mesh = selectBuffer(stem->getMaterial(Stem::Outer));
-
-	Segment stemSegment;
-	stemSegment.stem = stem;
-	stemSegment.vertexStart = vertices[mesh].size();
-	stemSegment.indexStart = indices[mesh].size();
-	addSections(stem, mesh, stemSegment);
-	stemSegment.vertexCount = vertices[mesh].size();
-	stemSegment.vertexCount -= stemSegment.vertexStart;
-	stemSegment.indexCount = indices[mesh].size();
-	stemSegment.indexCount -= stemSegment.indexStart;
-	this->stemSegments[mesh].emplace(stem->getID(), stemSegment);
+	State state;
+	state.mesh = selectBuffer(stem->getMaterial(Stem::Outer));
+	state.segment.stem = stem;
+	state.segment.vertexStart = vertices[state.mesh].size();
+	state.segment.indexStart = indices[state.mesh].size();
+	addSections(state);
+	state.segment.vertexCount = vertices[state.mesh].size();
+	state.segment.vertexCount -= state.segment.vertexStart;
+	state.segment.indexCount = indices[state.mesh].size();
+	state.segment.indexCount -= state.segment.indexStart;
+	this->stemSegments[state.mesh].emplace(stem->getID(), state.segment);
 
 	addLeaves(stem);
 
@@ -64,69 +65,59 @@ Segment Mesh::addStem(Stem *stem)
 		child = child->getSibling();
 	}
 
-	return stemSegment;
+	return state.segment;
 }
 
-void Mesh::addSections(Stem *stem, int mesh, Segment segment)
+void Mesh::addSections(State &state)
 {
-	float uvOffset = 0.0f;
-	Vec3 prevDirection = {0.0f, 1.0f, 0.0f};
-	Quat prevRotation = {0.0f, 0.0f, 0.0f, 1.0f};
+	Stem *stem = state.segment.stem;
+	Quat rotation;
+	state.uvOffset = 0.0f;
+	state.prevDirection = {0.0f, 1.0f, 0.0f};
+	state.prevRotation = {0.0f, 0.0f, 0.0f, 1.0f};
+	state.prevIndex = this->vertices[state.mesh].size();
+	state.section = createBranchCollar(state);
+
 	size_t sections = stem->getPath().getSize();
-	size_t prevIndex = vertices[mesh].size();
-	bool hasCollar = 
-		stem->getParent() &&
-		stem->getSwelling().x > 1.0f &&
-		stem->getSwelling().y > 1.0f;
+	for (; state.section < sections; state.section++) {
+		rotation = rotateSection(state);
+		state.prevIndex = this->vertices[state.mesh].size();
+		addSection(state, rotation);
 
-	for (size_t section = 0; section < sections; section++) {
-		size_t collarStart = this->vertices[mesh].size();
-		if (section == 1 && hasCollar) {
-			uvOffset = 0.0f;
-			reserveBranchCollarSpace(stem, mesh);
-			prevIndex = this->vertices[mesh].size();
-		}
-
-		/* A rotation for a cross section is relative to the rotation
-		of the previous cross section. Twisting can occur in stems
-		if all sections are rotated relative to the global axis. */
-		prevIndex = vertices[mesh].size();
-		Vec3 direction = stem->getPath().getAverageDirection(section);
-		Quat rotation = rotateIntoVecQ(prevDirection, direction);
-		rotation *= prevRotation;
-		prevRotation = rotation;
-		prevDirection = direction;
-		addSection(stem, section, rotation, &uvOffset, mesh);
-
-		if (section == 1 && hasCollar) {
-			Segment parentSegment = findStem(stem->getParent());
-			createBranchCollar(segment, parentSegment, collarStart);
-		}
-
-		if (section+1 < sections) {
-			size_t index = vertices[mesh].size();
-			int resolution = stem->getResolution(); 
-			addTriangleRing(prevIndex, index, resolution, mesh);
+		if (state.section+1 < sections) {
+			size_t i = this->vertices[state.mesh].size();
+			int r = stem->getResolution();
+			addTriangleRing(state.prevIndex, i, r, state.mesh);
 		}
 	}
 
-	capStem(stem, mesh, prevIndex);
+	capStem(stem, state.mesh, state.prevIndex);
+}
+
+/** A rotation for a cross section is relative to the rotation of the previous
+cross section. Twisting can occur in stems if all sections are rotated relative
+to the global axis. */
+Quat Mesh::rotateSection(State &state)
+{
+	Stem *stem = state.segment.stem;
+	Vec3 direction = stem->getPath().getAverageDirection(state.section);
+	Quat rotation = rotateIntoVecQ(state.prevDirection, direction);
+	rotation *= state.prevRotation;
+	state.prevRotation = rotation;
+	state.prevDirection = direction;
+	return rotation;
 }
 
 /** Generate a cross section for a point in the stem's path. Indices are added
 at a latter stage to connect the sections. */
-void Mesh::addSection(
-	Stem *stem, size_t section, Quat rotation, float *uvOffset, int mesh)
+void Mesh::addSection(State &state, Quat rotation)
 {
-	const float deltaAngle = 2.0f * M_PI / stem->getResolution();
+	Stem *stem = state.segment.stem;
+	const float deltaAngle = 2.0f * PI / stem->getResolution();
 	const float uOffset = 1.0f / stem->getResolution();
-	float radius = stem->getPath().getRadius(section);
-	float length = stem->getPath().getIntermediateDistance(section);
+	float radius = stem->getPath().getRadius(state.section);
+	float length = stem->getPath().getIntermediateDistance(state.section);
 	float angle = 0.0f;
-
-	Vec3 location = stem->getLocation() + stem->getPath().get(section);
-	Vertex vertex;
-
 	float aspect = 1.0f;
 	long materialID = stem->getMaterial(Stem::Outer);
 	if (materialID > 0) {
@@ -134,9 +125,13 @@ void Mesh::addSection(
 		aspect = m.getRatio();
 	}
 
-	float v = -(length*aspect)/(radius*2.0f*(float)M_PI)+(*uvOffset);
-	vertex.uv = {1.0f, v};
-	*uvOffset = vertex.uv.y;
+	Vertex vertex;
+	vertex.uv.x = 1.0f;
+	vertex.uv.y = -(length*aspect)/(radius*2.0f*PI)+state.uvOffset;
+	state.uvOffset = vertex.uv.y;
+
+	Vec3 location = stem->getLocation();
+	location += stem->getPath().get(state.section);
 
 	for (int i = 0; i <= stem->getResolution(); i++) {
 		vertex.position = {std::cos(angle), 0.0f, std::sin(angle)};
@@ -146,8 +141,7 @@ void Mesh::addSection(
 		vertex.position += location;
 		vertex.normal = rotate(rotation, vertex.normal, 0.0f);
 		vertex.normal = normalize(vertex.normal);
-		this->vertices[mesh].push_back(vertex);
-
+		this->vertices[state.mesh].push_back(vertex);
 		vertex.uv.x -= uOffset;
 		angle += deltaAngle;
 	}
@@ -165,6 +159,33 @@ void Mesh::addTriangleRing(
 		addTriangle(mesh, prevIndex, index, prevIndex + 1);
 		prevIndex++;
 	}
+}
+
+size_t Mesh::createBranchCollar(State &state)
+{
+	Stem *stem = state.segment.stem;
+
+	Vec2 swelling = stem->getSwelling();
+	if (!(stem->getParent() && swelling.x > 1.0f && swelling.y > 1.0f))
+		return 0;
+
+	state.section = 0;
+	state.prevIndex = this->vertices[state.mesh].size();
+	addSection(state, rotateSection(state));
+
+	size_t collarStart = this->vertices[state.mesh].size();
+	reserveBranchCollarSpace(stem, state.mesh);
+	state.prevIndex = this->vertices[state.mesh].size();
+	state.uvOffset = 0.0f;
+	state.section = 1;
+	state.prevIndex = this->vertices[state.mesh].size();
+	addSection(state, rotateSection(state));
+
+	Segment parentSegment = findStem(stem->getParent());
+	if (!connectCollar(state.segment, parentSegment, collarStart))
+		return 0;
+	else
+		return 1;
 }
 
 /** Cross sections are usually created one at a time and then connected with
@@ -235,12 +256,16 @@ Vertex Mesh::moveToSurface(Vertex vertex, Ray ray, Segment parent, int mesh)
 		Vec3 offset = (t - length) * ray.direction;
 		vertex.normal = normalize(vertex.normal);
 		vertex.position -= offset;
+	} else {
+		vertex.position.x = std::numeric_limits<float>::infinity();
+		vertex.position.y = std::numeric_limits<float>::infinity();
+		vertex.position.z = std::numeric_limits<float>::infinity();
 	}
 
 	return vertex;
 }
 
-void Mesh::createBranchCollar(Segment child, Segment parent, size_t vertexStart)
+bool Mesh::connectCollar(Segment child, Segment parent, size_t vertexStart)
 {
 	const int mesh1 = selectBuffer(child.stem->getMaterial(Stem::Outer));
 	const int mesh2 = selectBuffer(parent.stem->getMaterial(Stem::Outer));
@@ -264,10 +289,20 @@ void Mesh::createBranchCollar(Segment child, Segment parent, size_t vertexStart)
 		ray.origin = this->vertices[mesh1][nextIndex].position;
 		ray.direction = ray.origin - scaledPoint.position;
 		scaledPoint = moveToSurface(scaledPoint, ray, parent, mesh2);
+		if (std::isinf(scaledPoint.position.x)) {
+			this->vertices[mesh1].resize(child.vertexStart);
+			this->indices[mesh1].resize(child.indexStart);
+			return false;
+		}
 		this->vertices[mesh1][index] = scaledPoint;
 
 		ray.direction = ray.origin - initPoint.position;
 		initPoint = moveToSurface(initPoint, ray, parent, mesh2);
+		if (std::isinf(initPoint.position.x)) {
+			this->vertices[mesh1].resize(child.vertexStart);
+			this->indices[mesh1].resize(child.indexStart);
+			return false;
+		}
 
 		Spline spline;
 		spline.setDegree(3);
@@ -298,6 +333,7 @@ void Mesh::createBranchCollar(Segment child, Segment parent, size_t vertexStart)
 	index2 = vertexStart + collarSize;
 	setBranchCollarNormals(index1, index2, mesh1, resolution, divisions);
 	setBranchCollarUVs(index2, child.stem, mesh1, resolution, divisions);
+	return true;
 }
 
 /** Interpolate normals from the first cross section of the stem with normals
@@ -326,8 +362,7 @@ void Mesh::setBranchCollarNormals(
 The UV coordinates for branch collars are generated backwards because splines
 are not guaranteed to be the same length. */
 void Mesh::setBranchCollarUVs(
-	size_t lastIndex, Stem *stem, int mesh, int resolution,
-	int divisions)
+	size_t lastIndex, Stem *stem, int mesh, int resolution, int divisions)
 {
 	size_t size = resolution + 1;
 	float radius = stem->getPath().getRadius(1);
@@ -341,7 +376,7 @@ void Mesh::setBranchCollarUVs(
 			index -= size;
 			Vec3 p2 = this->vertices[mesh][index].position;
 			float length = magnitude(p2 - p1);
-			uv.y += length/(radius * 2.0f * (float)M_PI);
+			uv.y += length/(radius * 2.0f * PI);
 			this->vertices[mesh][index].uv = uv;
 		}
 	}
@@ -352,7 +387,7 @@ void Mesh::capStem(Stem *stem, int stemMesh, size_t section)
 	int mesh = selectBuffer(stem->getMaterial(Stem::Inner));
 	int index = section;
 	int divisions = stem->getResolution();
-	float rotation = 2.0f * M_PI / divisions;
+	float rotation = 2.0f * PI / divisions;
 	float angle = 0.0f;
 	section = this->vertices[mesh].size();
 
@@ -364,13 +399,11 @@ void Mesh::capStem(Stem *stem, int stemMesh, size_t section)
 	}
 
 	for (index = 0; index < divisions/2 - 1; index++) {
-		addTriangle(
-			mesh,
+		addTriangle(mesh,
 			section + index,
 			section + divisions - index - 1,
 			section + index + 1);
-		addTriangle(
-			mesh,
+		addTriangle(mesh,
 			section + index + 1,
 			section + divisions - index - 1,
 			section + divisions - index - 2);
@@ -378,8 +411,7 @@ void Mesh::capStem(Stem *stem, int stemMesh, size_t section)
 
 	if ((divisions & 1) != 0) { /* is odd */
 		size_t lastSection = section + index;
-		addTriangle(
-			mesh, lastSection, lastSection + 2, lastSection + 1);
+		addTriangle(mesh, lastSection, lastSection+2, lastSection+1);
 	}
 }
 
@@ -402,7 +434,7 @@ void Mesh::addLeaf(const Leaf *leaf, Stem *stem)
 	leafSegment.vertexStart = this->vertices[mesh].size();
 	leafSegment.indexStart = this->indices[mesh].size();
 
-	Geometry geom = transformLeaf(leaf, stem, this->plant);
+	Geometry geom = transformLeaf(leaf, stem);
 	size_t index = this->vertices[mesh].size();
 	for (Vertex vertex : geom.getPoints())
 		this->vertices[mesh].push_back(vertex);
@@ -416,8 +448,7 @@ void Mesh::addLeaf(const Leaf *leaf, Stem *stem)
 	leafSegments[mesh].emplace(leaf->getID(), leafSegment);
 }
 
-Geometry Mesh::transformLeaf(
-	const Leaf *leaf, const Stem *stem, const Plant *plant)
+Geometry Mesh::transformLeaf(const Leaf *leaf, const Stem *stem)
 {
 	Path path = stem->getPath();
 	Vec3 location = stem->getLocation();
@@ -432,7 +463,7 @@ Geometry Mesh::transformLeaf(
 		location += path.get().back();
 	}
 
-	Geometry geom = plant->getLeafMesh(leaf->getMesh());
+	Geometry geom = this->plant->getLeafMesh(leaf->getMesh());
 	Quat rotation;
 	rotation = leaf->getDefaultOrientation(direction);
 	rotation *= leaf->getRotation();

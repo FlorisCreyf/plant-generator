@@ -15,8 +15,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef PROPERTY_BOX
-#define PROPERTY_BOX
+#ifndef PROPERTY_EDITOR
+#define PROPERTY_EDITOR
 
 #include "editor.h"
 #include "curve_button.h"
@@ -24,11 +24,11 @@
 #include "editor/commands/save_stem.h"
 #include <QtWidgets>
 
-class PropertyBox : public QWidget {
+class PropertyEditor : public QWidget {
 	Q_OBJECT
 
 public:
-	PropertyBox(SharedResources *shared, Editor *editor, QWidget *parent);
+	PropertyEditor(SharedResources *shared, Editor *editor, QWidget *parent);
 	void bind(CurveEditor *curveEditor);
 	QSize sizeHint() const;
 
@@ -41,6 +41,8 @@ public slots:
 	void changeMinRadius(double d);
 	void changeRadiusCurve(pg::Spline &spline);
 	void changeStemMaterial();
+	void changeXCollar(double d);
+	void changeYCollar(double d);
 	void changeCapMaterial();
 	void changeXScale(double d);
 	void changeYScale(double d);
@@ -82,6 +84,10 @@ private:
 	QComboBox *degreeV;
 	QLabel *stemMaterialL;
 	QComboBox *stemMaterialV;
+	QLabel *collarXL;
+	QDoubleSpinBox *collarXV;
+	QLabel *collarYL;
+	QDoubleSpinBox *collarYV;
 
 	QGroupBox *capG;
 	QLabel *capMaterialL;
@@ -117,4 +123,4 @@ private:
 	void setValueWidths(QFormLayout *);
 };
 
-#endif /* PROPERTY_BOX */
+#endif /* PROPERTY_EDITOR */

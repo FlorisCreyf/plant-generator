@@ -34,10 +34,19 @@ namespace pg {
 	};
 
 	class Mesh {
+		struct State {
+			Segment segment;
+			Vec3 prevDirection;
+			Quat prevRotation;
+			size_t prevIndex;
+			size_t section;
+			float uvOffset;
+			int mesh;
+		};
+
 		Plant *plant;
 		Geometry defaultLeaf;
 
-		int mesh;
 		std::map<long, int> meshes;
 		std::vector<long> materials;
 		std::vector<std::vector<Vertex>> vertices;
@@ -46,13 +55,15 @@ namespace pg {
 		std::vector<std::map<long, Segment>> leafSegments;
 
 		bool hasValidLocation(Stem *stem);
-		void addSections(Stem *, int, Segment);
-		void addSection(Stem *, size_t, Quat, float *, int);
+		void addSections(State &state);
+		void addSection(State &, Quat);
+		Quat rotateSection(State &);
 		void addTriangleRing(size_t, size_t, int, int);
 		void capStem(Stem *, int, size_t);
 		Segment addStem(Stem *);
 
-		void createBranchCollar(Segment, Segment, size_t);
+		size_t createBranchCollar(State &);
+		bool connectCollar(Segment, Segment, size_t);
 		void reserveBranchCollarSpace(Stem *, int);
 		size_t getBranchCollarSize(Stem *);
 		Mat4 getBranchCollarScale(Stem *, Stem *);
@@ -62,6 +73,7 @@ namespace pg {
 
 		void addLeaves(Stem *);
 		void addLeaf(const Leaf *leaf, Stem *stem);
+		Geometry transformLeaf(const Leaf *, const Stem *);
 
 		float getUVOffset();
 		void addTriangle(int, int, int, int);
@@ -87,8 +99,6 @@ namespace pg {
 		int getMeshCount() const;
 		long getMaterialID(int mesh) const;
 
-		static Geometry transformLeaf(
-			const Leaf *, const Stem *, const Plant *);
 	};
 }
 

@@ -53,7 +53,7 @@ editor/widgets/material_editor.cpp \
 editor/widgets/material_viewer.cpp \
 editor/widgets/mesh_editor.cpp \
 editor/widgets/mesh_viewer.cpp \
-editor/widgets/property_box.cpp \
+editor/widgets/property_editor.cpp \
 editor/widgets/window.cpp \
 editor/camera.cpp \
 editor/history.cpp \
@@ -71,7 +71,7 @@ plant_generator/math/quat.h \
 plant_generator/math/vec2.h \
 plant_generator/math/vec3.h \
 plant_generator/math/vec4.h \
-plant-generator/file.h \
+plant_generator/file.h \
 plant_generator/pseudo_generator.h \
 plant_generator/geometry.h \
 plant_generator/leaf.h \
@@ -113,7 +113,7 @@ editor/widgets/material_editor.h \
 editor/widgets/mesh_editor.h \
 editor/widgets/mesh_viewer.h \
 editor/widgets/material_viewer.h \
-editor/widgets/property_box.h \
+editor/widgets/property_editor.h \
 editor/widgets/window.h \
 editor/camera.h \
 editor/history.h \

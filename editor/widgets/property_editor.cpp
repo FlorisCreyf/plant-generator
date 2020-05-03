@@ -15,11 +15,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "property_box.h"
+#include "property_editor.h"
 #include <iterator>
 
 using pg::Spline;
 using pg::Stem;
+using pg::Vec2;
 using pg::Vec3;
 using pg::Leaf;
 using pg::Plant;
@@ -30,7 +31,7 @@ using std::string;
 using std::map;
 using std::set;
 
-PropertyBox::PropertyBox(
+PropertyEditor::PropertyEditor(
 	SharedResources *shared, Editor *editor, QWidget *parent) :
 	QWidget(parent)
 {
@@ -55,7 +56,7 @@ PropertyBox::PropertyBox(
 	connect(this->editor, SIGNAL(selectionChanged()), this, SLOT(fill()));
 }
 
-void PropertyBox::setValueWidths(QFormLayout *layout)
+void PropertyEditor::setValueWidths(QFormLayout *layout)
 {
 	layout->setFormAlignment(Qt::AlignRight | Qt::AlignTop);
 	layout->setFieldGrowthPolicy(QFormLayout::FieldsStayAtSizeHint);
@@ -67,7 +68,7 @@ void PropertyBox::setValueWidths(QFormLayout *layout)
 	}
 }
 
-void PropertyBox::createStemBox(QVBoxLayout *layout)
+void PropertyEditor::createStemBox(QVBoxLayout *layout)
 {
 	this->stemG = new QGroupBox(tr("Stem"));
 	QFormLayout *form = new QFormLayout(this->stemG);
@@ -119,6 +120,18 @@ void PropertyBox::createStemBox(QVBoxLayout *layout)
 	this->stemMaterialV->addItem(tr(""), QVariant(0));
 	form->addRow(this->stemMaterialL, this->stemMaterialV);
 
+	this->collarXL = new QLabel(tr("Collar (X)"));
+	this->collarXV = new QDoubleSpinBox;
+	this->collarXV->setSingleStep(0.1);
+	this->collarXV->setDecimals(3);
+	form->addRow(this->collarXL, this->collarXV);
+
+	this->collarYL = new QLabel(tr("Collar (Y)"));
+	this->collarYV = new QDoubleSpinBox;
+	this->collarYV->setSingleStep(0.1);
+	this->collarYV->setDecimals(3);
+	form->addRow(this->collarYL, this->collarYV);
+
 	setValueWidths(form);
 	this->stemG->setSizePolicy(
 		QSizePolicy::Expanding, QSizePolicy::Minimum);
@@ -146,9 +159,17 @@ void PropertyBox::createStemBox(QVBoxLayout *layout)
 		this, SLOT(toggleCurve(CurveButton *)));
 	connect(this->stemMaterialV, SIGNAL(currentIndexChanged(int)),
 		this, SLOT(changeStemMaterial()));
+	connect(this->collarXV, SIGNAL(editingFinished()),
+		this, SLOT(finishChanging()));
+	connect(this->collarXV, SIGNAL(valueChanged(double)),
+		this, SLOT(changeXCollar(double)));
+	connect(this->collarYV, SIGNAL(editingFinished()),
+		this, SLOT(finishChanging()));
+	connect(this->collarYV, SIGNAL(valueChanged(double)),
+		this, SLOT(changeYCollar(double)));
 }
 
-void PropertyBox::createCapBox(QVBoxLayout *layout)
+void PropertyEditor::createCapBox(QVBoxLayout *layout)
 {
 	this->capG = new QGroupBox(tr("Cap"));
 	QFormLayout *form = new QFormLayout(capG);
@@ -168,26 +189,26 @@ void PropertyBox::createCapBox(QVBoxLayout *layout)
 		this, SLOT(changeCapMaterial()));
 }
 
-void PropertyBox::createLeafBox(QVBoxLayout *layout)
+void PropertyEditor::createLeafBox(QVBoxLayout *layout)
 {
 	this->leafG = new QGroupBox(tr("Leaf"));
 	QFormLayout *form = new QFormLayout(this->leafG);
 	form->setSpacing(2);
 	form->setMargin(5);
 
-	this->leafScaleXL = new QLabel(tr("X Scale"));
+	this->leafScaleXL = new QLabel(tr("Scale (X)"));
 	this->leafScaleXV = new QDoubleSpinBox;
 	this->leafScaleXV->setMinimum(0.01);
 	this->leafScaleXV->setSingleStep(0.1);
 	form->addRow(this->leafScaleXL, this->leafScaleXV);
 
-	this->leafScaleYL = new QLabel(tr("Y Scale"));
+	this->leafScaleYL = new QLabel(tr("Scale (Y)"));
 	this->leafScaleYV = new QDoubleSpinBox;
 	this->leafScaleYV->setMinimum(0.01);
 	this->leafScaleYV->setSingleStep(0.1);
 	form->addRow(this->leafScaleYL, this->leafScaleYV);
 
-	this->leafScaleZL = new QLabel(tr("Z Scale"));
+	this->leafScaleZL = new QLabel(tr("Scale (Z)"));
 	this->leafScaleZV = new QDoubleSpinBox;
 	this->leafScaleZV->setMinimum(0.01);
 	this->leafScaleZV->setSingleStep(0.1);
@@ -227,7 +248,7 @@ void PropertyBox::createLeafBox(QVBoxLayout *layout)
 		this, SLOT(changeLeafMesh()));
 }
 
-void PropertyBox::fill()
+void PropertyEditor::fill()
 {
 	auto leafInstances = this->editor->getSelection()->getLeafInstances();
 	auto stemInstances = this->editor->getSelection()->getStemInstances();
@@ -247,12 +268,13 @@ void PropertyBox::fill()
 		toggleCurve(this->selectedCurve);
 }
 
-void PropertyBox::setStemFields(map<Stem *, PointSelection> instances)
+void PropertyEditor::setStemFields(map<Stem *, PointSelection> instances)
 {
 	Stem *stem = instances.rbegin()->first;
 	auto nextIt = next(instances.begin());
 	blockStemSignals(true);
 
+	/* Resolution: */
 	indicateSimilarities(this->resolutionL);
 	for (auto it = nextIt; it != instances.end(); ++it) {
 		Stem *a = prev(it)->first;
@@ -262,9 +284,9 @@ void PropertyBox::setStemFields(map<Stem *, PointSelection> instances)
 			break;
 		}
 	}
-
 	this->resolutionV->setValue(stem->getResolution());
 
+	/* Division: */
 	indicateSimilarities(this->divisionL);
 	for (auto it = nextIt; it != instances.end(); ++it) {
 		pg::Path a = prev(it)->first->getPath();
@@ -274,9 +296,9 @@ void PropertyBox::setStemFields(map<Stem *, PointSelection> instances)
 			break;
 		}
 	}
-
 	this->divisionV->setValue(stem->getPath().getResolution());
 
+	/* Radius: */
 	indicateSimilarities(this->radiusL);
 	for (auto it = nextIt; it != instances.end(); ++it) {
 		pg::Path a = prev(it)->first->getPath();
@@ -286,10 +308,10 @@ void PropertyBox::setStemFields(map<Stem *, PointSelection> instances)
 			break;
 		}
 	}
-
 	this->radiusV->setValue(stem->getPath().getMaxRadius());
 	this->radiusB->setCurve(stem->getPath().getRadius());
 
+	/* Min radius: */
 	indicateSimilarities(this->minRadiusL);
 	for (auto it = nextIt; it != instances.end(); ++it) {
 		pg::Path a = prev(it)->first->getPath();
@@ -299,9 +321,9 @@ void PropertyBox::setStemFields(map<Stem *, PointSelection> instances)
 			break;
 		}
 	}
-
 	this->minRadiusV->setValue(stem->getPath().getMinRadius());
 
+	/* Degree: */
 	indicateSimilarities(this->degreeL);
 	for (auto it = nextIt; it != instances.end(); ++it) {
 		Spline a = prev(it)->first->getPath().getSpline();
@@ -311,7 +333,6 @@ void PropertyBox::setStemFields(map<Stem *, PointSelection> instances)
 			break;
 		}
 	}
-
 	switch (stem->getPath().getSpline().getDegree()) {
 		case 1:
 			this->degreeV->setCurrentIndex(0);
@@ -321,6 +342,7 @@ void PropertyBox::setStemFields(map<Stem *, PointSelection> instances)
 			break;
 	}
 
+	/* Material: */
 	indicateSimilarities(this->stemMaterialL);
 	for (auto it = nextIt; it != instances.end(); ++it) {
 		int a = prev(it)->first->getMaterial(Stem::Outer);
@@ -330,7 +352,6 @@ void PropertyBox::setStemFields(map<Stem *, PointSelection> instances)
 			break;
 		}
 	}
-
 	{
 		int id = stem->getMaterial(Stem::Outer);
 		string s = this->shared->getMaterial(id).getName();
@@ -338,6 +359,7 @@ void PropertyBox::setStemFields(map<Stem *, PointSelection> instances)
 		this->stemMaterialV->setCurrentText(qs);
 	}
 
+	/* Cap material: */
 	indicateSimilarities(this->capMaterialL);
 	for (auto it = nextIt; it != instances.end(); ++it) {
 		int a = prev(it)->first->getMaterial(Stem::Inner);
@@ -347,13 +369,28 @@ void PropertyBox::setStemFields(map<Stem *, PointSelection> instances)
 			break;
 		}
 	}
-
 	{
 		int id = stem->getMaterial(Stem::Inner);
 		string s = shared->getMaterial(id).getName();
 		QString qs = QString::fromStdString(s);
 		this->capMaterialV->setCurrentText(qs);
 	}
+
+	/* Collar: */
+	indicateSimilarities(this->collarXL);
+	indicateSimilarities(this->collarYL);
+	for (auto it = nextIt; it != instances.end(); ++it) {
+		Vec2 a = prev(it)->first->getSwelling();
+		Vec2 b = it->first->getSwelling();
+		if (a.x != b.x)
+			indicateDifferences(this->collarXL);
+		if (a.y != b.y)
+			indicateDifferences(this->collarYL);
+		if (a.x != b.x && a.y != b.y)
+			break;
+	}
+	this->collarXV->setValue(stem->getSwelling().x);
+	this->collarYV->setValue(stem->getSwelling().y);
 
 	if (this->selectedCurve)
 		this->selectedCurve->select();
@@ -363,13 +400,14 @@ void PropertyBox::setStemFields(map<Stem *, PointSelection> instances)
 	blockStemSignals(false);
 }
 
-void PropertyBox::setLeafFields(map<Stem *, set<long>> instances)
+void PropertyEditor::setLeafFields(map<Stem *, set<long>> instances)
 {
 	Stem *stem = instances.rbegin()->first;
 	long leafID = *instances.rbegin()->second.begin();
 	Leaf *leaf = stem->getLeaf(leafID);
 	blockLeafSignals(true);
 
+	/* Scale: */
 	indicateSimilarities(this->leafScaleXL);
 	indicateSimilarities(this->leafScaleYL);
 	indicateSimilarities(this->leafScaleZL);
@@ -385,11 +423,11 @@ void PropertyBox::setLeafFields(map<Stem *, set<long>> instances)
 				indicateDifferences(this->leafScaleZL);
 		}
 	}
-
 	this->leafScaleXV->setValue(leaf->getScale().x);
 	this->leafScaleYV->setValue(leaf->getScale().y);
 	this->leafScaleZV->setValue(leaf->getScale().z);
 
+	/* Material & Mesh: */
 	indicateSimilarities(this->leafMaterialL);
 	indicateSimilarities(this->leafMeshL);
 	for (auto it = instances.begin(); it != instances.end(); it++) {
@@ -425,7 +463,7 @@ void PropertyBox::setLeafFields(map<Stem *, set<long>> instances)
 	enableLeaf(true);
 }
 
-void PropertyBox::addMaterial(ShaderParams params)
+void PropertyEditor::addMaterial(ShaderParams params)
 {
 	QString name;
 	name = QString::fromStdString(params.getName());
@@ -439,7 +477,7 @@ void PropertyBox::addMaterial(ShaderParams params)
 	editor->change();
 }
 
-void PropertyBox::removeMaterial(QString name)
+void PropertyEditor::removeMaterial(QString name)
 {
 	int index = this->stemMaterialV->findText(name);
 	if (index != 0) {
@@ -454,7 +492,7 @@ void PropertyBox::removeMaterial(QString name)
 	}
 }
 
-void PropertyBox::renameMaterial(QString before, QString after)
+void PropertyEditor::renameMaterial(QString before, QString after)
 {
 	int index;
 	index = this->stemMaterialV->findText(before);
@@ -465,7 +503,7 @@ void PropertyBox::renameMaterial(QString before, QString after)
 	this->leafMaterialV->setItemText(index, after);
 }
 
-void PropertyBox::addMesh(pg::Geometry geom)
+void PropertyEditor::addMesh(pg::Geometry geom)
 {
 	QString name = QString::fromStdString(geom.getName());
 	if (leafMeshV->findText(name) < 0) {
@@ -475,13 +513,13 @@ void PropertyBox::addMesh(pg::Geometry geom)
 	this->editor->change();
 }
 
-void PropertyBox::renameMesh(QString before, QString after)
+void PropertyEditor::renameMesh(QString before, QString after)
 {
 	int index = this->leafMeshV->findText(before);
 	this->leafMeshV->setItemText(index, after);
 }
 
-void PropertyBox::removeMesh(QString name)
+void PropertyEditor::removeMesh(QString name)
 {
 	int index = this->leafMeshV->findText(name);
 	if (index != 0) {
@@ -490,7 +528,7 @@ void PropertyBox::removeMesh(QString name)
 	}
 }
 
-void PropertyBox::changePathDegree(int i)
+void PropertyEditor::changePathDegree(int i)
 {
 	beginChanging();
 	indicateSimilarities(this->degreeL);
@@ -511,7 +549,7 @@ void PropertyBox::changePathDegree(int i)
 	finishChanging();
 }
 
-void PropertyBox::changeResolution(int i)
+void PropertyEditor::changeResolution(int i)
 {
 	beginChanging();
 	indicateSimilarities(this->resolutionL);
@@ -521,7 +559,7 @@ void PropertyBox::changeResolution(int i)
 	this->editor->change();
 }
 
-void PropertyBox::changeDivisions(int i)
+void PropertyEditor::changeDivisions(int i)
 {
 	beginChanging();
 	indicateSimilarities(this->divisionL);
@@ -534,7 +572,7 @@ void PropertyBox::changeDivisions(int i)
 	this->editor->change();
 }
 
-void PropertyBox::changeRadius(double d)
+void PropertyEditor::changeRadius(double d)
 {
 	beginChanging();
 	indicateSimilarities(this->radiusL);
@@ -547,7 +585,7 @@ void PropertyBox::changeRadius(double d)
 	this->editor->change();
 }
 
-void PropertyBox::changeMinRadius(double d)
+void PropertyEditor::changeMinRadius(double d)
 {
 	beginChanging();
 	indicateSimilarities(this->minRadiusL);
@@ -560,7 +598,7 @@ void PropertyBox::changeMinRadius(double d)
 	this->editor->change();
 }
 
-void PropertyBox::changeRadiusCurve(pg::Spline &spline)
+void PropertyEditor::changeRadiusCurve(pg::Spline &spline)
 {
 	beginChanging();
 	auto instances = this->editor->getSelection()->getStemInstances();
@@ -572,7 +610,7 @@ void PropertyBox::changeRadiusCurve(pg::Spline &spline)
 	this->editor->change();
 }
 
-void PropertyBox::changeStemMaterial()
+void PropertyEditor::changeStemMaterial()
 {
 	beginChanging();
 	indicateSimilarities(this->stemMaterialL);
@@ -584,7 +622,33 @@ void PropertyBox::changeStemMaterial()
 	finishChanging();
 }
 
-void PropertyBox::changeCapMaterial()
+void PropertyEditor::changeXCollar(double d)
+{
+	beginChanging();
+	indicateSimilarities(this->collarXL);
+	auto instances = this->editor->getSelection()->getStemInstances();
+	for (auto &instance : instances) {
+		Vec2 swelling = instance.first->getSwelling();
+		swelling.x = d;
+		instance.first->setSwelling(swelling);
+	}
+	this->editor->change();
+}
+
+void PropertyEditor::changeYCollar(double d)
+{
+	beginChanging();
+	indicateSimilarities(this->collarYL);
+	auto instances = this->editor->getSelection()->getStemInstances();
+	for (auto &instance : instances) {
+		Vec2 swelling = instance.first->getSwelling();
+		swelling.y = d;
+		instance.first->setSwelling(swelling);
+	}
+	this->editor->change();
+}
+
+void PropertyEditor::changeCapMaterial()
 {
 	beginChanging();
 	indicateSimilarities(this->capMaterialL);
@@ -596,7 +660,7 @@ void PropertyBox::changeCapMaterial()
 	finishChanging();
 }
 
-void PropertyBox::changeXScale(double d)
+void PropertyEditor::changeXScale(double d)
 {
 	beginChanging();
 	indicateSimilarities(this->leafScaleXL);
@@ -612,7 +676,7 @@ void PropertyBox::changeXScale(double d)
 	this->editor->change();
 }
 
-void PropertyBox::changeYScale(double d)
+void PropertyEditor::changeYScale(double d)
 {
 	beginChanging();
 	indicateSimilarities(this->leafScaleYL);
@@ -628,7 +692,7 @@ void PropertyBox::changeYScale(double d)
 	this->editor->change();
 }
 
-void PropertyBox::changeZScale(double d)
+void PropertyEditor::changeZScale(double d)
 {
 	beginChanging();
 	indicateSimilarities(this->leafScaleYL);
@@ -644,7 +708,7 @@ void PropertyBox::changeZScale(double d)
 	this->editor->change();
 }
 
-void PropertyBox::changeLeafMaterial()
+void PropertyEditor::changeLeafMaterial()
 {
 	beginChanging();
 	indicateSimilarities(this->leafMaterialL);
@@ -659,7 +723,7 @@ void PropertyBox::changeLeafMaterial()
 	finishChanging();
 }
 
-void PropertyBox::changeLeafMesh()
+void PropertyEditor::changeLeafMesh()
 {
 	beginChanging();
 	indicateSimilarities(this->leafMeshL);
@@ -674,7 +738,7 @@ void PropertyBox::changeLeafMesh()
 	finishChanging();
 }
 
-void PropertyBox::beginChanging()
+void PropertyEditor::beginChanging()
 {
 	if (!this->changing) {
 		this->saveStem = new SaveStem(this->editor->getSelection());
@@ -683,7 +747,7 @@ void PropertyBox::beginChanging()
 	this->changing = true;
 }
 
-void PropertyBox::finishChanging()
+void PropertyEditor::finishChanging()
 {
 	if (this->changing && !this->saveStem->isSameAsCurrent()) {
 		this->saveStem->setNewSelection();
@@ -692,7 +756,7 @@ void PropertyBox::finishChanging()
 	this->changing = false;
 }
 
-void PropertyBox::blockStemSignals(bool block)
+void PropertyEditor::blockStemSignals(bool block)
 {
 	this->resolutionV->blockSignals(block);
 	this->divisionV->blockSignals(block);
@@ -703,9 +767,11 @@ void PropertyBox::blockStemSignals(bool block)
 	this->stemMaterialV->blockSignals(block);
 	this->capMaterialV->blockSignals(block);
 	this->stemG->blockSignals(block);
+	this->collarXV->blockSignals(block);
+	this->collarYV->blockSignals(block);
 }
 
-void PropertyBox::blockLeafSignals(bool block)
+void PropertyEditor::blockLeafSignals(bool block)
 {
 	this->leafScaleXV->blockSignals(block);
 	this->leafScaleYV->blockSignals(block);
@@ -714,7 +780,7 @@ void PropertyBox::blockLeafSignals(bool block)
 	this->leafMeshV->blockSignals(block);
 }
 
-void PropertyBox::enableStem(bool enable)
+void PropertyEditor::enableStem(bool enable)
 {
 	if (!enable) {
 		indicateSimilarities(this->radiusL);
@@ -724,6 +790,8 @@ void PropertyBox::enableStem(bool enable)
 		indicateSimilarities(this->degreeL);
 		indicateSimilarities(this->stemMaterialL);
 		indicateSimilarities(this->capMaterialL);
+		indicateSimilarities(this->collarXL);
+		indicateSimilarities(this->collarYL);
 	}
 
 	this->radiusV->setEnabled(enable);
@@ -734,9 +802,11 @@ void PropertyBox::enableStem(bool enable)
 	this->degreeV->setEnabled(enable);
 	this->stemMaterialV->setEnabled(enable);
 	this->capMaterialV->setEnabled(enable);
+	this->collarXV->setEnabled(enable);
+	this->collarYV->setEnabled(enable);
 }
 
-void PropertyBox::enableLeaf(bool enable)
+void PropertyEditor::enableLeaf(bool enable)
 {
 	if (!enable) {
 		indicateSimilarities(this->leafScaleXV);
@@ -753,17 +823,17 @@ void PropertyBox::enableLeaf(bool enable)
 	this->leafMeshV->setEnabled(enable);
 }
 
-void PropertyBox::indicateDifferences(QWidget *widget)
+void PropertyEditor::indicateDifferences(QWidget *widget)
 {
 	widget->setStyleSheet("font-weight:bold;");
 }
 
-void PropertyBox::indicateSimilarities(QWidget *widget)
+void PropertyEditor::indicateSimilarities(QWidget *widget)
 {
 	widget->setStyleSheet("");
 }
 
-void PropertyBox::bind(CurveEditor *curveEditor)
+void PropertyEditor::bind(CurveEditor *curveEditor)
 {
 	this->curveEditor = curveEditor;
 	connect(curveEditor, SIGNAL(curveChanged(pg::Spline, QString)),
@@ -772,12 +842,12 @@ void PropertyBox::bind(CurveEditor *curveEditor)
 		this, SLOT(finishChanging()));
 }
 
-QSize PropertyBox::sizeHint() const
+QSize PropertyEditor::sizeHint() const
 {
 	return QSize(350, 200);
 }
 
-void PropertyBox::setCurve(pg::Spline spline, QString name)
+void PropertyEditor::setCurve(pg::Spline spline, QString name)
 {
 	if (name == "Radius") {
 		this->radiusB->setCurve(spline);
@@ -785,7 +855,7 @@ void PropertyBox::setCurve(pg::Spline spline, QString name)
 	}
 }
 
-void PropertyBox::toggleCurve(CurveButton *button)
+void PropertyEditor::toggleCurve(CurveButton *button)
 {
 	this->selectedCurve = button;
 	auto instances = this->editor->getSelection()->getStemInstances();
