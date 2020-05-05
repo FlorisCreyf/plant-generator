@@ -14,13 +14,13 @@ plant_generator/math/vec2.cpp \
 plant_generator/math/vec3.cpp \
 plant_generator/math/vec4.cpp \
 plant_generator/file.cpp \
-plant_generator/pseudo_generator.cpp \
 plant_generator/geometry.cpp \
 plant_generator/leaf.cpp \
 plant_generator/material.cpp \
 plant_generator/mesh.cpp \
 plant_generator/path.cpp \
 plant_generator/plant.cpp \
+plant_generator/pseudo_generator.cpp \
 plant_generator/spline.cpp \
 plant_generator/stem.cpp \
 editor/commands/add_stem.cpp \
@@ -72,7 +72,6 @@ plant_generator/math/vec2.h \
 plant_generator/math/vec3.h \
 plant_generator/math/vec4.h \
 plant_generator/file.h \
-plant_generator/pseudo_generator.h \
 plant_generator/geometry.h \
 plant_generator/leaf.h \
 plant_generator/material.h \
@@ -80,6 +79,7 @@ plant_generator/mesh.h \
 plant_generator/path.h \
 plant_generator/patterns.h \
 plant_generator/plant.h \
+plant_generator/pseudo_generator.h \
 plant_generator/spline.h \
 plant_generator/stem.h \
 editor/commands/add_stem.h \

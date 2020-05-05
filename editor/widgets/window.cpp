@@ -203,11 +203,12 @@ void Window::setFilename(QString filename)
 
 	if (!name.isEmpty()) {
 		title.prepend("Plant Generator — ");
-		message.prepend("File: [");
-		message.append("]");
+		QDateTime time(QDateTime::currentDateTime());
+		message.append(" | ");
+		message.append(time.time().toString());
 	} else {
 		title = tr("Plant Generator");
-		message = tr("File: (Empty)");
+		message = tr("Not Saved");
 	}
 	fileLabel->setText(message);
 	setWindowTitle(title);
@@ -268,6 +269,7 @@ void Window::saveDialogBox()
 		boost::archive::text_oarchive oa(stream);
 		oa << *(this->editor->getPlant());
 		stream.close();
+		setFilename(filename);
 	}
 }
 

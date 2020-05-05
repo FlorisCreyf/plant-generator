@@ -65,7 +65,7 @@ void Editor::createToolBar()
 {
 	QHBoxLayout *layout = new QHBoxLayout(this);
 	layout->setMargin(0);
-	layout->setAlignment(Qt::AlignBottom);
+	layout->setAlignment(Qt::AlignBottom | Qt::AlignRight);
 	QToolBar *toolbar = new QToolBar(this);
 	perspectiveAction = toolbar->addAction(tr("Perspective"));
 	orthographicAction = toolbar->addAction(tr("Orthographic"));

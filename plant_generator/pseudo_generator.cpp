@@ -44,14 +44,12 @@ void pg::PseudoGenerator::grow()
 Vec3 pg::PseudoGenerator::getStemDirection(Stem *stem)
 {
 	Path path = stem->getParent()->getPath();
+	float ratio = stem->getPosition() / path.getLength();
 	Vec3 direction = path.getIntermediateDirection(stem->getPosition());
-	float radius = stem->getPath().getMaxRadius();
-	float parentRadius = stem->getParent()->getPath().getMaxRadius();
-	float ratio = radius / parentRadius;
-	std::uniform_real_distribution<float> dis(0.0f, M_PI * 0.4f);
-	float angleX = dis(randomGenerator) * ratio;
-	float angleY = dis(randomGenerator);
-	Mat4 rot = pg::rotateXY(M_PI * 0.6f - angleX, angleY * M_PI * 2.0f);
+	std::uniform_real_distribution<float> dis(0.0f, 2.0*M_PI);
+	float angleX = M_PI*(0.1f + 0.4f*(1.0f-ratio));
+	float angleY = dis(this->randomGenerator);
+	Mat4 rot = pg::rotateXY(angleX, angleY);
 	Mat4 tran = pg::rotateIntoVec({0.0f, 1.0f, 0.0f}, direction);
 	tran = tran * rot;
 	return tran.apply({0.0f, 1.0f, 0.0f}, 1.0f);
@@ -97,10 +95,7 @@ void pg::PseudoGenerator::setPath(
 	Stem *stem, Stem *parent, Vec3 direction, float position)
 {
 	std::vector<Vec3> controls;
-	Vec3 variance = {0.02f, -0.05f, 0.01f};
-
-	if (stem->getResolution() == 3)
-		stem->setSwelling({1.0f, 1.0f});
+	std::uniform_real_distribution<float> dis(-0.05f, 0.05f);
 
 	float radius;
 	float minRadius;
@@ -135,7 +130,10 @@ void pg::PseudoGenerator::setPath(
 
 	for (int i = 0; i < points; i++) {
 		control = control + length * direction;
-		direction = normalize(direction + variance);
+		direction.x += dis(this->randomGenerator);
+		direction.y += dis(this->randomGenerator);
+		direction.z += dis(this->randomGenerator);
+		direction = normalize(direction);
 		controls.push_back(control);
 	}
 

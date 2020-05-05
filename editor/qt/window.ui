@@ -73,7 +73,7 @@ QWidget {
 } QStatusBar {
 	background-color:#303030;
 } QStatusBar QLabel {
-	color:#bbb;
+	color:#ccc;
 	font-size:11px;
 	margin-left:5px;
 } QDockWidget QWidget {
@@ -108,17 +108,17 @@ QWidget {
 	subcontrol-origin:margin;
 	position:absolute;
 	top:0px;
-	right:4px;
+	right:5px;
 	bottom:0px;
-	width:14px;
+	width:16px;
 } QDockWidget::float-button {
 	subcontrol-position:top right;
 	subcontrol-origin:margin;
 	position:absolute;
 	top:0px;
-	right:22px;
+	right:25px;
 	bottom:0px;
-	width:14px;
+	width:16px;
 } QDockWidget QLabel {
 	height:24px;
 	font-size:11px;
@@ -190,7 +190,7 @@ QWidget {
 	qproperty-drawBase:0;
 } QTabBar::tab {
 	background:#3d3d3d;
-	color:#aaa;
+	color:#ccc;
 	top:0;
 	padding:6px 10px;
 	margin:0;
@@ -279,17 +279,17 @@ QWidget {
 	background-color:#444;
 	padding-left:7px;
 } QToolBar {
-	background-color:#383838;
 	padding:0;
 	margin:0;
 	spacing:0;
 } QToolButton {
-	color:#aaa;
-	background-color:#383838;
+	color:#ccc;
 	padding:4px;
 	border:0;
+} QToolButton:hover {
+	font-weight:bold;
 } QToolButton:checked {
-	background:#303030;
+	font-weight:bold;
 } QToolButton:pressed {
 	border:0;
 } QComboBox {
