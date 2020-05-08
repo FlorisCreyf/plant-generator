@@ -22,7 +22,7 @@ pg::Material::Material()
 	id = counter++;
 }
 
-long pg::Material::getID()
+long pg::Material::getID() const
 {
 	return id;
 }
@@ -37,7 +37,7 @@ void pg::Material::setName(std::string name)
 	this->name = name;
 }
 
-std::string pg::Material::getName()
+std::string pg::Material::getName() const
 {
 	return name;
 }
@@ -52,7 +52,7 @@ void pg::Material::setTexture(std::string file)
 	this->texture = file;
 }
 
-std::string pg::Material::getTexture()
+std::string pg::Material::getTexture() const
 {
 	return texture;
 }
@@ -62,7 +62,7 @@ void pg::Material::setRatio(float ratio)
 	this->ratio = ratio;
 }
 
-float pg::Material::getRatio()
+float pg::Material::getRatio() const
 {
 	return ratio;
 }

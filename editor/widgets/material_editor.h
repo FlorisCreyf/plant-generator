@@ -39,6 +39,7 @@ class MaterialEditor : public QWidget {
 	QLineEdit *diffuseBox;
 	QPushButton *addDiffuseButton;
 	QPushButton *removeDiffuseButton;
+	int selection;
 
 	void initFields(QFormLayout *form);
 	void initTopRow(QHBoxLayout *topRow);
@@ -55,7 +56,7 @@ public slots:
 	void openDiffuseFile();
 	void removeDiffuseFile();
 	void selectMaterial();
-	void renameMaterial(const QString &text);
+	void renameMaterial();
 	void removeMaterial();
 
 signals:

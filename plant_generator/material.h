@@ -46,15 +46,15 @@ namespace pg {
 
 	public:
 		Material();
-		long getID();
+		long getID() const;
 		void setName(const char *name);
 		void setName(std::string name);
-		std::string getName();
+		std::string getName() const;
 		void setTexture(const char *file);
 		void setTexture(std::string file);
-		std::string getTexture();
+		std::string getTexture() const;
 		void setRatio(float ratio);
-		float getRatio();
+		float getRatio() const;
 	};
 }
 

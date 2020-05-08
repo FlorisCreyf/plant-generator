@@ -28,10 +28,11 @@ namespace pg {
 		std::string exportMtl(std::string, const Plant &);
 
 	public:
-		void exportObj(
-			std::string filename, const Mesh &mesh,
+		void importObj(const char *filename, Geometry *geom);
+		void exportDae(std::string filename, const Mesh &mesh,
 			const Plant &plant);
-		void importObj(const char *filename, pg::Geometry *geom);
+		void exportObj(std::string filename, const Mesh &mesh,
+			const Plant &plant);
 	};
 }
 

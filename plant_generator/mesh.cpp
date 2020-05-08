@@ -586,22 +586,22 @@ vector<unsigned> Mesh::getIndices() const
 
 const vector<Vertex> *Mesh::getVertices(int mesh) const
 {
-	return &this->vertices[mesh];
+	return &this->vertices.at(mesh);
 }
 
 const vector<unsigned> *Mesh::getIndices(int mesh) const
 {
-	return &this->indices[mesh];
+	return &this->indices.at(mesh);
 }
 
 map<long, Segment> Mesh::getLeaves(int mesh) const
 {
-	return this->leafSegments[mesh];
+	return this->leafSegments.at(mesh);
 }
 
 int Mesh::getLeafCount(int mesh) const
 {
-	return this->leafSegments[mesh].size();
+	return this->leafSegments.at(mesh).size();
 }
 
 Segment Mesh::findStem(Stem *stem) const

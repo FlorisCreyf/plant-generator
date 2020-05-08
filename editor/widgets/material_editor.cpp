@@ -103,7 +103,7 @@ void MaterialEditor::initTopRow(QHBoxLayout *topRow)
 
 	this->materialBox = new QComboBox(this);
 	this->materialBox->setEditable(true);
-	this->materialBox->setInsertPolicy(QComboBox::NoInsert);
+	this->materialBox->setInsertPolicy(QComboBox::InsertAtCurrent);
 	this->materialBox->setItemDelegate(new ItemDelegate());
 
 	topRow->addWidget(this->materialBox);;
@@ -111,8 +111,8 @@ void MaterialEditor::initTopRow(QHBoxLayout *topRow)
 	topRow->addWidget(this->addButton);
 	topRow->setAlignment(Qt::AlignTop);
 
-	connect(this->materialBox, SIGNAL(editTextChanged(const QString &)),
-		this, SLOT(renameMaterial(const QString &)));
+	connect(this->materialBox->lineEdit(), SIGNAL(editingFinished()),
+		this, SLOT(renameMaterial()));
 	connect(this->addButton, SIGNAL(clicked()), this, SLOT(addMaterial()));
 	connect(this->removeButton, SIGNAL(clicked()),
 		this, SLOT(removeMaterial()));
@@ -176,16 +176,14 @@ void MaterialEditor::clear()
 	this->diffuseBox->clear();
 }
 
-void MaterialEditor::renameMaterial(const QString &text)
+void MaterialEditor::renameMaterial()
 {
-	if (!text.isEmpty() && this->materialBox->findText(text) == -1) {
-		int id = this->materialBox->currentData().toInt();
-		ShaderParams params = this->shared->getMaterial(id);
-		params.setName(text.toStdString());
-		this->shared->addMaterial(params);
-		this->materialBox->setItemText(
-			this->materialBox->currentIndex(), text);
-	}
+	int index = this->materialBox->currentIndex();
+	QString value = this->materialBox->itemText(index);
+	int id = this->materialBox->currentData().toInt();
+	ShaderParams params = this->shared->getMaterial(id);
+	params.setName(value.toStdString());
+	this->shared->addMaterial(params);
 }
 
 void MaterialEditor::selectMaterial()

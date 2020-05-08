@@ -39,9 +39,9 @@ MeshEditor::MeshEditor(
 	initTopRow(topRow);
 	columns->addLayout(topRow);
 
-	meshViewer = new MeshViewer(shared, this);
-	meshViewer->setMinimumHeight(200);
-	columns->addWidget(meshViewer);
+	this->meshViewer = new MeshViewer(shared, this);
+	this->meshViewer->setMinimumHeight(200);
+	columns->addWidget(this->meshViewer);
 
 	QVBoxLayout *layout = new QVBoxLayout();
 	layout->setMargin(5);
@@ -51,7 +51,7 @@ MeshEditor::MeshEditor(
 	columns->addStretch(1);
 
 	connect(this, SIGNAL(meshChanged(pg::Geometry)),
-		meshViewer, SLOT(updateMesh(pg::Geometry)));
+		this->meshViewer, SLOT(updateMesh(pg::Geometry)));
 }
 
 QSize MeshEditor::sizeHint() const
@@ -61,71 +61,76 @@ QSize MeshEditor::sizeHint() const
 
 void MeshEditor::initFields(QVBoxLayout *layout)
 {
-	customButton = new QPushButton("Custom", this);
-	customButton->setFixedHeight(22);
-	planeButton = new QPushButton("Plane", this);
-	planeButton->setFixedHeight(22);
-	perpPlaneButton = new QPushButton("Perpendicular Planes", this);
-	perpPlaneButton->setFixedHeight(22);
-	emptyButton = new QPushButton("Empty", this);
-	emptyButton->setFixedHeight(22);
+	this->customButton = new QPushButton("Custom", this);
+	this->customButton->setFixedHeight(22);
+	this->planeButton = new QPushButton("Plane", this);
+	this->planeButton->setFixedHeight(22);
+	this->perpPlaneButton = new QPushButton("Perpendicular Planes", this);
+	this->perpPlaneButton->setFixedHeight(22);
+	this->emptyButton = new QPushButton("Empty", this);
+	this->emptyButton->setFixedHeight(22);
 
 	QString style = tr("text-align:left;padding:0 5px;");
-	customButton->setStyleSheet(style);
-	planeButton->setStyleSheet(style);
-	perpPlaneButton->setStyleSheet(style);
-	emptyButton->setStyleSheet(style);
+	this->customButton->setStyleSheet(style);
+	this->planeButton->setStyleSheet(style);
+	this->perpPlaneButton->setStyleSheet(style);
+	this->emptyButton->setStyleSheet(style);
 
-	layout->addWidget(customButton);
-	layout->addWidget(planeButton);
-	layout->addWidget(perpPlaneButton);
-	layout->addWidget(emptyButton);
+	layout->addWidget(this->customButton);
+	layout->addWidget(this->planeButton);
+	layout->addWidget(this->perpPlaneButton);
+	layout->addWidget(this->emptyButton);
 
-	connect(customButton, SIGNAL(clicked()), this, SLOT(loadCustom()));
-	connect(planeButton, SIGNAL(clicked()), this, SLOT(loadPlane()));
-	connect(perpPlaneButton, SIGNAL(clicked()),
+	connect(this->customButton, SIGNAL(clicked()),
+		this, SLOT(loadCustom()));
+	connect(this->planeButton, SIGNAL(clicked()),
+		this, SLOT(loadPlane()));
+	connect(this->perpPlaneButton, SIGNAL(clicked()),
 		this, SLOT(loadPerpPlane()));
-	connect(emptyButton, SIGNAL(clicked()), this, SLOT(loadEmpty()));
+	connect(this->emptyButton, SIGNAL(clicked()),
+		this, SLOT(loadEmpty()));
 }
 
 void MeshEditor::initTopRow(QHBoxLayout *topRow)
 {
-	addButton = new QPushButton("+", this);
-	addButton->setFixedHeight(22);
-	addButton->setFixedWidth(22);
+	this->addButton = new QPushButton("+", this);
+	this->addButton->setFixedHeight(22);
+	this->addButton->setFixedWidth(22);
 
-	removeButton = new QPushButton("-", this);
-	removeButton->setFixedHeight(22);
-	removeButton->setFixedWidth(22);
+	this->removeButton = new QPushButton("-", this);
+	this->removeButton->setFixedHeight(22);
+	this->removeButton->setFixedWidth(22);
 
-	meshBox = new QComboBox(this);
-	meshBox->setEditable(true);
-	meshBox->setInsertPolicy(QComboBox::NoInsert);
-	meshBox->setItemDelegate(new ItemDelegate());
+	this->meshBox = new QComboBox(this);
+	this->meshBox->setEditable(true);
+	this->meshBox->setInsertPolicy(QComboBox::InsertAtCurrent);
+	this->meshBox->setItemDelegate(new ItemDelegate());
 
-	topRow->addWidget(meshBox);
-	topRow->addWidget(removeButton);
-	topRow->addWidget(addButton);
+	topRow->addWidget(this->meshBox);
+	topRow->addWidget(this->removeButton);
+	topRow->addWidget(this->addButton);
 	topRow->setAlignment(Qt::AlignTop);
 
-	connect(meshBox, SIGNAL(editTextChanged(const QString &)),
-		this, SLOT(renameMesh(const QString &)));
-	connect(addButton, SIGNAL(clicked()), this, SLOT(addMesh()));
-	connect(removeButton, SIGNAL(clicked()), this, SLOT(removeMesh()));
-	connect(meshBox, SIGNAL(currentIndexChanged(int)),
+	connect(this->meshBox->lineEdit(), SIGNAL(editingFinished()),
+		this, SLOT(renameMesh()));
+	connect(this->addButton, SIGNAL(clicked()),
+		this, SLOT(addMesh()));
+	connect(this->removeButton, SIGNAL(clicked()),
+		this, SLOT(removeMesh()));
+	connect(this->meshBox, SIGNAL(currentIndexChanged(int)),
 		this, SLOT(selectMesh()));
 }
 
 void MeshEditor::clear()
 {
-	for (int i = 0; i < meshBox->count(); i++)
-		emit meshRemoved(meshBox->itemText(i));
-	meshBox->clear();
+	for (int i = 0; i < this->meshBox->count(); i++)
+		emit meshRemoved(this->meshBox->itemText(i));
+	this->meshBox->clear();
 }
 
 const MeshViewer *MeshEditor::getViewer() const
 {
-	return meshViewer;
+	return this->meshViewer;
 }
 
 void MeshEditor::addMesh()
@@ -137,7 +142,7 @@ void MeshEditor::addMesh()
 	for (int i = 1; true; i++) {
 		name = "Mesh " + std::to_string(i);
 		qname = QString::fromStdString(name);
-		if (meshBox->findText(qname) == -1)
+		if (this->meshBox->findText(qname) == -1)
 			break;
 	}
 
@@ -148,110 +153,110 @@ void MeshEditor::addMesh()
 
 void MeshEditor::addMesh(pg::Geometry geom)
 {
-	pg::Plant *plant = editor->getPlant();
+	pg::Plant *plant = this->editor->getPlant();
 	QString qname = QString::fromStdString(geom.getName());
 	plant->addLeafMesh(geom);
-	meshBox->addItem(qname, QVariant((qlonglong)geom.getID()));
-	meshBox->setCurrentIndex(meshBox->findText(qname));
+	this->meshBox->addItem(qname, QVariant((qlonglong)geom.getID()));
+	this->meshBox->setCurrentIndex(this->meshBox->findText(qname));
 	emit meshChanged(geom);
 	emit meshAdded(geom);
 }
 
 void MeshEditor::loadCustom()
 {
-	if (meshBox->count() > 0) {
+	if (this->meshBox->count() > 0) {
 		QString filename = QFileDialog::getOpenFileName(
 			this, tr("Open File"), "", tr("Wavefront OBJ (*.obj)"));
 
 		if (!filename.isNull()) {
-			pg::Plant *plant = editor->getPlant();
-			int id = meshBox->currentData().toInt();
+			pg::Plant *plant = this->editor->getPlant();
+			int id = this->meshBox->currentData().toInt();
 			pg::Geometry geom = plant->getLeafMesh(id);
 			pg::File file;
 			std::string s = filename.toStdString();
 			file.importObj(s.c_str(), &geom);
 			plant->addLeafMesh(geom);
 			emit meshChanged(geom);
-			editor->change();
+			this->editor->change();
 		}
 	}
 }
 
 void MeshEditor::loadPlane()
 {
-	if (meshBox->count() > 0) {
+	if (this->meshBox->count() > 0) {
 		pg::Plant *plant = editor->getPlant();
-		int id = meshBox->currentData().toInt();
+		int id = this->meshBox->currentData().toInt();
 		pg::Geometry geom = plant->getLeafMesh(id);
 		geom.setPlane();
 		plant->addLeafMesh(geom);
 		emit meshChanged(geom);
-		editor->change();
+		this->editor->change();
 	}
 }
 
 void MeshEditor::loadPerpPlane()
 {
-	if (meshBox->count() > 0) {
-		pg::Plant *plant = editor->getPlant();
-		int id = meshBox->currentData().toInt();
+	if (this->meshBox->count() > 0) {
+		pg::Plant *plant = this->editor->getPlant();
+		int id = this->meshBox->currentData().toInt();
 		pg::Geometry geom = plant->getLeafMesh(id);
 		geom.setPerpendicularPlanes();
 		plant->addLeafMesh(geom);
 		emit meshChanged(geom);
-		editor->change();
+		this->editor->change();
 	}
 }
 
 void MeshEditor::loadEmpty()
 {
-	if (meshBox->count() > 0) {
-		pg::Plant *plant = editor->getPlant();
-		int id = meshBox->currentData().toInt();
+	if (this->meshBox->count() > 0) {
+		pg::Plant *plant = this->editor->getPlant();
+		int id = this->meshBox->currentData().toInt();
 		pg::Geometry geom = plant->getLeafMesh(id);
 		geom.clear();
 		plant->addLeafMesh(geom);
 		emit meshChanged(geom);
-		editor->change();
+		this->editor->change();
 	}
 }
 
 void MeshEditor::selectMesh()
 {
 	pg::Plant *plant = editor->getPlant();
-	int id = meshBox->currentData().toInt();
+	this->selectedText = this->meshBox->currentText();
+	int id = this->meshBox->currentData().toInt();
 	if (id != 0) {
 		pg::Geometry geom = plant->getLeafMesh(id);
 		emit meshChanged(geom);
 	}
 }
 
-void MeshEditor::renameMesh(const QString &text)
+void MeshEditor::renameMesh()
 {
-	if (!text.isEmpty() && meshBox->findText(text) == -1) {
-		QString before = meshBox->itemText(meshBox->currentIndex());
-		int id = meshBox->currentData().toInt();
-		pg::Plant *plant = editor->getPlant();
-		pg::Geometry geom = plant->getLeafMesh(id);
-		geom.setName(text.toStdString());
-		plant->addLeafMesh(geom);
-		meshBox->setItemText(meshBox->currentIndex(), text);
-		emit meshRenamed(before, text);
-	}
+	int index = this->meshBox->currentIndex();
+	QString value = this->meshBox->itemText(index);
+	int id = this->meshBox->currentData().toInt();
+	pg::Plant *plant = this->editor->getPlant();
+	pg::Geometry geom = plant->getLeafMesh(id);
+	geom.setName(value.toStdString());
+	plant->addLeafMesh(geom);
+	emit meshRenamed(this->selectedText, value);
+	this->selectedText = value;
 }
 
 void MeshEditor::removeMesh()
 {
-	 if (meshBox->count() > 1) {
-		pg::Plant *plant = editor->getPlant();
- 		int id = meshBox->currentData().toInt();
-		QString name = meshBox->currentText();
+	 if (this->meshBox->count() > 1) {
+		pg::Plant *plant = this->editor->getPlant();
+		int id = this->meshBox->currentData().toInt();
+		QString name = this->meshBox->currentText();
 
 		pg::Geometry geom = plant->getLeafMesh(id);
 		plant->removeLeafMesh(id);
 
-		meshBox->removeItem(meshBox->currentIndex());
+		this->meshBox->removeItem(this->meshBox->currentIndex());
 		selectMesh();
 		emit meshRemoved(name);
-	 }
+	}
 }

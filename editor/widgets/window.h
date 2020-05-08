@@ -29,6 +29,7 @@
 #include "mesh_editor.h"
 #include "key_editor.h"
 #include "property_editor.h"
+#include <QFileDialog>
 
 class Window : public QMainWindow {
 	Q_OBJECT

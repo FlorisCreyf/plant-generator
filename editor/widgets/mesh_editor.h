@@ -43,6 +43,8 @@ class MeshEditor : public QWidget {
 	QPushButton *perpPlaneButton;
 	QPushButton *emptyButton;
 
+	QString selectedText;
+
 	void initFields(QVBoxLayout *form);
 	void initTopRow(QHBoxLayout *topRow);
 
@@ -60,7 +62,7 @@ public slots:
 	void loadPerpPlane();
 	void loadEmpty();
 	void selectMesh();
-	void renameMesh(const QString &text);
+	void renameMesh();
 	void removeMesh();
 
 signals:

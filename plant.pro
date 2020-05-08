@@ -6,6 +6,7 @@ QT = core gui opengl xml
 LIBS += /usr/lib/x86_64-linux-gnu/libboost_serialization.a
 
 SOURCES += \
+plant_generator/thirdparty/pugixml/src/pugixml.cpp \
 plant_generator/math/curve.cpp \
 plant_generator/math/intersection.cpp \
 plant_generator/math/mat4.cpp \

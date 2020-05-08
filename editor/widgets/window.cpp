@@ -278,14 +278,18 @@ void Window::exportDialogBox()
 	const pg::Mesh *mesh = this->editor->getMesh();
 	const pg::Plant *plant = this->editor->getPlant();
 
+	QString filter;
 	QString filename = QFileDialog::getSaveFileName(
-		this, tr("Export File"), "saved/plant.obj",
-		tr("Wavefront OBJ (*.obj)"));
+		this, tr("Export File"), "saved/",
+		tr("Wavefront OBJ (*.obj);;Collada DAE (*.dae)"), &filter);
 
 	if (!filename.isEmpty()) {
 		pg::File f;
 		QByteArray b = filename.toLatin1();
-		f.exportObj(b.data(), *mesh, *plant);
+		if (filter == "Wavefront OBJ (*.obj)")
+			f.exportObj(b.data(), *mesh, *plant);
+		else if (filter == "Collada DAE (*.dae)")
+			f.exportDae(b.data(), *mesh, *plant);
 	}
 }
 
