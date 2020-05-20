@@ -52,8 +52,8 @@ void Window::createEditors()
 	QDockWidget *dockWidget[5];
 
 	dockWidget[0] = new QDockWidget(tr("Properties"), this);
-	this->propertyEditor =
-		new PropertyEditor(&this->shared, this->editor, this);
+	this->propertyEditor = new PropertyEditor(
+		&this->shared, this->editor, this);
 	dockWidget[0]->setAllowedAreas(areas);
 	scrollArea = new QScrollArea();
 	dockWidget[0]->setWidget(scrollArea);

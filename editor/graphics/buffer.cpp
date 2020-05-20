@@ -148,6 +148,12 @@ void Buffer::setVertexFormat()
 	ptr = (GLvoid *)(offsetof(Vertex, uv));
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, ptr);
 	glEnableVertexAttribArray(2);
+	ptr = (GLvoid *)(offsetof(Vertex, indices));
+	glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, stride, ptr);
+	glEnableVertexAttribArray(3);
+	ptr = (GLvoid *)(offsetof(Vertex, weights));
+	glVertexAttribPointer(4, 2, GL_FLOAT, GL_FALSE, stride, ptr);
+	glEnableVertexAttribArray(4);
 }
 
 void Buffer::use()

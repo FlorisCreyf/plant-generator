@@ -74,7 +74,7 @@ namespace pg {
 		#endif
 
 	public:
-		enum {Outer, Inner};
+		enum Type {Outer, Inner};
 
 		Stem(Stem *parent = nullptr);
 		Stem(const Stem &original);

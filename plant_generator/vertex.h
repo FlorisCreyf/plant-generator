@@ -28,6 +28,8 @@ namespace pg {
 			Vec3 color;
 		};
 		Vec2 uv;
+		Vec2 indices;
+		Vec2 weights;
 
 	private:
 		#ifdef PG_SERIALIZE
@@ -39,6 +41,8 @@ namespace pg {
 			ar & position;
 			ar & normal;
 			ar & uv;
+			ar & weights;
+			ar & indices;
 		}
 		#endif
 	};
