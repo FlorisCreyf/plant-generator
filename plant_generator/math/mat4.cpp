@@ -37,35 +37,29 @@ Mat4 pg::rotateIntoVec(const Vec3 &normal, const Vec3 &direction)
 	Vec3 v = pg::cross(normal, direction);
 	float e = pg::dot(normal, direction);
 	float h = 1.0f / (1.0f + e);
-	Mat4 result = {
+	return Mat4(
 		e + h*v.x*v.x, h*v.x*v.y + v.z, h*v.x*v.z - v.y, 0.0f,
 		h*v.x*v.y - v.z, e + h*v.y*v.y, h*v.y*v.z + v.x, 0.0f,
 		h*v.x*v.z + v.y, h*v.y*v.z - v.x, e + h*v.z*v.z, 0.0f,
-		0.0f, 0.0f, 0.0f, 1.0f
-	};
-	return result;
+		0.0f, 0.0f, 0.0f, 1.0f);
 }
 
 Mat4 pg::translate(const Vec3 &vec)
 {
-	Mat4 result = {
+	return Mat4(
 		1.0f, 0.0f, 0.0f, 0.0f,
 		0.0f, 1.0f, 0.0f, 0.0f,
 		0.0f, 0.0f, 1.0f, 0.0f,
-		vec.x, vec.y, vec.z, 1.0f
-	};
-	return result;
+		vec.x, vec.y, vec.z, 1.0f);
 }
 
 Mat4 pg::scale(const Vec3 &vec)
 {
-	Mat4 result = {
+	return Mat4(
 		vec.x, 0.0f, 0.0f, 0.0f,
 		0.0f, vec.y, 0.0f, 0.0f,
 		0.0f, 0.0f, vec.z, 0.0f,
-		0.0f, 0.0f, 0.0f, 1.0f
-	};
-	return result;
+		0.0f, 0.0f, 0.0f, 1.0f);
 }
 
 Mat4 pg::transpose(const Mat4 &mat)
@@ -83,13 +77,11 @@ Mat4 pg::rotateXY(float x, float y)
 	float cx = std::cos(x);
 	float sy = std::sin(y);
 	float cy = std::cos(y);
-	Mat4 result = {
+	return Mat4(
 		cy, 0.0f, sy, 0.0f,
 		sx*sy, cx, -sx*cy, 0.0f,
 		-cx*sy, sx, cx*cy, 0.0f,
-		0.0f, 0.0f, 0.0f, 1.0f
-	};
-	return result;
+		0.0f, 0.0f, 0.0f, 1.0f);
 }
 
 Mat4 pg::rotateZYX(float z, float y, float x)
@@ -100,22 +92,18 @@ Mat4 pg::rotateZYX(float z, float y, float x)
 	float sy = std::sin(y);
 	float cx = std::cos(x);
 	float sx = std::sin(x);
-	Mat4 result = {
+	return Mat4(
 		cz*cy, sz*cy, -sy, 0.0f,
 		cz*sy*sx-sz*sx, sz*sy*sx+cz*cz, cy*sx, 0.0f,
 		cz*sy*cx+sz*sx, sz*sy*cx-cz*sx, cy*cx, 0.0f,
-		0.0f, 0.0f, 0.0f, 1.0f
-	};
-	return result;
+		0.0f, 0.0f, 0.0f, 1.0f);
 }
 
 Mat4 pg::identity()
 {
-	Mat4 result = {
+	return Mat4(
 		1.0f, 0.0f, 0.0f, 0.0f,
 		0.0f, 1.0f, 0.0f, 0.0f,
 		0.0f, 0.0f, 1.0f, 0.0f,
-		0.0f, 0.0f, 0.0f, 1.0f
-	};
-	return result;
+		0.0f, 0.0f, 0.0f, 1.0f);
 }

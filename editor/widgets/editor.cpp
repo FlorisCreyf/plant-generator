@@ -51,9 +51,9 @@ Editor::Editor(SharedResources *shared, KeyMap *keymap, QWidget *parent) :
 	perspective = true;
 	shader = Model;
 
-	Vec3 color1 = {0.102f, 0.212f, 0.6f};
-	Vec3 color2 = {0.102f, 0.212f, 0.6f};
-	Vec3 color3 = {0.1f, 1.0f, 0.4f};
+	Vec3 color1(0.102f, 0.212f, 0.6f);
+	Vec3 color2(0.102f, 0.212f, 0.6f);
+	Vec3 color3(0.1f, 1.0f, 0.4f);
 	path.setColor(color1, color2, color3);
 	setMouseTracking(true);
 	setFocus();
@@ -141,10 +141,10 @@ void Editor::initializeBuffers()
 	Geometry axesArrows = translationAxes.getArrows();
 	Geometry rotationLines = rotationAxes.getLines();
 
-	pg::Vec3 colors[2];
-	colors[0] = {0.4f, 0.4f, 0.4f};
-	colors[1] = {0.4f, 0.4f, 0.4f};
-	geometry.addGrid(5, colors, {0.3, 0.3, 0.3});
+	Vec3 colors[2];
+	colors[0] = Vec3(0.4f, 0.4f, 0.4f);
+	colors[1] = Vec3(0.4f, 0.4f, 0.4f);
+	geometry.addGrid(5, colors, Vec3(0.3, 0.3, 0.3));
 	scene.grid = geometry.getSegment();
 	scene.axesLines = geometry.append(axesLines);
 	scene.axesArrows = geometry.append(axesArrows);
@@ -343,8 +343,8 @@ void Editor::mousePressEvent(QMouseEvent *event)
 		if (hasPoints && !hasFirstPoint && axis != Axes::None) {
 			MovePath *movePath = new MovePath(
 				&selection, &translationAxes, &camera);
-			pg::Vec3 axesPosition = translationAxes.getPosition();
-			pg::Vec3 s = camera.toScreenSpace(axesPosition);
+			Vec3 axesPosition = translationAxes.getPosition();
+			Vec3 s = camera.toScreenSpace(axesPosition);
 			movePath->setClickOffset(s.x - pos.x(), s.y - pos.y());
 			currentCommand = movePath;
 		}
@@ -408,8 +408,8 @@ void Editor::updateCamera(int width, int height)
 		camera.setPerspective(45.0f, 0.001f, 200.0f, ratio);
 	else {
 		ratio /= 2.0f;
-		Vec3 a = {-ratio, -0.5f, 0.0f};
-		Vec3 b = {ratio, 0.5f, 100.0f};
+		Vec3 a(-ratio, -0.5f, 0.0f);
+		Vec3 b(ratio, 0.5f, 100.0f);
 		camera.setOrthographic(a, b);
 	}
 }

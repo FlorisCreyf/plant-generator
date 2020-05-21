@@ -110,7 +110,7 @@ bool PointSelection::contains(int point) const
 Vec3 PointSelection::getAveragePosition(const Spline &spline, Vec3 location)
 	const
 {
-	Vec3 position = {0.0f, 0.0f, 0.0f};
+	Vec3 position(0.0f, 0.0f, 0.0f);
 	for (int point : this->points)
 		position += spline.getControls()[point];
 	position /= points.size();

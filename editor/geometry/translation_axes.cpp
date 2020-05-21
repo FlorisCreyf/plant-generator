@@ -18,25 +18,28 @@
 #include "translation_axes.h"
 #include <limits>
 
+using pg::Vec3;
+using pg::Mat4;
+
 Geometry TranslationAxes::getLines()
 {
 	Geometry lines;
-	pg::Vec3 color;
-	pg::Vec3 line[2];
+	Vec3 color;
+	Vec3 line[2];
 
-	line[0] = {lineLength[0], 0.0f, 0.0f};
-	line[1] = {lineLength[1], 0.0f, 0.0f};
-	color = {1.0f, 0.2f, 0.0f};
+	line[0] = Vec3(lineLength[0], 0.0f, 0.0f);
+	line[1] = Vec3(lineLength[1], 0.0f, 0.0f);
+	color = Vec3(1.0f, 0.2f, 0.0f);
 	lines.addLine(line, color);
 
-	line[0] = {0.0f, lineLength[0], 0.0f};
-	line[1] = {0.0f, lineLength[1], 0.0f};
-	color = {0.0f, 1.0f, 0.2f};
+	line[0] = Vec3(0.0f, lineLength[0], 0.0f);
+	line[1] = Vec3(0.0f, lineLength[1], 0.0f);
+	color = Vec3(0.0f, 1.0f, 0.2f);
 	lines.addLine(line, color);
 
-	line[0] = {0.0f, 0.0f, lineLength[0]};
-	line[1] = {0.0f, 0.0f, lineLength[1]};
-	color = {0.0f, 0.2f, 1.0f};
+	line[0] = Vec3(0.0f, 0.0f, lineLength[0]);
+	line[1] = Vec3(0.0f, 0.0f, lineLength[1]);
+	color = Vec3(0.0f, 0.2f, 1.0f);
 	lines.addLine(line, color);
 
 	return lines;
@@ -46,36 +49,33 @@ Geometry TranslationAxes::getArrows()
 {
 	Geometry::Segment segment;
 	Geometry arrows;
-	pg::Vec3 color;
+	Vec3 color;
 	int size = 10;
 
 	color = {0.0f, 1.0f, 0.2f};
 	arrows.addCone(radius, coneLength[0], size, color);
 	segment = arrows.getSegment();
-	arrows.transform(segment.pstart, segment.pcount, {
+	arrows.transform(segment.pstart, segment.pcount, Mat4(
 		1.0f, 0.0f, 0.0f, 0.0f,
 		0.0f, 1.0f, 0.0f, 0.0f,
 		0.0f, 0.0f, 1.0f, 0.0f,
-		0.0f, coneLength[1] - coneLength[0], 0.0f, 1.0f
-	});
+		0.0f, coneLength[1] - coneLength[0], 0.0f, 1.0f));
 
 	color = {0.0f, 0.2f, 1.0f};
 	arrows.addCone(radius, coneLength[0], size, color);
-	arrows.transform(segment.pcount, segment.pcount, {
+	arrows.transform(segment.pcount, segment.pcount, Mat4(
 		1.0f, 0.0f, 0.0f, 0.0f,
 		0.0f, 0.0f, 1.0f, 0.0f,
 		0.0f, -1.0f, 0.0f, 0.0f,
-		0.0f, 0.0f, coneLength[1] - coneLength[0], 1.0f
-	});
+		0.0f, 0.0f, coneLength[1] - coneLength[0], 1.0f));
 
 	color = {1.0f, 0.2f, 0.0f};
 	arrows.addCone(radius, coneLength[0], size, color);
-	arrows.transform(segment.pcount*2, segment.pcount, {
+	arrows.transform(segment.pcount*2, segment.pcount, Mat4(
 		0.0f, -1.0f, 0.0f, 0.0f,
 		1.0f, 0.0f, 0.0f, 0.0f,
 		0.0f, 0.0f, 1.0f, 0.0f,
-		coneLength[1] - coneLength[0], 0.0f, 0.0f, 1.0f
-	});
+		coneLength[1] - coneLength[0], 0.0f, 0.0f, 1.0f));
 
 	return arrows;
 }
@@ -140,11 +140,9 @@ pg::Mat4 TranslationAxes::getTransformation(float distance)
 	float m = 1.0f;
 	if (scalable)
 		m = distance / 15.0f * scale;
-	pg::Mat4 transform = {
+	return Mat4(
 		m, 0.0f, 0.0f, 0.0f,
 		0.0f, m, 0.0f, 0.0f,
 		0.0f, 0.0f, m, 0.0f,
-		position.x, position.y, position.z, 1.0f
-	};
-	return transform;
+		position.x, position.y, position.z, 1.0f);
 }

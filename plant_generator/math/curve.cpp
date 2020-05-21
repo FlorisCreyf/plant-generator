@@ -36,7 +36,7 @@ float getBernsteinTerm(float t, int i, int n)
 
 Vec3 pg::getBezier(float t, const Vec3 *points, int size)
 {
-	Vec3 b = {0.0f, 0.0f, 0.0f};
+	Vec3 b(0.0f, 0.0f, 0.0f);
 
 	for (int i = 0; i < size; i++) {
 		float basis = getBernsteinTerm(t, i, size-1);

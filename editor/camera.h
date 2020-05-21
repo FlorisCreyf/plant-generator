@@ -55,13 +55,9 @@ public:
 	bool isPerspective() const;
 
 private:
-	struct Point {
-		float x;
-		float y;
-	};
-	Point posDiff;
-	Point pos;
-	Point start;
+	pg::Vec2 posDiff;
+	pg::Vec2 pos;
+	pg::Vec2 start;
 
 	Action action;
 
@@ -70,8 +66,8 @@ private:
 	pg::Vec3 feye;
 	pg::Vec3 target;
 	pg::Vec3 ftarget;
-	pg::Vec3 far;
-	pg::Vec3 near;
+	pg::Vec3 farPlane;
+	pg::Vec3 nearPlane;
 	int winWidth;
 	int winHeight;
 	float distance;

@@ -20,6 +20,8 @@
 #include <cstdlib>
 #include <cmath>
 
+#define PI 3.14159265359f
+
 using pg::Stem;
 using pg::Vec3;
 using pg::Mat4;
@@ -37,7 +39,7 @@ void pg::PseudoGenerator::grow()
 {
 	Stem *root = plant->createRoot();
 	root->setPosition(0.0f);
-	setPath(root, nullptr, {0.0f, 1.0f, 0.0f}, 0.0f);
+	setPath(root, nullptr, Vec3(0.0f, 1.0f, 0.0f), 0.0f);
 	addLateralStems(root, 1.5f);
 }
 
@@ -46,13 +48,13 @@ Vec3 pg::PseudoGenerator::getStemDirection(Stem *stem)
 	Path path = stem->getParent()->getPath();
 	float ratio = stem->getPosition() / path.getLength();
 	Vec3 direction = path.getIntermediateDirection(stem->getPosition());
-	std::uniform_real_distribution<float> dis(0.0f, 2.0*M_PI);
-	float angleX = M_PI*(0.1f + 0.4f*(1.0f-ratio));
+	std::uniform_real_distribution<float> dis(0.0f, 2.0*PI);
+	float angleX = PI*(0.1f + 0.4f*(1.0f-ratio));
 	float angleY = dis(this->randomGenerator);
 	Mat4 rot = pg::rotateXY(angleX, angleY);
-	Mat4 tran = pg::rotateIntoVec({0.0f, 1.0f, 0.0f}, direction);
+	Mat4 tran = pg::rotateIntoVec(Vec3(0.0f, 1.0f, 0.0f), direction);
 	tran = tran * rot;
-	return tran.apply({0.0f, 1.0f, 0.0f}, 1.0f);
+	return tran.apply(Vec3(0.0f, 1.0f, 0.0f), 1.0f);
 }
 
 void pg::PseudoGenerator::addLateralStems(Stem *parent, float position)
@@ -83,7 +85,7 @@ void pg::PseudoGenerator::growLateralStem(Stem *stem, float position)
 	if (this->hasLeaves) {
 		Leaf leaf;
 		leaf.setPosition(1.5f);
-		leaf.setScale({2.0f, 2.0f, 2.0f});
+		leaf.setScale(Vec3(2.0f, 2.0f, 2.0f));
 		stem->addLeaf(leaf);
 	}
 
@@ -123,7 +125,7 @@ void pg::PseudoGenerator::setPath(
 	path.setRadius(getDefaultCurve(0));
 	path.setResolution(divisions);
 
-	Vec3 control = {0.0f, 0.0f, 0.0f};
+	Vec3 control(0.0f, 0.0f, 0.0f);
 	controls.push_back(control);
 	control += length * 0.5f * direction;
 	controls.push_back(control);

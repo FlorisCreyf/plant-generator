@@ -66,8 +66,7 @@ Quat pg::fromAxisAngle(Vec3 vec, float theta)
 {
 	float a = theta / 2.0f;
 	float b = std::sin(a);
-	Quat quat = {vec.x*b, vec.y*b, vec.z*b, std::cos(a)};
-	return quat;
+	return Quat(vec.x*b, vec.y*b, vec.z*b, std::cos(a));
 }
 
 Quat pg::slerp(Quat a, Quat b, float t)
@@ -89,6 +88,5 @@ Quat pg::rotateIntoVecQ(Vec3 normal, Vec3 direction)
 {
 	float e = sqrt(2.0f * (1.0f + dot(normal, direction)));
 	Vec3 vec = (1.0f / e) * cross(normal, direction);
-	Quat quat = {vec.x, vec.y, vec.z, e / 2.0f};
-	return quat;
+	return Quat(vec.x, vec.y, vec.z, e / 2.0f);
 }

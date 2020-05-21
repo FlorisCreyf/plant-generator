@@ -23,10 +23,10 @@ Leaf::Leaf()
 {
 	id = counter++;
 	position = -1.0f;
-	scale = {1.0f, 1.0f, 1.0f};
+	scale = Vec3(1.0f, 1.0f, 1.0f);
 	material = 0;
 	mesh = 0;
-	rotation = {0.0f, 0.0f, 0.0f, 1.0f};
+	rotation = Quat(0.0f, 0.0f, 0.0f, 1.0f);
 }
 
 bool Leaf::operator==(const Leaf &leaf) const
@@ -73,20 +73,19 @@ Quat Leaf::getRotation() const
 
 Quat Leaf::getDefaultOrientation(Vec3 stemDirection) const
 {
-	Vec3 normal = {0.0f, 1.0f, 0.0f};
-	Vec3 planeDirection = {0.0f, 0.0f, 1.0f};
+	Vec3 normal(0.0f, 1.0f, 0.0f);
+	Vec3 planeDirection(0.0f, 0.0f, 1.0f);
 	Vec3 leafDirection;
 	if (isZero(stemDirection - normal))
 		leafDirection = planeDirection;
 	else
 		leafDirection = normalize(cross(stemDirection, normal));
-	Quat q = rotateIntoVecQ(planeDirection, leafDirection);
-	return q;
+	return rotateIntoVecQ(planeDirection, leafDirection);
 }
 
 Vec3 Leaf::getDirection(Vec3 stemDirection) const
 {
-	Vec3 normal = {0.0f, 0.0f, 1.0f};
+	Vec3 normal(0.0f, 0.0f, 1.0f);
 	Quat rotation = this->rotation * getDefaultOrientation(stemDirection);
 	return rotate(rotation, normal, 0.0f);
 }

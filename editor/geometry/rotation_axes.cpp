@@ -17,6 +17,9 @@
 
 #include "rotation_axes.h"
 
+using pg::Mat4;
+using pg::Vec3;
+
 Geometry RotationAxes::getLines()
 {
 	unsigned index = 0;
@@ -25,33 +28,33 @@ Geometry RotationAxes::getLines()
 	Geometry lines;
 	Geometry::Segment segment;
 
-	lines.addCircle(radius, resolution, {0.0f, 1.0f, 0.2f});
+	lines.addCircle(radius, resolution, Vec3(0.0f, 1.0f, 0.2f));
 	while (index < resolution)
 		lines.addIndex(index++);
 	lines.addIndex(index - resolution);
 	lines.addIndex(Geometry::primitiveReset);
 	segment = lines.getSegment();
 
-	lines.addCircle(radius, resolution, {0.0f, 0.2f, 1.0f});
-	lines.transform(segment.pcount, segment.pcount, {
+	lines.addCircle(radius, resolution, Vec3(0.0f, 0.2f, 1.0f));
+	lines.transform(segment.pcount, segment.pcount, Mat4(
 		1.0f, 0.0f, 0.0f, 0.0f,
 		0.0f, 0.0f, 1.0f, 0.0f,
 		0.0f, -1.0f, 0.0f, 0.0f,
-		0.0f, 0.0f, 0.0f, 1.0f
-	});
+		0.0f, 0.0f, 0.0f, 1.0f));
+
 	while (index < resolution*2)
 		lines.addIndex(index++);
 	lines.addIndex(index - resolution);
 	lines.addIndex(Geometry::primitiveReset);
 
 	lines.addIndex(Geometry::primitiveReset);
-	lines.addCircle(radius, resolution, {1.0f, 0.2f, 0.0f});
-	lines.transform(segment.pcount*2, segment.pcount, {
+	lines.addCircle(radius, resolution, Vec3(1.0f, 0.2f, 0.0f));
+	lines.transform(segment.pcount*2, segment.pcount, Mat4(
 		0.0f, -1.0f, 0.0f, 0.0f,
 		1.0f, 0.0f, 0.0f, 0.0f,
 		0.0f, 0.0f, 1.0f, 0.0f,
-		0.0f, 0.0f, 0.0f, 1.0f
-	});
+		0.0f, 0.0f, 0.0f, 1.0f));
+
 	while (index < resolution*3)
 		lines.addIndex(index++);
 	lines.addIndex(index - resolution);
@@ -69,11 +72,10 @@ pg::Mat4 RotationAxes::getTransformation(float distance, pg::Vec3 direction)
 	float m = 1.0f;
 	if (scalable)
 		m = distance / 15.0f * scale;
-	pg::Mat4 transform = {
+	Mat4 transform(
 		m, 0.0f, 0.0f, 0.0f,
 		0.0f, m, 0.0f, 0.0f,
 		0.0f, 0.0f, m, 0.0f,
-		position.x, position.y, position.z, 1.0f
-	};
-	return transform * pg::rotateIntoVec({0.0f, 1.0f, 0.0f}, direction);
+		position.x, position.y, position.z, 1.0f);
+	return transform * pg::rotateIntoVec(Vec3(0.0f, 1.0f, 0.0f), direction);
 }

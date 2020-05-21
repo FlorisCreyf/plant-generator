@@ -26,6 +26,23 @@ namespace pg {
 	struct Mat4 {
 		Vec4 vectors[4];
 
+		Mat4()
+		{
+
+		}
+
+		Mat4(
+			float a11, float a12, float a13, float a14,
+			float a21, float a22, float a23, float a24,
+			float a31, float a32, float a33, float a34,
+			float a41, float a42, float a43, float a44)
+		{
+			this->vectors[0] = Vec4(a11, a12, a13, a14);
+			this->vectors[1] = Vec4(a21, a22, a23, a24);
+			this->vectors[2] = Vec4(a31, a32, a33, a34);
+			this->vectors[3] = Vec4(a41, a42, a43, a44);
+		}
+
 		Vec4 &operator[](unsigned row)
 		{
 			return vectors[row];

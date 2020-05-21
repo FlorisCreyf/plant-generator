@@ -26,6 +26,7 @@
 #include <QTabBar>
 #include <cmath>
 
+using pg::Vec2;
 using pg::Vec3;
 using pg::Mat4;
 
@@ -51,7 +52,7 @@ CurveEditor::CurveEditor(
 	setFocusPolicy(Qt::StrongFocus);
 	setMouseTracking(true);
 
-	this->camera.setTarget({0.5f, 0.0f, 0.5f});
+	this->camera.setTarget(Vec3(0.5f, 0.0f, 0.5f));
 	this->camera.setOrientation(180.0f, -180.0f);
 	this->camera.setDistance(1.0f);
 	this->camera.setPanSpeed(0.004f);
@@ -85,9 +86,9 @@ void CurveEditor::initializeGL()
 	this->buffer.allocateIndexMemory(1000);
 
 	this->path.setColor(
-		{0.5f, 0.5f, 0.5f},
-		{0.6f, 0.6f, 0.6f},
-		{0.1f, 1.0f, 0.4f});
+		Vec3(0.5f, 0.5f, 0.5f),
+		Vec3(0.6f, 0.6f, 0.6f),
+		Vec3(0.1f, 1.0f, 0.4f));
 	glPrimitiveRestartIndex(Geometry::primitiveReset);
 
 	change();
@@ -103,17 +104,17 @@ void CurveEditor::createInterface()
 	Geometry geometry;
 
 	{
-		this->path.set(this->spline, 20, {0.0f, 0.0f, 0.0f});
+		this->path.set(this->spline, 20, Vec3(0.0f, 0.0f, 0.0f));
 		this->path.setSelectedPoints(selection);
 		geometry.append(*this->path.getGeometry());
 	}
 
 	{
 		Geometry plane;
-		Vec3 a = {1.0f, 0.0f, 0.0f};
-		Vec3 b = {0.0f, 0.0f, 1.0f};
-		Vec3 center = {0.0f, 0.2f, 0.0f};
-		Vec3 color = {0.34f, 0.34f, 0.34f};
+		Vec3 a(1.0f, 0.0f, 0.0f);
+		Vec3 b(0.0f, 0.0f, 1.0f);
+		Vec3 center(0.0f, 0.2f, 0.0f);
+		Vec3 color(0.34f, 0.34f, 0.34f);
 		plane.addPlane(a, b, center, color);
 		this->planeSegment = geometry.append(plane);
 	}
@@ -121,14 +122,13 @@ void CurveEditor::createInterface()
 	{
 		Geometry grid;
 		Vec3 colors[2];
-		colors[0] = {0.3f, 0.3f, 0.3f};
-		colors[1] = {0.3f, 0.3f, 0.3f};
-		Mat4 t = {
+		colors[0] = Vec3(0.3f, 0.3f, 0.3f);
+		colors[1] = Vec3(0.3f, 0.3f, 0.3f);
+		Mat4 t(
 			1.0f/6.0f, 0.0f, 0.0f, 0.0f,
 			0.0f, 1.0f/6.0f, 0.0f, 0.0f,
 			0.0f, 0.0f, 1.0f/6.0f, 0.0f,
-			0.5f, 0.0f, 0.5f, 1.0f
-		};
+			0.5f, 0.0f, 0.5f, 1.0f);
 		grid.addGrid(100, colors, colors[0]);
 		Geometry::Segment segment = grid.getSegment();
 		grid.transform(segment.pstart, segment.pcount, t);
@@ -144,7 +144,7 @@ void CurveEditor::resizeGL(int width, int height)
 	float ratio = static_cast<float>(width) / static_cast<float>(height);
 	this->camera.setWindowSize(width, height);
 	this->camera.setOrthographic(
-		{-ratio, -1.0f, 0.0f}, {ratio, 1.0f, 100.0f});
+		Vec3(-ratio, -1.0f, 0.0f), Vec3(ratio, 1.0f, 100.0f));
 }
 
 void CurveEditor::keyPressEvent(QKeyEvent *event)
@@ -605,15 +605,15 @@ void CurveEditor::truncateCubicControl(std::vector<Vec3> &controls, int i)
 		float t;
 		float r;
 		pg::Ray2 boundary;
-		boundary.origin = (pg::Vec2){0.0f, 1.0f};
-		boundary.direction = (pg::Vec2){1.0f, 0.0f};
+		boundary.origin = Vec2(0.0f, 1.0f);
+		boundary.direction = Vec2(1.0f, 0.0f);
 		t = intersectsLine(tangent, boundary);
 		/* Discard result if the direction is inward. */
 		if (tangent.direction.y < 0)
 			t = -1.0f;
 
-		boundary.origin = (pg::Vec2){0.0f, 0.0f};
-		boundary.direction = (pg::Vec2){1.0f, 0.0f};
+		boundary.origin =  Vec2(0.0f, 0.0f);
+		boundary.direction =  Vec2(1.0f, 0.0f);
 		r = intersectsLine(tangent, boundary);
 		/* Discard result if the direction is inward. */
 		if (tangent.direction.y > 0)
@@ -621,8 +621,8 @@ void CurveEditor::truncateCubicControl(std::vector<Vec3> &controls, int i)
 		if (t < 0 || (r < t && r >= 0))
 			t = r;
 
-		boundary.origin = (pg::Vec2){controls[k].x, 0.0f};
-		boundary.direction = (pg::Vec2){0.0f, 1.0f};
+		boundary.origin =  Vec2(controls[k].x, 0.0f);
+		boundary.direction =  Vec2(0.0f, 1.0f);
 		r = intersectsLine(tangent, boundary);
 		if (t < 0 || (r < t && r >= 0))
 			t = r;

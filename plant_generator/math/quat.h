@@ -30,6 +30,22 @@ namespace pg {
 		float z;
 		float w;
 
+		Quat()
+		{
+			this->x = 0.0f;
+			this->y = 0.0f;
+			this->z = 0.0f;
+			this->w = 0.0f;
+		}
+
+		Quat(float x, float y, float z, float w)
+		{
+			this->x = x;
+			this->y = y;
+			this->z = z;
+			this->w = w;
+		}
+
 		Quat &operator*=(const Quat &b)
 		{
 			Vec3 m = {this->x, this->y, this->z};
@@ -98,7 +114,7 @@ namespace pg {
 	{
 		return !(a == b);
 	}
-	
+
 	inline std::ostream &operator<<(std::ostream &stream, const Quat &q)
 	{
 		stream << "(" << q.x << ", " << q.y << ", " << q.z << ", ";

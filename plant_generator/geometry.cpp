@@ -50,21 +50,21 @@ void pg::Geometry::setName(std::string name)
 void pg::Geometry::setPlane()
 {
 	Vertex p;
-	p.normal = {0.0f, 1.0f, 0.0f};
+	p.normal = Vec3(0.0f, 1.0f, 0.0f);
 	points.clear();
 	indices.clear();
 
-	p.position = {0.5f, 0.0f, 0.0f};
-	p.uv = {0.0f, 1.0f};
+	p.position = Vec3(0.5f, 0.0f, 0.0f);
+	p.uv = Vec2(0.0f, 1.0f);
 	points.push_back(p);
-	p.position = {0.5f, 0.0f, 1.0f};
-	p.uv = {0.0f, 0.0f};
+	p.position = Vec3(0.5f, 0.0f, 1.0f);
+	p.uv = Vec2(0.0f, 0.0f);
 	points.push_back(p);
-	p.position = {-0.5f, 0.0f, 1.0f};
-	p.uv = {1.0f, 0.0f};
+	p.position = Vec3(-0.5f, 0.0f, 1.0f);
+	p.uv = Vec2(1.0f, 0.0f);
 	points.push_back(p);
-	p.position = {-0.5f, 0.0f, 0.0f};
-	p.uv = {1.0f, 1.0f};
+	p.position = Vec3(-0.5f, 0.0f, 0.0f);
+	p.uv = Vec2(1.0f, 1.0f);
 	points.push_back(p);
 
 	indices.push_back(0);
@@ -83,17 +83,17 @@ void pg::Geometry::setPerpendicularPlanes()
 
 	setPlane();
 
-	p.position = {0.0f, 0.5f, 0.0f};
-	p.uv = {0.0f, 1.0f};
+	p.position = Vec3(0.0f, 0.5f, 0.0f);
+	p.uv = Vec2(0.0f, 1.0f);
 	points.push_back(p);
-	p.position = {0.0f, 0.5f, 1.0f};
-	p.uv = {0.0f, 0.0f};
+	p.position = Vec3(0.0f, 0.5f, 1.0f);
+	p.uv = Vec2(0.0f, 0.0f);
 	points.push_back(p);
-	p.position = {0.0f, -0.5f, 1.0f};
-	p.uv = {1.0f, 0.0f};
+	p.position = Vec3(0.0f, -0.5f, 1.0);
+	p.uv = Vec2(1.0f, 0.0f);
 	points.push_back(p);
-	p.position = {0.0f, -0.5f, 0.0f};
-	p.uv = {1.0f, 1.0f};
+	p.position = Vec3(0.0f, -0.5f, 0.0);
+	p.uv = Vec2(1.0f, 1.0f);
 	points.push_back(p);
 
 	indices.push_back(4);
@@ -143,7 +143,7 @@ void pg::Geometry::transform(Quat rotation, Vec3 scale, Vec3 translation)
 
 void pg::Geometry::toCenter()
 {
-	Vec3 avg = {0.0f, 0.0f, 0.0f};
+	Vec3 avg(0.0f, 0.0f, 0.0f);
 	for (auto &point : points)
 		avg += point.position;
 	avg /= points.size();

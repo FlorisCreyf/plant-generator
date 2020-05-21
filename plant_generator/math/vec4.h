@@ -31,6 +31,22 @@ namespace pg {
 		float z;
 		float w;
 
+		Vec4()
+		{
+			this->x = 0.0f;
+			this->y = 0.0f;
+			this->z = 0.0f;
+			this->w = 0.0f;
+		}
+
+		Vec4(float x, float y, float z, float w)
+		{
+			this->x = x;
+			this->y = y;
+			this->z = z;
+			this->w = w;
+		}
+
 		float &operator[](unsigned column)
 		{
 			switch (column) {
@@ -68,14 +84,12 @@ namespace pg {
 
 	inline Vec4 toVec4(const Vec3 &vec, const float w)
 	{
-		Vec4 v = {vec.x, vec.y, vec.z, w};
-		return v;
+		return Vec4(vec.x, vec.y, vec.z, w);
 	}
 
 	inline Vec3 toVec3(const Vec4 &vec)
 	{
-		Vec3 v = {vec.x, vec.y, vec.z};
-		return v;
+		return Vec3(vec.x, vec.y, vec.z);
 	}
 
 	inline bool operator==(const Vec4 &a, const Vec4 &b)
@@ -94,7 +108,7 @@ namespace pg {
 		stream << v.w << ")";
 		return stream;
 	}
-        
+
 	float magnitude(Vec4 vec);
 	Vec4 normalize(Vec4 vec);
 }

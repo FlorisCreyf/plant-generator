@@ -32,7 +32,7 @@ Generator::Generator()
 	this->minRadius = 0.001f;
 	this->primaryGrowthRate = 0.1f;
 	this->secondaryGrowthRate = 0.001f;
-	this->maxSwelling = {1.5f, 3.0f};
+	this->maxSwelling = Vec2(1.5f, 3.0f);
 
 	Stem *root = this->plant.createRoot();
 	root->setResolution(6);
@@ -49,7 +49,7 @@ Generator::Generator()
 	path.setMaxRadius(this->minRadius);
 	path.setRadius(getDefaultCurve(0));
 	root->setPath(path);
-	root->setSwelling({1.0f, 1.0f});
+	root->setSwelling(Vec2(1.0f, 1.0f));
 
 	Geometry geom;
 	geom.setPlane();
@@ -92,9 +92,9 @@ void Generator::castRays()
 			float angle = j*(2.0f*PI/rayCount);
 			float x = std::cos(angle) * radius;
 			float z = std::sin(angle) * radius;
-			Vec3 origin = {-x, 0.0f, -z};
+			Vec3 origin(-x, 0.0f, -z);
 			Ray ray;
-			ray.origin = {x, y, z};
+			ray.origin = Vec3(x, y, z);
 			ray.direction = normalize(origin-ray.origin);
 			updateGrowth(ray);
 		}
@@ -180,7 +180,7 @@ Generator::Intersection Generator::intersect(Stem *stem, Ray ray)
 		float radius = leaf->getScale().x * 0.5f;
 		float distance = leaf->getPosition();
 		Vec3 location = stem->getLocation();
-		Vec3 direction = {0.0f, 0.0f, 1.0f};
+		Vec3 direction(0.0f, 0.0f, 1.0f);
 		if (path.getSize() > 1) {
 			location += path.getIntermediate(distance);
 			direction = path.getIntermediateDirection(distance);
@@ -234,7 +234,7 @@ int Generator::propagate(Stem *stem)
 		if (path.getSize() > 1)
 			light.direction = path.getDirection(path.getSize()-1);
 		else
-			light.direction = {0.0f, -1.0f, 0.0f};
+			light.direction = Vec3(0.0f, -1.0f, 0.0f);
 		light.rays = 1;
 		this->growth[stem] = light;
 	}
@@ -267,10 +267,10 @@ void Generator::addStems(Stem *stem)
 
 		Stem *child = plant.addStem(stem);
 		child->setPosition(leaf.getPosition());
-		child->setSwelling({1.0f, 1.0f});
+		child->setSwelling(Vec2(1.0f, 1.0f));
 		path = child->getPath();
 		Spline spline = path.getSpline();
-		spline.addControl({0.0f, 0.0f, 0.0f});
+		spline.addControl(Vec3(0.0f, 0.0f, 0.0f));
 		spline.addControl(point);
 		spline.setDegree(1);
 		path.setSpline(spline);
@@ -307,7 +307,7 @@ void Generator::addLeaves(Stem *stem, float distance)
 Leaf Generator::createLeaf()
 {
 	Leaf leaf;
-	leaf.setScale({0.04f, 0.04f, 0.04f});
+	leaf.setScale(Vec3(0.04f, 0.04f, 0.04f));
 	leaf.setMesh(this->leafGeomID);
 	return leaf;
 }

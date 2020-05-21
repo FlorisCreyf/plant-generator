@@ -73,8 +73,8 @@ void Mesh::addSections(State &state)
 	Stem *stem = state.segment.stem;
 	Quat rotation;
 	state.uvOffset = 0.0f;
-	state.prevDirection = {0.0f, 1.0f, 0.0f};
-	state.prevRotation = {0.0f, 0.0f, 0.0f, 1.0f};
+	state.prevDirection = Vec3(0.0f, 1.0f, 0.0f);
+	state.prevRotation = Quat(0.0f, 0.0f, 0.0f, 1.0f);
 	state.prevIndex = this->vertices[state.mesh].size();
 	state.section = createBranchCollar(state);
 

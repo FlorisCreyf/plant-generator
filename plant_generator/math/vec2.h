@@ -28,6 +28,18 @@ namespace pg {
 		float x;
 		float y;
 
+		Vec2()
+		{
+			this->x = 0.0f;
+			this->y = 0.0f;
+		}
+
+		Vec2(float x, float y)
+		{
+			this->x = x;
+			this->y = y;
+		}
+
 		Vec2 &operator+=(const Vec2 &b)
 		{
 			this->x += b.x;

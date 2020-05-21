@@ -412,7 +412,7 @@ void Selection::getTotalLeafPosition(Vec3 &position, int &count) const
 
 Vec3 Selection::getAveragePosition() const
 {
-	Vec3 position = {0.0f, 0.0f, 0.0f};
+	Vec3 position(0.0f, 0.0f, 0.0f);
 	int count = 0;
 	for (auto &instance : this->stems) {
 		const PointSelection &ps = instance.second;
@@ -432,7 +432,7 @@ Vec3 Selection::getAveragePosition() const
 
 Vec3 Selection::getAveragePositionFP() const
 {
-	Vec3 position = {0.0f, 0.0f, 0.0f};
+	Vec3 position(0.0f, 0.0f, 0.0f);
 	int count = 0;
 	for (auto &instance : this->stems) {
 		Stem *stem = instance.first;
@@ -455,7 +455,7 @@ Vec3 Selection::getAveragePositionFP() const
 
 Vec3 Selection::getAverageDirectionFP() const
 {
-	Vec3 dir = {0.0f, 0.0f, 0.0f};
+	Vec3 dir(0.0f, 0.0f, 0.0f);
 	int count = 0;
 
 	for (auto &instance : this->stems) {
@@ -477,7 +477,7 @@ Vec3 Selection::getAverageDirectionFP() const
 		for (long id : instance.second) {
 			Leaf *leaf = stem->getLeaf(id);
 			Quat q = leaf->getRotation();
-			Quat k = {0.0f, 0.0f, 1.0f, 0.0f};
+			Quat k(0.0f, 0.0f, 1.0f, 0.0f);
 			dir += pg::toVec3(q * k * pg::conjugate(q));
 			count++;
 		}

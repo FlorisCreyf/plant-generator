@@ -6,6 +6,7 @@
 #include "../geometry.h"
 #include <type_traits>
 
+#define PI 3.14159265359f
 #define TOLERANCE 0.000001f
 
 using namespace pg;
@@ -62,7 +63,7 @@ BOOST_AUTO_TEST_CASE(test_rectangle_intersection, * bt::tolerance(TOLERANCE))
 BOOST_AUTO_TEST_CASE(test_rotate_around_axis, * bt::tolerance(TOLERANCE))
 {
 	/* Rotate 180 degrees around the y-axis. */
-	Quat rotation1 = fromAxisAngle({0.0f, 1.0f, 0.0f}, M_PI);
+	Quat rotation1 = fromAxisAngle({0.0f, 1.0f, 0.0f}, PI);
 	Quat rotation2 = {0.0f, 1.0f, 0.0f, 0.0f};
 	BOOST_TEST(rotation1.x == rotation2.x);
 	BOOST_TEST(rotation1.y == rotation2.y);
@@ -79,7 +80,7 @@ BOOST_AUTO_TEST_CASE(test_rotate_around_axis, * bt::tolerance(TOLERANCE))
 BOOST_AUTO_TEST_CASE(test_clamp_direction, * bt::tolerance(TOLERANCE))
 {
 	float max = std::sqrt(2.0f)/2.0f;
-	Vec3 a = {0.0f, std::sin(M_PI*0.4f), std::cos(M_PI*0.4f)};
+	Vec3 a = {0.0f, std::sin(PI*0.4f), std::cos(PI*0.4f)};
 	Vec3 b = {0.0f, 0.0f, 1.0f};
 	BOOST_TEST(dot(a, b) < max);
 	Vec3 rejection = normalize(a - dot(a, b)*b);

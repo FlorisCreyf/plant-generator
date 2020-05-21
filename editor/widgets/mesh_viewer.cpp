@@ -29,7 +29,7 @@ MeshViewer::MeshViewer(SharedResources *shared, QWidget *parent) :
 	setFocusPolicy(Qt::StrongFocus);
 	setMouseTracking(true);
 
-	camera.setTarget({0.0f, 0.0f, 0.0f});
+	camera.setTarget(Vec3(0.0f, 0.0f, 0.0f));
 	camera.setOrientation(0.0f, 90.0f);
 	camera.setDistance(2.0f);
 	camera.setPanSpeed(0.004f);

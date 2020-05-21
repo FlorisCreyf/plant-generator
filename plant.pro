@@ -1,5 +1,5 @@
 TEMPLATE = app
-CONFIG += qt debug object_parallel_to_source c++11 -g
+CONFIG += qt debug object_parallel_to_source c++11 -g warn_on strict_c++ no_batch
 QMAKE_LFLAGS += -no-pie
 TARGET = plant
 QT = core gui opengl xml

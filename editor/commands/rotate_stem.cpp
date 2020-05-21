@@ -142,7 +142,7 @@ void RotateStem::rotateChild(pg::Stem *stem, Quat t, float distance)
 
 void RotateStem::rotateStems()
 {
-	Quat q = {0.0f, 0.0f, 0.0f, 1.0f};
+	Quat q(0.0f, 0.0f, 0.0f, 1.0f);
 	Quat t = getTransformation(q);
 	auto stemInstances = selection->getStemInstances();
 	for (auto &instance : stemInstances) {

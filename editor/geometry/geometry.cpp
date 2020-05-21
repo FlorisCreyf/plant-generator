@@ -18,6 +18,8 @@
 #include "geometry.h"
 #include <cmath>
 
+#define PI 3.14159265359f
+
 using pg::Vertex;
 using pg::Vec2;
 using pg::Vec3;
@@ -59,9 +61,9 @@ void Geometry::addLine(Vec3 line[2], Vec3 color)
 void Geometry::addCircle(float radius, int points, Vec3 color)
 {
 	float angle = 0.0f;
-	float rotation = 2.0f * M_PI / points;
+	float rotation = 2.0f * PI / points;
 	for (int i = 0; i < points; i++) {
-		Vec3 point = {cos(angle)*radius, 0.0f, sin(angle)*radius};
+		Vec3 point(cos(angle)*radius, 0.0f, sin(angle)*radius);
 		addPoint(point, color);
 		angle += rotation;
 	}
@@ -97,8 +99,8 @@ void Geometry::addCone(float radius, float height, int points, Vec3 color)
 	unsigned pointStart = this->points.size();
 
 	for (int i = 0; i < points; i++) {
-		float r = i * 2.0f * M_PI / points;
-		addPoint({cos(r)*radius, 0.0f, sin(r)*radius}, color);
+		float r = i * 2.0f * PI / points;
+		addPoint(Vec3(cos(r)*radius, 0.0f, sin(r)*radius), color);
 
 		indices.push_back(pointStart + i);
 		indices.push_back(pointStart + points);
@@ -109,8 +111,8 @@ void Geometry::addCone(float radius, float height, int points, Vec3 color)
 		indices.push_back(pointStart + (i == points-1 ? 0 : i+1));
 	}
 
-	addPoint({0.0f, height, 0.0f}, color);
-	addPoint({0.0f, 0.0f, 0.0f}, color);
+	addPoint(Vec3(0.0f, height, 0.0f), color);
+	addPoint(Vec3(0.0f, 0.0f, 0.0f), color);
 }
 
 void Geometry::addGrid(int size, pg::Vec3 pcolor[2], pg::Vec3 scolor)
@@ -118,26 +120,26 @@ void Geometry::addGrid(int size, pg::Vec3 pcolor[2], pg::Vec3 scolor)
 	Vec3 line[2];
 	float bound = static_cast<float>(size);
 
-	line[0] = {0.0f, 0.0f, bound};
-	line[1] = {0.0f, 0.0f, -bound};
+	line[0] = Vec3(0.0f, 0.0f, bound);
+	line[1] = Vec3(0.0f, 0.0f, -bound);
 	addLine(line, pcolor[1]);
-	line[0] = {bound, 0.0f, 0.0f};
-	line[1] = {-bound, 0.0f, 0.0f};
+	line[0] = Vec3(bound, 0.0f, 0.0f);
+	line[1] = Vec3(-bound, 0.0f, 0.0f);
 	addLine(line, pcolor[0]);
 
 	for (int i = 1; i <= size; i++) {
 		float j = static_cast<float>(i);
-		line[0] = {j, 0.0f, bound};
-		line[1] = {j, 0.0f, -bound};
+		line[0] = Vec3(j, 0.0f, bound);
+		line[1] = Vec3(j, 0.0f, -bound);
 		addLine(line, scolor);
-		line[0] = {-j, 0.0f, bound};
-		line[1] = {-j, 0.0f, -bound};
+		line[0] = Vec3(-j, 0.0f, bound);
+		line[1] = Vec3(-j, 0.0f, -bound);
 		addLine(line, scolor);
-		line[0] = {bound, 0.0f, j};
-		line[1] = {-bound, 0.0f, j};
+		line[0] = Vec3(bound, 0.0f, j);
+		line[1] = Vec3(-bound, 0.0f, j);
 		addLine(line, scolor);
-		line[0] = {bound, 0.0f, -j};
-		line[1] = {-bound, 0.0f, -j};
+		line[0] = Vec3(bound, 0.0f, -j);
+		line[1] = Vec3(-bound, 0.0f, -j);
 		addLine(line, scolor);
 	}
 }

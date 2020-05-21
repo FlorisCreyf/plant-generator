@@ -20,8 +20,7 @@ using pg::Vec2;
 
 Vec2 pg::perp(Vec2 vec)
 {
-	Vec2 result = {-vec.y, vec.x};
-	return result;
+	return Vec2(-vec.y, vec.x);
 }
 
 float pg::magnitude(Vec2 vec)

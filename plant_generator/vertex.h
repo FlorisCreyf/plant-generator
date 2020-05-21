@@ -31,6 +31,11 @@ namespace pg {
 		Vec2 indices;
 		Vec2 weights;
 
+		Vertex()
+		{
+
+		}
+
 	private:
 		#ifdef PG_SERIALIZE
 		friend class boost::serialization::access;

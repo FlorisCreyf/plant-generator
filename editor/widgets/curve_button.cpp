@@ -51,7 +51,7 @@ void CurveButton::setCurve(const pg::Spline &spline)
 	this->spline = spline;
 	if (isValid()) {
 		geometry.clear();
-		geometry.addCurve(spline, {0.7f, 0.7f, 0.7f}, 6);
+		geometry.addCurve(spline, Vec3(0.7f, 0.7f, 0.7f), 6);
 		segment = geometry.getSegment();
 		buffer.update(geometry);
 		update();
@@ -60,12 +60,11 @@ void CurveButton::setCurve(const pg::Spline &spline)
 
 void CurveButton::paintGL()
 {
-	Mat4 vp = {
+	Mat4 vp(
 		1.0f, 0.0f, 0.0f, 0.0f,
 		0.0f, 0.0f, 1.0f, 0.0f,
 		0.0f, 1.0f, 0.0f, 0.0f,
-		-0.5f, -0.5f, 0.0f, 1.0f
-	};
+		-0.5f, -0.5f, 0.0f, 1.0f);
 
 	glClearColor(0.2666f, 0.2666f, 0.2666f, 1.0);
 	glClearDepth(1.0f);

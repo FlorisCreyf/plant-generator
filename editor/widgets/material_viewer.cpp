@@ -29,7 +29,7 @@ MaterialViewer::MaterialViewer(SharedResources *shared, QWidget *parent) :
 	setFocusPolicy(Qt::StrongFocus);
 	setMouseTracking(true);
 
-	camera.setTarget({0.5f, 0.0f, 0.5f});
+	camera.setTarget(Vec3(0.5f, 0.0f, 0.5f));
 	camera.setOrientation(180.0f, -180.0f);
 	camera.setDistance(0.8f);
 	camera.setPanSpeed(0.004f);
@@ -53,10 +53,10 @@ void MaterialViewer::createInterface()
 
 	{
 		Geometry plane;
-		Vec3 a = {1.0f, 0.0f, 0.0f};
-		Vec3 b = {0.0f, 0.0f, 1.0f};
-		Vec3 center = {0.0f, 0.2f, 0.0f};
-		Vec3 color = {0.34f, 0.34f, 0.34f};
+		Vec3 a(1.0f, 0.0f, 0.0f);
+		Vec3 b(0.0f, 0.0f, 1.0f);
+		Vec3 center(0.0f, 0.2f, 0.0f);
+		Vec3 color(0.34f, 0.34f, 0.34f);
 		plane.addPlane(a, b, center, color);
 		planeSegment = geometry.append(plane);
 	}
@@ -94,9 +94,9 @@ void MaterialViewer::paintGL()
 	float aspect = params.getMaterial().getRatio();
 	Mat4 scale;
 	if (aspect < 1.0f)
-		scale = pg::scale({1.0f, 1.0f/aspect, 1.0f});
+		scale = pg::scale(Vec3(1.0f, 1.0f/aspect, 1.0f));
 	else
-		scale = pg::scale({aspect, 1.0f, 1.0f});
+		scale = pg::scale(Vec3(aspect, 1.0f, 1.0f));
 	Mat4 vp = scale * camera.getVP();
 	buffer.use();
 	glUseProgram(shared->getShader(Shader::Material));
@@ -120,7 +120,8 @@ void MaterialViewer::resizeGL(int width, int height)
 {
 	float ratio = static_cast<float>(width) / static_cast<float>(height);
 	camera.setWindowSize(width, height);
-	camera.setOrthographic({-ratio, -1.0f, 0.0f}, {ratio, 1.0f, 100.0f});
+	camera.setOrthographic(
+		Vec3(-ratio, -1.0f, 0.0f), Vec3(ratio, 1.0f, 100.0f));
 }
 
 void MaterialViewer::mousePressEvent(QMouseEvent *event)

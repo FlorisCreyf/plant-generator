@@ -27,7 +27,9 @@ using pg::Plane;
 
 Aabb pg::createAABB(const pg::Vertex *buffer, size_t size)
 {
-	Aabb aabb = {buffer[0].position, buffer[0].position};
+	Aabb aabb;
+	aabb.a = buffer[0].position;
+	aabb.b = buffer[0].position;
 
 	for (size_t i = 0; i < size; i += 6) {
 		Vec3 position = buffer[i].position;
@@ -95,9 +97,9 @@ float pg::intersectsAABB(Ray &ray, Aabb &aabb)
 	obb.h[1] = a.y;
 	obb.h[2] = a.z;
 	obb.center = b;
-	obb.n[0] = {1.0f, 0.0f, 0.0f};
-	obb.n[1] = {0.0f, 1.0f, 0.0f};
-	obb.n[2] = {0.0f, 0.0f, 1.0f};
+	obb.n[0] = Vec3(1.0f, 0.0f, 0.0f);
+	obb.n[1] = Vec3(0.0f, 1.0f, 0.0f);
+	obb.n[2] = Vec3(0.0f, 0.0f, 1.0f);
 	return pg::intersectsOBB(ray, obb);
 }
 
@@ -194,8 +196,8 @@ bool findRoots(float a, float b, float c, float (&roots)[2])
 float pg::intersectsTaperedCylinder(
 	Ray ray, Vec3 start, Vec3 direction, float height, float r1, float r2)
 {
-	Vec3 s = {1.0f/r1, (1.0f - r2/r1)/height, 1.0f/r1};
-	Vec3 p = {0.0f, -1.0f, 0.0f};
+	Vec3 s(1.0f/r1, (1.0f - r2/r1)/height, 1.0f/r1);
+	Vec3 p(0.0f, -1.0f, 0.0f);
 
 	float a = s.x*s.x;
 	float b = -s.y*s.y;
@@ -206,7 +208,7 @@ float pg::intersectsTaperedCylinder(
 	float j = p.x*p.x - p.y*p.y + p.z*p.z;
 
 	{ /* Transform ray into object space of cone. */
-		Vec3 yaxis = {0.0f, 1.0f, 0.0f};
+		Vec3 yaxis(0.0f, 1.0f, 0.0f);
 		Mat4 m = rotateIntoVec(direction, yaxis);
 		ray.origin = ray.origin - start;
 		ray.direction = toVec3(m * toVec4(ray.direction, 0.0f));
