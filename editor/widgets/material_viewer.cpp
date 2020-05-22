@@ -99,7 +99,7 @@ void MaterialViewer::paintGL()
 		scale = pg::scale(Vec3(aspect, 1.0f, 1.0f));
 	Mat4 vp = scale * camera.getVP();
 	buffer.use();
-	glUseProgram(shared->getShader(Shader::Material));
+	glUseProgram(shared->getShader(SharedResources::Material));
 	glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
 
 	GLuint texture = params.getTexture(0);

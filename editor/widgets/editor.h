@@ -18,7 +18,6 @@
 #ifndef EDITOR_H
 #define EDITOR_H
 
-#define GL_GLEXT_PROTOTYPES
 #define PG_SERIALIZE
 
 #include "editor/camera.h"
@@ -39,7 +38,7 @@
 #include "plant_generator/plant.h"
 #include "plant_generator/mesh.h"
 #include "plant_generator/pseudo_generator.h"
-#include <QtGui/QOpenGLFunctions>
+#include <QOpenGLFunctions_4_3_Core>
 #include <QOpenGLWidget>
 #include <QToolBar>
 #include <QToolButton>
@@ -47,7 +46,7 @@
 #include <QComboBox>
 #include <set>
 
-class Editor : public QOpenGLWidget, protected QOpenGLFunctions {
+class Editor : public QOpenGLWidget, protected QOpenGLFunctions_4_3_Core {
 	Q_OBJECT
 
 signals:
@@ -107,7 +106,7 @@ private:
 	Buffer staticBuffer;
 	GLuint outlineColorMap;
 	GLuint outlineFrameBuffer;
-	Shader shader;
+	SharedResources::Shader shader;
 
 	pg::PseudoGenerator generator;
 	pg::Mesh mesh;

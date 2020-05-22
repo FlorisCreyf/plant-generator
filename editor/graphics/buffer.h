@@ -18,13 +18,11 @@
 #ifndef BUFFER_H
 #define BUFFER_H
 
-#define GL_GLEXT_PROTOTYPES
-
 #include "editor/geometry/geometry.h"
 #include "plant_generator/vertex.h"
-#include <QOpenGLFunctions>
+#include <QOpenGLFunctions_4_3_Core>
 
-class Buffer : protected QOpenGLFunctions {
+class Buffer : protected QOpenGLFunctions_4_3_Core {
 public:
 	enum {Points = 0, Indices = 1};
 

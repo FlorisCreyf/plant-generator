@@ -23,11 +23,12 @@
 #include "editor/graphics/buffer.h"
 #include "editor/graphics/shared_resources.h"
 #include "plant_generator/material.h"
-#include <QOpenGLFunctions>
+#include <QOpenGLFunctions_4_3_Core>
 #include <QOpenGLWidget>
 #include <QtWidgets>
 
-class MaterialViewer : public QOpenGLWidget, protected QOpenGLFunctions {
+class MaterialViewer :
+	public QOpenGLWidget, protected QOpenGLFunctions_4_3_Core {
 	Q_OBJECT
 
 	SharedResources *shared;

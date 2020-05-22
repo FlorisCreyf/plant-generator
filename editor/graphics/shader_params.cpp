@@ -18,6 +18,7 @@
 #include "shader_params.h"
 #include <QImage>
 #include <QImageReader>
+#include <QOpenGLExtraFunctions>
 
 ShaderParams::ShaderParams()
 {
@@ -69,23 +70,24 @@ bool ShaderParams::loadTexture(int index, QString filename)
 
 GLuint ShaderParams::loadTexture(QImage image)
 {
+	auto context = QOpenGLContext::currentContext();
+	auto f = context->extraFunctions();
+
 	GLuint name;
 	GLsizei width = image.width();
 	GLsizei height = image.height();
 
-	initializeOpenGLFunctions();
+	f->glGenTextures(1, &name);
+	f->glActiveTexture(GL_TEXTURE0);
+	f->glBindTexture(GL_TEXTURE_2D, name);
 
-	glGenTextures(1, &name);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, name);
+	f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-	glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, width, height);
-	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_BGRA,
+	f->glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, width, height);
+	f->glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_BGRA,
 		GL_UNSIGNED_BYTE, image.bits());
 
 	return name;
@@ -93,9 +95,12 @@ GLuint ShaderParams::loadTexture(QImage image)
 
 void ShaderParams::removeTexture(int index)
 {
+	auto context = QOpenGLContext::currentContext();
+	auto f = context->extraFunctions();
+
 	material.setTexture("");
 	if (textures[index] != 0 && textures[index] != defaultTextures[index])
-		glDeleteTextures(1, &textures[index]);
+		f->glDeleteTextures(1, &textures[index]);
 	textures[index] = defaultTextures[index];
 }
 

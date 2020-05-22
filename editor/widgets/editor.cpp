@@ -49,7 +49,7 @@ Editor::Editor(SharedResources *shared, KeyMap *keymap, QWidget *parent) :
 
 	currentCommand = nullptr;
 	perspective = true;
-	shader = Model;
+	shader = SharedResources::Model;
 
 	Vec3 color1(0.102f, 0.212f, 0.6f);
 	Vec3 color2(0.102f, 0.212f, 0.6f);
@@ -427,15 +427,15 @@ void Editor::paintGL()
 
 	/* Paint the grid. */
 	staticBuffer.use();
-	glUseProgram(shared->getShader(Shader::Flat));
+	glUseProgram(shared->getShader(SharedResources::Flat));
 	glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
 	glDrawArrays(GL_LINES, scene.grid.pstart, scene.grid.pcount);
 
 	/* Paint the plant. */
 	plantBuffer.use();
-	if (shader == Shader::Model) {
+	if (shader == SharedResources::Model) {
 		size_t start = 0;
-		glUseProgram(shared->getShader(Shader::Model));
+		glUseProgram(shared->getShader(SharedResources::Model));
 		glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
 		glUniform4f(1, position.x, position.y, position.z, 0.0f);
 		for (int i = 0; i < mesh.getMeshCount(); i++) {
@@ -445,8 +445,8 @@ void Editor::paintGL()
 				GL_UNSIGNED_INT, (GLvoid *)start);
 			start += mesh.getIndices(i)->size() * sizeof(unsigned);
 		}
-	} else if (shader == Shader::Wire) {
-		glUseProgram(shared->getShader(Shader::Wire));
+	} else if (shader == SharedResources::Wire) {
+		glUseProgram(shared->getShader(SharedResources::Wire));
 		glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
 		glUniform4f(1, 0.13f, 0.13f, 0.13f, 1.0f);
 
@@ -468,9 +468,9 @@ void Editor::paintGL()
 		}
 
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	} else if (shader == Shader::Material) {
+	} else if (shader == SharedResources::Material) {
 		size_t start = 0;
-		glUseProgram(shared->getShader(Shader::Material));
+		glUseProgram(shared->getShader(SharedResources::Material));
 		glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
 		for (int i = 0; i < mesh.getMeshCount(); i++) {
 			long materialID = mesh.getMaterialID(i);
@@ -491,7 +491,7 @@ void Editor::paintGL()
 	glClear(GL_COLOR_BUFFER_BIT);
 	glViewport(0, 0, width(), height());
 
-	glUseProgram(shared->getShader(Shader::Outline));
+	glUseProgram(shared->getShader(SharedResources::Outline));
 	glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
 	glUniform4f(1, position.x, position.y, position.z, 0.0f);
 	glUniform1i(2, 0);
@@ -504,7 +504,8 @@ void Editor::paintGL()
 	}
 
 	/* Draw objects to screen with outline. */
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	GLuint defaultFramebuffer = this->context()->defaultFramebufferObject();
+	glBindFramebuffer(GL_FRAMEBUFFER, defaultFramebuffer);
 	glBindTexture(GL_TEXTURE_2D, outlineColorMap);
 	glUniform1i(2, 1);
 	for (unsigned i = 0; i < meshes.size(); i++) {
@@ -522,7 +523,7 @@ void Editor::paintGL()
 		glPointSize(6);
 
 		pathBuffer.use();
-		glUseProgram(shared->getShader(Shader::Line));
+		glUseProgram(shared->getShader(SharedResources::Line));
 		glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
 		glUniform2f(1, QWidget::width(), QWidget::height());
 
@@ -534,7 +535,7 @@ void Editor::paintGL()
 
 		auto texture = shared->getTexture(shared->DotTexture);
 		glBindTexture(GL_TEXTURE_2D, texture);
-		glUseProgram(shared->getShader(Shader::Point));
+		glUseProgram(shared->getShader(SharedResources::Point));
 		glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
 
 		segment = path.getPointSegment();
@@ -556,7 +557,7 @@ void Editor::paintAxes()
 	glClear(GL_DEPTH_BUFFER_BIT);
 	glDepthFunc(GL_LEQUAL);
 
-	glUseProgram(shared->getShader(Shader::Flat));
+	glUseProgram(shared->getShader(SharedResources::Flat));
 	staticBuffer.use();
 
 	translationAxes.setPosition(selection.getAveragePosition());
@@ -704,17 +705,17 @@ void Editor::change(QAction *action)
 		perspectiveAction->setChecked(false);
 		updateCamera(width(), height());
 	} else if (text == "Wireframe") {
-		shader = Wire;
+		shader = SharedResources::Wire;
 		wireframeAction->setChecked(true);
 		solidAction->setChecked(false);
 		materialAction->setChecked(false);
 	} else if (text == "Solid") {
-		shader = Model;
+		shader = SharedResources::Model;
 		wireframeAction->setChecked(false);
 		solidAction->setChecked(true);
 		materialAction->setChecked(false);
 	} else if (text == "Material") {
-		shader = Material;
+		shader = SharedResources::Material;
 		wireframeAction->setChecked(false);
 		solidAction->setChecked(false);
 		materialAction->setChecked(true);

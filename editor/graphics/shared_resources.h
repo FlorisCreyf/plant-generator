@@ -18,28 +18,25 @@
 #ifndef SHARED_RESOURCES_H
 #define SHARED_RESOURCES_H
 
-#define GL_GLEXT_PROTOTYPES
-
 #include "shader_params.h"
 #include "plant_generator/material.h"
-#include <QOpenGLFunctions>
+#include <QOpenGLFunctions_4_3_Core>
 #include <QObject>
 #include <map>
 
-enum Shader {
-	Model = 0,
-	Point = 1,
-	Wire = 2,
-	Line = 3,
-	Flat = 4,
-	Material = 5,
-	Outline = 6
-};
-
-class SharedResources : public QObject, protected QOpenGLFunctions {
+class SharedResources : public QObject, protected QOpenGLFunctions_4_3_Core {
 	Q_OBJECT
 
 public:
+	enum Shader {
+		Model = 0,
+		Point = 1,
+		Wire = 2,
+		Line = 3,
+		Flat = 4,
+		Material = 5,
+		Outline = 6
+	};
 	enum Texture {
 		DotTexture,
 		DefaultTexture

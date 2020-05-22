@@ -1,9 +1,15 @@
 TEMPLATE = app
 CONFIG += qt debug object_parallel_to_source c++11 -g warn_on strict_c++ no_batch
-QMAKE_LFLAGS += -no-pie
+DEFINES += GL_GLEXT_PROTOTYPES
+unix::QMAKE_LFLAGS += -no-pie
 TARGET = plant
-QT = core gui opengl xml
-LIBS += /usr/lib/x86_64-linux-gnu/libboost_serialization.a
+QT = core gui opengl xml openglextensions
+unix::LIBS += /usr/lib/x86_64-linux-gnu/libboost_serialization.a
+# Change the path name to reflect the Boost version.
+win32::LIBS += "C:\Program Files\boost\boost_1_73_0\stage\lib\libboost_serialization-vc142-mt-x64-1_73.lib"
+win32::LIBS += opengl32.lib
+win32::INCLUDEPATH += "C:\Program Files\boost\boost_1_73_0"
+win32::DEPENDPATH += "C:\Program Files\boost\boost_1_73_0"
 
 SOURCES += \
 plant_generator/thirdparty/pugixml/src/pugixml.cpp \

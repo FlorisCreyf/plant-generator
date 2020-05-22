@@ -18,12 +18,10 @@
 #ifndef SHADER_PARAMS_H
 #define SHADER_PARAMS_H
 
-#define GL_GLEXT_PROTOTYPES
-
 #include "plant_generator/material.h"
-#include <QOpenGLFunctions>
+#include <QOpenGLFunctions_4_3_Core>
 
-class ShaderParams : protected QOpenGLFunctions {
+class ShaderParams {
 	GLuint textures[4] = {0};
 	GLuint defaultTextures[4] = {0};
 	pg::Material material;

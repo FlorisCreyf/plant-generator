@@ -72,7 +72,7 @@ void CurveButton::paintGL()
 
 	if (enabled) {
 		buffer.use();
-		glUseProgram(shared->getShader(Shader::Flat));
+		glUseProgram(shared->getShader(SharedResources::Flat));
 		glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
 		glDrawArrays(GL_LINE_STRIP, segment.pstart, segment.pcount);
 	}

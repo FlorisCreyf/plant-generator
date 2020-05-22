@@ -28,11 +28,11 @@
 #include "editor/graphics/shared_resources.h"
 #include "editor/geometry/translation_axes.h"
 #include "plant_generator/math/math.h"
-#include <QOpenGLFunctions>
+#include <QOpenGLFunctions_4_3_Core>
 #include <QOpenGLWidget>
 #include <QtWidgets>
 
-class CurveEditor : public QOpenGLWidget, protected QOpenGLFunctions {
+class CurveEditor : public QOpenGLWidget, protected QOpenGLFunctions_4_3_Core {
 	Q_OBJECT
 
 public:

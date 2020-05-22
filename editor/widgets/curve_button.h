@@ -23,11 +23,11 @@
 #include "editor/graphics/shared_resources.h"
 #include "plant_generator/math/math.h"
 #include "plant_generator/spline.h"
-#include <QtGui/QOpenGLFunctions>
+#include <QOpenGLFunctions_4_3_Core>
 #include <QOpenGLWidget>
 #include <QtWidgets>
 
-class CurveButton : public QOpenGLWidget, protected QOpenGLFunctions {
+class CurveButton : public QOpenGLWidget, protected QOpenGLFunctions_4_3_Core {
 	Q_OBJECT
 
 	SharedResources *shared;

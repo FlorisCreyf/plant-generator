@@ -647,7 +647,7 @@ void CurveEditor::paintGL()
 	Mat4 vp = this->camera.getVP();
 
 	this->buffer.use();
-	glUseProgram(this->shared->getShader(Shader::Flat));
+	glUseProgram(this->shared->getShader(SharedResources::Flat));
 	glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
 
 	{
@@ -661,7 +661,7 @@ void CurveEditor::paintGL()
 		this->gridSegment.pcount);
 
 	if (this->enabled && this->spline.getControls().size() > 0) {
-		glUseProgram(this->shared->getShader(Shader::Line));
+		glUseProgram(this->shared->getShader(SharedResources::Line));
 		glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
 		glUniform2f(1, QWidget::width(), QWidget::height());
 
@@ -672,9 +672,9 @@ void CurveEditor::paintGL()
 
 		segment = this->path.getPointSegment();
 		GLuint texture =
-			this->shared->getTexture(this->shared->DotTexture);
+			this->shared->getTexture(SharedResources::DotTexture);
 		glBindTexture(GL_TEXTURE_2D, texture);
-		glUseProgram(shared->getShader(Shader::Point));
+		glUseProgram(shared->getShader(SharedResources::Point));
 		glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
 		glDrawArrays(GL_POINTS, segment.pstart, segment.pcount);
 	}
