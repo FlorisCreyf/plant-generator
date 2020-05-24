@@ -67,7 +67,7 @@ private:
 
 	void createPrograms();
 	bool isCompiled(GLuint name, const char *filename);
-	bool openFile(const char *filename, GLchar *&buffer, int &size);
+	bool openFile(const char *filename, std::string &buffer);
 	GLuint buildShader(GLenum type, const char *filename);
 	GLuint buildProgram(GLuint *shaders, int size);
 };

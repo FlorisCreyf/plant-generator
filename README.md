@@ -1,6 +1,6 @@
 # Plant Generator
 
-Plant Generator generates plant geometry. The project is divided into a generator and editor component, where the generator is licensed under the Apache License (version 2.0) and the editor is licensed under the GPL 3.0. The editor depends on Qt5, but the project can be compiled without a GUI using the Makefile in _plant_generator/plant_generator_. Both components depend on Boost for serialization and parsing command line arguments, but Boost is not a critical component of the program.
+Plant Generator generates plant geometry. The project is divided into a generator and editor component. The generator is licensed under the Apache License (version 2.0) and the editor is licensed under the GPL 3.0. The editor depends on Qt5, but the project can be compiled without a GUI using the Makefile in _plant_generator/plant_generator_. Both components depend on Boost for serialization and parsing command line arguments, but Boost is not a critical component of the program.
 
 ## Screenshot
 
@@ -22,6 +22,8 @@ Commands and key bindings can be viewed and edited in _keymap.xml_.
 
 ## Installation
 
+### Linux
+
 ```sh
 sudo dnf install qt5-devel
 sudo dnf install boost-devel
@@ -29,6 +31,23 @@ cd ~/plant
 git submodule update --init --recursive
 make all
 ```
+
+### Windows (VS)
+
+1. Download Visual Studio, Qt VS Tools, Qt5, and Boost.
+2. Move the Boost directory to "C:\\Program Files\\boost" and/or modify the Qt project file.
+3. Use Qt VS Tools to generate a VS project.
+4. Build the project.
+5. Copy files into the debug/release directory.
+    - keymap.xml
+    - resources
+    - shaders
+    - Qt5Core.dll
+    - Qt5Gui.dll
+    - Qt5Widgets.dll
+    - Qt5OpenGL.dll
+    - Qt5Xml.dll
+    - platforms/qwindows.dll
 
 ## Growth Model
 

@@ -198,13 +198,11 @@ Mat4 Camera::getLookAtMatrix(Vec3 eye, Vec3 center) const
 	x = -pg::dot(b, eye);
 	y = -pg::dot(c, eye);
 	z = pg::dot(a, eye);
-
-	return (Mat4){
+	return Mat4(
 		b.x, c.x, -a.x, 0.0f,
 		b.y, c.y, -a.y, 0.0f,
 		b.z, c.z, -a.z, 0.0f,
-		x, y, z, 1.0f
-	};
+		x, y, z, 1.0f);
 }
 
 Mat4 Camera::getInverseLookAt() const

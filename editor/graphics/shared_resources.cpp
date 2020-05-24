@@ -18,7 +18,9 @@
 #include "shared_resources.h"
 #include "editor/terminal.h"
 #include <QImage>
-#include <stdio.h>
+#include <fstream>
+#include <sstream>
+#include <iostream>
 
 void SharedResources::initialize()
 {
@@ -141,58 +143,43 @@ bool SharedResources::isCompiled(GLuint name, const char *filename)
 {
 	GLint status;
 	glGetShaderiv(name, GL_COMPILE_STATUS, &status);
-
 	if (status == GL_FALSE) {
 		GLsizei size;
-
 		glGetShaderiv(name, GL_INFO_LOG_LENGTH, &size);
 		GLchar *log = new GLchar[size + 1];
 		glGetShaderInfoLog(name, size, &size, log);
-		fprintf(stderr, BOLDWHITE "%s: " BOLDRED "error:" RESET "\n%s",
-			filename, log);
-
+		std::cerr << BOLDWHITE << filename << ": ";
+		std::cerr << BOLDRED "error:" RESET "\n" << log << std::endl;
 		delete[] log;
 		return false;
 	}
-
 	return true;
 }
 
-bool SharedResources::openFile(const char *filename, GLchar *&buffer, int &size)
+bool SharedResources::openFile(const char *filename, std::string &buffer)
 {
-	FILE *file = fopen(filename, "r");
-
-	if (file == NULL) {
-		fprintf(stderr, BOLDMAGENTA "warning:" RESET" %s not found\n",
-			filename);
+	std::ifstream file(filename, std::ios::in);
+	if (!file.is_open()) {
+		std::cerr << BOLDMAGENTA "warning: " RESET << filename;
+		std::cerr << " not found" << std::endl;
 		return false;
 	}
-
-	fseek(file, 0, SEEK_END);
-	size = ftell(file);
-	rewind(file);
-
-	buffer = new GLchar[size];
-	if (!fread(buffer, 1, size, file)) {
-		fprintf(stderr, BOLDMAGENTA "warning:" RESET
-			"failed to read %s\n", filename);
-		delete[] buffer;
-		return false;
-	}
-
-	fclose(file);
+	std::stringstream stream;
+	stream << file.rdbuf();
+	buffer = stream.str();
 	return true;
 }
 
 GLuint SharedResources::buildShader(GLenum type, const char *filename)
 {
-	int size;
-	GLchar *buffer;
-	if(!openFile(filename, buffer, size))
+	std::string buffer;
+	if(!openFile(filename, buffer))
 		return 0;
 
 	GLuint shader = glCreateShader(type);
-	glShaderSource(shader, 1, (const char**)&buffer, &size);
+	const GLint size = static_cast<GLint>(buffer.size());
+	const GLchar *glBuffer = buffer.c_str();
+	glShaderSource(shader, 1, &glBuffer, &size);
 	glCompileShader(shader);
 
 	if (!isCompiled(shader, filename)) {

@@ -1,5 +1,8 @@
 TEMPLATE = app
+# Qt VS Tools might not generate object files in sub-directories.
+# Object File Name: $(IntDir)%(RelativeDir)
 CONFIG += qt debug object_parallel_to_source c++11 -g warn_on strict_c++ no_batch
+# win32::CONFIG += console
 DEFINES += GL_GLEXT_PROTOTYPES
 unix::QMAKE_LFLAGS += -no-pie
 TARGET = plant
