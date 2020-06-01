@@ -22,6 +22,7 @@
 #include "vertex.h"
 #include <vector>
 #include <map>
+#include <utility>
 
 namespace pg {
 	struct Segment {
@@ -40,8 +41,11 @@ namespace pg {
 			Quat prevRotation;
 			size_t prevIndex;
 			size_t section;
-			float uvOffset;
+			size_t jointIndex;
+			int jointID;
 			int mesh;
+			float texOffset;
+			float jointOffset;
 		};
 
 		Plant *plant;
@@ -60,7 +64,7 @@ namespace pg {
 		Quat rotateSection(State &);
 		void addTriangleRing(size_t, size_t, int, int);
 		void capStem(Stem *, int, size_t);
-		Segment addStem(Stem *);
+		Segment addStem(Stem *, const State &);
 
 		size_t createBranchCollar(State &);
 		bool connectCollar(Segment, Segment, size_t);
@@ -71,11 +75,16 @@ namespace pg {
 		void setBranchCollarNormals(size_t, size_t, int, int, int);
 		void setBranchCollarUVs(size_t, Stem *, int, int, int);
 
-		void addLeaves(Stem *);
-		void addLeaf(const Leaf *leaf, Stem *stem);
+		void addLeaves(Stem *, const State &);
+		void addLeaf(const Leaf *leaf, Stem *stem, const State &);
 		Geometry transformLeaf(const Leaf *, const Stem *);
 
-		float getUVOffset();
+		void setInitialJointState(State &, const State &);
+		std::pair<size_t, Joint> getJoint(float, const Stem *);
+		void incrementJoint(State &state, const std::vector<Joint> &);
+		void updateJointState(State &, Vec2 &, Vec2 &);
+		void setJointInfo(const Stem *, float, size_t, Vec2 &, Vec2 &);
+
 		void addTriangle(int, int, int, int);
 		int selectBuffer(long);
 		void initBuffer();
@@ -98,7 +107,6 @@ namespace pg {
 		int getIndexCount() const;
 		int getMeshCount() const;
 		long getMaterialID(int mesh) const;
-
 	};
 }
 

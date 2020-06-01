@@ -2,7 +2,6 @@ CPPFLAGS += --pedantic -W -g
 BUILDDIR := build
 LIBS = /usr/lib/x86_64-linux-gnu/libboost_program_options.a
 OBJECTS := $(addprefix $(BUILDDIR)/, \
-thirdparty/pugixml/src/pugixml.o \
 math/curve.o \
 math/intersection.o \
 math/mat4.o \
@@ -13,6 +12,7 @@ math/vec4.o \
 file.o \
 generator.o \
 geometry.o \
+joint.o \
 leaf.o \
 material.o \
 mesh.o \
@@ -20,6 +20,8 @@ path.o \
 plant.o \
 spline.o \
 stem.o \
+wind.o \
+xml_writer.o \
 )
 TEST_OBJECTS := $(addprefix $(BUILDDIR)/, \
 tests/test_math.o \

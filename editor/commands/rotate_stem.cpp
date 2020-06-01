@@ -168,7 +168,8 @@ void RotateStem::rotateStems()
 			controls[i] += controls[point];
 		}
 
-		rotateChild(stem->getChild(), t, path.getDistance(point));
+		size_t pathIndex = path.toPathIndex(point);
+		rotateChild(stem->getChild(), t, path.getDistance(pathIndex));
 
 		spline.setControls(controls);
 		path.setSpline(spline);

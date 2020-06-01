@@ -372,7 +372,8 @@ QWidget {
     <addaction name="actionOpen"/>
     <addaction name="actionSave"/>
     <addaction name="actionSaveAs"/>
-    <addaction name="actionExportMesh"/>
+    <addaction name="actionExportCollada"/>
+    <addaction name="actionExportWavefront"/>
     <addaction name="actionQuit"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
@@ -407,9 +408,14 @@ QWidget {
     <string>Save &amp;As...</string>
    </property>
   </action>
-  <action name="actionExportMesh">
+  <action name="actionExportWavefront">
    <property name="text">
-    <string>&amp;Export Mesh...</string>
+    <string>Export Wavefront...</string>
+   </property>
+  </action>
+  <action name="actionExportCollada">
+   <property name="text">
+    <string>Export Collada...</string>
    </property>
   </action>
   <action name="actionQuit">
@@ -539,10 +545,26 @@ QWidget {
    </hints>
   </connection>
   <connection>
-   <sender>actionExportMesh</sender>
+   <sender>actionExportWavefront</sender>
    <signal>triggered()</signal>
    <receiver>Window</receiver>
-   <slot>exportDialogBox()</slot>
+   <slot>exportWavefrontDialogBox()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionExportCollada</sender>
+   <signal>triggered()</signal>
+   <receiver>Window</receiver>
+   <slot>exportColladaDialogBox()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>-1</x>

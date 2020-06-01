@@ -13,28 +13,21 @@
  * limitations under the License.
  */
 
-#ifndef PG_FILE_H
-#define PG_FILE_H
+#ifndef PG_WIND_GENERATOR_H
+#define PG_WIND_GENERATOR_H
 
 #include "plant.h"
-#include "geometry.h"
-#include "mesh.h"
-#include <cstddef>
-#include <vector>
-#include <string>
 
 namespace pg {
-	class File {
-		std::string exportMtl(std::string, const Plant &);
-		bool exportArmature = true;
+	class Wind {
+		Plant *plant;
+
+		int generate(Stem *, int, int);
 
 	public:
-		void importObj(const char *filename, Geometry *geom);
-		void exportDae(std::string filename, const Mesh &mesh,
-			const Plant &plant);
-		void exportObj(std::string filename, const Mesh &mesh,
-			const Plant &plant);
+		Wind(Plant *plant);
+		void generate();
 	};
 }
 
-#endif /* PG_FILE_H */
+#endif

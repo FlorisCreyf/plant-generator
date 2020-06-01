@@ -20,7 +20,9 @@
 #include "math/math.h"
 #include "math/curve.h"
 #include "path.h"
+#include "joint.h"
 #include <map>
+#include <vector>
 
 #ifdef PG_SERIALIZE
 #include <boost/archive/text_oarchive.hpp>
@@ -47,6 +49,8 @@ namespace pg {
 		long material[2] = {0};
 		Vec2 swelling;
 
+		std::vector<Joint> joints;
+
 		void updatePositions(Stem *stem);
 		void copy(const Stem &stem);
 
@@ -70,6 +74,7 @@ namespace pg {
 			ar & location;
 			ar & material;
 			ar & swelling;
+			ar & joints;
 		}
 		#endif
 
@@ -105,6 +110,11 @@ namespace pg {
 		Vec3 getLocation() const;
 		void setMaterial(int feature, long material);
 		long getMaterial(int feature) const;
+
+		std::vector<Joint> getJoints() const;
+		bool hasJoints() const;
+		void addJoint(Joint joint);
+		void clearJoints();
 
 		Stem *getParent();
 		const Stem *getParent() const;

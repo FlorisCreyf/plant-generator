@@ -40,7 +40,8 @@ public:
 public Q_SLOTS:
 	void newFile();
 	void openDialogBox();
-	void exportDialogBox();
+	void exportWavefrontDialogBox();
+	void exportColladaDialogBox();
 	void saveAsDialogBox();
 	void saveDialogBox();
 	void reportIssue();

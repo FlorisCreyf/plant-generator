@@ -1,7 +1,7 @@
 TEMPLATE = app
 # Qt VS Tools might not generate object files in sub-directories.
 # Object File Name: $(IntDir)%(RelativeDir)
-CONFIG += qt debug object_parallel_to_source c++11 -g warn_on strict_c++ no_batch
+CONFIG += qt debug object_parallel_to_source c++11 strict_c++ no_batch warn_on
 # win32::CONFIG += console
 DEFINES += GL_GLEXT_PROTOTYPES
 unix::QMAKE_LFLAGS += -no-pie
@@ -15,7 +15,6 @@ win32::INCLUDEPATH += "C:\Program Files\boost\boost_1_73_0"
 win32::DEPENDPATH += "C:\Program Files\boost\boost_1_73_0"
 
 SOURCES += \
-plant_generator/thirdparty/pugixml/src/pugixml.cpp \
 plant_generator/math/curve.cpp \
 plant_generator/math/intersection.cpp \
 plant_generator/math/mat4.cpp \
@@ -25,6 +24,7 @@ plant_generator/math/vec3.cpp \
 plant_generator/math/vec4.cpp \
 plant_generator/file.cpp \
 plant_generator/geometry.cpp \
+plant_generator/joint.cpp \
 plant_generator/leaf.cpp \
 plant_generator/material.cpp \
 plant_generator/mesh.cpp \
@@ -33,6 +33,8 @@ plant_generator/plant.cpp \
 plant_generator/pseudo_generator.cpp \
 plant_generator/spline.cpp \
 plant_generator/stem.cpp \
+plant_generator/wind.cpp \
+plant_generator/xml_writer.cpp \
 editor/commands/add_stem.cpp \
 editor/commands/add_leaf.cpp \
 editor/commands/command.cpp \
@@ -86,6 +88,7 @@ plant_generator/math/vec3.h \
 plant_generator/math/vec4.h \
 plant_generator/file.h \
 plant_generator/geometry.h \
+plant_generator/joint.h \
 plant_generator/leaf.h \
 plant_generator/material.h \
 plant_generator/mesh.h \
@@ -95,6 +98,8 @@ plant_generator/plant.h \
 plant_generator/pseudo_generator.h \
 plant_generator/spline.h \
 plant_generator/stem.h \
+plant_generator/wind.h \
+plant_generator/xml_writer.h \
 editor/commands/add_stem.h \
 editor/commands/add_leaf.h \
 editor/commands/command.h \

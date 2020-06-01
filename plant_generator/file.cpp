@@ -14,7 +14,7 @@
  */
 
 #include "file.h"
-#include "thirdparty/pugixml/src/pugixml.hpp"
+#include "xml_writer.h"
 #include <fstream>
 #include <sstream>
 #include <map>
@@ -27,7 +27,6 @@ using std::map;
 using std::string;
 using std::ifstream;
 using std::istringstream;
-using pugi::xml_node;
 
 string pg::File::exportMtl(string filename, const Plant &plant)
 {
@@ -193,6 +192,13 @@ void pg::File::importObj(const char *filename, pg::Geometry *geom)
 	geom->setIndices(indices);
 }
 
+template<class T>
+string toString(T x) {
+	std::ostringstream out;
+	out << x;
+	return out.str();
+}
+
 bool isInvalidChar(char c)
 {
 	return !std::isalnum(c);
@@ -208,101 +214,89 @@ string getName(string name)
 
 string getMaterialName(long materialID, const Plant &plant)
 {
-	string name;
 	if (materialID != 0) {
 		Material material = plant.getMaterial(materialID);
-		name = getName(material.getName());
+		return getName(material.getName());
 	} else
-		name = "default";
-	return name;
+		return "default";
 }
 
-void setMeshSources(const Mesh &mesh, xml_node meshNode)
+void setSources(XMLWriter &xml, const Mesh &mesh)
 {
-	xml_node psource = meshNode.append_child("source");
-	psource.append_attribute("id") = "plant-mesh-positions";
-	xml_node nsource = meshNode.append_child("source");
-	nsource.append_attribute("id") = "plant-mesh-normals";
-	xml_node msource = meshNode.append_child("source");
-	msource.append_attribute("id") = "plant-mesh-map";
-
-	string pvalue = "";
-	string nvalue = "";
-	string mvalue = "";
+	string value;
 	std::vector<Vertex> vertices = mesh.getVertices();
+
+	value.clear();
 	for (Vertex vertex : vertices) {
-		pvalue += std::to_string(vertex.position.x) + " ";
-		pvalue += std::to_string(vertex.position.y) + " ";
-		pvalue += std::to_string(vertex.position.z) + " ";
-		nvalue += std::to_string(vertex.normal.x) + " ";
-		nvalue += std::to_string(vertex.normal.y) + " ";
-		nvalue += std::to_string(vertex.normal.z) + " ";
-		mvalue += std::to_string(vertex.uv.x) + " ";
-		mvalue += std::to_string(vertex.uv.y) + " ";
-
+		value += toString(vertex.position.x) + " ";
+		value += toString(vertex.position.y) + " ";
+		value += toString(vertex.position.z) + " ";
 	}
-	pvalue.pop_back();
-	nvalue.pop_back();
-	mvalue.pop_back();
+	value.pop_back();
+	xml >> "<source id='plant-mesh-positions'>";
+	xml += ("<float_array id='plant-mesh-positions-array' "
+		"count='" + toString(vertices.size() * 3) + "'>" +
+		value + "</float_array>");
+	xml >> "<technique_common>";
+	xml >> ("<accessor source='#plant-mesh-positions-array' stride='3' "
+		"count='" + toString(vertices.size()) + "'>");
+	xml += "<param type='float' name='X'/>";
+	xml += "<param type='float' name='Y'/>";
+	xml += "<param type='float' name='Z'/>";
+	xml << "</accessor>";
+	xml << "</technique_common>";
+	xml << "</source>";
 
-	xml_node parray = psource.append_child("float_array");
-	parray.append_attribute("id") = "plant-mesh-positions-array";
-	parray.append_attribute("count") = vertices.size() * 3;
-	parray.append_child(pugi::node_pcdata).set_value(pvalue.c_str());
-	xml_node narray = nsource.append_child("float_array");
-	narray.append_attribute("id") = "plant-mesh-normals-array";
-	narray.append_attribute("count") = vertices.size() * 3;
-	narray.append_child(pugi::node_pcdata).set_value(nvalue.c_str());
-	xml_node marray = msource.append_child("float_array");
-	marray.append_attribute("id") = "plant-mesh-map-array";
-	marray.append_attribute("count") = vertices.size() * 2;
-	marray.append_child(pugi::node_pcdata).set_value(mvalue.c_str());
+	value.clear();
+	for (Vertex vertex : vertices) {
+		value += toString(vertex.normal.x) + " ";
+		value += toString(vertex.normal.y) + " ";
+		value += toString(vertex.normal.z) + " ";
+	}
+	value.pop_back();
+	xml >> "<source id='plant-mesh-normals'>";
+	xml += ("<float_array id='plant-mesh-normals-array' "
+		"count='" + toString(vertices.size() * 3) + "'>" +
+		value + "</float_array>");
+	xml >> "<technique_common>";
+	xml >> ("<accessor source='#plant-mesh-normals-array' stride='3' "
+		"count='" + toString(vertices.size()) + "'>");
+	xml += "<param type='float' name='X'/>";
+	xml += "<param type='float' name='Y'/>";
+	xml += "<param type='float' name='Z'/>";
+	xml << "</accessor>";
+	xml << "</technique_common>";
+	xml << "</source>";
 
-	xml_node ptechnique = psource.append_child("technique_common");
-	xml_node paccessor = ptechnique.append_child("accessor");
-	paccessor.append_attribute("source") = "#plant-mesh-positions-array";
-	paccessor.append_attribute("stride") = 3;
-	paccessor.append_attribute("count") = vertices.size();
-	xml_node ntechnique = nsource.append_child("technique_common");
-	xml_node naccessor = ntechnique.append_child("accessor");
-	naccessor.append_attribute("source") = "#plant-mesh-normals-array";
-	naccessor.append_attribute("stride") = 3;
-	naccessor.append_attribute("count") = vertices.size();
-	xml_node mtechnique = msource.append_child("technique_common");
-	xml_node maccessor = mtechnique.append_child("accessor");
-	maccessor.append_attribute("source") = "#plant-mesh-map-array";
-	maccessor.append_attribute("stride") = 2;
-	maccessor.append_attribute("count") = vertices.size();
-
-	xml_node param = paccessor.append_child("param");
-	param.append_attribute("type") = "float";
-	param.append_attribute("name") = "X";
-	naccessor.append_copy(param);
-	param = paccessor.append_child("param");
-	param.append_attribute("type") = "float";
-	param.append_attribute("name") = "Y";
-	naccessor.append_copy(param);
-	param = paccessor.append_child("param");
-	param.append_attribute("type") = "float";
-	param.append_attribute("name") = "Z";
-	naccessor.append_copy(param);
-	param = maccessor.append_child("param");
-	param.append_attribute("type") = "float";
-	param.append_attribute("name") = "S";
-	param = maccessor.append_child("param");
-	param.append_attribute("type") = "float";
-	param.append_attribute("name") = "T";
+	value.clear();
+	for (Vertex vertex : vertices) {
+		value += toString(vertex.uv.x) + " ";
+		value += toString(vertex.uv.y) + " ";
+	}
+	value.pop_back();
+	xml >> "<source id='plant-mesh-map'>";
+	xml += ("<float_array id='plant-mesh-map-array' "
+		"count='" + toString(vertices.size() * 2) + "'>" +
+		value + "</float_array>");
+	xml >> "<technique_common>";
+	xml >> ("<accessor source='#plant-mesh-map-array' stride='2' "
+		"count='" + toString(vertices.size()) + "'>");
+	xml += "<param type='float' name='S'/>";
+	xml += "<param type='float' name='T'/>";
+	xml << "</accessor>";
+	xml << "</technique_common>";
+	xml << "</source>";
 }
 
-void setMesh(const Mesh &mesh, const Plant &plant, xml_node meshNode)
+void setGeometry(XMLWriter &xml, const Mesh &mesh, const Plant &plant)
 {
-	setMeshSources(mesh, meshNode);
-
-	pugi::xml_node vertices = meshNode.append_child("vertices");
-	vertices.append_attribute("id") = "plant-mesh-vertices";
-	pugi::xml_node vertinput = vertices.append_child("input");
-	vertinput.append_attribute("semantic") = "POSITION";
-	vertinput.append_attribute("source") = "#plant-mesh-positions";
+	xml >> "<library_geometries>";
+	xml >> "<geometry id='plant-mesh' name='plant'>";
+	xml >> "<mesh>";
+	setSources(xml, mesh);
+	xml >> "<vertices id='plant-mesh-vertices'>";
+	xml += "<input semantic='POSITION' source='#plant-mesh-positions'/>";
+	xml << "</vertices>";
 
 	for (int i = 0; i < mesh.getMeshCount(); i++) {
 		if (mesh.getVertices(i)->size() == 0)
@@ -311,164 +305,382 @@ void setMesh(const Mesh &mesh, const Plant &plant, xml_node meshNode)
 		long materialID = mesh.getMaterialID(i);
 		string name = getMaterialName(materialID, plant) + "-material";
 		const vector<unsigned> *indices = mesh.getIndices(i);
-
-		pugi::xml_node triangles = meshNode.append_child("triangles");
-		triangles.append_attribute("material") = name.c_str();
-		triangles.append_attribute("count") = indices->size() / 3;
-		pugi::xml_node input = triangles.append_child("input");
-		input.append_attribute("semantic") = "VERTEX";
-		input.append_attribute("source") = "#plant-mesh-vertices";
-		input.append_attribute("offset") = 0;
-		input = triangles.append_child("input");
-		input.append_attribute("semantic") = "NORMAL";
-		input.append_attribute("source") = "#plant-mesh-normals";
-		input.append_attribute("offset") = 1;
-		input = triangles.append_child("input");
-		input.append_attribute("semantic") = "TEXCOORD";
-		input.append_attribute("source") = "#plant-mesh-map";
-		input.append_attribute("offset") = 2;
-		input.append_attribute("set") = 0;
-
-		string value = "";
+		string value;
 		for (unsigned index : *indices) {
-			string s = std::to_string(index);
+			string s = toString(index);
 			value += s + " " + s + " " + s + " ";
 		}
 
-		xml_node p = triangles.append_child("p");
-		p.append_child(pugi::node_pcdata).set_value(value.c_str());
+		xml >> ("<triangles material='" + name + "' "
+			"count='" + toString(indices->size() / 3) + "'>");
+		xml += "<input semantic='VERTEX' "
+			"source='#plant-mesh-vertices' offset='0'/>";
+		xml += "<input semantic='NORMAL' "
+			"source='#plant-mesh-normals' offset='1'/>";
+		xml += "<input semantic='TEXCOORD' "
+			"source='#plant-mesh-map' offset='2'/>";
+		xml += "<p>" + value + "</p>";
+		xml << "</triangles>";
 	}
+
+	xml << "</mesh>";
+	xml << "</geometry>";
+	xml << "</library_geometries>";
 }
 
-void setScene(xml_node scenelib, const Mesh &mesh, const Plant &plant)
+void setImages(XMLWriter &xml, const Mesh &mesh, const Plant &plant)
 {
-	xml_node scene = scenelib.append_child("visual_scene");
-	scene.append_attribute("id") = "scene";
-	scene.append_attribute("name") = "scene";
-	xml_node node = scene.append_child("node");
-	node.append_attribute("id") = "plant";
-	node.append_attribute("name") = "plant";
-	node.append_attribute("type") = "NODE";
-	xml_node geom = node.append_child("instance_geometry");
-	geom.append_attribute("url") = "#plant-mesh";
-	geom.append_attribute("name") = "plant";
-	xml_node material = geom.append_child("bind_material");
+	xml >> "<library_images>";
 	for (int i = 0; i < mesh.getMeshCount(); i++) {
 		if (mesh.getVertices(i)->size() == 0)
 			continue;
-		string name = getMaterialName(mesh.getMaterialID(i), plant);
-		name += "-material";
-		string id = "#" + name;
-		xml_node technique = material.append_child("technique_common");
-		xml_node instance = technique.append_child("instance_material");
-		instance.append_attribute("symbol") = name.c_str();
-		instance.append_attribute("target") = id.c_str();
-		xml_node input = instance.append_child("bind_vertex_input");
-		input.append_attribute("semantic") = "UVMap";
-		input.append_attribute("input_semantic") = "TEXCOORD";
-		input.append_attribute("input_set") = 0;
+
+		long materialID = mesh.getMaterialID(i);
+		if (materialID == 0)
+			continue;
+
+		Material material = plant.getMaterial(materialID);
+		if (material.getTexture().empty())
+			continue;
+
+		string path = material.getTexture();
+		string texture = getName(path);
+
+		xml >> ("<image id='" + texture + "' name='" + texture + "'>");
+		xml += "<init_from>" + path + "</init_from>";
+		xml << "</image>";
 	}
+	xml << "</library_images>";
 }
 
-bool setTexture(long id, xml_node effectlib, xml_node imagelib, string name,
-	const Plant &plant)
+void setEffects(XMLWriter &xml, const Mesh &mesh, const Plant &plant)
 {
-	if (id == 0)
-		return false;
-
-	Material material = plant.getMaterial(id);
-	if (material.getTexture().empty())
-		return false;
-
-	string path = material.getTexture();
-	string texture = getName(path);
-	xml_node effect = effectlib.append_child("effect");
-	effect.append_attribute("id") = name.c_str();
-	xml_node profile = effect.append_child("profile_COMMON");
-
-	string surfaceName = texture + "-surface";
-	xml_node param = profile.append_child("newparam");
-	param.append_attribute("sid") = surfaceName.c_str();
-	xml_node surface = param.append_child("surface");
-	surface.append_attribute("type") = "2D";
-	xml_node init = surface.append_child("init_from");
-	init.append_child(pugi::node_pcdata).set_value(texture.c_str());
-
-	string samplerName = texture + "-sampler";
-	param = profile.append_child("newparam");
-	param.append_attribute("sid") = samplerName.c_str();
-	xml_node sampler = param.append_child("sampler2D");
-	xml_node source = sampler.append_child("source");
-	xml_node sourceData = source.append_child(pugi::node_pcdata);
-	sourceData.set_value(surfaceName.c_str());
-
-	xml_node image = imagelib.append_child("image");
-	image.append_attribute("id") = texture.c_str();
-	image.append_attribute("name") = texture.c_str();
-	init = image.append_child("init_from");
-	init.append_child(pugi::node_pcdata).set_value(path.c_str());
-
-	xml_node technique = profile.append_child("technique");
-	technique.append_attribute("sid") = "common";
-	xml_node lambert = technique.append_child("lambert");
-	xml_node diffuse = lambert.append_child("diffuse");
-	xml_node diffusetex = diffuse.append_child("texture");
-	diffusetex.append_attribute("texture") = samplerName.c_str();
-	diffusetex.append_attribute("texcoord") = "UVMap";
-
-	return true;
-}
-
-void setMaterials(xml_node root, const Mesh &mesh, const Plant &plant)
-{
-	xml_node effectlib = root.append_child("library_effects");
-	xml_node imagelib = root.append_child("library_images");
-	xml_node matlib = root.append_child("library_materials");
+	xml >> "<library_effects>";
 	for (int i = 0; i < mesh.getMeshCount(); i++) {
 		if (mesh.getVertices(i)->size() == 0)
 			continue;
-		xml_node material = matlib.append_child("material");
+
+		long materialID = mesh.getMaterialID(i);
+		if (materialID == 0)
+			continue;
+
+		Material material = plant.getMaterial(materialID);
+		if (material.getTexture().empty())
+			continue;
+
+		std::string name = getMaterialName(materialID, plant);
+		string path = material.getTexture();
+		string texture = getName(path);
+
+		xml >> ("<effect id='" + name + "-effect'>");
+		xml >> "<profile_COMMON>";
+
+		xml >> ("<newparam sid='" + texture + "-surface'>");
+		xml >> "<surface type='2D'>";
+		xml += ("<init_from>" + texture + "</init_from>");
+		xml << "</surface>";
+		xml << "</newparam>";
+
+		xml >> ("<newparam sid='" + texture + "-sampler'>");
+		xml >> "<sampler2D>";
+		xml += ("<source>" + texture + "-surface</source>");
+		xml << "</sampler2D>";
+		xml << "</newparam>";
+
+		xml >> "<technique sid='common'>";
+		xml >> "<lambert>";
+		xml >> "<diffuse>";
+		xml += ("<texture texcoord='UVMap' "
+			"texture='" + texture + "-sampler'/>");
+		xml << "</diffuse>";
+		xml << "</lambert>";
+		xml << "</technique>";
+
+		xml << "</profile_COMMON>";
+		xml << "</effect>";
+	}
+	xml << "</library_effects>";
+}
+
+void setMaterials(XMLWriter &xml, const Mesh &mesh, const Plant &plant)
+{
+	xml >> "<library_materials>";
+	for (int i = 0; i < mesh.getMeshCount(); i++) {
+		if (mesh.getVertices(i)->size() == 0)
+			continue;
+
 		long materialID = mesh.getMaterialID(i);
 		string name = getMaterialName(materialID, plant);
-		string id = name + "-material";
-		material.append_attribute("id") = id.c_str();
-		material.append_attribute("name") = id.c_str();
-		id = name + "-effect";
-		if (setTexture(materialID, effectlib, imagelib, id, plant)) {
-			string effectID = "#" + id;
-			xml_node ie = material.append_child("instance_effect");
-			ie.append_attribute("url") = effectID.c_str();
+		xml >> ("<material id='" + name + "-material' "
+			"name='" + name + "-material'>");
+
+		if (materialID != 0) {
+			Material material = plant.getMaterial(materialID);
+			if (!material.getTexture().empty()) {
+				string url = "#" + name + "-effect";
+				xml += "<instance_effect url='" + url + "'/>";
+			}
+		}
+
+		xml << "</material>";
+	}
+	xml << "</library_materials>";
+}
+
+/** Create a list of bind poses that is ordered by joint ID.*/
+void getJointPoses(const Stem *stem, vector<Vec3> &poses, vector<int> &ids)
+{
+	vector<Joint> joints = stem->getJoints();
+	for (Joint joint : joints) {
+		Vec3 location = joint.getLocation() + stem->getLocation();
+		int id = joint.getID();
+		auto it = std::upper_bound(ids.begin(), ids.end(), id);
+		size_t index = it - ids.begin();
+		ids.insert(it, id);
+		poses.insert(poses.begin() + index, -1.0f * location);
+	}
+
+	const Stem *child = stem->getChild();
+	while (child) {
+		getJointPoses(child, poses, ids);
+		child = child->getSibling();
+	}
+}
+
+void setControllerSources(
+	XMLWriter &xml, const Mesh &mesh, const Plant &plant)
+{
+	vector<Vec3> poses;
+	vector<int> ids;
+	getJointPoses(plant.getRoot(), poses, ids);
+	size_t jointCount = poses.size();
+	string value;
+
+	value.clear();
+	for (int id : ids)
+		value += "joint" + toString(id) + " ";
+	value.pop_back();
+	xml >> "<source id='plant-armature-names'>";
+	xml += "<Name_array id='plant-armature-names-array' "
+		"count='" + toString(jointCount) + "'>" +
+		value + "</Name_array>";
+	xml >> "<technique_common>";
+	xml >> ("<accessor source='#plant-armature-names-array' "
+		"count='" + toString(jointCount) + "' stride='1'>");
+	xml += "<param name='JOINT' type='name'/>";
+	xml << "</accessor>";
+	xml << "</technique_common>";
+	xml << "</source>";
+
+	value.clear();
+	for (Vec3 location : poses) {
+		value += "1 0 0 " + toString(location.x) + " ";
+		value += "0 1 0 " + toString(location.y) + " ";
+		value += "0 0 1 " + toString(location.z) + " ";
+		value += "0 0 0 1 ";
+	}
+	value.pop_back();
+	xml >> "<source id='plant-armature-poses'>";
+	xml += "<float_array id='plant-armature-poses-array' "
+		"count='" + toString(jointCount * 16) + "'>" +
+		value + "</float_array>";
+	xml >> "<technique_common>";
+	xml >> ("<accessor source='#plant-armature-poses-array' "
+		"count='" + toString(jointCount) + "' "
+		"stride='16'>");
+	xml += "<param name='TRANSFORM' type='float4x4'/>";
+	xml << "</accessor>";
+	xml << "</technique_common>";
+	xml << "</source>";
+
+	value.clear();
+	vector<Vertex> vertices = mesh.getVertices();
+	size_t weightCount = 0;
+	for (Vertex vertex : vertices) {
+		value += toString(vertex.weights.x) + " ";
+		weightCount++;
+		if (vertex.indices.x != vertex.indices.y) {
+			value += toString(vertex.weights.y) + " ";
+			weightCount++;
 		}
 	}
+	value.pop_back();
+	xml >> "<source id='plant-armature-weights'>";
+	xml += "<float_array id='plant-armature-weights-array' "
+		"count='" + toString(weightCount) + "'>" +
+		value + "</float_array>";
+	xml >> "<technique_common>";
+	xml >> ("<accessor source='#plant-armature-weights-array' "
+		"count='" + toString(weightCount) + "' "
+		"stride='1'>");
+	xml += "<param name='WEIGHT' type='float'/>";
+	xml << "</accessor>";
+	xml << "</technique_common>";
+	xml << "</source>";
+}
+
+void setControllers(XMLWriter &xml, const Mesh &mesh, const Plant &plant)
+{
+	xml >> "<library_controllers>";
+	xml >> "<controller id='plant-armature-skin' "
+		"name='plant-armature-skin'>";
+	xml >> "<skin source='#plant-mesh'>";
+
+	setControllerSources(xml, mesh, plant);
+	vector<Vertex> vertices = mesh.getVertices();
+
+	xml >> "<joints>";
+	xml += "<input semantic='JOINT' source='#plant-armature-names'/>";
+	xml += "<input semantic='INV_BIND_MATRIX' "
+		"source='#plant-armature-poses'/>";
+	xml << "</joints>";
+
+	string pairs;
+	string influences;
+	size_t weightIndex = 0;
+	for (size_t i = 0; i < vertices.size(); i++) {
+		Vec2 indices = vertices[i].indices;
+		pairs += toString(static_cast<size_t>(indices.x)) + " ";
+		pairs += toString(weightIndex++) + " ";
+		if (indices.x != indices.y) {
+			pairs += toString(static_cast<size_t>(indices.y)) + " ";
+			pairs += toString(weightIndex++) + " ";
+			influences += "2 ";
+		} else
+			influences += "1 ";
+	}
+	pairs.pop_back();
+	influences.pop_back();
+	xml >> ("<vertex_weights count='" + toString(vertices.size()) + "'>");
+	xml += "<input semantic='JOINT' source='#plant-armature-names' "
+		"offset='0'/>";
+	xml += "<input semantic='WEIGHT' source='#plant-armature-weights' "
+		"offset='1'/>";
+	xml += "<vcount>" + influences + "</vcount>";
+	xml += "<v>" + pairs + "</v>";
+	xml << "</vertex_weights>";
+
+	xml << "</skin>";
+	xml << "</controller>";
+	xml << "</library_controllers>";
+}
+
+void addJoints(XMLWriter &xml, const Stem *stem, Vec3 prevLocation)
+{
+	std::vector<Joint> joints = stem->getJoints();
+	for (Joint joint : joints) {
+		unsigned id = joint.getID();
+		xml >> ("<node type='JOINT' "
+			"id='plant-armature-joint" + toString(id) + "' "
+			"name='joint" + toString(id) + "' "
+			"sid='joint" + toString(id) + "'>");
+
+		Vec3 location = joint.getLocation() - prevLocation;
+		location += stem->getLocation();
+		string value;
+		value += "1 0 0 " + toString(location.x) + " ";
+		value += "0 1 0 " + toString(location.y) + " ";
+		value += "0 0 1 " + toString(location.z) + " ";
+		value += "0 0 0 1";
+		xml += "<matrix sid='transform'>" + value + "</matrix>";
+
+		const Stem *child = stem->getChild();
+		while (child) {
+			if (!child->getJoints().empty()) {
+				Joint childJoint = child->getJoints().front();
+				if (childJoint.getParentID() == id) {
+					Vec3 location = joint.getLocation();
+					addJoints(xml, child, location);
+				}
+			}
+			child = child->getSibling();
+		}
+
+		prevLocation = joint.getLocation() + stem->getLocation();
+	}
+	for (size_t i = 0; i < joints.size(); i++)
+		xml << "</node>";
+}
+
+void bindPlantMaterial(XMLWriter &xml, const Mesh &mesh, const Plant &plant)
+{
+	xml >> "<bind_material>";
+	for (int i = 0; i < mesh.getMeshCount(); i++) {
+		if (mesh.getVertices(i)->size() == 0)
+			continue;
+
+		string name = getMaterialName(mesh.getMaterialID(i), plant);
+		xml >> "<technique_common>";
+		xml >> ("<instance_material symbol='" + name + "-material' "
+			"target='#" + name + "-material'>");
+		xml += "<bind_vertex_input semantic='UVMap' "
+			"input_semantic='TEXCOORD' input_set='0'/>";
+		xml << "</instance_material>";
+		xml << "</technique_common>";
+	}
+	xml << "</bind_material>";
+}
+
+void addPlantGeometry(XMLWriter &xml, const Mesh &mesh, const Plant &plant)
+{
+	xml >> "<node id='plant' name='plant' type='NODE'>";
+	xml >> "<instance_geometry url='#plant-mesh' name='plant'>";
+	bindPlantMaterial(xml, mesh, plant);
+	xml << "</instance_geometry>";
+	xml << "</node>";
+}
+
+void addPlantController(XMLWriter &xml, const Mesh &mesh, const Plant &plant)
+{
+	xml >> "<node id='plant-armature' type='NODE'>";
+	addJoints(xml, plant.getRoot(), Vec3(0.0f, 0.0f, 0.0f));
+
+	xml >> "<node id='plant' name='plant' type='NODE'>";
+	xml >> "<instance_controller url='#plant-armature-skin'>";
+	xml += "<skeleton>#plant-armature-joint0</skeleton>";
+	bindPlantMaterial(xml, mesh, plant);
+	xml << "</instance_controller>";
+	xml << "</node>";
+
+	xml << "</node>";
+}
+
+void setScene(XMLWriter &xml, const Mesh &mesh, const Plant &plant,
+	bool exportArmature)
+{
+	xml >> "<library_visual_scenes>";
+	xml >> "<visual_scene id='scene' name='scene'>";
+	if (exportArmature)
+		addPlantController(xml, mesh, plant);
+	else
+		addPlantGeometry(xml, mesh, plant);
+	xml << "</visual_scene>";
+	xml << "</library_visual_scenes>";
+
+	xml >> "<scene>";
+	xml += "<instance_visual_scene url='#scene'/>";
+	xml << "</scene>";
 }
 
 void pg::File::exportDae(string filename, const Mesh &mesh, const Plant &plant)
 {
-	pugi::xml_document doc;
-	xml_node root = doc.append_child("COLLADA");
-	root.append_attribute("xmlns") =
-		"http://www.collada.org/2005/11/COLLADASchema";
-	root.append_attribute("xmlns:xsi") =
-		"http://www.w3.org/2001/XMLSchema-instance";
-	root.append_attribute("version") = "1.4.1";
-	xml_node asset = root.append_child("asset");
-	xml_node axis = asset.append_child("up_axis");
-	axis.append_child(pugi::node_pcdata).set_value("Y_UP");
+	XMLWriter xml(filename.c_str());
+	xml += "<?xml version='1.0'?>";
+	xml >> "<COLLADA version='1.4.1' "
+		"xmlns='http://www.collada.org/2005/11/COLLADASchema' "
+		"xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'>";
 
-	setMaterials(root, mesh, plant);
+	xml >> "<asset>";
+	xml += "<up_axis>Y_UP</up_axis>";
+	xml << "</asset>";
 
-	xml_node geolib = root.append_child("library_geometries");
-	xml_node geom = geolib.append_child("geometry");
-	geom.append_attribute("id") = "plant-mesh";
-	geom.append_attribute("name") = "plant";
-	xml_node meshNode = geom.append_child("mesh");
-	setMesh(mesh, plant, meshNode);
+	setImages(xml, mesh, plant);
+	setEffects(xml, mesh, plant);
+	setMaterials(xml, mesh, plant);
+	setGeometry(xml, mesh, plant);
+	if (this->exportArmature)
+		setControllers(xml, mesh, plant);
+	setScene(xml, mesh, plant, this->exportArmature);
 
-	xml_node scenelib = root.append_child("library_visual_scenes");
-	setScene(scenelib, mesh, plant);
-	xml_node scene = root.append_child("scene");
-	xml_node ivs = scene.append_child("instance_visual_scene");
-	ivs.append_attribute("url") = "#scene";
-
-	doc.save_file(filename.c_str());
+	xml << "</COLLADA>";
 }

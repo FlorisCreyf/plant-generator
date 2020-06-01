@@ -30,6 +30,7 @@ namespace pg {
 		Spline radius;
 		float minRadius = 0.015f;
 		float maxRadius = 0.2f;
+		bool linearStart;
 
 		#ifdef PG_SERIALIZE
 		friend class boost::serialization::access;
@@ -53,7 +54,7 @@ namespace pg {
 
 		void setSpline(Spline &spline);
 		Spline getSpline();
-		/** Sets the divisions for each curve in the path. */
+		/** Set the divisions for each curve in the path. */
 		void setResolution(int resolution);
 		int getResolution() const;
 		void subdivide(int level);
@@ -63,22 +64,28 @@ namespace pg {
 		void generate(bool linearStart=false);
 
 		std::vector<Vec3> get() const;
-		/** Gets a point on the path. */
+		/** Return a point on the path. */
 		Vec3 get(const int index) const;
-		/** Gets the number of point on the path. */
-		int getSize() const;
-		/** Gets a point at a distance along the path. */
+		/** Return the number of point on the path. */
+		size_t getSize() const;
+		/** Return a point at a distance along the path. */
 		Vec3 getIntermediate(float distance) const;
-		/** Get the length of the path. */
+		/** Return the index before a distance along the path. */
+		size_t getIndex(float distance) const;
+		/** Return the length of the path. */
 		float getLength() const;
-		/* Get the direction of a line segment of the path. */
+		/** Return the direction of a line segment of the path. */
 		Vec3 getDirection(size_t index) const;
 		Vec3 getAverageDirection(size_t index) const;
 		Vec3 getIntermediateDirection(float t) const;
-		/* Get the distance along the path to a control point. */
-		float getDistance(int index) const;
-		/* Get the distance between control points. */
-		float getIntermediateDistance(int index) const;
+		/** Return the distance along the path to a control point. */
+		float getDistance(size_t index) const;
+		/** Return the distance between two control points. */
+		float getDistance(size_t start, size_t end) const;
+		/** Return the distance between control points. */
+		float getSegmentLength(size_t index) const;
+		/** Convert a spline control index to a path index. */
+		size_t toPathIndex(size_t control);
 
 		void setMaxRadius(float radius);
 		float getMaxRadius() const;

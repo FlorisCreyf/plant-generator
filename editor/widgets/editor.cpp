@@ -16,8 +16,13 @@
  */
 
 #include "editor.h"
+#include "editor/commands/add_leaf.h"
+#include "editor/commands/add_stem.h"
 #include "editor/commands/extrude_stem.h"
+#include "editor/commands/move_stem.h"
+#include "editor/commands/move_path.h"
 #include "editor/commands/remove_stem.h"
+#include "editor/commands/rotate_stem.h"
 #include "editor/geometry/geometry.h"
 
 #include <algorithm>
@@ -41,6 +46,7 @@ using pg::Ray;
 Editor::Editor(SharedResources *shared, KeyMap *keymap, QWidget *parent) :
 	QOpenGLWidget(parent),
 	generator(&plant),
+	wind(&plant),
 	mesh(&plant),
 	selection(&camera, &plant, &mesh)
 {
@@ -640,6 +646,7 @@ void Editor::change()
 	if (!isValid())
 	 	return;
 
+	wind.generate();
 	mesh.generate();
 	plantBuffer.use();
 	if (mesh.getVertexCount() > plantBuffer.getCapacity(Buffer::Points))

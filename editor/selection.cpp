@@ -178,7 +178,7 @@ pair<float, Stem *> Selection::getStem(pg::Ray &ray, Stem *stem)
 	if (stem != nullptr) {
 		Path path = stem->getPath();
 
-		for (int i = 0, j = 1; i < path.getSize()-1; i++, j++) {
+		for (size_t i = 0, j = 1; i < path.getSize()-1; i++, j++) {
 			Vec3 direction = path.getDirection(i);
 			Vec3 line[2] = {path.get(i), path.get(j)};
 			line[0] = line[0] + stem->getLocation();
@@ -221,8 +221,8 @@ pair<float, pg::Segment> Selection::getLeaf(pg::Ray ray)
 			pg::Segment segment = pair.second;
 			segment.indexStart -= indexOffset;
 
-			unsigned len = segment.indexStart + segment.indexCount;
-			for (unsigned i = segment.indexStart; i < len; i += 3) {
+			size_t len = segment.indexStart + segment.indexCount;
+			for (size_t i = segment.indexStart; i < len; i += 3) {
 				unsigned triangle[3];
 				triangle[0] = (*indices)[i] - vertexOffset;
 				triangle[1] = (*indices)[i+1] - vertexOffset;

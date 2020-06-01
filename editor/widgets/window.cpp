@@ -93,7 +93,7 @@ void Window::createEditors()
 	scrollArea->setWidgetResizable(true);
 	scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 	dockWidget[3] = new QDockWidget(tr("Materials"), this);
-	this->materialEditor = new MaterialEditor(&shared, this);
+	this->materialEditor = new MaterialEditor(&this->shared, this);
 	dockWidget[3]->setAllowedAreas(areas);
 	dockWidget[3]->setWidget(scrollArea);
 	scrollArea->setWidget(this->materialEditor);
@@ -105,7 +105,7 @@ void Window::createEditors()
 	scrollArea->setWidgetResizable(true);
 	scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 	dockWidget[4] = new QDockWidget(tr("Meshes"), this);
-	this->meshEditor = new MeshEditor(&shared, this->editor, this);
+	this->meshEditor = new MeshEditor(&this->shared, this->editor, this);
 	dockWidget[4]->setAllowedAreas(areas);
 	dockWidget[4]->setWidget(scrollArea);
 	scrollArea->setWidget(this->meshEditor);
@@ -132,19 +132,19 @@ void Window::initEditor()
 	else
 		this->editor->load(this->filename.toLatin1());
 
-	objectLabel = new QLabel(this);
-	fileLabel = new QLabel(this);
-	commandLabel = new QLabel(this);
-	statusBar()->addWidget(fileLabel, 1);
-	statusBar()->addWidget(commandLabel, 1);
-	statusBar()->addWidget(objectLabel, 0);
+	this->objectLabel = new QLabel(this);
+	this->fileLabel = new QLabel(this);
+	this->commandLabel = new QLabel(this);
+	statusBar()->addWidget(this->fileLabel, 1);
+	statusBar()->addWidget(this->commandLabel, 1);
+	statusBar()->addWidget(this->objectLabel, 0);
 	connect(this->editor, SIGNAL(changed()), this, SLOT(updateStatus()));
 	setFilename(this->filename);
 }
 
 void Window::initMeshEditor()
 {
-	if (!filename.isEmpty()) {
+	if (!this->filename.isEmpty()) {
 		auto meshes = this->editor->getPlant()->getLeafMeshes();
 		for (auto &mesh : meshes)
 			this->meshEditor->addMesh(mesh.second);
@@ -154,7 +154,7 @@ void Window::initMeshEditor()
 
 void Window::initMaterialEditor()
 {
-	if (!filename.isEmpty()) {
+	if (!this->filename.isEmpty()) {
 		auto materials = this->editor->getPlant()->getMaterials();
 		for (auto &material : materials)
 			this->materialEditor->addMaterial(material.second);
@@ -173,7 +173,7 @@ void Window::updateStatus()
 	value += "Vertices: " + std::to_string(vertices);
 	value += " | Triangles: " + std::to_string(triangles);
 	value += " | Materials: " + std::to_string(materials);
-	objectLabel->setText(QString::fromStdString(value));
+	this->objectLabel->setText(QString::fromStdString(value));
 }
 
 void Window::Window::keyPressEvent(QKeyEvent *event)
@@ -210,7 +210,7 @@ void Window::setFilename(QString filename)
 		title = tr("Plant Generator");
 		message = tr("Not Saved");
 	}
-	fileLabel->setText(message);
+	this->fileLabel->setText(message);
 	setWindowTitle(title);
 }
 
@@ -262,34 +262,46 @@ void Window::saveAsDialogBox()
 
 void Window::saveDialogBox()
 {
-	if (filename.isNull() || filename.isEmpty())
+	if (this->filename.isNull() || this->filename.isEmpty())
 		saveAsDialogBox();
 	else {
-		std::ofstream stream(filename.toLatin1());
+		std::ofstream stream(this->filename.toLatin1());
 		boost::archive::text_oarchive oa(stream);
 		oa << *(this->editor->getPlant());
 		stream.close();
-		setFilename(filename);
+		setFilename(this->filename);
 	}
 }
 
-void Window::exportDialogBox()
+void Window::exportWavefrontDialogBox()
 {
 	const pg::Mesh *mesh = this->editor->getMesh();
 	const pg::Plant *plant = this->editor->getPlant();
 
-	QString filter;
 	QString filename = QFileDialog::getSaveFileName(
-		this, tr("Export File"), "saved/",
-		tr("Wavefront OBJ (*.obj);;Collada DAE (*.dae)"), &filter);
+		this, tr("Export File"), "saved/plant.obj",
+		tr("Wavefront (*.obj);;All (*)"));
 
 	if (!filename.isEmpty()) {
 		pg::File f;
 		QByteArray b = filename.toLatin1();
-		if (filter == "Wavefront OBJ (*.obj)")
-			f.exportObj(b.data(), *mesh, *plant);
-		else if (filter == "Collada DAE (*.dae)")
-			f.exportDae(b.data(), *mesh, *plant);
+		f.exportObj(b.data(), *mesh, *plant);
+	}
+}
+
+void Window::exportColladaDialogBox()
+{
+	const pg::Mesh *mesh = this->editor->getMesh();
+	const pg::Plant *plant = this->editor->getPlant();
+
+	QString filename = QFileDialog::getSaveFileName(
+		this, tr("Export File"), "saved/plant.dae",
+		tr("Collada (*.dae);;All (*)"));
+
+	if (!filename.isEmpty()) {
+		pg::File f;
+		QByteArray b = filename.toLatin1();
+		f.exportDae(b.data(), *mesh, *plant);
 	}
 }
 

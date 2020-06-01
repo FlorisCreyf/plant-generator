@@ -13,28 +13,34 @@
  * limitations under the License.
  */
 
-#ifndef PG_FILE_H
-#define PG_FILE_H
+#include "xml_writer.h"
 
-#include "plant.h"
-#include "geometry.h"
-#include "mesh.h"
-#include <cstddef>
-#include <vector>
-#include <string>
+using std::string;
 
-namespace pg {
-	class File {
-		std::string exportMtl(std::string, const Plant &);
-		bool exportArmature = true;
-
-	public:
-		void importObj(const char *filename, Geometry *geom);
-		void exportDae(std::string filename, const Mesh &mesh,
-			const Plant &plant);
-		void exportObj(std::string filename, const Mesh &mesh,
-			const Plant &plant);
-	};
+XMLWriter::XMLWriter(const char *filename)
+{
+	this->depth = 0;
+	this->file.open(filename, std::ios::out);
 }
 
-#endif /* PG_FILE_H */
+XMLWriter::~XMLWriter()
+{
+	this->file.close();
+}
+
+void XMLWriter::operator>>(string tag)
+{
+	this->file << string(this->depth*2, ' ') << tag << std::endl;
+	this->depth++;
+}
+
+void XMLWriter::operator<<(string tag)
+{
+	this->depth--;
+	this->file << string(this->depth*2, ' ') << tag << std::endl;
+}
+
+void XMLWriter::operator+=(string tag)
+{
+	this->file << string(this->depth*2, ' ') << tag << std::endl;
+}

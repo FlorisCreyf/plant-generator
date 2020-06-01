@@ -33,7 +33,8 @@ void Mesh::generate()
 {
 	Stem *stem = this->plant->getRoot();
 	initBuffer();
-	addStem(stem);
+	State state = {};
+	addStem(stem, state);
 	updateSegments();
 }
 
@@ -42,13 +43,14 @@ bool Mesh::hasValidLocation(Stem *stem)
 	return !std::isnan(stem->getLocation().x);
 }
 
-Segment Mesh::addStem(Stem *stem)
+Segment Mesh::addStem(Stem *stem, const State &parentState)
 {
 	State state;
 	state.mesh = selectBuffer(stem->getMaterial(Stem::Outer));
 	state.segment.stem = stem;
 	state.segment.vertexStart = vertices[state.mesh].size();
 	state.segment.indexStart = indices[state.mesh].size();
+	setInitialJointState(state, parentState);
 	addSections(state);
 	state.segment.vertexCount = vertices[state.mesh].size();
 	state.segment.vertexCount -= state.segment.vertexStart;
@@ -56,12 +58,12 @@ Segment Mesh::addStem(Stem *stem)
 	state.segment.indexCount -= state.segment.indexStart;
 	this->stemSegments[state.mesh].emplace(stem->getID(), state.segment);
 
-	addLeaves(stem);
+	addLeaves(stem, state);
 
 	Stem *child = stem->getChild();
 	while (child != nullptr) {
 		if (hasValidLocation(child))
-			addStem(child);
+			addStem(child, state);
 		child = child->getSibling();
 	}
 
@@ -72,11 +74,17 @@ void Mesh::addSections(State &state)
 {
 	Stem *stem = state.segment.stem;
 	Quat rotation;
-	state.uvOffset = 0.0f;
+	state.texOffset = 0.0f;
 	state.prevDirection = Vec3(0.0f, 1.0f, 0.0f);
 	state.prevRotation = Quat(0.0f, 0.0f, 0.0f, 1.0f);
 	state.prevIndex = this->vertices[state.mesh].size();
 	state.section = createBranchCollar(state);
+
+	if (state.section > 0) {
+		size_t i = this->vertices[state.mesh].size();
+		int r = stem->getResolution();
+		addTriangleRing(state.prevIndex, i, r, state.mesh);
+	}
 
 	size_t sections = stem->getPath().getSize();
 	for (; state.section < sections; state.section++) {
@@ -116,7 +124,7 @@ void Mesh::addSection(State &state, Quat rotation)
 	const float deltaAngle = 2.0f * PI / stem->getResolution();
 	const float uOffset = 1.0f / stem->getResolution();
 	float radius = stem->getPath().getRadius(state.section);
-	float length = stem->getPath().getIntermediateDistance(state.section);
+	float length = stem->getPath().getSegmentLength(state.section);
 	float angle = 0.0f;
 	float aspect = 1.0f;
 	long materialID = stem->getMaterial(Stem::Outer);
@@ -127,11 +135,16 @@ void Mesh::addSection(State &state, Quat rotation)
 
 	Vertex vertex;
 	vertex.uv.x = 1.0f;
-	vertex.uv.y = -(length*aspect)/(radius*2.0f*PI)+state.uvOffset;
-	state.uvOffset = vertex.uv.y;
+	vertex.uv.y = -(length*aspect)/(radius*2.0f*PI)+state.texOffset;
+	state.texOffset = vertex.uv.y;
 
 	Vec3 location = stem->getLocation();
 	location += stem->getPath().get(state.section);
+
+	Vec2 indices;
+	Vec2 weights;
+	if (stem->getJoints().size() > 0)
+		updateJointState(state, indices, weights);
 
 	for (int i = 0; i <= stem->getResolution(); i++) {
 		vertex.position = {std::cos(angle), 0.0f, std::sin(angle)};
@@ -141,6 +154,9 @@ void Mesh::addSection(State &state, Quat rotation)
 		vertex.position += location;
 		vertex.normal = rotate(rotation, vertex.normal, 0.0f);
 		vertex.normal = normalize(vertex.normal);
+		vertex.weights = weights;
+		vertex.indices = indices;
+
 		this->vertices[state.mesh].push_back(vertex);
 		vertex.uv.x -= uOffset;
 		angle += deltaAngle;
@@ -176,16 +192,16 @@ size_t Mesh::createBranchCollar(State &state)
 	size_t collarStart = this->vertices[state.mesh].size();
 	reserveBranchCollarSpace(stem, state.mesh);
 	state.prevIndex = this->vertices[state.mesh].size();
-	state.uvOffset = 0.0f;
+	state.texOffset = 0.0f;
 	state.section = 1;
 	state.prevIndex = this->vertices[state.mesh].size();
 	addSection(state, rotateSection(state));
 
 	Segment parentSegment = findStem(stem->getParent());
-	if (!connectCollar(state.segment, parentSegment, collarStart))
-		return 0;
+	if (connectCollar(state.segment, parentSegment, collarStart))
+		return 2;
 	else
-		return 1;
+		return 0;
 }
 
 /** Cross sections are usually created one at a time and then connected with
@@ -294,6 +310,8 @@ bool Mesh::connectCollar(Segment child, Segment parent, size_t vertexStart)
 			this->indices[mesh1].resize(child.indexStart);
 			return false;
 		}
+		scaledPoint.weights = this->vertices[mesh1][index].weights;
+		scaledPoint.indices = this->vertices[mesh1][index].indices;
 		this->vertices[mesh1][index] = scaledPoint;
 
 		ray.direction = ray.origin - initPoint.position;
@@ -316,6 +334,8 @@ bool Mesh::connectCollar(Segment child, Segment parent, size_t vertexStart)
 		for (int j = 0; j < divisions; j++, t += delta) {
 			Vertex vertex;
 			vertex.position = spline.getPoint(0, t);
+			vertex.indices = scaledPoint.indices;
+			vertex.weights = scaledPoint.weights;
 			size_t index = vertexStart + i + (resolution + 1) * j;
 			this->vertices[mesh1][index] = vertex;
 		}
@@ -415,42 +435,61 @@ void Mesh::capStem(Stem *stem, int stemMesh, size_t section)
 	}
 }
 
-void Mesh::addLeaves(Stem *stem)
+void Mesh::addLeaves(Stem *stem, const State &state)
 {
 	auto leaves = stem->getLeaves();
 	for (auto it = leaves.begin(); it != leaves.end(); it++) {
 		const Leaf *leaf = stem->getLeaf(it->first);
-		addLeaf(leaf, stem);
+		addLeaf(leaf, stem, state);
 	}
 }
 
-void Mesh::addLeaf(const Leaf *leaf, Stem *stem)
+void Mesh::addLeaf(const Leaf *leaf, Stem *stem, const State &state)
 {
 	int mesh = selectBuffer(leaf->getMaterial());
-
 	Segment leafSegment;
 	leafSegment.leaf = leaf->getID();
 	leafSegment.stem = stem;
 	leafSegment.vertexStart = this->vertices[mesh].size();
 	leafSegment.indexStart = this->indices[mesh].size();
 
+	Vec2 weights;
+	Vec2 indices;
+	if (stem->hasJoints()) {
+		float position = leaf->getPosition();
+		auto pair = getJoint(position, stem);
+		size_t index = pair.first;
+		size_t pathIndex = pair.second.getPathIndex();
+		float jointPosition = stem->getPath().getDistance(pathIndex);
+		float offset = position - jointPosition;
+		setJointInfo(stem, offset, index, weights, indices);
+	} else {
+		weights.x = 1.0f;
+		weights.y = 0.0f;
+		indices.x = static_cast<float>(state.jointID);
+		indices.y = indices.x;
+	}
+
 	Geometry geom = transformLeaf(leaf, stem);
 	size_t index = this->vertices[mesh].size();
-	for (Vertex vertex : geom.getPoints())
+	for (Vertex vertex : geom.getPoints()) {
+		vertex.indices = indices;
+		vertex.weights = weights;
 		this->vertices[mesh].push_back(vertex);
+	}
 	for (unsigned i : geom.getIndices())
 		this->indices[mesh].push_back(i + index);
 
-	leafSegment.vertexCount = vertices[mesh].size();
+	leafSegment.vertexCount = this->vertices[mesh].size();
 	leafSegment.vertexCount -= leafSegment.vertexStart;
-	leafSegment.indexCount = indices[mesh].size();
+	leafSegment.indexCount = this->indices[mesh].size();
 	leafSegment.indexCount -= leafSegment.indexStart;
-	leafSegments[mesh].emplace(leaf->getID(), leafSegment);
+	this->leafSegments[mesh].emplace(leaf->getID(), leafSegment);
 }
 
 Geometry Mesh::transformLeaf(const Leaf *leaf, const Stem *stem)
 {
-	Path path = stem->getPath();
+	const Path path = stem->getPath();
 	Vec3 location = stem->getLocation();
 	float position = leaf->getPosition();
 	Vec3 direction;
@@ -469,6 +508,145 @@ Geometry Mesh::transformLeaf(const Leaf *leaf, const Stem *stem)
 	rotation *= leaf->getRotation();
 	geom.transform(rotation, leaf->getScale(), location);
 	return geom;
+}
+
+/** Stem descendants might not have joints and the parent state is needed to
+determine what joint ancestors are influenced by. */
+void Mesh::setInitialJointState(State &state, const State &parentState)
+{
+	const Stem *stem = state.segment.stem;
+	const Stem *parent = stem->getParent();
+	state.jointID = 0;
+	state.jointIndex = 0;
+	state.jointOffset = 0.0f;
+	const vector<Joint> joints = stem->getJoints();
+
+	if (joints.empty() && (!parent || !parent->hasJoints())) {
+		state.jointID = parentState.jointID;
+	} else if (joints.empty()) {
+		float position = stem->getPosition();
+		auto pair = getJoint(position, stem->getParent());
+		state.jointID = pair.second.getID();
+		state.jointIndex = pair.first;
+	} else {
+		Joint joint = joints.front();
+		state.jointID = joint.getID();
+	}
+}
+
+std::pair<size_t, Joint> Mesh::getJoint(float position, const Stem *stem)
+{
+	size_t index = stem->getPath().getIndex(position);
+	const vector<Joint> joints = stem->getJoints();
+	size_t jointIndex = 0;
+	for (auto it = joints.begin(); it != joints.end(); it++) {
+		size_t pathIndex = it->getPathIndex();
+		if (pathIndex > index) {
+			if (it != joints.begin()) {
+				jointIndex--;
+				it--;
+			}
+			return std::pair<size_t, Joint>(jointIndex, *it);
+		}
+		jointIndex++;
+	}
+	return std::pair<size_t, Joint>(jointIndex-1, joints.back());
+}
+
+void Mesh::incrementJoint(State &state, const vector<Joint> &joints)
+{
+	if (state.jointIndex + 1 < joints.size()) {
+		Joint nextJoint = joints[state.jointIndex + 1];
+		if (nextJoint.getPathIndex() == state.section) {
+			state.jointIndex++;
+			state.jointID = nextJoint.getID();
+			state.jointOffset = 0.0f;
+		}
+	}
+}
+
+/** Update the current joint and set the joint indices and weights. */
+void Mesh::updateJointState(State &state, Vec2 &indices, Vec2 &weights)
+{
+	const Stem *stem = state.segment.stem;
+	const Path path = stem->getPath();
+	const vector<Joint> joints = stem->getJoints();
+	incrementJoint(state, joints);
+	size_t pathIndex = joints[state.jointIndex].getPathIndex();
+
+	if (state.jointIndex == 0 && state.section <= pathIndex) {
+		weights.x = 1.0f;
+		weights.y = 0.0f;
+		indices.x = static_cast<float>(state.jointID);
+		indices.y = indices.x;
+	} else if (state.section == 0 || state.section == path.getSize()-1) {
+		weights.x = 1.0f;
+		weights.y = 0.0f;
+		indices.x = static_cast<float>(state.jointID);
+		indices.y = indices.x;
+	} else if (state.section == pathIndex) {
+		unsigned prevID = joints[state.jointIndex-1].getID();
+		weights.x = 0.5f;
+		weights.y = 0.5f;
+		indices.x = static_cast<float>(state.jointID);
+		indices.y = static_cast<float>(prevID);
+	} else {
+		if (state.section != pathIndex) {
+			Vec3 point1 = stem->getPath().get(state.section);
+			Vec3 point2 = stem->getPath().get(state.section - 1);
+			state.jointOffset += magnitude(point1-point2);
+		}
+		setJointInfo(stem, state.jointOffset, state.jointIndex,
+			weights, indices);
+	}
+}
+
+void Mesh::setJointInfo(const Stem *stem, float jointOffset, size_t jointIndex,
+	Vec2 &weights, Vec2 &indices)
+{
+	const vector<Joint> joints = stem->getJoints();
+	const Path path = stem->getPath();
+	size_t pathIndex = joints[jointIndex].getPathIndex();
+	unsigned jointID = joints[jointIndex].getID();
+
+	float ratio;
+	float distance;
+	bool lastJoint = jointIndex + 1 >= joints.size();
+	if (lastJoint) {
+		size_t start = pathIndex;
+		size_t end = path.getSize() - 1;
+		distance = path.getDistance(start, end);
+		ratio = jointOffset / distance;
+	} else {
+		Joint nextJoint = joints[jointIndex + 1];
+		size_t start = pathIndex;
+		size_t end = nextJoint.getPathIndex();
+		distance = path.getDistance(start, end);
+		ratio = jointOffset / distance;
+	}
+
+	bool first = ratio < 0.5f && jointIndex == 0;
+	bool last = ratio > 0.5f && lastJoint;
+	if (ratio == 0.5f || first || last) {
+		weights.x = 1.0f;
+		weights.y = 0.0f;
+		indices.x = static_cast<float>(jointID);
+		indices.y = indices.x;
+	} else if (ratio > 0.5f) {
+		int nextID = joints[jointIndex + 1].getID();
+		indices.x = static_cast<float>(jointID);
+		indices.y = static_cast<float>(nextID);
+		float ratio = jointOffset / distance - 0.5f;
+		weights.x = 1.0f - ratio;
+		weights.y = ratio;
+	} else {
+		int prevID = joints[jointIndex - 1].getID();
+		indices.x = static_cast<float>(jointID);
+		indices.y = static_cast<float>(prevID);
+		float ratio = jointOffset / distance;
+		weights.x = 0.5f + ratio;
+		weights.y = 0.5f - ratio;
+	}
 }
 
 void Mesh::addTriangle(int mesh, int a, int b, int c)

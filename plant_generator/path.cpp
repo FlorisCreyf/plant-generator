@@ -43,6 +43,7 @@ void Path::generate(bool linearStart)
 	if (numControls <= 1)
 	 	return;
 
+	this->linearStart = linearStart;
 	int curves = this->spline.getCurveCount();
 	int curve = 0;
 	this->path.clear();
@@ -51,9 +52,9 @@ void Path::generate(bool linearStart)
 		this->path.push_back(this->spline.getPoint(curve++, 0.0f));
 
 	while (curve < curves) {
-		float r = 1.0f / resolution;
+		float r = 1.0f / this->resolution;
 		float t = 0.0f;
-		for (int i = 0; i < resolution; i++) {
+		for (int i = 0; i < this->resolution; i++) {
 			t = r * i;
 			Vec3 point = this->spline.getPoint(curve, t);
 			this->path.push_back(point);
@@ -106,7 +107,7 @@ Vec3 Path::get(int index) const
 	return this->path[index];
 }
 
-int Path::getSize() const
+size_t Path::getSize() const
 {
 	return this->path.size();
 }
@@ -120,8 +121,8 @@ Vec3 Path::getIntermediate(float distance) const
 	};
 	float total = 0.0f;
 
-	for (size_t i = 0; i < path.size() - 1; i++) {
-		float length = magnitude(path[i + 1] - path[i]);
+	for (size_t i = 0; i < this->path.size() - 1; i++) {
+		float length = magnitude(this->path[i + 1] - this->path[i]);
 		if (total + length >= distance) {
 			point = (distance - total) * getDirection(i);
 			point += this->path[i];
@@ -135,6 +136,18 @@ Vec3 Path::getIntermediate(float distance) const
 		point = this->path.back();
 
 	return point;
+}
+
+size_t Path::getIndex(float distance) const
+{
+	float total = 0.0f;
+	for (size_t i = 0; i < this->path.size(); i++) {
+		float length = magnitude(this->path[i + 1] - this->path[i]);
+		if (total + length >= distance)
+			return i;
+		total += length;
+	}
+	return this->path.size();
 }
 
 float Path::getLength() const
@@ -184,22 +197,40 @@ Vec3 Path::getIntermediateDirection(float t) const
 		return direction;
 }
 
-float Path::getDistance(int index) const
+float Path::getDistance(size_t index) const
 {
-	std::vector<Vec3> controls = this->spline.getControls();
-	int lastIndex = index / this->spline.getDegree() * this->resolution;
 	float distance = 0.0f;
-	for (int i = 0; i < lastIndex; i++)
+	for (size_t i = 0; i < index; i++)
 		distance += magnitude(this->path[i + 1] - this->path[i]);
 	return distance;
 }
 
-float Path::getIntermediateDistance(int index) const
+float Path::getDistance(size_t start, size_t end) const
+{
+	float distance = 0.0f;
+	for (size_t i = start; i < end; i++)
+		distance += magnitude(this->path[i + 1] - this->path[i]);
+	return distance;
+}
+
+float Path::getSegmentLength(size_t index) const
 {
 	if (index == 0)
 		return 0.0f;
 	else
 		return magnitude(this->path[index] - this->path[index-1]);
+}
+
+size_t Path::toPathIndex(size_t control)
+{
+	if (control == 0)
+		return 0;
+
+	control /= this->spline.getDegree();
+	if (this->linearStart)
+		return (control-1) * this->resolution + 1;
+	else
+		return control * this->resolution;
 }
 
 void Path::setMaxRadius(float radius)

@@ -17,7 +17,7 @@
 #include <limits>
 #include <cmath>
 
-using pg::Stem;
+using namespace pg;
 
 long Stem::counter = 1;
 
@@ -283,4 +283,33 @@ pg::Vec2 Stem::getLimitedSwelling(float limit) const
 			swelling.y = 1.0f;
 	}
 	return swelling;
+}
+
+std::vector<Joint> Stem::getJoints() const
+{
+	return this->joints;
+}
+
+bool Stem::hasJoints() const
+{
+	return !this->joints.empty();
+}
+
+void Stem::addJoint(Joint joint)
+{
+//	int index = joint.getPathIndex();
+//	Vec3 location = path.getSpline().getControls()[index];
+//	joint.updateLocation(location);
+	joint.updateLocation(path.get(joint.getPathIndex()));
+	this->joints.push_back(joint);
+}
+
+void Stem::clearJoints()
+{
+	this->joints.clear();
+	Stem *child = this->child;
+	while (child) {
+		child->clearJoints();
+		child = child->nextSibling;
+	}
 }

@@ -24,27 +24,24 @@
 #include "editor/history.h"
 #include "editor/keymap.h"
 #include "editor/selection.h"
-#include "editor/commands/add_leaf.h"
-#include "editor/commands/add_stem.h"
-#include "editor/commands/move_stem.h"
-#include "editor/commands/move_path.h"
-#include "editor/commands/rotate_stem.h"
 #include "editor/commands/save_selection.h"
 #include "editor/geometry/path.h"
 #include "editor/geometry/rotation_axes.h"
 #include "editor/geometry/translation_axes.h"
 #include "editor/graphics/buffer.h"
 #include "editor/graphics/shared_resources.h"
+
 #include "plant_generator/plant.h"
 #include "plant_generator/mesh.h"
 #include "plant_generator/pseudo_generator.h"
+#include "plant_generator/wind.h"
+
 #include <QOpenGLFunctions_4_3_Core>
 #include <QOpenGLWidget>
 #include <QToolBar>
 #include <QToolButton>
 #include <QWidgetAction>
 #include <QComboBox>
-#include <set>
 
 class Editor : public QOpenGLWidget, protected QOpenGLFunctions_4_3_Core {
 	Q_OBJECT
@@ -109,6 +106,7 @@ private:
 	SharedResources::Shader shader;
 
 	pg::PseudoGenerator generator;
+	pg::Wind wind;
 	pg::Mesh mesh;
 	pg::Plant plant;
 	std::vector<pg::Segment> meshes;

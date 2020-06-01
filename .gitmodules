@@ -1,6 +1,3 @@
 [submodule "resources"]
 	path = resources
 	url = https://github.com/floriscreyf/plant-generator-resources
-[submodule "plant_generator/thirdparty/pugixml"]
-	path = plant_generator/thirdparty/pugixml
-	url = https://github.com/floriscreyf/pugixml

@@ -13,28 +13,38 @@
  * limitations under the License.
  */
 
-#ifndef PG_FILE_H
-#define PG_FILE_H
+#include "joint.h"
+#include "path.h"
 
-#include "plant.h"
-#include "geometry.h"
-#include "mesh.h"
-#include <cstddef>
-#include <vector>
-#include <string>
+using namespace pg;
 
-namespace pg {
-	class File {
-		std::string exportMtl(std::string, const Plant &);
-		bool exportArmature = true;
-
-	public:
-		void importObj(const char *filename, Geometry *geom);
-		void exportDae(std::string filename, const Mesh &mesh,
-			const Plant &plant);
-		void exportObj(std::string filename, const Mesh &mesh,
-			const Plant &plant);
-	};
+Joint::Joint(unsigned id, unsigned parentID, size_t pathIndex)
+{
+	this->id = id;
+	this->parentID = parentID;
+	this->pathIndex = pathIndex;
 }
 
-#endif /* PG_FILE_H */
+unsigned Joint::getID() const
+{
+	return this->id;
+}
+
+unsigned Joint::getParentID() const
+{
+	return this->parentID;
+}
+
+size_t Joint::getPathIndex() const
+{
+	return this->pathIndex;
+}
+
+void Joint::updateLocation(Vec3 location)
+{
+	this->location = location;
+}
+
+Vec3 Joint::getLocation() const {
+	return this->location;
+}
