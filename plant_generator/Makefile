@@ -24,14 +24,16 @@ wind.o \
 xml_writer.o \
 )
 TEST_OBJECTS := $(addprefix $(BUILDDIR)/, \
+tests/test.o \
 tests/test_math.o \
+tests/test_spline.o \
 )
 
 plant: $(OBJECTS) $(BUILDDIR)/main.o
 	g++ $(OBJECTS) $(BUILDDIR)/main.o $(LIBS) -o $@
 
 test: $(OBJECTS) $(TEST_OBJECTS)
-	g++ $(OBJECTS) $(TEST_OBJECTS) $(LIBS) -o $@
+	g++ $(OBJECTS) $(TEST_OBJECTS) $(LIBS) -o $@ -lboost_unit_test_framework
 
 clean:
 	rm -r build

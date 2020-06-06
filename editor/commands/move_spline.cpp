@@ -56,34 +56,34 @@ void MoveSpline::setSpline(pg::Spline *spline)
 void MoveSpline::set(pg::Ray ray, Vec3 cameraDirection)
 {
 	float distance;
-	Vec3 position = axes->getPosition();
+	Vec3 position = this->axes->getPosition();
 	pg::Plane plane = {position, cameraDirection};
 
-	if (axes->getSelection() == Axes::XAxis)
+	if (this->axes->getSelection() == Axes::XAxis)
 		plane.normal.x = 0.0f;
-	else if (axes->getSelection() == Axes::YAxis)
+	else if (this->axes->getSelection() == Axes::YAxis)
 		plane.normal.y = 0.0f;
-	else if (axes->getSelection() == Axes::ZAxis)
+	else if (this->axes->getSelection() == Axes::ZAxis)
 		plane.normal.z = 0.0f;
 
 	plane.normal = pg::normalize(plane.normal);
 	distance = pg::intersectsPlane(ray, plane);
 	position = distance * ray.direction + ray.origin;
 
-	if (axes->getSelection() == Axes::XAxis) {
+	if (this->axes->getSelection() == Axes::XAxis) {
 		position.y = plane.point.y;
 		position.z = plane.point.z;
-	} else if (axes->getSelection() == Axes::YAxis) {
+	} else if (this->axes->getSelection() == Axes::YAxis) {
 		position.x = plane.point.x;
 		position.z = plane.point.z;
-	} else if (axes->getSelection() == Axes::ZAxis) {
+	} else if (this->axes->getSelection() == Axes::ZAxis) {
 		position.x = plane.point.x;
 		position.y = plane.point.y;
 	}
 
-	this->direction = position - axes->getPosition();
-	this->totalDirection += direction;
-	axes->setPosition(position);
+	this->direction = position - this->axes->getPosition();
+	this->totalDirection += this->direction;
+	this->axes->setPosition(position);
 }
 
 void MoveSpline::setParallelTangents(bool parallel)
@@ -93,21 +93,22 @@ void MoveSpline::setParallelTangents(bool parallel)
 
 Vec3 MoveSpline::getDirection()
 {
-	return direction;
+	return this->direction;
 }
 
 void MoveSpline::execute()
 {
-	auto points = selection->getPoints();
+	auto points = this->selection->getPoints();
 
 	/* The new location of each point is the difference of the
 	position of the axes before and after the movement. */
-	if (spline->getDegree() == 1) {
+	if (this->spline->getDegree() == 1) {
 		for (int point : points) {
-			Vec3 location = spline->getControls()[point];
-			spline->move(point, location + direction, true);
+			Vec3 location = this->spline->getControls()[point];
+			location += this->direction;
+			this->spline->move(point, location, true);
 		}
-	} else if (spline->getDegree() == 3) {
+	} else if (this->spline->getDegree() == 3) {
 		for (auto it = points.begin(); it != points.end(); ++it) {
 			int p = *it;
 			bool a = it == points.begin();
@@ -122,13 +123,14 @@ void MoveSpline::execute()
 
 			/* Only one point can be moved if one peripheral
 			point moves the other. */
-			Vec3 location = spline->getControls()[p];
+			Vec3 location = this->spline->getControls()[p];
+			location += this->direction;
 			if (p % 3 == 1 && (!a && *std::prev(it) == p - 2))
-				spline->move(p, location + direction, false);
+				this->spline->move(p, location, false);
 			else if (p % 3 == 2 && (!b && *std::next(it) == p + 2))
-				spline->move(p, location + direction, false);
+				this->spline->move(p, location, false);
 			else
-				spline->move(p, location + direction, parallel);
+				this->spline->move(p, location, this->parallel);
 		}
 	}
 }
@@ -139,6 +141,8 @@ void MoveSpline::undo()
 		this->totalDirection = -1.0f * this->totalDirection;
 		this->direction = this->totalDirection;
 		execute();
+		this->direction = -1.0f * this->direction;
+		this->totalDirection = this->direction;
 	} else {
 		std::vector<Vec3> controls = this->spline->getControls();
 		this->spline->setControls(this->positions);
@@ -154,8 +158,8 @@ void MoveSpline::redo()
 bool MoveSpline::onMouseMove(QMouseEvent *event)
 {
 	QPoint point = event->pos();
-	float x = point.x() + clickOffset[0];
-	float y = point.y() + clickOffset[1];
+	float x = point.x() + this->clickOffset[0];
+	float y = point.y() + this->clickOffset[1];
 	set(this->camera->getRay(x, y), this->camera->getDirection());
 	setParallelTangents(false);
 	execute();
