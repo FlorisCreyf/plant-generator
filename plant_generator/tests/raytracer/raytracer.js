@@ -13,26 +13,8 @@ function main()
 	var height = canvas.height;
 	var i = 0;
 
-	// variables for drawing checkerboard background
-	var cx = 0;
-	var ccx = false;
-	var cy = 0;
-	var ccy = false;
-
 	for (var y = 0; y < height; y++) {
-		if (++cy > 10) {
-			ccy = !ccy;
-			cy = 0;
-		}
-		cx = 0;
-		ccx = ccy;
-
 		for (var x = 0; x < width; x++) {
-			if (++cx > 10) {
-				ccx = !ccx;
-				cx = 0;
-			}
-
 			var orig = {
 				x: 2 * (x / width) - 1,
 				z: 1 - 2 * (y / height),
@@ -44,27 +26,17 @@ function main()
 
 			var t = intersection(orig, dir);
 
-			if (t != null) {
+			if (t) {
 				t = 255 - (t / 2) * 255;
-
-				img.data[i  ] = t;
-				img.data[i+1] = t;
-				img.data[i+2] = t;
-				img.data[i+3] = 255;
-				i += 4;
+				img.data[i++] = t;
+				img.data[i++] = t;
+				img.data[i++] = t;
+				img.data[i++] = 255;
 			} else {
-				if (ccx) {
-					img.data[i  ] = 80;
-					img.data[i+1] = 80;
-					img.data[i+2] = 80;
-					img.data[i+3] = 255;
-				} else {
-					img.data[i  ] = 50;
-					img.data[i+1] = 50;
-					img.data[i+2] = 50;
-					img.data[i+3] = 255;
-				}
-				i += 4;
+				img.data[i++] = 50;
+				img.data[i++] = 50;
+				img.data[i++] = 50;
+				img.data[i++] = 255;
 			}
 		}
 	}

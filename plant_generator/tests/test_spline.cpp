@@ -67,7 +67,7 @@ BOOST_AUTO_TEST_CASE(test_parallelize_cubic, *bt::tolerance(TOLERANCE))
 	controls[2] = Vec3(1.0f, 0.0f, 0.0f);
 	controls[3] = Vec3(1.0f, 1.0f, 0.0f);
 	controls[4] = Vec3(1.0f, 2.0f, 0.0f);
-	
+
 	spline.setDegree(3);
 	spline.setControls(controls);
 	spline.parallelize(2);
@@ -76,12 +76,12 @@ BOOST_AUTO_TEST_CASE(test_parallelize_cubic, *bt::tolerance(TOLERANCE))
 	BOOST_TEST(point.x == controls[4].x);
 	BOOST_TEST(point.y == controls[4].y);
 	BOOST_TEST(point.z == controls[4].z);
-	
+
 	controls[4] = point;
 	controls[2].y = -1.0f;
 	spline.setControls(controls);
 	spline.parallelize(4);
-	
+
 	point = spline.getControls()[2];
 	BOOST_TEST(point.x == controls[2].x);
 	BOOST_TEST(point.y == controls[2].y);

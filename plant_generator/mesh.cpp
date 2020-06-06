@@ -79,14 +79,14 @@ void Mesh::addSections(State &state)
 	state.prevRotation = Quat(0.0f, 0.0f, 0.0f, 1.0f);
 	state.prevIndex = this->vertices[state.mesh].size();
 	state.section = createBranchCollar(state);
+	size_t sections = stem->getPath().getSize();
 
-	if (state.section > 0) {
+	if (state.section > 0 && state.section < sections) {
 		size_t i = this->vertices[state.mesh].size();
 		int r = stem->getResolution();
 		addTriangleRing(state.prevIndex, i, r, state.mesh);
 	}
 
-	size_t sections = stem->getPath().getSize();
 	for (; state.section < sections; state.section++) {
 		rotation = rotateSection(state);
 		state.prevIndex = this->vertices[state.mesh].size();
@@ -99,7 +99,8 @@ void Mesh::addSections(State &state)
 		}
 	}
 
-	capStem(stem, state.mesh, state.prevIndex);
+	if (stem->getPath().getMinRadius() > 0)
+		capStem(stem, state.mesh, state.prevIndex);
 }
 
 /** A rotation for a cross section is relative to the rotation of the previous

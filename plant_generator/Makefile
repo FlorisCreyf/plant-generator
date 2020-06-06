@@ -26,6 +26,7 @@ xml_writer.o \
 TEST_OBJECTS := $(addprefix $(BUILDDIR)/, \
 tests/test.o \
 tests/test_math.o \
+tests/test_mesh.o \
 tests/test_spline.o \
 )
 
