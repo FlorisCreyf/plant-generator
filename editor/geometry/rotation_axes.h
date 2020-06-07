@@ -1,4 +1,4 @@
-/* Plant Genererator
+/* Plant Generator
  * Copyright (C) 2018  Floris Creyf
  *
  * Plant Generator is free software: you can redistribute it and/or modify

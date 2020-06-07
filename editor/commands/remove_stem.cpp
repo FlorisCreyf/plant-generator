@@ -1,12 +1,12 @@
-/* Plant Genererator
+/* Plant Generator
  * Copyright (C) 2018  Floris Creyf
  *
- * Plant Genererator is free software: you can redistribute it and/or modify
+ * Plant Generator is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * Plant Genererator is distributed in the hope that it will be useful,
+ * Plant Generator is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -33,7 +33,7 @@ RemoveStem::~RemoveStem()
 	if (!this->stems.empty()) {
 		/* Adjust the selection so that descendants are not deleted
 		after ancestors have been deleted. */
-		prevSelection.reduceToAncestors();
+		this->prevSelection.reduceToAncestors();
 		for (auto stem : this->stems)
 			delete stem;
 	}
@@ -43,12 +43,12 @@ RemoveStem::~RemoveStem()
 from the plant if their stem is removed. */
 void RemoveStem::removeLeaves()
 {
-	auto instances = selection->getLeafInstances();
+	auto instances = this->selection->getLeafInstances();
 	for (auto &instance : instances) {
 		Stem *stem = instance.first;
 		std::set<long> &ids = instance.second;
 		for (auto it = ids.begin(); it != ids.end(); it++) {
-			leaves.emplace(stem, *(stem->getLeaf(*it)));
+			this->leaves.emplace(stem, *(stem->getLeaf(*it)));
 			stem->removeLeaf(*it);
 		}
 	}
@@ -58,7 +58,7 @@ void RemoveStem::removeLeaves()
 void RemoveStem::removeStems()
 {
 	std::vector<Stem *> removals;
-	auto instances = selection->getStemInstances();
+	auto instances = this->selection->getStemInstances();
 	for (auto &instance : instances) {
 		Stem *stem = instance.first;
 		Path path = stem->getPath();
@@ -95,9 +95,9 @@ void RemoveStem::removeStems()
 
 	/* Do not remove stems from the selection if only a couple of points
 	were removed. */
-	selection->setInstances(instances);
+	this->selection->setInstances(instances);
 	for (auto stem : removals)
-		selection->removeStem(stem);
+		this->selection->removeStem(stem);
 }
 
 void RemoveStem::execute()
@@ -121,7 +121,7 @@ void RemoveStem::undo()
 		stem->setPath(path);
 	}
 
-	for (auto &item : leaves) {
+	for (auto &item : this->leaves) {
 		Stem *stem = item.first;
 		stem->addLeaf(item.second);
 	}
