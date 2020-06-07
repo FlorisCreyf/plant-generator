@@ -16,6 +16,7 @@
  */
 
 #include "curve_editor.h"
+#include "editor/selector.h"
 #include "editor/commands/extrude_spline.h"
 #include "editor/commands/remove_spline.h"
 #include "editor/commands/save_point_selection.h"
@@ -32,7 +33,7 @@ using pg::Mat4;
 
 CurveEditor::CurveEditor(
 	SharedResources *shared, KeyMap *keymap, QWidget *parent) :
-	QOpenGLWidget(parent), selection(&camera)
+	QOpenGLWidget(parent)
 {
 	this->shared = shared;
 	this->keymap = keymap;
@@ -156,7 +157,7 @@ void CurveEditor::keyPressEvent(QKeyEvent *event)
 	bool ctrl = event->modifiers() & Qt::ControlModifier;
 	bool shift = event->modifiers() & Qt::ShiftModifier;
 	bool alt = event->modifiers() & Qt::AltModifier;
-	QString command = keymap->getBinding(key, ctrl, shift, alt);
+	QString command = this->keymap->getBinding(key, ctrl, shift, alt);
 
 	if (command == tr("Select Previous Points")) {
 		SavePointSelection *selectionCopy =
@@ -214,7 +215,7 @@ void CurveEditor::keyPressEvent(QKeyEvent *event)
 		this->spline = this->origSpline;
 		applyRestrictions();
 		change();
-		emit curveChanged(spline, name);
+		emit curveChanged(this->spline, this->name);
 	}
 }
 
@@ -261,7 +262,7 @@ void CurveEditor::extrude()
 	applyRestrictions();
 	change();
 
-	emit curveChanged(spline, name);
+	emit curveChanged(this->spline, this->name);
 }
 
 void CurveEditor::mousePressEvent(QMouseEvent *event)
@@ -280,19 +281,21 @@ void CurveEditor::mousePressEvent(QMouseEvent *event)
 			this->camera.setAction(Camera::Pan);
 	} else if (this->enabled && event->button() == Qt::RightButton) {
 		SavePointSelection *selectionCopy =
-			new SavePointSelection(&selection);
+			new SavePointSelection(&this->selection);
 		QMouseEvent modifiedEvent(
 			QEvent::MouseMove,
 			QPoint(pos.x(), pos.y() - this->toolBarHeight),
 			event->button(), event->buttons(), event->modifiers());
-		this->selection.selectPoint(
-			&modifiedEvent, this->spline, pg::getZeroVec3());
+		Selector selector(&this->camera);
+		selector.selectPoint(
+			&modifiedEvent, this->spline, pg::getZeroVec3(),
+			&this->selection);
 		if (selectionCopy->hasChanged()) {
 			selectionCopy->setAfter();
 			this->history.add(selectionCopy);
 			Vec3 avg = this->selection.getAveragePosition(
 				this->spline, pg::getZeroVec3());
-			path.setSelectedPoints(selection);
+			this->path.setSelectedPoints(this->selection);
 			this->axes.setPosition(avg);
 			change();
 		}
@@ -304,7 +307,8 @@ void CurveEditor::mousePressEvent(QMouseEvent *event)
 			int y = s.y - pos.y();
 			initiateMovePoint();
 			MoveSpline *moveSpline = new MoveSpline(
-				&selection, &origSpline, &axes, &camera);
+				&this->selection, &this->origSpline,
+				&this->axes, &this->camera);
 			moveSpline->preservePositions();
 			moveSpline->setClickOffset(x, y);
 			this->command = moveSpline;
@@ -319,7 +323,7 @@ void CurveEditor::mouseReleaseEvent(QMouseEvent *event)
 	else if (this->command)
 		exitCommand(this->command->onMouseRelease(event));
 
-	axes.clearSelection();
+	this->axes.clearSelection();
 }
 
 void CurveEditor::mouseMoveEvent(QMouseEvent *event)
@@ -518,7 +522,7 @@ void CurveEditor::restrictCubicControl(std::vector<Vec3> &controls, int i)
 			}
 
 			if (i != 0 && i != l) {
-				Vec3 orig = origSpline.getControls()[i];
+				Vec3 orig = this->origSpline.getControls()[i];
 				Vec3 diff = controls[i] - orig;
 				controls[i+1] += diff;
 				controls[i-1] += diff;
@@ -674,7 +678,7 @@ void CurveEditor::paintGL()
 		GLuint texture =
 			this->shared->getTexture(SharedResources::DotTexture);
 		glBindTexture(GL_TEXTURE_2D, texture);
-		glUseProgram(shared->getShader(SharedResources::Point));
+		glUseProgram(this->shared->getShader(SharedResources::Point));
 		glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
 		glDrawArrays(GL_POINTS, segment.pstart, segment.pcount);
 	}

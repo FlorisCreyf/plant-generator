@@ -16,6 +16,7 @@
  */
 
 #include "editor.h"
+#include "editor/selector.h"
 #include "editor/commands/add_leaf.h"
 #include "editor/commands/add_stem.h"
 #include "editor/commands/extrude_stem.h"
@@ -48,7 +49,7 @@ Editor::Editor(SharedResources *shared, KeyMap *keymap, QWidget *parent) :
 	generator(&plant),
 	wind(&plant),
 	mesh(&plant),
-	selection(&camera, &plant, &mesh)
+	selection(&plant)
 {
 	this->shared = shared;
 	this->keymap = keymap;
@@ -325,7 +326,8 @@ void Editor::mousePressEvent(QMouseEvent *event)
 		exitCommand(currentCommand->onMousePress(event));
 	} else if (event->button() == Qt::RightButton) {
 		SaveSelection *selectionCopy = new SaveSelection(&selection);
-		selection.select(event);
+		Selector selector(&this->camera);
+		selector.select(event, &this->mesh, &this->selection);
 		if (selectionCopy->hasChanged()) {
 			selectionCopy->setAfter();
 			history.add(selectionCopy);

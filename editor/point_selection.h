@@ -18,26 +18,18 @@
 #ifndef POINT_SELECTION_H
 #define POINT_SELECTION_H
 
-#include "camera.h"
 #include "plant_generator/spline.h"
-#include <QtGui/QMouseEvent>
 #include <set>
 
 class PointSelection {
-	Camera *camera;
 	std::set<int> points;
-	pg::Vec3 location;
 
 public:
-	PointSelection(Camera *camera);
 	bool operator==(const PointSelection &obj) const;
 	bool operator!=(const PointSelection &obj) const;
 
-	/** Returns the index of the point that was clicked on. */
-	int selectPoint(
-		QMouseEvent *event, const pg::Spline &spline,
-		pg::Vec3 location);
 	void setPoints(std::set<int> points);
+	void addPoint(int point);
 	std::set<int> getPoints() const;
 	bool hasPoints() const;
 	bool contains(int point) const;
@@ -46,6 +38,7 @@ public:
 		const pg::Spline &spline, pg::Vec3 location) const;
 
 	void clear();
+	bool removePoint(int point);
 	void selectNext(int max);
 	void selectPrevious();
 	void selectAll(int max);

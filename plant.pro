@@ -75,7 +75,8 @@ editor/history.cpp \
 editor/keymap.cpp \
 editor/main.cpp \
 editor/point_selection.cpp \
-editor/selection.cpp
+editor/selection.cpp \
+editor/selector.cpp
 
 HEADERS += \
 plant_generator/math/curve.h \
@@ -140,7 +141,8 @@ editor/camera.h \
 editor/history.h \
 editor/keymap.h \
 editor/point_selection.h \
-editor/selection.h
+editor/selection.h \
+editor/selector.h
 
 FORMS += editor/qt/window.ui
 MOC_DIR = editor/qt
