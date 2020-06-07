@@ -37,7 +37,8 @@ int Wind::generate(Stem *stem, int id, int parentID)
 	int degree = spline.getDegree();
 	float distance = 0.0f;
 
-	for (size_t i = stem->getParent() ? 1 : 0; i < size-1; i += degree) {
+	size_t i = stem->getParent() ? degree : 0;
+	for (; i < size-1; i += degree) {
 		size_t start = path.toPathIndex(i);
 		size_t end = path.toPathIndex(i + degree);
 		distance += path.getDistance(start, end);

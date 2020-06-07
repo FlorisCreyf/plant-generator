@@ -52,7 +52,7 @@ namespace pg {
 		bool operator==(const Path &path) const;
 		bool operator!=(const Path &path) const;
 
-		void setSpline(Spline &spline);
+		void setSpline(const Spline &spline);
 		Spline getSpline();
 		/** Set the divisions for each curve in the path. */
 		void setResolution(int resolution);
@@ -85,7 +85,7 @@ namespace pg {
 		/** Return the distance between control points. */
 		float getSegmentLength(size_t index) const;
 		/** Convert a spline control index to a path index. */
-		size_t toPathIndex(size_t control);
+		size_t toPathIndex(size_t control) const;
 
 		void setMaxRadius(float radius);
 		float getMaxRadius() const;

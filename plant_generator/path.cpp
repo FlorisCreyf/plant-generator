@@ -65,7 +65,7 @@ void Path::generate(bool linearStart)
 	this->path.push_back(this->spline.getControls()[numControls-1]);
 }
 
-void Path::setSpline(Spline &spline)
+void Path::setSpline(const Spline &spline)
 {
 	this->spline = spline;
 }
@@ -221,12 +221,12 @@ float Path::getSegmentLength(size_t index) const
 		return magnitude(this->path[index] - this->path[index-1]);
 }
 
-size_t Path::toPathIndex(size_t control)
+size_t Path::toPathIndex(size_t control) const
 {
+	control /= this->spline.getDegree();
 	if (control == 0)
 		return 0;
 
-	control /= this->spline.getDegree();
 	if (this->linearStart)
 		return (control-1) * this->resolution + 1;
 	else

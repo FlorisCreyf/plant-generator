@@ -297,9 +297,6 @@ bool Stem::hasJoints() const
 
 void Stem::addJoint(Joint joint)
 {
-//	int index = joint.getPathIndex();
-//	Vec3 location = path.getSpline().getControls()[index];
-//	joint.updateLocation(location);
 	joint.updateLocation(path.get(joint.getPathIndex()));
 	this->joints.push_back(joint);
 }
