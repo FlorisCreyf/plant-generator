@@ -212,16 +212,17 @@ void MaterialEditor::openDiffuseFile()
 	int index = this->materialBox->currentIndex();
 	long id = this->materialBox->itemData(index).toInt();
 	ShaderParams params = this->shared->getMaterial(id);
-	QFileDialog dialog(this, tr("Open File"));
 
-	dialog.exec();
-	QString filename = dialog.selectedFiles().first();
+	QString filename = QFileDialog::getOpenFileName(
+		this, tr("Open File"), "",
+		tr("All Files (*);;PNG (*.png);;JPEG (*.jpg);;SVG (*.svg)"));
 
-	if (params.loadTexture(0, filename)) {
-		this->shared->addMaterial(params);
-		this->diffuseBox->setText(filename);
-		emit materialChanged(params);
-	}
+	if (!filename.isNull() || !filename.isEmpty())
+		if (params.loadTexture(0, filename)) {
+			this->shared->addMaterial(params);
+			this->diffuseBox->setText(filename);
+			emit materialChanged(params);
+		}
 }
 
 void MaterialEditor::removeDiffuseFile()

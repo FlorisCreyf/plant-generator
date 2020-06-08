@@ -1,7 +1,7 @@
 TEMPLATE = app
 # Qt VS Tools might not generate object files in sub-directories.
 # Object File Name: $(IntDir)%(RelativeDir)
-CONFIG += qt debug object_parallel_to_source c++11 strict_c++ no_batch warn_on
+CONFIG += qt object_parallel_to_source c++11 strict_c++ no_batch warn_on
 # win32::CONFIG += console
 DEFINES += GL_GLEXT_PROTOTYPES
 unix::QMAKE_LFLAGS += -no-pie
@@ -13,6 +13,16 @@ win32::LIBS += "C:\Program Files\boost\boost_1_73_0\stage\lib\libboost_serializa
 win32::LIBS += opengl32.lib
 win32::INCLUDEPATH += "C:\Program Files\boost\boost_1_73_0"
 win32::DEPENDPATH += "C:\Program Files\boost\boost_1_73_0"
+FORMS += editor/qt/window.ui
+CONFIG(release, debug|release) {
+	OBJECTS_DIR = build/release
+}
+CONFIG(debug, debug|release) {
+	OBJECTS_DIR = build/debug
+}
+MOC_DIR = editor/qt
+RCC_DIR = editor/qt
+UI_DIR = editor/qt
 
 SOURCES += \
 plant_generator/math/curve.cpp \
@@ -147,9 +157,3 @@ editor/keymap.h \
 editor/point_selection.h \
 editor/selection.h \
 editor/selector.h
-
-FORMS += editor/qt/window.ui
-MOC_DIR = editor/qt
-RCC_DIR = editor/qt
-UI_DIR = editor/qt
-OBJECTS_DIR = build

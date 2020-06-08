@@ -106,7 +106,7 @@ int Spline::insert(unsigned index, Vec3 point)
 int Spline::insertCubic(int index, Vec3 point)
 {
 	Vec3 curve[3];
-	int center;
+	int center = 0;
 
 	if (index % 3 == 0) {
 		if (index == (int)controls.size() - 1) {

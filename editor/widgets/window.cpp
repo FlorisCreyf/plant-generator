@@ -273,7 +273,7 @@ void Window::exportWavefrontDialogBox()
 
 	QString filename = QFileDialog::getSaveFileName(
 		this, tr("Export File"), "saved/plant.obj",
-		tr("Wavefront (*.obj);;All (*)"));
+		tr("Wavefront (*.obj);;All Files (*)"));
 
 	if (!filename.isEmpty()) {
 		pg::File f;
@@ -289,7 +289,7 @@ void Window::exportColladaDialogBox()
 
 	QString filename = QFileDialog::getSaveFileName(
 		this, tr("Export File"), "saved/plant.dae",
-		tr("Collada (*.dae);;All (*)"));
+		tr("Collada (*.dae);;All Files (*)"));
 
 	if (!filename.isEmpty()) {
 		pg::File f;
