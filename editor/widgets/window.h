@@ -25,6 +25,7 @@
 #include "editor/graphics/shared_resources.h"
 #include "editor.h"
 #include "curve_editor.h"
+#include "generator_editor.h"
 #include "material_editor.h"
 #include "mesh_editor.h"
 #include "key_editor.h"
@@ -58,6 +59,7 @@ private:
 	Editor *editor;
 	PropertyEditor *propertyEditor;
 	CurveEditor *curveEditor;
+	GeneratorEditor *genEditor;
 	MaterialEditor *materialEditor;
 	MeshEditor *meshEditor;
 	KeyEditor *keyEditor;
@@ -70,6 +72,7 @@ private:
 	void keyPressEvent(QKeyEvent *event);
 	void createPropertyBox();
 	void createEditors();
+	QDockWidget *createDockWidget(const char *, QWidget *, bool);
 	void setFilename(QString filename);
 };
 

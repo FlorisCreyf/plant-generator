@@ -22,28 +22,35 @@
 
 #define PI 3.14159265359f
 
-using pg::Stem;
-using pg::Vec3;
-using pg::Mat4;
+using namespace pg;
 
-pg::PseudoGenerator::PseudoGenerator(pg::Plant *plant)
+PseudoGenerator::PseudoGenerator(Plant *plant)
 {
 	std::random_device rd;
-	randomGenerator.seed(rd());
+	this->randomGenerator.seed(rd());
 	this->plant = plant;
-	this->maxStemDepth = 1;
-	this->hasLeaves = true;
+	this->stemDepth = 1;
+	this->stemDensity = 0.0f;
+	this->leafDensity = 0.0f;
+	this->stemStart = 0.0f;
+	this->leafStart = 0.0f;
+	this->requiredLength = 0.0f;
 }
 
-void pg::PseudoGenerator::grow()
+void PseudoGenerator::grow()
 {
-	Stem *root = plant->createRoot();
+	Stem *root = this->plant->createRoot();
 	root->setPosition(0.0f);
 	setPath(root, nullptr, Vec3(0.0f, 1.0f, 0.0f), 0.0f);
-	addLateralStems(root, 1.5f);
+	addLateralStems(root);
 }
 
-Vec3 pg::PseudoGenerator::getStemDirection(Stem *stem)
+void PseudoGenerator::grow(Stem *stem)
+{
+	addLateralStems(stem);
+}
+
+Vec3 PseudoGenerator::getStemDirection(Stem *stem)
 {
 	Path path = stem->getParent()->getPath();
 	float ratio = stem->getPosition() / path.getLength();
@@ -57,22 +64,25 @@ Vec3 pg::PseudoGenerator::getStemDirection(Stem *stem)
 	return tran.apply(Vec3(0.0f, 1.0f, 0.0f), 1.0f);
 }
 
-void pg::PseudoGenerator::addLateralStems(Stem *parent, float position)
+void PseudoGenerator::addLateralStems(Stem *parent)
 {
+	if (this->stemDensity == 0.0f)
+		return;
+
 	float length = parent->getPath().getLength();
-	float stemDensity = parent->getDepth() == 0 ? 1.0f : 1.5f;
-	float distance = 1.0f / stemDensity;
+	float distance = 1.0f / this->stemDensity;
+	float position = this->stemStart;
 
 	while (position < length) {
-		Stem *stem = plant->addStem(parent);
-		growLateralStem(stem, position);
+		if (!growLateralStem(parent, position))
+			break;
 		position += distance;
 	}
 }
 
-void pg::PseudoGenerator::growLateralStem(Stem *stem, float position)
+bool PseudoGenerator::growLateralStem(Stem *parent, float position)
 {
-	Stem *parent = stem->getParent();
+	Stem *stem = plant->addStem(parent);
 	stem->setPosition(position);
 
 	if (parent->getResolution() - 4 < 3)
@@ -80,31 +90,43 @@ void pg::PseudoGenerator::growLateralStem(Stem *stem, float position)
 	else
 		stem->setResolution(parent->getResolution() - 2);
 
-	setPath(stem, parent, getStemDirection(stem), position);
-
-	if (this->hasLeaves) {
-		Leaf leaf;
-		leaf.setPosition(1.5f);
-		leaf.setScale(Vec3(2.0f, 2.0f, 2.0f));
-		stem->addLeaf(leaf);
+	if (!setPath(stem, parent, getStemDirection(stem), position)) {
+		delete this->plant->extractStem(stem);
+		return false;
 	}
 
-	if (stem->getDepth() < this->maxStemDepth)
-		addLateralStems(stem, 0.5f);
+	if (this->leafDensity > 0.0f) {
+		float length = stem->getPath().getLength();
+		float distance = 1.0f / this->leafDensity;
+		float position = this->leafStart;
+		Quat rotation(0.0f, 0.0f, 0.0f, 1.0f);
+		while (position < length) {
+			Leaf leaf;
+			leaf.setPosition(position);
+			leaf.setScale(Vec3(2.0f, 2.0f, 2.0f));
+			alternateLeaf(&leaf, rotation);
+			rotation = leaf.getRotation();
+			stem->addLeaf(leaf);
+			position += distance;
+		}
+	}
+
+	if (stem->getDepth() < this->stemDepth)
+		addLateralStems(stem);
+
+	return true;
 }
 
-void pg::PseudoGenerator::setPath(
+bool PseudoGenerator::setPath(
 	Stem *stem, Stem *parent, Vec3 direction, float position)
 {
-	std::vector<Vec3> controls;
-	std::uniform_real_distribution<float> dis(-0.05f, 0.05f);
-
 	float radius;
 	float minRadius;
+	float parentRadius;
 	if (parent) {
-		float margin = 1.0f / stem->getResolution();
-		radius = parent->getPath().getIntermediateRadius(position);
-		radius /= stem->getSwelling().x + margin;
+		const Path path = parent->getPath();
+		parentRadius = path.getIntermediateRadius(position);
+		radius = parentRadius / (stem->getSwelling().x + 0.1f);
 		minRadius = radius / 5.0f;
 		if (minRadius < 0.001f)
 			minRadius = 0.001f;
@@ -113,25 +135,31 @@ void pg::PseudoGenerator::setPath(
 	} else {
 		radius = 0.2f;
 		minRadius = 0.01f;
+		parentRadius = 1.0f;
 	}
 
-	float length = radius * 10.0f;
-	int divisions = stem->getDepth() == 0 ? 2 : 1;
-	int points = stem->getParent() ? 4 : 5;
+	int divisions = 1;
+	float length = radius * 40.0f;
+	int points = static_cast<int>(length / 2.0f) + 1;
+	float increment = length / points;
+	if (length < this->requiredLength)
+		return false;
 
 	Path path;
 	path.setMinRadius(minRadius);
 	path.setMaxRadius(radius);
 	path.setRadius(getDefaultCurve(0));
 	path.setResolution(divisions);
+	std::vector<Vec3> controls;
+	std::uniform_real_distribution<float> dis(-0.05f, 0.05f);
 
 	Vec3 control(0.0f, 0.0f, 0.0f);
 	controls.push_back(control);
-	control += length * 0.5f * direction;
+	control += parentRadius * 4.0f * direction;
 	controls.push_back(control);
 
 	for (int i = 0; i < points; i++) {
-		control = control + length * direction;
+		control = control + increment * direction;
 		direction.x += dis(this->randomGenerator);
 		direction.y += dis(this->randomGenerator);
 		direction.z += dis(this->randomGenerator);
@@ -144,19 +172,37 @@ void pg::PseudoGenerator::setPath(
 	spline.setControls(controls);
 	path.setSpline(spline);
 	stem->setPath(path);
+	return true;
 }
 
-void pg::PseudoGenerator::disableLeaves(bool disable)
+void PseudoGenerator::alternateLeaf(Leaf *leaf, Quat prevRotation)
 {
-	this->hasLeaves = !disable;
+	Quat rotation(0.0f, 0.0f, 0.0f, 0.0f);
+	if (prevRotation.w == 1.0f)
+		rotation.y = 1.0f;
+	else
+		rotation.w = 1.0f;
+	leaf->setRotation(rotation);
 }
 
-void pg::PseudoGenerator::setMaxDepth(int depth)
+void PseudoGenerator::setStemCount(float density, float start)
 {
-	this->maxStemDepth = depth;
+	this->stemDensity = density;
+	this->stemStart = start;
 }
 
-int pg::PseudoGenerator::getMaxDepth()
+void PseudoGenerator::setLeafCount(float density, float start)
 {
-	return maxStemDepth;
+	this->leafDensity = density;
+	this->leafStart = start;
+}
+
+void PseudoGenerator::setRequiredLength(float length)
+{
+	this->requiredLength = length;
+}
+
+void PseudoGenerator::setDepth(int depth)
+{
+	this->stemDepth = depth;
 }

@@ -40,6 +40,7 @@ editor/commands/add_leaf.cpp \
 editor/commands/command.cpp \
 editor/commands/extrude_spline.cpp \
 editor/commands/extrude_stem.cpp \
+editor/commands/generate.cpp \
 editor/commands/move_spline.cpp \
 editor/commands/move_stem.cpp \
 editor/commands/move_path.cpp \
@@ -61,6 +62,7 @@ editor/widgets/curve_button.cpp \
 editor/widgets/curve_editor.cpp \
 editor/widgets/editor.cpp \
 editor/widgets/form.cpp \
+editor/widgets/generator_editor.cpp \
 editor/widgets/key_editor.cpp \
 editor/widgets/leaf_editor.cpp \
 editor/widgets/material_editor.cpp \
@@ -106,6 +108,7 @@ editor/commands/add_leaf.h \
 editor/commands/command.h \
 editor/commands/extrude_spline.h \
 editor/commands/extrude_stem.h \
+editor/commands/generate.h \
 editor/commands/move_spline.h \
 editor/commands/move_stem.h \
 editor/commands/move_path.h \
@@ -127,6 +130,7 @@ editor/widgets/curve_button.h \
 editor/widgets/curve_editor.h \
 editor/widgets/editor.h \
 editor/widgets/form.h \
+editor/widgets/generator_editor.h \
 editor/widgets/item_delegate.h \
 editor/widgets/key_editor.h \
 editor/widgets/leaf_editor.h \

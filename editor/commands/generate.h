@@ -1,5 +1,5 @@
 /* Plant Generator
- * Copyright (C) 2018  Floris Creyf
+ * Copyright (C) 2020  Floris Creyf
  *
  * Plant Generator is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,29 +15,29 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef REMOVE_STEM_H
-#define REMOVE_STEM_H
+#ifndef GENERATE_H
+#define GENERATE_H
 
 #include "command.h"
+#include "remove_stem.h"
 #include "editor/selection.h"
-#include <memory>
-#include <utility>
+#include "plant_generator/pseudo_generator.h"
 
-class RemoveStem : public Command {
-	Selection *selection;
+class Generate : public Command {
 	Selection prevSelection;
-	std::vector<std::pair<pg::Stem *, pg::Leaf>> leaves;
-	std::vector<std::pair<pg::Stem *, pg::Spline>> splines;
-	std::vector<pg::Stem *> stems;
-
-	void removeLeaves();
-	void removeStems();
+	Selection removals;
+	Selection additions;
+	Selection *selection;
+	RemoveStem removeRemovals;
+	RemoveStem removeAdditions;
+	pg::PseudoGenerator gen;
 
 public:
-	RemoveStem(Selection *selection);
-	~RemoveStem();
+	Generate(Selection *selection);
+	void setGenerator(pg::PseudoGenerator gen);
 	void execute();
 	void undo();
+	void redo();
 };
 
-#endif /* REMOVE_STEM_H */
+#endif /* GENERATE_H */

@@ -32,6 +32,7 @@ namespace pg {
 		Vec3 scale;
 		Quat rotation;
 
+
 		#ifdef PG_SERIALIZE
 		friend class boost::serialization::access;
 		template<class Archive>
@@ -59,6 +60,7 @@ namespace pg {
 		void setRotation(Quat rotation);
 		Quat getRotation() const;
 		Quat getDefaultOrientation(Vec3 stemDirection) const;
+		Quat getStemTiltAlignment(Vec3 stemDirection) const;
 		Vec3 getDirection(Vec3 stemDirection) const;
 		void setScale(Vec3 scale);
 		Vec3 getScale() const;

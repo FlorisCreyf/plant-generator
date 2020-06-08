@@ -58,7 +58,7 @@ void Form::finishChanging()
 {
 	if (this->changing && !this->saveStem->isSameAsCurrent()) {
 		this->saveStem->setNewSelection();
-		this->editor->add(*this->saveStem);
+		this->editor->add(this->saveStem);
 	}
 	this->changing = false;
 }

@@ -23,21 +23,28 @@ namespace pg {
 	class PseudoGenerator {
 		Plant *plant;
 		std::mt19937 randomGenerator;
-		int maxStemDepth;
-		bool hasLeaves;
+		int stemDepth;
+		float stemDensity;
+		float leafDensity;
+		float stemStart;
+		float leafStart;
+		float requiredLength;
 
 		Vec3 getStemDirection(Stem *);
-		void getDichotomousDirections(Stem *, Vec3 [2]);
-		void setPath(Stem *, Stem *, Vec3, float);
-		void addLateralStems(Stem *, float);
+		bool setPath(Stem *, Stem *, Vec3, float);
+		void addLateralStems(Stem *);
+		bool growLateralStem(Stem *, float);
+		void alternateLeaf(Leaf *, Quat);
 
 	public:
 		PseudoGenerator(Plant *plant);
-		void growLateralStem(Stem *stem, float position);
 		void grow();
-		void setMaxDepth(int depth);
-		int getMaxDepth();
-		void disableLeaves(bool disable);
+		void grow(Stem *stem);
+
+		void setRequiredLength(float length);
+		void setStemCount(float density, float start);
+		void setLeafCount(float density, float start);
+		void setDepth(int depth);
 	};
 }
 

@@ -45,23 +45,31 @@ Window::Window(int argc, char **argv)
 		this->editor, SLOT(updateMaterial(ShaderParams)));
 }
 
+QDockWidget *Window::createDockWidget(
+	const char *name, QWidget *widget, bool scrollbar)
+{
+	QDockWidget *dw = new QDockWidget(tr(name), this);
+	dw->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+	if (scrollbar) {
+		QScrollArea *sa = new QScrollArea();
+		sa->setWidgetResizable(true);
+		sa->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+		dw->setWidget(sa);
+		sa->setWidget(widget);
+	} else
+		dw->setWidget(widget);
+	return dw;
+}
+
 void Window::createEditors()
 {
-	QScrollArea *scrollArea;
-	auto areas = Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea;
-	QDockWidget *dockWidget[5];
+	QDockWidget *dw[6];
 
-	dockWidget[0] = new QDockWidget(tr("Properties"), this);
 	this->propertyEditor = new PropertyEditor(
 		&this->shared, this->editor, this);
-	dockWidget[0]->setAllowedAreas(areas);
-	scrollArea = new QScrollArea();
-	dockWidget[0]->setWidget(scrollArea);
-	dockWidget[0]->setMinimumWidth(350);
-	scrollArea->setWidget(this->propertyEditor);
-	scrollArea->setWidgetResizable(true);
-	scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-	this->addDockWidget(static_cast<Qt::DockWidgetArea>(1), dockWidget[0]);
+	dw[0] = createDockWidget("Properties", this->propertyEditor, true);
+	dw[0]->setMinimumWidth(350);
+	addDockWidget(static_cast<Qt::DockWidgetArea>(1), dw[0]);
 
 	connect(&shared, SIGNAL(materialAdded(ShaderParams)),
 		this->propertyEditor, SLOT(addMaterial(ShaderParams)));
@@ -70,46 +78,30 @@ void Window::createEditors()
 	connect(&shared, SIGNAL(materialRemoved(QString)),
 		this->propertyEditor, SLOT(removeMaterial(QString)));
 
-	scrollArea = new QScrollArea();
-	scrollArea->setWidgetResizable(true);
-	scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-	dockWidget[1] = new QDockWidget(tr("Keys"), this);
 	this->keyEditor = new KeyEditor(&keymap, this);
-	dockWidget[1]->setAllowedAreas(areas);
-	dockWidget[1]->setWidget(this->keyEditor);
-	dockWidget[1]->setWidget(scrollArea);
-	dockWidget[1]->setMinimumWidth(350);
-	scrollArea->setWidget(this->keyEditor);
-	this->addDockWidget(static_cast<Qt::DockWidgetArea>(1), dockWidget[1]);
+	dw[1] = createDockWidget("Keys", this->keyEditor, true);
+	dw[1]->setMinimumWidth(350);
+	addDockWidget(static_cast<Qt::DockWidgetArea>(1), dw[1]);
 
-	dockWidget[2] = new QDockWidget(tr("Curves"), this);
 	this->curveEditor = new CurveEditor(&this->shared, &this->keymap, this);
-	dockWidget[2]->setAllowedAreas(areas);
-	dockWidget[2]->setWidget(this->curveEditor);
-	this->addDockWidget(static_cast<Qt::DockWidgetArea>(1), dockWidget[2]);
+	dw[2] = createDockWidget("Curves", this->curveEditor, false);
+	addDockWidget(static_cast<Qt::DockWidgetArea>(1), dw[2]);
 	this->propertyEditor->bind(this->curveEditor);
 
-	scrollArea = new QScrollArea();
-	scrollArea->setWidgetResizable(true);
-	scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-	dockWidget[3] = new QDockWidget(tr("Materials"), this);
 	this->materialEditor = new MaterialEditor(&this->shared, this);
-	dockWidget[3]->setAllowedAreas(areas);
-	dockWidget[3]->setWidget(scrollArea);
-	scrollArea->setWidget(this->materialEditor);
-	this->addDockWidget(static_cast<Qt::DockWidgetArea>(1), dockWidget[3]);
+	dw[3] = createDockWidget("Materials", this->materialEditor, true);
+	addDockWidget(static_cast<Qt::DockWidgetArea>(1), dw[3]);
+
 	connect(this->materialEditor->getViewer(), SIGNAL(ready()),
 		this, SLOT(initMaterialEditor()));
 
-	scrollArea = new QScrollArea();
-	scrollArea->setWidgetResizable(true);
-	scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-	dockWidget[4] = new QDockWidget(tr("Meshes"), this);
 	this->meshEditor = new MeshEditor(&this->shared, this->editor, this);
-	dockWidget[4]->setAllowedAreas(areas);
-	dockWidget[4]->setWidget(scrollArea);
-	scrollArea->setWidget(this->meshEditor);
-	this->addDockWidget(static_cast<Qt::DockWidgetArea>(1), dockWidget[4]);
+	dw[4] = createDockWidget("Meshes", this->meshEditor, true);
+	addDockWidget(static_cast<Qt::DockWidgetArea>(1), dw[4]);
+
+	this->genEditor = new GeneratorEditor(this->editor, this);
+	dw[5] = createDockWidget("Generator", this->genEditor, true);
+	addDockWidget(static_cast<Qt::DockWidgetArea>(1), dw[5]);
 
 	connect(this->meshEditor->getViewer(), SIGNAL(ready()),
 		this, SLOT(initMeshEditor()));
@@ -120,9 +112,10 @@ void Window::createEditors()
 	connect(this->meshEditor, SIGNAL(meshRemoved(QString)),
 		this->propertyEditor, SLOT(removeMesh(QString)));
 
-	tabifyDockWidget(dockWidget[1], dockWidget[0]);
-	tabifyDockWidget(dockWidget[4], dockWidget[3]);
-	tabifyDockWidget(dockWidget[4], dockWidget[2]);
+	tabifyDockWidget(dw[1], dw[5]);
+	tabifyDockWidget(dw[1], dw[0]);
+	tabifyDockWidget(dw[4], dw[3]);
+	tabifyDockWidget(dw[4], dw[2]);
 }
 
 void Window::initEditor()

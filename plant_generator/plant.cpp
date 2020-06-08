@@ -74,8 +74,19 @@ const Stem *Plant::getRoot() const
 	return this->root;
 }
 
+void Plant::updateDepth(Stem *stem, int depth)
+{
+	stem->depth = depth;
+	Stem *child = stem->getChild();
+	while (child) {
+		updateDepth(child, depth + 1);
+		child = child->getSibling();
+	}
+}
+
 void Plant::insertStem(Stem *stem, Stem *parent)
 {
+	updateDepth(stem, parent->getDepth() + 1);
 	Stem *firstChild = parent->child;
 	parent->child = stem;
 	if (firstChild)

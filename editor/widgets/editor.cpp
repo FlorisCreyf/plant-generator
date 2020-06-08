@@ -114,7 +114,7 @@ void Editor::initializeGL()
 	shared->initialize();
 	initializeBuffers();
 	if (!plant.getRoot())
-		generator.grow();
+		createDefaultPlant();
 
 	change();
 	emit ready();
@@ -678,13 +678,21 @@ void Editor::change()
 	update();
 }
 
+void Editor::createDefaultPlant()
+{
+	generator.setRequiredLength(1.0f);
+	generator.setStemCount(1.0f, 2.0f);
+	generator.setLeafCount(0.5f, 1.0f);
+	generator.grow();
+}
+
 void Editor::load(const char *filename)
 {
 	plant.removeRoot();
 	plant.removeLeafMeshes();
 
 	if (filename == nullptr)
-		generator.grow();
+		createDefaultPlant();
 	else {
 		std::ifstream stream(filename);
 		boost::archive::text_iarchive ia(stream);
@@ -752,9 +760,9 @@ const pg::Mesh *Editor::getMesh()
 	return &mesh;
 }
 
-void Editor::add(Command &cmd)
+void Editor::add(Command *cmd)
 {
-	history.add(&cmd);
+	history.add(cmd);
 }
 
 void Editor::undo()

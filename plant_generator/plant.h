@@ -32,6 +32,7 @@ namespace pg {
 		std::map<long, Geometry> leafMeshes;
 
 		void removeMaterial(Stem *, long);
+		void updateDepth(Stem *, int);
 
 		#ifdef PG_SERIALIZE
 		friend class boost::serialization::access;

@@ -1,5 +1,5 @@
 /* Plant Generator
- * Copyright (C) 2018  Floris Creyf
+ * Copyright (C) 2020  Floris Creyf
  *
  * Plant Generator is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,29 +15,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef REMOVE_STEM_H
-#define REMOVE_STEM_H
+#ifndef GENERATOR_EDITOR_H
+#define GENERATOR_EDITOR_H
 
-#include "command.h"
-#include "editor/selection.h"
-#include <memory>
-#include <utility>
+#include "form.h"
+#include "editor.h"
 
-class RemoveStem : public Command {
-	Selection *selection;
-	Selection prevSelection;
-	std::vector<std::pair<pg::Stem *, pg::Leaf>> leaves;
-	std::vector<std::pair<pg::Stem *, pg::Spline>> splines;
-	std::vector<pg::Stem *> stems;
+class GeneratorEditor : public Form {
+	Q_OBJECT
 
-	void removeLeaves();
-	void removeStems();
+	Editor *editor;
+	QDoubleSpinBox *stemDensity;
+	QDoubleSpinBox *stemStart;
+	QDoubleSpinBox *leafDensity;
+	QDoubleSpinBox *leafStart;
+	QPushButton *createButton;
+
+	void createInterface();
+	void removeCurrent();
+	QSize sizeHint() const;
 
 public:
-	RemoveStem(Selection *selection);
-	~RemoveStem();
-	void execute();
-	void undo();
+	GeneratorEditor(Editor *editor, QWidget *parent);
+
+public slots:
+	void submit();
 };
 
-#endif /* REMOVE_STEM_H */
+#endif

@@ -18,10 +18,12 @@
 #include "remove_stem.h"
 #include "remove_spline.h"
 
-using pg::Stem;
+using pg::Leaf;
 using pg::Path;
-using pg::Spline;
 using pg::Plant;
+using pg::Spline;
+using pg::Stem;
+using std::pair;
 
 RemoveStem::RemoveStem(Selection *selection) : prevSelection(*selection)
 {
@@ -48,7 +50,10 @@ void RemoveStem::removeLeaves()
 		Stem *stem = instance.first;
 		std::set<long> &ids = instance.second;
 		for (auto it = ids.begin(); it != ids.end(); it++) {
-			this->leaves.emplace(stem, *(stem->getLeaf(*it)));
+			pair<Stem *, Leaf> instance;
+			instance.first = stem;
+			instance.second = *(stem->getLeaf(*it));
+			this->leaves.push_back(instance);
 			stem->removeLeaf(*it);
 		}
 	}
@@ -77,7 +82,8 @@ void RemoveStem::removeStems()
 			}
 		} else {
 			/* Remove points from the stem. */
-			this->splines.emplace(stem, spline);
+			pair<Stem *, Spline> instance(stem, spline);
+			this->splines.push_back(instance);
 
 			RemoveSpline removeSpline(&pointSelection, &spline);
 			removeSpline.setClearable(false);

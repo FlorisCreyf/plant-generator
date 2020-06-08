@@ -63,7 +63,7 @@ public:
 	pg::Plant *getPlant();
 	Selection *getSelection();
 	const pg::Mesh *getMesh();
-	void add(Command &);
+	void add(Command *command);
 	void undo();
 	void redo();
 
@@ -121,6 +121,7 @@ private:
 	bool perspective;
 	bool rotating = false;
 
+	void createDefaultPlant();
 	void addSelectionToHistory(SaveSelection *selection);
 	void createToolBar();
 	void createFrameBuffers();
