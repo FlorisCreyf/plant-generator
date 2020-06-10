@@ -61,6 +61,7 @@ namespace pg {
 		bool hasValidLocation(Stem *stem);
 		void addSections(State &state);
 		void addSection(State &, Quat);
+		float getTextureLength(Stem *, size_t);
 		Quat rotateSection(State &);
 		void addTriangleRing(size_t, size_t, int, int);
 		void capStem(Stem *, int, size_t);

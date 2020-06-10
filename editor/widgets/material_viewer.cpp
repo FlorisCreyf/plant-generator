@@ -55,7 +55,7 @@ void MaterialViewer::createInterface()
 		Geometry plane;
 		Vec3 a(1.0f, 0.0f, 0.0f);
 		Vec3 b(0.0f, 0.0f, 1.0f);
-		Vec3 center(0.0f, 0.2f, 0.0f);
+		Vec3 center(0.0f, 0.0f, 0.0f);
 		Vec3 color(0.34f, 0.34f, 0.34f);
 		plane.addPlane(a, b, center, color);
 		planeSegment = geometry.append(plane);

@@ -69,7 +69,7 @@ void Geometry::addCircle(float radius, int points, Vec3 color)
 	}
 }
 
-void Geometry::addCurve(const pg::Spline &spline, pg::Vec3 color, int size)
+void Geometry::addCurve(const pg::Spline &spline, Vec3 color, int size)
 {
 	float step = 1.0f/(size - 1);
 	for (int curve = 0; curve < spline.getCurveCount(); curve++) {
@@ -81,10 +81,10 @@ void Geometry::addCurve(const pg::Spline &spline, pg::Vec3 color, int size)
 
 void Geometry::addPlane(Vec3 a, Vec3 b, Vec3 c, Vec3 color)
 {
-	addPoint(c, color, {0.0f, 1.0f});
-	addPoint(c + a, color, {1.0f, 1.0f});
-	addPoint(c + b, color, {0.0f, 0.0f});
-	addPoint(c + a + b, color, {1.0f, 0.0f});
+	addPoint(c, color, Vec2(0.0f, 0.0f));
+	addPoint(c + a, color, Vec2(1.0f, 0.0f));
+	addPoint(c + b, color, Vec2(0.0f, 1.0f));
+	addPoint(c + a + b, color, Vec2(1.0f, 1.0f));
 
 	indices.push_back(0);
 	indices.push_back(1);
@@ -115,7 +115,7 @@ void Geometry::addCone(float radius, float height, int points, Vec3 color)
 	addPoint(Vec3(0.0f, 0.0f, 0.0f), color);
 }
 
-void Geometry::addGrid(int size, pg::Vec3 pcolor[2], pg::Vec3 scolor)
+void Geometry::addGrid(int size, Vec3 pcolor[2], Vec3 scolor)
 {
 	Vec3 line[2];
 	float bound = static_cast<float>(size);
@@ -183,7 +183,7 @@ Geometry::Segment Geometry::append(const Geometry &geometry)
 	return segment;
 }
 
-const vector<pg::Vertex> *Geometry::getPoints() const
+const vector<Vertex> *Geometry::getPoints() const
 {
 	return &points;
 }

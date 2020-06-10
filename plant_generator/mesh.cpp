@@ -125,18 +125,11 @@ void Mesh::addSection(State &state, Quat rotation)
 	const float deltaAngle = 2.0f * PI / stem->getResolution();
 	const float uOffset = 1.0f / stem->getResolution();
 	float radius = stem->getPath().getRadius(state.section);
-	float length = stem->getPath().getSegmentLength(state.section);
 	float angle = 0.0f;
-	float aspect = 1.0f;
-	long materialID = stem->getMaterial(Stem::Outer);
-	if (materialID > 0) {
-		Material m = this->plant->getMaterial(materialID);
-		aspect = m.getRatio();
-	}
 
 	Vertex vertex;
 	vertex.uv.x = 1.0f;
-	vertex.uv.y = -(length*aspect)/(radius*2.0f*PI)+state.texOffset;
+	vertex.uv.y = getTextureLength(stem, state.section) + state.texOffset;
 	state.texOffset = vertex.uv.y;
 
 	Vec3 location = stem->getLocation();
@@ -162,6 +155,29 @@ void Mesh::addSection(State &state, Quat rotation)
 		vertex.uv.x -= uOffset;
 		angle += deltaAngle;
 	}
+}
+
+float getAspect(const Plant *plant, const Stem *stem)
+{
+	float aspect = 1.0f;
+	long materialID = stem->getMaterial(Stem::Outer);
+	if (materialID > 0) {
+		Material m = plant->getMaterial(materialID);
+		aspect = m.getRatio();
+	}
+	return aspect;
+}
+
+/** Determine a length to preserve the aspect ratio throughout the stem. */
+float Mesh::getTextureLength(Stem *stem, size_t section)
+{
+	if (section > 0) {
+		float length = stem->getPath().getSegmentLength(section);
+		float radius = stem->getPath().getRadius(section-1);
+		float aspect = getAspect(this->plant, stem);
+		return (length * aspect) / (radius * 2.0f * PI);
+	} else
+		return 0.0f;
 }
 
 /** Compute indices between the cross section just generated (starting at the
@@ -387,6 +403,7 @@ void Mesh::setBranchCollarUVs(
 {
 	size_t size = resolution + 1;
 	float radius = stem->getPath().getRadius(1);
+	float aspect = getAspect(this->plant, stem);
 
 	for (int i = 0; i <= resolution; i++) {
 		Vec2 uv = this->vertices[mesh][lastIndex + i].uv;
@@ -397,7 +414,7 @@ void Mesh::setBranchCollarUVs(
 			index -= size;
 			Vec3 p2 = this->vertices[mesh][index].position;
 			float length = magnitude(p2 - p1);
-			uv.y += length/(radius * 2.0f * PI);
+			uv.y -= (length * aspect) / (radius * 2.0f * PI);
 			this->vertices[mesh][index].uv = uv;
 		}
 	}

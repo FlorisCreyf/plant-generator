@@ -52,10 +52,9 @@ void PropertyEditor::addMaterial(ShaderParams params)
 	bool added = false;
 	added = this->stemEditor->addMaterial(params);
 	added = this->leafEditor->addMaterial(params);
-	if (added) {
+	if (added)
 		this->editor->getPlant()->addMaterial(params.getMaterial());
-		editor->change();
-	}
+	editor->change();
 }
 
 void PropertyEditor::removeMaterial(QString name)

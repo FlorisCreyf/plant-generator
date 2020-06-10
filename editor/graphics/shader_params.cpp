@@ -55,8 +55,9 @@ bool ShaderParams::loadTexture(int index, QString filename)
 {
 	QImageReader reader(filename);
 	reader.setAutoTransform(true);
-	const QImage image = reader.read();
+	QImage image = reader.read();
 	if (!image.isNull()) {
+		image = image.mirrored(false, true);
 		if (!material.getTexture().empty())
 			removeTexture(index);
 		float ratio = (float)image.width() / (float)image.height();

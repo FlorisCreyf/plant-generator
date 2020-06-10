@@ -55,16 +55,16 @@ void pg::Geometry::setPlane()
 	indices.clear();
 
 	p.position = Vec3(0.5f, 0.0f, 0.0f);
-	p.uv = Vec2(0.0f, 1.0f);
-	points.push_back(p);
-	p.position = Vec3(0.5f, 0.0f, 1.0f);
-	p.uv = Vec2(0.0f, 0.0f);
-	points.push_back(p);
-	p.position = Vec3(-0.5f, 0.0f, 1.0f);
 	p.uv = Vec2(1.0f, 0.0f);
 	points.push_back(p);
-	p.position = Vec3(-0.5f, 0.0f, 0.0f);
+	p.position = Vec3(0.5f, 0.0f, 1.0f);
 	p.uv = Vec2(1.0f, 1.0f);
+	points.push_back(p);
+	p.position = Vec3(-0.5f, 0.0f, 1.0f);
+	p.uv = Vec2(0.0f, 1.0f);
+	points.push_back(p);
+	p.position = Vec3(-0.5f, 0.0f, 0.0f);
+	p.uv = Vec2(0.0f, 0.0f);
 	points.push_back(p);
 
 	indices.push_back(0);
@@ -84,16 +84,16 @@ void pg::Geometry::setPerpendicularPlanes()
 	setPlane();
 
 	p.position = Vec3(0.0f, 0.5f, 0.0f);
-	p.uv = Vec2(0.0f, 1.0f);
-	points.push_back(p);
-	p.position = Vec3(0.0f, 0.5f, 1.0f);
-	p.uv = Vec2(0.0f, 0.0f);
-	points.push_back(p);
-	p.position = Vec3(0.0f, -0.5f, 1.0);
 	p.uv = Vec2(1.0f, 0.0f);
 	points.push_back(p);
-	p.position = Vec3(0.0f, -0.5f, 0.0);
+	p.position = Vec3(0.0f, 0.5f, 1.0f);
 	p.uv = Vec2(1.0f, 1.0f);
+	points.push_back(p);
+	p.position = Vec3(0.0f, -0.5f, 1.0f);
+	p.uv = Vec2(0.0f, 1.0f);
+	points.push_back(p);
+	p.position = Vec3(0.0f, -0.5f, 0.0f);
+	p.uv = Vec2(0.0f, 0.0f);
 	points.push_back(p);
 
 	indices.push_back(4);
