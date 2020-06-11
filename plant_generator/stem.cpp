@@ -19,32 +19,14 @@
 
 using namespace pg;
 
-long Stem::counter = 1;
-
 Stem::Stem(Stem *parent)
 {
-	this->id = counter++;
-	this->swelling = Vec2(1.5, 3.0);
-	this->nextSibling = nullptr;
-	this->prevSibling = nullptr;
-	this->child = nullptr;
-	this->parent = parent;
-	if (parent == nullptr) {
-		this->depth = 0;
-		this->position = 0.0f;
-		this->location = Vec3(0.0f, 0.0f, 0.0f);
-	} else
-		this->depth = parent->depth + 1;
+	init(parent);
 }
 
 Stem::~Stem()
 {
-	Stem *child = this->child;
-	while (child) {
-		Stem *next = child->nextSibling;
-		delete child;
-		child = next;
-	}
+
 }
 
 Stem::Stem(const Stem &original)
@@ -56,6 +38,21 @@ Stem::Stem(const Stem &original)
 	this->prevSibling = nullptr;
 	this->child = nullptr;
 	copy(original);
+}
+
+void Stem::init(Stem *parent)
+{
+	this->swelling = Vec2(1.5, 3.0);
+	this->nextSibling = nullptr;
+	this->prevSibling = nullptr;
+	this->child = nullptr;
+	this->parent = parent;
+	if (parent == nullptr) {
+		this->depth = 0;
+		this->position = 0.0f;
+		this->location = Vec3(0.0f, 0.0f, 0.0f);
+	} else
+		this->depth = parent->depth + 1;
 }
 
 Stem &Stem::operator=(const Stem &stem)
@@ -99,11 +96,6 @@ bool Stem::operator==(const Stem &stem) const
 bool Stem::operator!=(const Stem &stem) const
 {
 	return !(*this == stem);
-}
-
-long Stem::getID() const
-{
-	return id;
 }
 
 int Stem::addLeaf(const Leaf &leaf)

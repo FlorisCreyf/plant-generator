@@ -56,7 +56,7 @@ Segment Mesh::addStem(Stem *stem, const State &parentState)
 	state.segment.vertexCount -= state.segment.vertexStart;
 	state.segment.indexCount = indices[state.mesh].size();
 	state.segment.indexCount -= state.segment.indexStart;
-	this->stemSegments[state.mesh].emplace(stem->getID(), state.segment);
+	this->stemSegments[state.mesh].emplace(stem, state.segment);
 
 	addLeaves(stem, state);
 
@@ -684,7 +684,7 @@ int Mesh::selectBuffer(long material)
 		if (it == this->meshes.end()) {
 			this->vertices.push_back(vector<Vertex>());
 			this->indices.push_back(vector<unsigned>());
-			this->stemSegments.push_back(map<long, Segment>());
+			this->stemSegments.push_back(map<Stem *, Segment>());
 			this->leafSegments.push_back(map<long, Segment>());
 			this->meshes[material] = this->indices.size() - 1;
 			this->materials.push_back(material);
@@ -706,7 +706,7 @@ void Mesh::initBuffer()
 	this->materials.push_back(0);
 	this->vertices.push_back(vector<Vertex>());
 	this->indices.push_back(vector<unsigned>());
-	this->stemSegments.push_back(map<long, Segment>());
+	this->stemSegments.push_back(map<Stem *, Segment>());
 	this->leafSegments.push_back(map<long, Segment>());
 }
 
@@ -805,7 +805,7 @@ Segment Mesh::findStem(Stem *stem) const
 	Segment segment = {};
 	for (size_t i = 0; i < this->stemSegments.size(); i++) {
 		try {
-			segment = this->stemSegments[i].at(stem->getID());
+			segment = this->stemSegments[i].at(stem);
 			break;
 		} catch (std::out_of_range) {}
 	}

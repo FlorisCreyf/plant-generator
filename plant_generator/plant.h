@@ -19,6 +19,7 @@
 #include "stem.h"
 #include "material.h"
 #include "geometry.h"
+#include "stem_pool.h"
 
 #ifdef PG_SERIALIZE
 #include <boost/serialization/map.hpp>
@@ -30,9 +31,11 @@ namespace pg {
 		Stem *root;
 		std::map<long, Material> materials;
 		std::map<long, Geometry> leafMeshes;
+		StemPool stemPool;
 
 		void removeMaterial(Stem *, long);
 		void updateDepth(Stem *, int);
+		void deleteStems(Stem *);
 
 		#ifdef PG_SERIALIZE
 		friend class boost::serialization::access;
@@ -49,6 +52,7 @@ namespace pg {
 	public:
 		Plant();
 		~Plant();
+		StemPool *getStemPool();
 
 		/** Add a new stem to the plant at a parent stem. */
 		Stem *addStem(Stem *parent);
@@ -58,6 +62,8 @@ namespace pg {
 		Stem *createRoot();
 		/** Remove a stem from the plant. */
 		Stem *extractStem(Stem *);
+		/** Delete a stem. */
+		void deleteStem(Stem *);
 		/** Return the root or trunk of the plant. */
 		Stem *getRoot();
 		const Stem *getRoot() const;

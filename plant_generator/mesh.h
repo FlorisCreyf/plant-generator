@@ -55,7 +55,7 @@ namespace pg {
 		std::vector<long> materials;
 		std::vector<std::vector<Vertex>> vertices;
 		std::vector<std::vector<unsigned>> indices;
-		std::vector<std::map<long, Segment>> stemSegments;
+		std::vector<std::map<Stem *, Segment>> stemSegments;
 		std::vector<std::map<long, Segment>> leafSegments;
 
 		bool hasValidLocation(Stem *stem);

@@ -15,10 +15,7 @@
 
 #include "plant.h"
 
-using pg::Plant;
-using pg::Stem;
-using pg::Geometry;
-using pg::Material;
+using namespace pg;
 
 Plant::Plant()
 {
@@ -27,12 +24,17 @@ Plant::Plant()
 
 Plant::~Plant()
 {
-	delete root;
+	deleteStems(this->root);
+}
+
+StemPool *Plant::getStemPool()
+{
+	return &this->stemPool;
 }
 
 Stem *Plant::addStem(Stem *parent)
 {
-	Stem *stem = new Stem(parent);
+	Stem *stem = stemPool.allocate(parent);
 	Stem *firstChild = parent->child;
 	parent->child = stem;
 	if (firstChild)
@@ -44,8 +46,9 @@ Stem *Plant::addStem(Stem *parent)
 
 Stem *Plant::createRoot()
 {
-	delete this->root;
-	this->root = new Stem(nullptr);
+	if (this->root)
+		deleteStems(this->root);
+	this->root = this->stemPool.allocate(nullptr);
 	return this->root;
 }
 
@@ -97,8 +100,26 @@ void Plant::insertStem(Stem *stem, Stem *parent)
 
 void Plant::removeRoot()
 {
-	delete this->root;
-	this->root = nullptr;
+	if (this->root) {
+		deleteStems(this->root);
+		this->root = nullptr;
+	}
+}
+
+void Plant::deleteStems(Stem *stem)
+{
+	Stem *child = stem->child;
+	while (child) {
+		Stem *next = child->nextSibling;
+		this->stemPool.deallocate(child);
+		child = next;
+	}
+}
+
+void Plant::deleteStem(Stem *stem)
+{
+	extractStem(stem);
+	deleteStems(stem);
 }
 
 void Plant::addMaterial(Material material)

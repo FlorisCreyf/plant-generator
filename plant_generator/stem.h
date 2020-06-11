@@ -31,9 +31,10 @@
 namespace pg {
 	class Stem {
 		friend class Plant;
+		friend class StemPool;
 
-		static long counter;
-		long id;
+		Stem *nextAvailable;
+		bool unused;
 
 		Stem *nextSibling;
 		Stem *prevSibling;
@@ -53,6 +54,7 @@ namespace pg {
 
 		void updatePositions(Stem *stem);
 		void copy(const Stem &stem);
+		void init(Stem *parent = nullptr);
 
 		#ifdef PG_SERIALIZE
 		friend class boost::serialization::access;
@@ -60,8 +62,6 @@ namespace pg {
 		void serialize(Archive &ar, const unsigned int version)
 		{
 			(void)version;
-			ar & counter;
-			ar & id;
 			ar & nextSibling;
 			ar & prevSibling;
 			ar & child;
@@ -88,8 +88,6 @@ namespace pg {
 		Stem &operator=(const Stem &stem);
 		bool operator==(const Stem &stem) const;
 		bool operator!=(const Stem &stem) const;
-
-		long getID() const;
 
 		int addLeaf(const Leaf &leaf);
 		int getLeafCount() const;

@@ -35,9 +35,9 @@ namespace pg {
 
 		std::map<Stem *, Light> growth;
 		float primaryGrowthRate;
-                float secondaryGrowthRate;
+		float secondaryGrowthRate;
 		Plant plant;
-                long leafGeomID;
+		long leafGeomID;
 		float minRadius;
 		int rayCount;
 		int rayLevels;
@@ -47,9 +47,9 @@ namespace pg {
 		int propagate(Stem *stem);
 		void addStems(Stem *stem);
 		void addNodes(int);
-                void addNode(Stem *, Light, int);
-                void addLeaves(Stem *, float);
-                Leaf createLeaf();
+		void addNode(Stem *, Light, int);
+		void addLeaves(Stem *, float);
+		Leaf createLeaf();
 
 		Intersection intersect(Stem *, Ray);
 		void castRays();

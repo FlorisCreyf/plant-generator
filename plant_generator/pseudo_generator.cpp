@@ -91,7 +91,7 @@ bool PseudoGenerator::growLateralStem(Stem *parent, float position)
 		stem->setResolution(parent->getResolution() - 2);
 
 	if (!setPath(stem, parent, getStemDirection(stem), position)) {
-		delete this->plant->extractStem(stem);
+		this->plant->deleteStem(stem);
 		return false;
 	}
 
