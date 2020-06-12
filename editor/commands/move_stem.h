@@ -27,7 +27,7 @@
 #include <memory>
 
 class MoveStem : public Command {
-	const Camera *camera;
+	Camera camera;
 	Selection *selection;
 	std::map<pg::Stem *, pg::Vec3> stemOffsets;
 	std::map<pg::Stem *, std::vector<pg::Vec3>> leafOffsets;

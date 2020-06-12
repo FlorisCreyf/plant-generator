@@ -25,14 +25,14 @@ MoveStem::MoveStem(
 	int x, int y, bool snap)
 {
 	this->selection = selection;
-	this->camera = camera;
+	this->camera = *camera;
 	this->snap = snap;
 	snap = false;
 	originalCursor.x = x;
 	originalCursor.y = y;
 	cursor = originalCursor;
 
-	pg::Vec3 point;
+	Vec3 point;
 	point.x = x;
 	point.y = y;
 	point.z = 0.0f;
@@ -43,22 +43,22 @@ MoveStem::MoveStem(
 	}
 }
 
-void MoveStem::setStemOffsets(pg::Vec3 point)
+void MoveStem::setStemOffsets(Vec3 point)
 {
 	auto stemInstances = selection->getStemInstances();
 	for (auto instance : stemInstances) {
 		pg::Stem *stem = instance.first;
-		pg::Vec3 offset = camera->toScreenSpace(stem->getLocation());
+		Vec3 offset = camera.toScreenSpace(stem->getLocation());
 		offset.z = 0.0f;
 		stemOffsets.emplace(stem, point - offset);
 	}
 }
 
-void MoveStem::setLeafOffsets(pg::Vec3 point)
+void MoveStem::setLeafOffsets(Vec3 point)
 {
 	auto leafInstances = selection->getLeafInstances();
 	for (auto instance : leafInstances) {
-		std::vector<pg::Vec3> offsets;
+		std::vector<Vec3> offsets;
 		pg::Stem *stem = instance.first;
 		pg::Path path = stem->getPath();
 
@@ -71,7 +71,7 @@ void MoveStem::setLeafOffsets(pg::Vec3 point)
 			else
 				location += path.get().back();
 
-			pg::Vec3 offset = camera->toScreenSpace(location);
+			Vec3 offset = camera.toScreenSpace(location);
 			offset.z = 0.0f;
 			offsets.push_back(point - offset);
 		}
@@ -92,10 +92,10 @@ void MoveStem::getPosition(pg::Stem *parent, size_t &line, float &t, Vec3 point)
 	/* Convert the parent path to the screen space. */
 	auto points = path.get();
 	{
-		pg::Vec3 location = parent->getLocation();
-		for (pg::Vec3 &point : points) {
+		Vec3 location = parent->getLocation();
+		for (Vec3 &point : points) {
 			point += location;
-			point = camera->toScreenSpace(point);
+			point = camera.toScreenSpace(point);
 			point.z = 0.0f;
 		}
 	}
@@ -161,7 +161,7 @@ void MoveStem::moveLeavesAlongPath()
 		pg::Stem *stem = instance.first;
 		pg::Path path = stem->getPath();
 
-		std::vector<pg::Vec3> offsets;
+		std::vector<Vec3> offsets;
 		if (!snap)
 			offsets = leafOffsets.at(stem);
 
