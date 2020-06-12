@@ -27,7 +27,7 @@
 namespace pg {
 	struct Segment {
 		Stem *stem;
-		long leaf;
+		unsigned leafIndex;
 	 	unsigned vertexStart;
 	 	unsigned indexStart;
 	 	unsigned vertexCount;
@@ -35,6 +35,27 @@ namespace pg {
 	};
 
 	class Mesh {
+	public:
+		using LeafID = std::pair<Stem *, size_t>;
+
+		Mesh(Plant *plant);
+		void generate();
+		std::vector<Vertex> getVertices() const;
+		std::vector<unsigned> getIndices() const;
+		const std::vector<Vertex> *getVertices(int mesh) const;
+		const std::vector<unsigned> *getIndices(int mesh) const;
+		/** Find the location of a stem in the buffer. */
+		Segment findStem(Stem *stem) const;
+		/** Find the location of a leaf in the buffer. */
+		Segment findLeaf(LeafID leaf) const;
+		std::map<LeafID, Segment> getLeaves(int mesh) const;
+		size_t getLeafCount(int mesh) const;
+		size_t getVertexCount() const;
+		size_t getIndexCount() const;
+		size_t getMeshCount() const;
+		long getMaterialID(int mesh) const;
+
+	private:
 		struct State {
 			Segment segment;
 			Vec3 prevDirection;
@@ -56,7 +77,7 @@ namespace pg {
 		std::vector<std::vector<Vertex>> vertices;
 		std::vector<std::vector<unsigned>> indices;
 		std::vector<std::map<Stem *, Segment>> stemSegments;
-		std::vector<std::map<long, Segment>> leafSegments;
+		std::vector<std::map<LeafID, Segment>> leafSegments;
 
 		bool hasValidLocation(Stem *stem);
 		void addSections(State &state);
@@ -77,7 +98,7 @@ namespace pg {
 		void setBranchCollarUVs(size_t, Stem *, int, int, int);
 
 		void addLeaves(Stem *, const State &);
-		void addLeaf(const Leaf *leaf, Stem *stem, const State &);
+		void addLeaf(Stem *stem, unsigned, const State &);
 		Geometry transformLeaf(const Leaf *, const Stem *);
 
 		void setInitialJointState(State &, const State &);
@@ -90,24 +111,6 @@ namespace pg {
 		int selectBuffer(long);
 		void initBuffer();
 		void updateSegments();
-
-	public:
-		Mesh(Plant *plant);
-		void generate();
-		std::vector<Vertex> getVertices() const;
-		std::vector<unsigned> getIndices() const;
-		const std::vector<Vertex> *getVertices(int mesh) const;
-		const std::vector<unsigned> *getIndices(int mesh) const;
-		/** Find the location of a stem in the buffer. */
-		Segment findStem(Stem *stem) const;
-		/** Find the location of a leaf in the buffer. */
-		Segment findLeaf(long leaf) const;
-		std::map<long, Segment> getLeaves(int mesh) const;
-		int getLeafCount(int mesh) const;
-		int getVertexCount() const;
-		int getIndexCount() const;
-		int getMeshCount() const;
-		long getMaterialID(int mesh) const;
 	};
 }
 

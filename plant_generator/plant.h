@@ -20,6 +20,7 @@
 #include "material.h"
 #include "geometry.h"
 #include "stem_pool.h"
+#include <map>
 
 #ifdef PG_SERIALIZE
 #include <boost/serialization/map.hpp>

@@ -29,7 +29,7 @@ void Buffer::initialize(GLenum mode)
 	this->mode = mode;
 }
 
-void Buffer::allocatePointMemory(int size)
+void Buffer::allocatePointMemory(size_t size)
 {
 	capacity[Points] = size;
 	size *= sizeof(Vertex);
@@ -38,7 +38,7 @@ void Buffer::allocatePointMemory(int size)
 	setVertexFormat();
 }
 
-void Buffer::allocateIndexMemory(int size)
+void Buffer::allocateIndexMemory(size_t size)
 {
 	capacity[Indices] = size;
 	size *= sizeof(unsigned);
@@ -54,8 +54,8 @@ void Buffer::load(const Geometry &geometry)
 }
 
 void Buffer::load(
-	const Vertex *points, int psize,
-	const unsigned *indices, int isize)
+	const Vertex *points, size_t psize,
+	const unsigned *indices, size_t isize)
 {
 	size[Points] = capacity[Points] = psize;
 	psize *= sizeof(Vertex);
@@ -79,8 +79,8 @@ void Buffer::update(const Geometry &geometry)
 }
 
 void Buffer::update(
-	const Vertex *points, int psize,
-	const unsigned *indices, int isize)
+	const Vertex *points, size_t psize,
+	const unsigned *indices, size_t isize)
 {
 	use();
 	size[Points] = psize;
@@ -106,9 +106,9 @@ void Buffer::update(
 	}
 }
 
-bool Buffer::update(const Vertex *points, int start, int size)
+bool Buffer::update(const Vertex *points, size_t start, size_t size)
 {
-	int newSize = start + size;
+	size_t newSize = start + size;
 	if (newSize <= capacity[Points])
 		this->size[Points] = newSize;
 	else
@@ -121,9 +121,9 @@ bool Buffer::update(const Vertex *points, int start, int size)
 	return true;
 }
 
-bool Buffer::update(const unsigned *indices, int start, int size)
+bool Buffer::update(const unsigned *indices, size_t start, size_t size)
 {
-	int newSize = start + size;
+	size_t newSize = start + size;
 	if (newSize <= capacity[Indices])
 		this->size[Indices] = newSize;
 	else
@@ -161,12 +161,12 @@ void Buffer::use()
 	glBindVertexArray(vao);
 }
 
-int Buffer::getSize(int type) const
+size_t Buffer::getSize(int type) const
 {
 	return size[type];
 }
 
-int Buffer::getCapacity(int type) const
+size_t Buffer::getCapacity(int type) const
 {
 	return capacity[type];
 }

@@ -76,7 +76,7 @@ void Selector::selectMesh(
 		if (!selection->removeStem(stemPair.second))
 			selection->addStem(stemPair.second);
 	} else if (leafPair.second.stem && leafPair.first < stemPair.first) {
-		long leaf = leafPair.second.leaf;
+		unsigned leaf = leafPair.second.leafIndex;
 		Stem *stem = leafPair.second.stem;
 		if (!selection->removeLeaf(stem, leaf))
 			selection->addLeaf(stem, leaf);
@@ -129,7 +129,7 @@ pair<float, pg::Segment> Selector::getLeaf(pg::Ray ray, const Mesh *mesh)
 	selection.first = std::numeric_limits<float>::max();
 	selection.second.stem = nullptr;
 
-	for (int m = 0; m < mesh->getMeshCount(); m++) {
+	for (size_t m = 0; m < mesh->getMeshCount(); m++) {
 		auto vertices = mesh->getVertices(m);
 		auto indices = mesh->getIndices(m);
 		auto leaves = mesh->getLeaves(m);

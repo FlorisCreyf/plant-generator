@@ -98,35 +98,40 @@ bool Stem::operator!=(const Stem &stem) const
 	return !(*this == stem);
 }
 
-int Stem::addLeaf(const Leaf &leaf)
+size_t Stem::addLeaf(const Leaf &leaf)
 {
-	leaves.emplace(leaf.getID(), leaf);
+	leaves.push_back(leaf);
 	return leaves.size() - 1;
 }
 
-int Stem::getLeafCount() const
+void Stem::insertLeaf(const Leaf &leaf, size_t index)
+{
+	leaves.insert(leaves.begin() + index, leaf);
+}
+
+size_t Stem::getLeafCount() const
 {
 	return leaves.size();
 }
 
-pg::Leaf *Stem::getLeaf(long id)
+Leaf *Stem::getLeaf(size_t index)
 {
-	return &leaves.at(id);
+	return &leaves.at(index);
 }
 
-const pg::Leaf *Stem::getLeaf(long id) const
+const Leaf *Stem::getLeaf(size_t index) const
 {
-	return &leaves.at(id);
+	return &leaves.at(index);
 }
 
-const std::map<long, pg::Leaf> &Stem::getLeaves() const
+const std::vector<Leaf> &Stem::getLeaves() const
 {
 	return leaves;
 }
 
-void Stem::removeLeaf(long id)
+void Stem::removeLeaf(size_t index)
 {
-	leaves.erase(leaves.find(id));
+	leaves.erase(leaves.begin() + index);
 }
 
 void Stem::setResolution(int resolution)
@@ -139,7 +144,7 @@ int Stem::getResolution() const
 	return resolution;
 }
 
-void Stem::setPath(pg::Path &path)
+void Stem::setPath(Path &path)
 {
 	this->path = path;
 	if (this->parent)
@@ -149,7 +154,7 @@ void Stem::setPath(pg::Path &path)
 	updatePositions(this);
 }
 
-pg::Path Stem::getPath() const
+Path Stem::getPath() const
 {
 	return path;
 }
@@ -168,7 +173,7 @@ void Stem::setPosition(float position)
 {
 	if (parent != nullptr) {
 		Path parentPath = parent->getPath();
-		pg::Vec3 point = parentPath.getIntermediate(position);
+		Vec3 point = parentPath.getIntermediate(position);
 		if (std::isnan(point.x))
 			location = point;
 		else
@@ -183,7 +188,7 @@ float Stem::getPosition() const
 	return position;
 }
 
-pg::Vec3 Stem::getLocation() const
+Vec3 Stem::getLocation() const
 {
 	return location;
 }
@@ -246,17 +251,17 @@ int Stem::getDepth() const
 	return depth;
 }
 
-void Stem::setSwelling(pg::Vec2 scale)
+void Stem::setSwelling(Vec2 scale)
 {
 	this->swelling = scale;
 }
 
-pg::Vec2 Stem::getSwelling() const
+Vec2 Stem::getSwelling() const
 {
 	return this->swelling;
 }
 
-pg::Vec2 Stem::getLimitedSwelling(float limit) const
+Vec2 Stem::getLimitedSwelling(float limit) const
 {
 	if (!this->parent)
 		return this->swelling;

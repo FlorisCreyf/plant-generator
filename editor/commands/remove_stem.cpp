@@ -48,13 +48,14 @@ void RemoveStem::removeLeaves()
 	auto instances = this->selection->getLeafInstances();
 	for (auto &instance : instances) {
 		Stem *stem = instance.first;
-		std::set<long> &ids = instance.second;
-		for (auto it = ids.begin(); it != ids.end(); it++) {
-			pair<Stem *, Leaf> instance;
-			instance.first = stem;
-			instance.second = *(stem->getLeaf(*it));
-			this->leaves.push_back(instance);
-			stem->removeLeaf(*it);
+		std::set<size_t> &indices = instance.second;
+		for (auto it = indices.begin(); it != indices.end(); it++) {
+			LeafState state;
+			state.stem = stem;
+			state.index = *it;
+			state.leaf = *(stem->getLeaf(state.index));
+			this->leaves.push_back(state);
+			stem->removeLeaf(state.index);
 		}
 	}
 	this->selection->removeLeaves();
@@ -127,12 +128,13 @@ void RemoveStem::undo()
 		stem->setPath(path);
 	}
 
-	for (auto &item : this->leaves) {
-		Stem *stem = item.first;
-		stem->addLeaf(item.second);
+	for (auto &state : this->leaves) {
+		Stem *stem = state.stem;
+		stem->insertLeaf(state.leaf, state.index);
 	}
 
 	this->stems.clear();
+	this->leaves.clear();
 	this->splines.clear();
 	*this->selection = this->prevSelection;
 }

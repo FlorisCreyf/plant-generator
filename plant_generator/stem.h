@@ -21,7 +21,6 @@
 #include "math/curve.h"
 #include "path.h"
 #include "joint.h"
-#include <map>
 #include <vector>
 
 #ifdef PG_SERIALIZE
@@ -40,7 +39,7 @@ namespace pg {
 		Stem *prevSibling;
 		Stem *child;
 		Stem *parent;
-		std::map<long, Leaf> leaves;
+		std::vector<Leaf> leaves;
 
 		int depth;
 		float position;
@@ -89,12 +88,13 @@ namespace pg {
 		bool operator==(const Stem &stem) const;
 		bool operator!=(const Stem &stem) const;
 
-		int addLeaf(const Leaf &leaf);
-		int getLeafCount() const;
-		Leaf *getLeaf(long id);
-		const Leaf *getLeaf(long id) const;
-		const std::map<long, Leaf> &getLeaves() const;
-		void removeLeaf(long id);
+		size_t addLeaf(const Leaf &leaf);
+		void insertLeaf(const Leaf &leaf, size_t index);
+		size_t getLeafCount() const;
+		Leaf *getLeaf(size_t index);
+		const Leaf *getLeaf(size_t index) const;
+		const std::vector<Leaf> &getLeaves() const;
+		void removeLeaf(size_t index);
 
 		void setResolution(int resolution);
 		int getResolution() const;

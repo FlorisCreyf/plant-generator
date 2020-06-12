@@ -24,14 +24,11 @@
 
 namespace pg {
 	class Leaf {
-		static long counter;
-		long id;
 		long material;
 		long mesh;
 		float position;
 		Vec3 scale;
 		Quat rotation;
-
 
 		#ifdef PG_SERIALIZE
 		friend class boost::serialization::access;
@@ -39,8 +36,6 @@ namespace pg {
 		void serialize(Archive &ar, const unsigned int version)
 		{
 			(void)version;
-			ar & counter;
-			ar & id;
 			ar & position;
 			ar & scale;
 			ar & material;
@@ -54,7 +49,6 @@ namespace pg {
 		bool operator==(const Leaf &leaf) const;
 		bool operator!=(const Leaf &leaf) const;
 
-		long getID() const;
 		void setPosition(float position);
 		float getPosition() const;
 		void setRotation(Quat rotation);

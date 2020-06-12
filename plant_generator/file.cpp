@@ -298,7 +298,7 @@ void setGeometry(XMLWriter &xml, const Mesh &mesh, const Plant &plant)
 	xml += "<input semantic='POSITION' source='#plant-mesh-positions'/>";
 	xml << "</vertices>";
 
-	for (int i = 0; i < mesh.getMeshCount(); i++) {
+	for (size_t i = 0; i < mesh.getMeshCount(); i++) {
 		if (mesh.getVertices(i)->size() == 0)
 			continue;
 
@@ -331,7 +331,7 @@ void setGeometry(XMLWriter &xml, const Mesh &mesh, const Plant &plant)
 void setImages(XMLWriter &xml, const Mesh &mesh, const Plant &plant)
 {
 	xml >> "<library_images>";
-	for (int i = 0; i < mesh.getMeshCount(); i++) {
+	for (size_t i = 0; i < mesh.getMeshCount(); i++) {
 		if (mesh.getVertices(i)->size() == 0)
 			continue;
 
@@ -356,7 +356,7 @@ void setImages(XMLWriter &xml, const Mesh &mesh, const Plant &plant)
 void setEffects(XMLWriter &xml, const Mesh &mesh, const Plant &plant)
 {
 	xml >> "<library_effects>";
-	for (int i = 0; i < mesh.getMeshCount(); i++) {
+	for (size_t i = 0; i < mesh.getMeshCount(); i++) {
 		if (mesh.getVertices(i)->size() == 0)
 			continue;
 
@@ -405,7 +405,7 @@ void setEffects(XMLWriter &xml, const Mesh &mesh, const Plant &plant)
 void setMaterials(XMLWriter &xml, const Mesh &mesh, const Plant &plant)
 {
 	xml >> "<library_materials>";
-	for (int i = 0; i < mesh.getMeshCount(); i++) {
+	for (size_t i = 0; i < mesh.getMeshCount(); i++) {
 		if (mesh.getVertices(i)->size() == 0)
 			continue;
 
@@ -605,7 +605,7 @@ void addJoints(XMLWriter &xml, const Stem *stem, Vec3 prevLocation)
 void bindPlantMaterial(XMLWriter &xml, const Mesh &mesh, const Plant &plant)
 {
 	xml >> "<bind_material>";
-	for (int i = 0; i < mesh.getMeshCount(); i++) {
+	for (size_t i = 0; i < mesh.getMeshCount(); i++) {
 		if (mesh.getVertices(i)->size() == 0)
 			continue;
 

@@ -24,9 +24,14 @@
 #include <utility>
 
 class RemoveStem : public Command {
+	struct LeafState {
+		size_t index;
+		pg::Leaf leaf;
+		pg::Stem *stem;
+	};
 	Selection *selection;
 	Selection prevSelection;
-	std::vector<std::pair<pg::Stem *, pg::Leaf>> leaves;
+	std::vector<LeafState> leaves;
 	std::vector<std::pair<pg::Stem *, pg::Spline>> splines;
 	std::vector<pg::Stem *> stems;
 

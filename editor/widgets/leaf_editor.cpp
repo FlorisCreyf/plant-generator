@@ -107,7 +107,7 @@ void LeafEditor::createInterface()
 		this, SLOT(changeLeafMesh()));
 }
 
-void LeafEditor::setFields(map<Stem *, set<long>> instances)
+void LeafEditor::setFields(map<Stem *, set<size_t>> instances)
 {
 	if (instances.empty()) {
 		enable(false);
@@ -115,8 +115,8 @@ void LeafEditor::setFields(map<Stem *, set<long>> instances)
 	}
 
 	Stem *stem = instances.rbegin()->first;
-	long leafID = *instances.rbegin()->second.begin();
-	Leaf *leaf = stem->getLeaf(leafID);
+	size_t leafIndex = *instances.rbegin()->second.begin();
+	Leaf *leaf = stem->getLeaf(leafIndex);
 	blockSignals(true);
 
 	indicateSimilarities(this->scaleXLabel);

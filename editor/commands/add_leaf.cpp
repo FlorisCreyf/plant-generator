@@ -30,9 +30,9 @@ void AddLeaf::execute()
 	if (instances.size() == 1) {
 		this->leaf = pg::Leaf();
 		this->stem = (*instances.begin()).first;
-		this->stem->addLeaf(this->leaf);
+		this->leafIndex = this->stem->addLeaf(this->leaf);
 		this->selection->clear();
-		this->selection->addLeaf(this->stem, this->leaf.getID());
+		this->selection->addLeaf(this->stem, this->leafIndex);
 		this->moveStem.execute();
 	}
 }
@@ -51,8 +51,8 @@ bool AddLeaf::onMousePress(QMouseEvent *event)
 
 void AddLeaf::undo()
 {
-	this->leaf = *this->stem->getLeaf(this->leaf.getID());
-	this->stem->removeLeaf(this->leaf.getID());
+	this->leaf = *this->stem->getLeaf(this->leafIndex);
+	this->stem->removeLeaf(this->leafIndex);
 	*this->selection = this->prevSelection;
 }
 
@@ -63,6 +63,6 @@ void AddLeaf::redo()
 		pg::Stem *stem = (*instances.begin()).first;
 		this->stem->addLeaf(this->leaf);
 		this->selection->clear();
-		this->selection->addLeaf(stem, this->leaf.getID());
+		this->selection->addLeaf(stem, this->leafIndex);
 	}
 }
