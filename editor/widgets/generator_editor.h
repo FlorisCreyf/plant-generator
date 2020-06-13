@@ -25,6 +25,7 @@ class GeneratorEditor : public Form {
 	Q_OBJECT
 
 	Editor *editor;
+	QSpinBox *seed;
 	QDoubleSpinBox *stemDensity;
 	QDoubleSpinBox *stemStart;
 	QDoubleSpinBox *leafDensity;

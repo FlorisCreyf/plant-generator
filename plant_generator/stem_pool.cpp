@@ -25,15 +25,14 @@ StemPool::StemPool()
 	addPool();
 }
 
-Stem *StemPool::allocate(Stem *parent)
+Stem *StemPool::allocate()
 {
-	for (auto it = pools.begin(); it != pools.end(); it++) {
+	for (auto it = this->pools.begin(); it != this->pools.end(); it++) {
 		Stem *stem = it->firstAvailable;
 		if (stem && stem->unused) {
 			stem->unused = false;
 			it->firstAvailable = stem->nextAvailable;
 			it->remaining--;
-			stem->init(parent);
 			return stem;
 		}
 	}
@@ -42,8 +41,23 @@ Stem *StemPool::allocate(Stem *parent)
 	stem->unused = false;
 	pool.firstAvailable = stem->nextAvailable;
 	pool.remaining--;
-	stem->init(parent);
 	return stem;
+}
+
+bool StemPool::allocateAt(Stem *stem)
+{
+	stem->unused = false;
+	auto it = getPool(stem);
+	if (it == this->pools.end())
+		return false;
+	it->remaining--;
+	if (stem->nextAvailable)
+		stem->nextAvailable->prevAvailable = stem->prevAvailable;
+	if (stem->prevAvailable)
+		stem->prevAvailable->nextAvailable = stem->nextAvailable;
+	if (it->firstAvailable == stem)
+		it->firstAvailable = stem->nextAvailable;
+	return true;
 }
 
 StemPool::Pool &StemPool::addPool()
@@ -68,12 +82,16 @@ size_t StemPool::deallocate(Stem *stem)
 	list<Pool>::iterator it = getPool(stem);
 	stem->unused = true;
 	it->remaining++;
+
 	if (it->firstAvailable) {
-		Stem *next = it->firstAvailable;
+		stem->prevAvailable = nullptr;
+		it->firstAvailable->prevAvailable = stem;
+		stem->nextAvailable = it->firstAvailable;
 		it->firstAvailable = stem;
-		stem->nextAvailable = next;
-	} else
+	} else {
 		it->firstAvailable = stem;
+		stem->prevAvailable = nullptr;
+	}
 	return it->remaining;
 }
 
@@ -93,7 +111,7 @@ long StemPool::getPoolID(const Stem *stem) const
 {
 	for (const auto &pool : this->pools) {
 		const void *start = &pool.stems[0];
-		const void *end = &pool.stems[0] + PG_POOL_SIZE-1;
+		const void *end = &pool.stems[0] + PG_POOL_SIZE - 1;
 		if (start <= stem && stem <= end)
 			return pool.id;
 	}

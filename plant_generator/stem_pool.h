@@ -20,10 +20,6 @@
 #include <array>
 #include <list>
 
-#ifdef PG_SERIALIZE
-#include <boost/serialization/map.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#endif
 #define PG_POOL_SIZE 100
 
 namespace pg {
@@ -34,28 +30,18 @@ namespace pg {
 			Stem *firstAvailable;
 			std::array<Stem, PG_POOL_SIZE> stems;
 		};
-
 		long counter;
 		std::list<Pool> pools;
 
 		Pool &addPool();
 		std::list<Pool>::iterator getPool(Stem *stem);
 
-		#ifdef PG_SERIALIZE
-		friend class boost::serialization::access;
-		template<class Archive>
-		void serialize(Archive &ar, const unsigned int version)
-		{
-			(void)version;
-			ar & counter;
-			ar & pools;
-		}
-		#endif
-
 	public:
 		StemPool();
 		StemPool(const StemPool &) = delete;
-		Stem *allocate(Stem *stem = nullptr);
+		Stem *allocate();
+		/** Try to allocate memory at a specific address. */
+		bool allocateAt(Stem *stem);
 		/** Remove a stem and return the number of remaining stems. */
 		size_t deallocate(Stem *stem);
 		long getPoolID(const Stem *stem) const;

@@ -33,9 +33,11 @@ void Mesh::generate()
 {
 	Stem *stem = this->plant->getRoot();
 	initBuffer();
-	State state = {};
-	addStem(stem, state);
-	updateSegments();
+	if (stem) {
+		State state = {};
+		addStem(stem, state);
+		updateSegments();
+	}
 }
 
 bool Mesh::hasValidLocation(Stem *stem)

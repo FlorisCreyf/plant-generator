@@ -17,6 +17,7 @@
 
 #include "generator_editor.h"
 #include "../commands/generate.h"
+#include <limits>
 
 GeneratorEditor::GeneratorEditor(Editor *editor, QWidget *parent) :
 	Form(editor, parent)
@@ -39,13 +40,23 @@ void GeneratorEditor::createInterface()
 	form->setSpacing(2);
 	form->setMargin(5);
 
+	this->seed = new QSpinBox(this);
+	this->seed->setRange(
+		std::numeric_limits<int>::min(),
+		std::numeric_limits<int>::max());
+	this->seed->setSingleStep(1);
+	form->addRow(tr("Seed"), this->seed);
 	this->stemDensity = new QDoubleSpinBox(this);
+	this->stemDensity->setSingleStep(0.1);
 	form->addRow(tr("Stem Density"), this->stemDensity);
 	this->stemStart = new QDoubleSpinBox(this);
+	this->stemStart->setSingleStep(0.1);
 	form->addRow(tr("Stem Start"), this->stemStart);
 	this->leafDensity = new QDoubleSpinBox(this);
+	this->leafDensity->setSingleStep(0.1);
 	form->addRow(tr("Leaf Density"), this->leafDensity);
 	this->leafStart = new QDoubleSpinBox(this);
+	this->leafStart->setSingleStep(0.1);
 	form->addRow(tr("Leaf Start"), this->leafStart);
 	this->createButton = new QPushButton(tr("Generate"), this);
 	this->createButton->setFixedHeight(22);
@@ -60,7 +71,8 @@ void GeneratorEditor::submit()
 	pg::PseudoGenerator gen(this->editor->getPlant());
 	gen.setLeafCount(this->leafDensity->value(), this->leafStart->value());
 	gen.setStemCount(this->stemDensity->value(), this->stemStart->value());
-	generate->setGenerator(gen);
+	gen.setSeed(this->seed->value());
+	generate->setGenerator(std::move(gen));
 	generate->execute();
 	this->editor->add(generate);
 	this->editor->change();

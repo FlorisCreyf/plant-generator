@@ -174,18 +174,16 @@ Generator::Intersection Generator::intersect(Stem *stem, Ray ray)
 			intersection = i;
 		child = child->getSibling();
 	}
-
-	for (const auto pair : stem->getLeaves()) {
-		const Leaf *leaf = &pair.second;
-		float radius = leaf->getScale().x * 0.5f;
-		float distance = leaf->getPosition();
+	for (const Leaf &leaf : stem->getLeaves()) {
+		float radius = leaf.getScale().x * 0.5f;
+		float distance = leaf.getPosition();
 		Vec3 location = stem->getLocation();
 		Vec3 direction(0.0f, 0.0f, 1.0f);
 		if (path.getSize() > 1) {
 			location += path.getIntermediate(distance);
 			direction = path.getIntermediateDirection(distance);
 		}
-		direction = leaf->getDirection(direction);
+		direction = leaf.getDirection(direction);
 		location += radius * direction;
 
 		float t = intersectsSphere(ray, location, radius);
@@ -227,7 +225,7 @@ int Generator::propagate(Stem *stem)
 			this->growth[stem] = light;
 		} else {
 			this->growth.erase(stem);
-			delete plant.extractStem(stem);
+			plant.deleteStem(stem);
 		}
 	} else {
 		Path path = stem->getPath();
@@ -250,21 +248,18 @@ void Generator::addStems(Stem *stem)
 		child = child->getSibling();
 	}
 
-	std::map<long, Leaf> leaves = stem->getLeaves();
-	for (auto it = leaves.begin(), last = --leaves.end(); it != last;) {
-		long leafID = it->first;
-		Leaf leaf = it->second;
+	std::vector<Leaf> leaves = stem->getLeaves();
+	for (auto it = leaves.begin(); it != leaves.end(); it++) {
+		Leaf leaf = *it;
 
 		/* TODO: Not all leaves should be removed. */
-		it = leaves.erase(it);
-		stem->removeLeaf(leafID);
+		stem->removeLeaf(0);
 
 		Path path = stem->getPath();
 		float distance = leaf.getPosition();
 		Vec3 direction = path.getIntermediateDirection(distance);
 		direction = leaf.getDirection(direction);
 		Vec3 point = this->primaryGrowthRate * direction;
-
 		Stem *child = plant.addStem(stem);
 		child->setPosition(leaf.getPosition());
 		child->setSwelling(Vec2(1.0f, 1.0f));
@@ -292,7 +287,7 @@ void Generator::addLeaves(Stem *stem, float distance)
 	if (leaves.empty())
 		rotation.w = 1.0f;
 	else {
-		Leaf prevLeaf = leaves.rbegin()->second;
+		Leaf prevLeaf = *leaves.rbegin();
 		if (prevLeaf.getRotation().w == 1.0f)
 			rotation.y = 1.0f;
 		else

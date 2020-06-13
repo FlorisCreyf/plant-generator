@@ -16,6 +16,8 @@
 #include "plant.h"
 
 using namespace pg;
+using std::vector;
+using std::pair;
 
 Plant::Plant()
 {
@@ -24,7 +26,26 @@ Plant::Plant()
 
 Plant::~Plant()
 {
-	deleteStems(this->root);
+	deallocateStems(this->root);
+}
+
+Stem *Plant::move(Stem *value)
+{
+	Stem *stem = this->stemPool.allocate();
+	Stem *childValue = value->getChild();
+	*stem = *value;
+	stem->child = nullptr;
+	stem->parent = nullptr;
+	stem->nextSibling = nullptr;
+	stem->prevSibling = nullptr;
+	while (childValue) {
+		Stem *siblingValue = childValue->nextSibling;
+		Stem *child = move(childValue);
+		insertStem(child, stem);
+		childValue = siblingValue;
+	}
+	delete value;
+	return stem;
 }
 
 StemPool *Plant::getStemPool()
@@ -34,26 +55,34 @@ StemPool *Plant::getStemPool()
 
 Stem *Plant::addStem(Stem *parent)
 {
-	Stem *stem = stemPool.allocate(parent);
-	Stem *firstChild = parent->child;
-	parent->child = stem;
-	if (firstChild)
-		firstChild->prevSibling = stem;
-	stem->nextSibling = firstChild;
-	stem->prevSibling = nullptr;
-	return stem;
+	if (!parent)
+		return createRoot();
+	else {
+		Stem *stem = this->stemPool.allocate();
+		stem->init(parent);
+		Stem *firstChild = parent->child;
+		parent->child = stem;
+		if (firstChild)
+			firstChild->prevSibling = stem;
+		stem->nextSibling = firstChild;
+		stem->prevSibling = nullptr;
+		return stem;
+	}
 }
 
 Stem *Plant::createRoot()
 {
 	if (this->root)
-		deleteStems(this->root);
-	this->root = this->stemPool.allocate(nullptr);
+		deallocateStems(this->root);
+	this->root = this->stemPool.allocate();
+	this->root->init(nullptr);
 	return this->root;
 }
 
-Stem *Plant::extractStem(pg::Stem *stem)
+void Plant::decouple(Stem *stem)
 {
+	if (stem == this->root)
+		this->root = nullptr;
 	if (stem->prevSibling)
 		stem->prevSibling->nextSibling = stem->nextSibling;
 	if (stem->nextSibling)
@@ -64,7 +93,6 @@ Stem *Plant::extractStem(pg::Stem *stem)
 		else
 			stem->parent->child = stem->nextSibling;
 	}
-	return stem;
 }
 
 Stem *Plant::getRoot()
@@ -92,6 +120,7 @@ void Plant::insertStem(Stem *stem, Stem *parent)
 	updateDepth(stem, parent->getDepth() + 1);
 	Stem *firstChild = parent->child;
 	parent->child = stem;
+	stem->parent = parent;
 	if (firstChild)
 		firstChild->prevSibling = parent->child;
 	parent->child->nextSibling = firstChild;
@@ -101,42 +130,73 @@ void Plant::insertStem(Stem *stem, Stem *parent)
 void Plant::removeRoot()
 {
 	if (this->root) {
-		deleteStems(this->root);
+		deallocateStems(this->root);
 		this->root = nullptr;
 	}
 }
 
-void Plant::deleteStems(Stem *stem)
+void Plant::deallocateStems(Stem *stem)
 {
 	Stem *child = stem->child;
 	while (child) {
 		Stem *next = child->nextSibling;
-		this->stemPool.deallocate(child);
+		deallocateStems(child);
 		child = next;
 	}
+	this->stemPool.deallocate(stem);
 }
 
 void Plant::deleteStem(Stem *stem)
 {
-	extractStem(stem);
-	deleteStems(stem);
+	decouple(stem);
+	deallocateStems(stem);
+}
+
+void Plant::copy(vector<pair<Stem *, Stem>> &stems, Stem *stem)
+{
+	stems.push_back(pair<Stem *, Stem>(stem, *stem));
+	Stem *child = stem->getChild();
+	while (child) {
+		copy(stems, child);
+		child = child->getSibling();
+	}
+}
+
+void Plant::extractStems(Stem *stem, vector<pair<Stem *, Stem>> &stems)
+{
+	stem->depth = 0;
+	copy(stems, stem);
+	deleteStem(stem);
+}
+
+void Plant::reinsertStems(vector<pair<Stem *, Stem>> &stems)
+{
+	for (auto instance : stems) {
+		Stem *stem = instance.first;
+		this->stemPool.allocateAt(stem);
+		*stem = instance.second;
+		if (stem->depth == 0 && stem->parent)
+			insertStem(stem, stem->parent);
+		else if (!stem->parent && !this->root)
+			this->root = stem;
+	}
 }
 
 void Plant::addMaterial(Material material)
 {
-	materials[material.getID()] = material;
+	this->materials[material.getID()] = material;
 }
 
 void Plant::removeMaterial(long id)
 {
-	if (root) {
-		if (root->getMaterial(Stem::Outer) == id)
-			root->setMaterial(Stem::Outer, 0);
-		if (root->getMaterial(Stem::Inner) == id)
-			root->setMaterial(Stem::Inner, 0);
-		removeMaterial(root, id);
+	if (this->root) {
+		if (this->root->getMaterial(Stem::Outer) == id)
+			this->root->setMaterial(Stem::Outer, 0);
+		if (this->root->getMaterial(Stem::Inner) == id)
+			this->root->setMaterial(Stem::Inner, 0);
+		removeMaterial(this->root, id);
 	}
-	materials.erase(id);
+	this->materials.erase(id);
 }
 
 void Plant::removeMaterial(Stem *stem, long id)
@@ -154,33 +214,33 @@ void Plant::removeMaterial(Stem *stem, long id)
 
 Material Plant::getMaterial(long id) const
 {
-	return materials.at(id);
+	return this->materials.at(id);
 }
 
 std::map<long, Material> Plant::getMaterials() const
 {
-	return materials;
+	return this->materials;
 }
 
 void Plant::addLeafMesh(Geometry mesh)
 {
-	leafMeshes[mesh.getID()] = mesh;
+	this->leafMeshes[mesh.getID()] = mesh;
 }
 
 void Plant::removeLeafMesh(long id)
 {
-	leafMeshes.erase(id);
+	this->leafMeshes.erase(id);
 }
 
 void Plant::removeLeafMeshes()
 {
-	leafMeshes.clear();
+	this->leafMeshes.clear();
 }
 
 Geometry Plant::getLeafMesh(long id) const
 {
 	if (id != 0)
-		return leafMeshes.at(id);
+		return this->leafMeshes.at(id);
 	else {
 		Geometry geom;
 		geom.setPerpendicularPlanes();
@@ -190,5 +250,5 @@ Geometry Plant::getLeafMesh(long id) const
 
 std::map<long, Geometry> Plant::getLeafMeshes() const
 {
-	return leafMeshes;
+	return this->leafMeshes;
 }

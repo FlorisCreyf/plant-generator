@@ -105,11 +105,11 @@ private:
 	GLuint outlineFrameBuffer;
 	SharedResources::Shader shader;
 
+	std::vector<pg::Segment> meshes;
 	pg::PseudoGenerator generator;
 	pg::Wind wind;
 	pg::Mesh mesh;
 	pg::Plant plant;
-	std::vector<pg::Segment> meshes;
 	Path path;
 
 	Camera camera;

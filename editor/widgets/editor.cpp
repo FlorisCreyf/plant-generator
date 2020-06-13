@@ -193,13 +193,14 @@ void Editor::keyPressEvent(QKeyEvent *event)
 	bool hasOneStem = selection.getStemInstances().size() == 1;
 	bool hasLeaves = selection.hasLeaves();
 	bool containsRoot = selection.contains(plant.getRoot());
+	pg::Stem *root = plant.getRoot();
 
 	if (command == tr("Add Leaf") && hasOneStem) {
 		currentCommand = new AddLeaf(&selection, &camera, x, y);
 		currentCommand->execute();
 		change();
 		emit selectionChanged();
-	} else if (command == tr("Add Stem") && hasOneStem) {
+	} else if (command == tr("Add Stem") && (hasOneStem || !root)) {
 		currentCommand = new AddStem(
 			&selection, &translationAxes, &camera, x, y);
 		currentCommand->execute();

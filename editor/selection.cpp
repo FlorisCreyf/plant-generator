@@ -158,7 +158,7 @@ void Selection::reduceToAncestors()
 	for (auto &instance : this->stems) {
 		Stem *stem1 = instance.first;
 		bool valid = true;
-		for (auto instance : stems) {
+		for (auto instance : this->stems) {
 			Stem *stem2 = instance.first;
 			if (stem1->isDescendantOf(stem2)) {
 				valid = false;
@@ -176,8 +176,7 @@ void Selection::selectStems(Stem *stem)
 	if (stem) {
 		Stem *child = stem->getChild();
 		while (child) {
-			this->stems.emplace(
-				child, PointSelection());
+			this->stems.emplace(child, PointSelection());
 			selectStems(child);
 			child = child->getSibling();
 		}

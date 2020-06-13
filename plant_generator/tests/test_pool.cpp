@@ -43,7 +43,6 @@ BOOST_AUTO_TEST_CASE(test_allocate)
 BOOST_AUTO_TEST_CASE(test_same_address)
 {
 	StemPool pool;
-	/* This property is the whole purpose of having a object pool. */
 	Stem *stem = pool.allocate();
 	pool.deallocate(stem);
 	BOOST_TEST(stem == pool.allocate());

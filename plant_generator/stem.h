@@ -32,23 +32,28 @@ namespace pg {
 		friend class Plant;
 		friend class StemPool;
 
-		Stem *nextAvailable;
 		bool unused;
 
-		Stem *nextSibling;
-		Stem *prevSibling;
+		union {
+			Stem *nextAvailable;
+			Stem *nextSibling;
+		};
+		union {
+			Stem *prevSibling;
+			Stem *prevAvailable;
+		};
 		Stem *child;
 		Stem *parent;
-		std::vector<Leaf> leaves;
 
 		int depth;
 		float position;
 		Vec3 location;
 		Path path;
-		int resolution = 10;
-		long material[2] = {0};
+		int resolution;
+		long material[2];
 		Vec2 swelling;
 
+		std::vector<Leaf> leaves;
 		std::vector<Joint> joints;
 
 		void updatePositions(Stem *stem);

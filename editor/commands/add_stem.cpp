@@ -29,64 +29,61 @@ AddStem::AddStem(
 	movePath(selection, axes, camera)
 {
 	this->selection = selection;
-	this->undone = false;
-}
-
-AddStem::~AddStem()
-{
-	if (!this->undone)
-		delete this->stem;
 }
 
 void AddStem::create()
 {
-	auto instances = selection->getStemInstances();
+	Plant *plant = this->selection->getPlant();
+	int pathDivisions = 1;
+	auto instances = this->selection->getStemInstances();
 	if (instances.size() == 1) {
 		Stem *parent = (*instances.begin()).first;
-		Plant *plant = selection->getPlant();
-		this->stem = plant->addStem(parent);
-
-		this->stem->setResolution(parent->getResolution());
-		this->stem->setMaterial(
+		stem = plant->addStem(parent);
+		stem->setResolution(parent->getResolution());
+		stem->setMaterial(
 			Stem::Outer, parent->getMaterial(Stem::Outer));
-		this->stem->setMaterial(
+		stem->setMaterial(
 			Stem::Inner, parent->getMaterial(Stem::Inner));
-
 		pg::Path parentPath = parent->getPath();
-		pg::Path path = this->stem->getPath();
-		pg::Spline spline = path.getSpline();
-		std::vector<pg::Vec3> controls;
-		controls.push_back(pg::getZeroVec3());
-		/* Adjust the second point at a latter time. */
-		controls.push_back(pg::getZeroVec3());
-		spline.setControls(controls);
-		spline.setDegree(1);
-		path.setSpline(spline);
-		path.setResolution(parentPath.getResolution());
-		path.setRadius(pg::getDefaultCurve(0));
-		this->stem->setPath(path);
-		this->stem->setPosition(0.0f);
+		pathDivisions = parentPath.getResolution();
+	} else
+		this->stem = plant->createRoot();
 
-		selection->clear();
-		selection->addStem(this->stem);
-		selection->selectLastPoints();
-	}
+	pg::Path path = this->stem->getPath();
+	pg::Spline spline = path.getSpline();
+	std::vector<pg::Vec3> controls;
+	controls.push_back(pg::getZeroVec3());
+	/* Adjust the second point at a latter time. */
+	controls.push_back(pg::getZeroVec3());
+	spline.setControls(controls);
+	spline.setDegree(1);
+	path.setSpline(spline);
+	path.setResolution(pathDivisions);
+	path.setRadius(pg::getDefaultCurve(0));
+	this->stem->setPath(path);
+	this->stem->setPosition(0.0f);
+
+	this->selection->clear();
+	this->selection->addStem(this->stem);
+	this->selection->selectLastPoints();
 }
 
 void AddStem::setRadius()
 {
 	pg::Stem *parent = this->stem->getParent();
-	pg::Path path = this->stem->getPath();
-	pg::Path parentPath = parent->getPath();
-	float t = this->stem->getPosition();
-	float radius = parentPath.getIntermediateRadius(t);
-	radius /= stem->getSwelling().x + 0.1;
-	path.setMaxRadius(radius);
-	if (parentPath.getMinRadius() > radius)
-		path.setMinRadius(radius);
-	else
-		path.setMinRadius(parentPath.getMinRadius());
-	this->stem->setPath(path);
+	if (parent) {
+		pg::Path path = this->stem->getPath();
+		pg::Path parentPath = parent->getPath();
+		float t = this->stem->getPosition();
+		float radius = parentPath.getIntermediateRadius(t);
+		radius /= this->stem->getSwelling().x + 0.1;
+		path.setMaxRadius(radius);
+		if (parentPath.getMinRadius() > radius)
+			path.setMinRadius(radius);
+		else
+			path.setMinRadius(parentPath.getMinRadius());
+		this->stem->setPath(path);
+	}
 }
 
 bool AddStem::onMouseMove(QMouseEvent *event)
@@ -105,6 +102,8 @@ bool AddStem::onMousePress(QMouseEvent *event)
 	} if (this->moveStem.isDone()) {
 		bool update = this->movePath.onMouseRelease(event);
 		this->done = this->movePath.isDone();
+		if (this->done)
+			this->stemCopy = *this->stem;
 		return update;
 	}
 	return false;
@@ -117,25 +116,24 @@ bool AddStem::onMouseRelease(QMouseEvent *event)
 
 void AddStem::execute()
 {
-	prevSelection = *selection;
+	this->prevSelection = *this->selection;
 	create();
-	moveStem.execute();
+	this->moveStem.execute();
 }
 
 void AddStem::undo()
 {
-	pg::Plant *plant = selection->getPlant();
-	plant->extractStem(stem);
-	*selection = prevSelection;
-	this->undone = true;
+	pg::Plant *plant = this->selection->getPlant();
+	plant->deleteStem(this->stem);
+	*this->selection = this->prevSelection;
 }
 
 void AddStem::redo()
 {
-	pg::Plant *plant = selection->getPlant();
-	plant->insertStem(stem, stem->getParent());
-	selection->clear();
-	selection->addStem(stem);
-	selection->selectLastPoints();
-	this->undone = false;
+	pg::Plant *plant = this->selection->getPlant();
+	this->stem = plant->addStem(this->stemCopy.getParent());
+	*this->stem = this->stemCopy;
+	this->selection->clear();
+	this->selection->addStem(this->stem);
+	this->selection->selectLastPoints();
 }

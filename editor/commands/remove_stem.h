@@ -32,15 +32,15 @@ class RemoveStem : public Command {
 	Selection *selection;
 	Selection prevSelection;
 	std::vector<LeafState> leaves;
+	/* Pointers can only be used as identifiers when using a stem pool. */
 	std::vector<std::pair<pg::Stem *, pg::Spline>> splines;
-	std::vector<pg::Stem *> stems;
+	std::vector<std::pair<pg::Stem *, pg::Stem>> stems;
 
 	void removeLeaves();
 	void removeStems();
 
 public:
 	RemoveStem(Selection *selection);
-	~RemoveStem();
 	void execute();
 	void undo();
 };

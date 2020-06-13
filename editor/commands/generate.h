@@ -26,10 +26,8 @@
 class Generate : public Command {
 	Selection prevSelection;
 	Selection removals;
-	Selection additions;
 	Selection *selection;
 	RemoveStem removeRemovals;
-	RemoveStem removeAdditions;
 	pg::PseudoGenerator gen;
 
 public:
