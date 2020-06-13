@@ -17,11 +17,8 @@
 
 using namespace pg;
 
-long Leaf::counter = 1;
-
 Leaf::Leaf()
 {
-	id = counter++;
 	position = -1.0f;
 	scale = Vec3(1.0f, 1.0f, 1.0f);
 	material = 0;
@@ -32,7 +29,6 @@ Leaf::Leaf()
 bool Leaf::operator==(const Leaf &leaf) const
 {
 	return (
-		id == leaf.id &&
 		position == leaf.position &&
 		scale == leaf.scale &&
 		material == leaf.material &&
@@ -44,11 +40,6 @@ bool Leaf::operator==(const Leaf &leaf) const
 bool Leaf::operator!=(const Leaf &leaf) const
 {
 	return !(*this == leaf);
-}
-
-long Leaf::getID() const
-{
-	return id;
 }
 
 void Leaf::setPosition(float position)
@@ -76,10 +67,10 @@ Quat Leaf::getStemTiltAlignment(Vec3 stemDirection) const
 	Vec3 normal(0.0f, 1.0f, 0.0f);
 	Vec3 planeDirection(0.0f, 0.0f, 1.0f);
 	Vec3 up(0.0f, -1.0f, 0.0f);
-	planeDirection = pg::cross(up, stemDirection);
-	planeDirection = pg::cross(planeDirection, stemDirection);
+	planeDirection = cross(up, stemDirection);
+	planeDirection = cross(planeDirection, stemDirection);
 	planeDirection = normalize(planeDirection);
-	return pg::rotateIntoVecQ(normal, planeDirection);
+	return rotateIntoVecQ(normal, planeDirection);
 }
 
 Quat Leaf::getDefaultOrientation(Vec3 stemDirection) const

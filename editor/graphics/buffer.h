@@ -28,36 +28,36 @@ public:
 
 	/** Creates and binds a new vertex array object. */
 	void initialize(GLenum mode);
-	void allocatePointMemory(int size);
-	void allocateIndexMemory(int size);
+	void allocatePointMemory(size_t size);
+	void allocateIndexMemory(size_t size);
 	/** Allocates a new buffer.
 	IMPORTANT: Call initialize() or use() before calling load(...). The
 	buffer can't be changed until the VAO is bound. */
 	void load(const Geometry &geometry);
 	void load(
-		const pg::Vertex *points, int psize,
-		const unsigned *indices, int isize);
+		const pg::Vertex *points, size_t psize,
+		const unsigned *indices, size_t isize);
 	/** Reduces reallocations and should be used for dynamic meshes. */
 	void update(const Geometry &geometry);
 	void update(
-		const pg::Vertex *points, int psize,
-		const unsigned *indices, int isize);
+		const pg::Vertex *points, size_t psize,
+		const unsigned *indices, size_t isize);
 	/** The buffer should be bound prior to calling update. The method
 	returns false if the buffer is too small. */
-	bool update(const pg::Vertex *points, int start, int size);
+	bool update(const pg::Vertex *points, size_t start, size_t size);
 	/** The buffer should be bound prior to calling update. The method
 	returns false if the buffer is too small. */
-	bool update(const unsigned *indices, int start, int size);
+	bool update(const unsigned *indices, size_t start, size_t size);
 	/** The buffer needs to be bound before drawing from it. */
 	void use();
-	int getSize(int type) const;
-	int getCapacity(int type) const;
+	size_t getSize(int type) const;
+	size_t getCapacity(int type) const;
 
 private:
 	GLuint vao;
 	GLuint buffers[2];
-	int size[2];
-	int capacity[2];
+	size_t size[2];
+	size_t capacity[2];
 	GLenum mode;
 
 	void setVertexFormat();

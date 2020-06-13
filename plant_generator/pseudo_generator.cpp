@@ -27,7 +27,8 @@ using namespace pg;
 PseudoGenerator::PseudoGenerator(Plant *plant)
 {
 	std::random_device rd;
-	this->randomGenerator.seed(rd());
+	this->seed = rd();
+	this->randomGenerator.seed(this->seed);
 	this->plant = plant;
 	this->stemDepth = 1;
 	this->stemDensity = 0.0f;
@@ -35,6 +36,17 @@ PseudoGenerator::PseudoGenerator(Plant *plant)
 	this->stemStart = 0.0f;
 	this->leafStart = 0.0f;
 	this->requiredLength = 0.0f;
+}
+
+void PseudoGenerator::setSeed(unsigned seed)
+{
+	this->seed = seed;
+	this->randomGenerator.seed(seed);
+}
+
+void PseudoGenerator::reset()
+{
+	this->randomGenerator.seed(this->seed);
 }
 
 void PseudoGenerator::grow()
@@ -91,7 +103,7 @@ bool PseudoGenerator::growLateralStem(Stem *parent, float position)
 		stem->setResolution(parent->getResolution() - 2);
 
 	if (!setPath(stem, parent, getStemDirection(stem), position)) {
-		delete this->plant->extractStem(stem);
+		this->plant->deleteStem(stem);
 		return false;
 	}
 

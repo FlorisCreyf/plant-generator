@@ -28,7 +28,7 @@
 class Selection {
 	pg::Plant *plant;
 	std::map<pg::Stem *, PointSelection> stems;
-	std::map<pg::Stem *, std::set<long>> leaves;
+	std::map<pg::Stem *, std::set<size_t>> leaves;
 
 	void selectStems(pg::Stem *);
 	void getTotalLeafPosition(pg::Vec3 &, int &) const;
@@ -48,7 +48,7 @@ public:
 
 	void setInstances(std::map<pg::Stem *, PointSelection> instances);
 	std::map<pg::Stem *, PointSelection> getStemInstances() const;
-	std::map<pg::Stem *, std::set<long>> getLeafInstances() const;
+	std::map<pg::Stem *, std::set<size_t>> getLeafInstances() const;
 	pg::Plant *getPlant() const;
 
 	void clear();

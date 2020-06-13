@@ -19,12 +19,29 @@
 
 using namespace pg;
 
-long Stem::counter = 1;
-
 Stem::Stem(Stem *parent)
 {
-	this->id = counter++;
+	init(parent);
+}
+
+Stem::~Stem()
+{
+
+}
+
+Stem::Stem(const Stem &original)
+{
+	copy(original);
+}
+
+void Stem::init(Stem *parent)
+{
+	this->joints.clear();
+	this->leaves.clear();
 	this->swelling = Vec2(1.5, 3.0);
+	this->material[0] = 0;
+	this->material[1] = 0;
+	this->resolution = 10;
 	this->nextSibling = nullptr;
 	this->prevSibling = nullptr;
 	this->child = nullptr;
@@ -37,27 +54,6 @@ Stem::Stem(Stem *parent)
 		this->depth = parent->depth + 1;
 }
 
-Stem::~Stem()
-{
-	Stem *child = this->child;
-	while (child) {
-		Stem *next = child->nextSibling;
-		delete child;
-		child = next;
-	}
-}
-
-Stem::Stem(const Stem &original)
-{
-	/* Set nullptr to prevent temporary copies from deleting children. An
-	explicit deep copy method might be more appropiate if necessary. */
-	this->parent = nullptr;
-	this->nextSibling = nullptr;
-	this->prevSibling = nullptr;
-	this->child = nullptr;
-	copy(original);
-}
-
 Stem &Stem::operator=(const Stem &stem)
 {
 	copy(stem);
@@ -66,6 +62,10 @@ Stem &Stem::operator=(const Stem &stem)
 
 void Stem::copy(const Stem &stem)
 {
+	this->nextSibling = stem.nextAvailable;
+	this->prevSibling = stem.prevSibling;
+	this->parent = stem.parent;
+	this->child = stem.child;
 	this->depth = stem.depth;
 	this->path = stem.path;
 	this->resolution = stem.resolution;
@@ -80,19 +80,19 @@ void Stem::copy(const Stem &stem)
 bool Stem::operator==(const Stem &stem) const
 {
 	return (
-		nextSibling == stem.nextSibling &&
-		prevSibling == stem.prevSibling &&
-		child == stem.child &&
-		parent == stem.parent &&
-		depth == stem.depth &&
-		path == stem.path &&
-		resolution == stem.resolution &&
-		position == stem.position &&
-		location == stem.location &&
-		material[0] == stem.material[0] &&
-		material[1] == stem.material[1] &&
-		swelling == stem.swelling &&
-		leaves == stem.leaves
+		this->nextSibling == stem.nextSibling &&
+		this->prevSibling == stem.prevSibling &&
+		this->child == stem.child &&
+		this->parent == stem.parent &&
+		this->depth == stem.depth &&
+		this->path == stem.path &&
+		this->resolution == stem.resolution &&
+		this->position == stem.position &&
+		this->location == stem.location &&
+		this->material[0] == stem.material[0] &&
+		this->material[1] == stem.material[1] &&
+		this->swelling == stem.swelling &&
+		this->leaves == stem.leaves
 	);
 }
 
@@ -101,40 +101,40 @@ bool Stem::operator!=(const Stem &stem) const
 	return !(*this == stem);
 }
 
-long Stem::getID() const
+size_t Stem::addLeaf(const Leaf &leaf)
 {
-	return id;
+	this->leaves.push_back(leaf);
+	return this->leaves.size() - 1;
 }
 
-int Stem::addLeaf(const Leaf &leaf)
+void Stem::insertLeaf(const Leaf &leaf, size_t index)
 {
-	leaves.emplace(leaf.getID(), leaf);
-	return leaves.size() - 1;
+	this->leaves.insert(this->leaves.begin() + index, leaf);
 }
 
-int Stem::getLeafCount() const
+size_t Stem::getLeafCount() const
 {
-	return leaves.size();
+	return this->leaves.size();
 }
 
-pg::Leaf *Stem::getLeaf(long id)
+Leaf *Stem::getLeaf(size_t index)
 {
-	return &leaves.at(id);
+	return &this->leaves.at(index);
 }
 
-const pg::Leaf *Stem::getLeaf(long id) const
+const Leaf *Stem::getLeaf(size_t index) const
 {
-	return &leaves.at(id);
+	return &this->leaves.at(index);
 }
 
-const std::map<long, pg::Leaf> &Stem::getLeaves() const
+const std::vector<Leaf> &Stem::getLeaves() const
 {
-	return leaves;
+	return this->leaves;
 }
 
-void Stem::removeLeaf(long id)
+void Stem::removeLeaf(size_t index)
 {
-	leaves.erase(leaves.find(id));
+	this->leaves.erase(this->leaves.begin() + index);
 }
 
 void Stem::setResolution(int resolution)
@@ -144,10 +144,10 @@ void Stem::setResolution(int resolution)
 
 int Stem::getResolution() const
 {
-	return resolution;
+	return this->resolution;
 }
 
-void Stem::setPath(pg::Path &path)
+void Stem::setPath(Path &path)
 {
 	this->path = path;
 	if (this->parent)
@@ -157,9 +157,9 @@ void Stem::setPath(pg::Path &path)
 	updatePositions(this);
 }
 
-pg::Path Stem::getPath() const
+Path Stem::getPath() const
 {
-	return path;
+	return this->path;
 }
 
 void Stem::updatePositions(Stem *stem)
@@ -174,13 +174,13 @@ void Stem::updatePositions(Stem *stem)
 
 void Stem::setPosition(float position)
 {
-	if (parent != nullptr) {
-		Path parentPath = parent->getPath();
-		pg::Vec3 point = parentPath.getIntermediate(position);
+	if (this->parent != nullptr) {
+		Path parentPath = this->parent->getPath();
+		Vec3 point = parentPath.getIntermediate(position);
 		if (std::isnan(point.x))
-			location = point;
+			this->location = point;
 		else
-			location = parent->getLocation() + point;
+			this->location = parent->getLocation() + point;
 		this->position = position;
 		updatePositions(this);
 	}
@@ -188,12 +188,12 @@ void Stem::setPosition(float position)
 
 float Stem::getPosition() const
 {
-	return position;
+	return this->position;
 }
 
-pg::Vec3 Stem::getLocation() const
+Vec3 Stem::getLocation() const
 {
-	return location;
+	return this->location;
 }
 
 void Stem::setMaterial(int feature, long material)
@@ -203,43 +203,43 @@ void Stem::setMaterial(int feature, long material)
 
 long Stem::getMaterial(int feature) const
 {
-	return material[feature];
+	return this->material[feature];
 }
 
 Stem *Stem::getParent()
 {
-	return parent;
+	return this->parent;
 }
 
 const Stem *Stem::getParent() const
 {
-	return parent;
+	return this->parent;
 }
 
 Stem *Stem::getSibling()
 {
-	return nextSibling;
+	return this->nextSibling;
 }
 
 const Stem *Stem::getSibling() const
 {
-	return nextSibling;
+	return this->nextSibling;
 }
 
 Stem *Stem::getChild()
 {
-	return child;
+	return this->child;
 }
 
 const Stem *Stem::getChild() const
 {
-	return child;
+	return this->child;
 }
 
 bool Stem::isDescendantOf(Stem *stem) const
 {
 	const Stem *descendant = this;
-	if (depth > stem->getDepth()) {
+	if (this->depth > stem->getDepth()) {
 		while (descendant != nullptr) {
 			if (stem == descendant->parent)
 				return true;
@@ -251,20 +251,20 @@ bool Stem::isDescendantOf(Stem *stem) const
 
 int Stem::getDepth() const
 {
-	return depth;
+	return this->depth;
 }
 
-void Stem::setSwelling(pg::Vec2 scale)
+void Stem::setSwelling(Vec2 scale)
 {
 	this->swelling = scale;
 }
 
-pg::Vec2 Stem::getSwelling() const
+Vec2 Stem::getSwelling() const
 {
 	return this->swelling;
 }
 
-pg::Vec2 Stem::getLimitedSwelling(float limit) const
+Vec2 Stem::getLimitedSwelling(float limit) const
 {
 	if (!this->parent)
 		return this->swelling;

@@ -27,10 +27,10 @@
 class AddStem : public Command {
 	Selection *selection;
 	Selection prevSelection;
+	pg::Stem stemCopy;
 	pg::Stem *stem;
 	MoveStem moveStem;
 	MovePath movePath;
-	bool undone;
 
 	void create();
 	void setRadius();

@@ -29,6 +29,7 @@ namespace pg {
 		float stemStart;
 		float leafStart;
 		float requiredLength;
+		unsigned seed;
 
 		Vec3 getStemDirection(Stem *);
 		bool setPath(Stem *, Stem *, Vec3, float);
@@ -40,7 +41,8 @@ namespace pg {
 		PseudoGenerator(Plant *plant);
 		void grow();
 		void grow(Stem *stem);
-
+		void setSeed(unsigned seed);
+		void reset();
 		void setRequiredLength(float length);
 		void setStemCount(float density, float start);
 		void setLeafCount(float density, float start);

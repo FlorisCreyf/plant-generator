@@ -19,6 +19,8 @@
 #include "stem.h"
 #include "material.h"
 #include "geometry.h"
+#include "stem_pool.h"
+#include <map>
 
 #ifdef PG_SERIALIZE
 #include <boost/serialization/map.hpp>
@@ -30,34 +32,54 @@ namespace pg {
 		Stem *root;
 		std::map<long, Material> materials;
 		std::map<long, Geometry> leafMeshes;
+		StemPool stemPool;
 
 		void removeMaterial(Stem *, long);
 		void updateDepth(Stem *, int);
+		void deallocateStems(Stem *);
+		void insertStem(Stem *, Stem *);
+		void decouple(Stem *);
+		Stem *move(Stem *);
+		void copy(std::vector<std::pair<Stem *, Stem>> &, Stem *);
 
 		#ifdef PG_SERIALIZE
 		friend class boost::serialization::access;
 		template<class Archive>
-		void serialize(Archive &ar, const unsigned int version)
+		void save(Archive &ar, const unsigned int version) const
 		{
 			(void)version;
 			ar & root;
 			ar & materials;
 			ar & leafMeshes;
 		}
+		template<class Archive>
+		void load(Archive &ar, const unsigned int version)
+		{
+			(void)version;
+			ar & root;
+			root = move(root);
+			ar & materials;
+			ar & leafMeshes;
+		}
+		BOOST_SERIALIZATION_SPLIT_MEMBER()
 		#endif
 
 	public:
 		Plant();
 		~Plant();
+		StemPool *getStemPool();
 
 		/** Add a new stem to the plant at a parent stem. */
 		Stem *addStem(Stem *parent);
-		/** Insert a stem into the plant at parent. */
-		void insertStem(Stem *stem, Stem *parent);
 		/** Remove all stems from the plant and create a new root. */
 		Stem *createRoot();
-		/** Remove a stem from the plant. */
-		Stem *extractStem(Stem *);
+		/** Remove a stem and its descendants from the plant. */
+		void extractStems(Stem *stem,
+			std::vector<std::pair<Stem *, Stem>> &stems);
+		/** Reinsert extracted stems. */
+		void reinsertStems(std::vector<std::pair<Stem *, Stem>> &stem);
+		/** Delete a stem. */
+		void deleteStem(Stem *);
 		/** Return the root or trunk of the plant. */
 		Stem *getRoot();
 		const Stem *getRoot() const;

@@ -22,9 +22,7 @@ using pg::Stem;
 Generate::Generate(Selection *selection) :
 	prevSelection(*selection),
 	removals(selection->getPlant()),
-	additions(selection->getPlant()),
 	removeRemovals(&removals),
-	removeAdditions(&additions),
 	gen(selection->getPlant())
 {
 	this->selection = selection;
@@ -49,23 +47,23 @@ void Generate::execute()
 		Stem *stem = instance.first;
 		this->gen.grow(stem);
 	}
-
-	this->additions = selection;
-	this->additions.selectLeaves();
-	this->additions.selectChildren();
-	this->removeAdditions = RemoveStem(&this->additions);
 }
 
 void Generate::undo()
 {
-	this->removeAdditions.redo();
+	Selection additions = *this->selection;
+	additions.reduceToAncestors();
+	additions.selectChildren();
+	auto stems = additions.getStemInstances();
+	for (auto it = stems.begin(); it != stems.end(); it++)
+		additions.getPlant()->deleteStem(it->first);
+
 	this->removeRemovals.undo();
 	*this->selection = this->prevSelection;
 }
 
 void Generate::redo()
 {
-	this->removeRemovals.redo();
-	this->removeAdditions.undo();
-	this->selection->reduceToAncestors();
+	this->gen.reset();
+	execute();
 }

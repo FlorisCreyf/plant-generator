@@ -43,6 +43,7 @@ plant_generator/plant.cpp \
 plant_generator/pseudo_generator.cpp \
 plant_generator/spline.cpp \
 plant_generator/stem.cpp \
+plant_generator/stem_pool.cpp \
 plant_generator/wind.cpp \
 plant_generator/xml_writer.cpp \
 editor/commands/add_stem.cpp \
@@ -111,6 +112,7 @@ plant_generator/plant.h \
 plant_generator/pseudo_generator.h \
 plant_generator/spline.h \
 plant_generator/stem.h \
+plant_generator/stem_pool.h \
 plant_generator/wind.h \
 plant_generator/xml_writer.h \
 editor/commands/add_stem.h \

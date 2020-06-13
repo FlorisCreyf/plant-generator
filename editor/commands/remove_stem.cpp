@@ -30,17 +30,6 @@ RemoveStem::RemoveStem(Selection *selection) : prevSelection(*selection)
 	this->selection = selection;
 }
 
-RemoveStem::~RemoveStem()
-{
-	if (!this->stems.empty()) {
-		/* Adjust the selection so that descendants are not deleted
-		after ancestors have been deleted. */
-		this->prevSelection.reduceToAncestors();
-		for (auto stem : this->stems)
-			delete stem;
-	}
-}
-
 /** Should be called after stems are removed. Leaves do not need to be removed
 from the plant if their stem is removed. */
 void RemoveStem::removeLeaves()
@@ -48,38 +37,39 @@ void RemoveStem::removeLeaves()
 	auto instances = this->selection->getLeafInstances();
 	for (auto &instance : instances) {
 		Stem *stem = instance.first;
-		std::set<long> &ids = instance.second;
-		for (auto it = ids.begin(); it != ids.end(); it++) {
-			pair<Stem *, Leaf> instance;
-			instance.first = stem;
-			instance.second = *(stem->getLeaf(*it));
-			this->leaves.push_back(instance);
-			stem->removeLeaf(*it);
+		std::set<size_t> &indices = instance.second;
+		for (auto it = indices.rbegin(); it != indices.rend(); it++) {
+			LeafState state;
+			state.stem = stem;
+			state.index = *it;
+			state.leaf = *(stem->getLeaf(state.index));
+			this->leaves.push_back(state);
+			stem->removeLeaf(state.index);
 		}
 	}
 	this->selection->removeLeaves();
 }
 
+bool shouldRemoveStem(PointSelection &pointSelection, int degree)
+{
+	auto points = pointSelection.getPoints();
+	int first = degree == 1 ? 0 : 1;
+	return points.empty() || *points.begin() <= first;
+}
+
 void RemoveStem::removeStems()
 {
-	std::vector<Stem *> removals;
+	Plant *plant = this->selection->getPlant();
+	this->selection->reduceToAncestors();
 	auto instances = this->selection->getStemInstances();
-	for (auto &instance : instances) {
-		Stem *stem = instance.first;
+	for (auto it = instances.begin(); it != instances.end(); it++) {
+		Stem *stem = it->first;
 		Path path = stem->getPath();
 		Spline spline = path.getSpline();
-		PointSelection &pointSelection = instance.second;
-		auto points = pointSelection.getPoints();
-
-		int first = spline.getDegree() == 1 ? 0 : 1;
-		if (points.empty() || *points.begin() <= first) {
+		PointSelection &pointSelection = it->second;
+		if (shouldRemoveStem(pointSelection, spline.getDegree())) {
 			/* Remove the whole stem. */
-			if (stem->getParent()) {
-				points.clear();
-				this->selection->getPlant()->extractStem(stem);
-				this->stems.push_back(stem);
-				removals.push_back(stem);
-			}
+			plant->extractStems(stem, this->stems);
 		} else {
 			/* Remove points from the stem. */
 			pair<Stem *, Spline> instance(stem, spline);
@@ -91,19 +81,10 @@ void RemoveStem::removeStems()
 			path.setSpline(spline);
 			stem->setPath(path);
 
-			if (pointSelection.hasPoints() && stem->getParent()) {
-				this->selection->getPlant()->extractStem(stem);
-				removals.push_back(stem);
-			} else
-				pointSelection.clear();
+			if (pointSelection.hasPoints())
+				plant->extractStems(stem, this->stems);
 		}
 	}
-
-	/* Do not remove stems from the selection if only a couple of points
-	were removed. */
-	this->selection->setInstances(instances);
-	for (auto stem : removals)
-		this->selection->removeStem(stem);
 }
 
 void RemoveStem::execute()
@@ -111,14 +92,13 @@ void RemoveStem::execute()
 	/* Remove leaves first to avoid checking for deleted stems. */
 	removeLeaves();
 	removeStems();
+	this->selection->clear();
 }
 
 void RemoveStem::undo()
 {
-	for (Stem *stem : this->stems) {
-		Plant *plant = this->selection->getPlant();
-		plant->insertStem(stem, stem->getParent());
-	}
+	Plant *plant = this->selection->getPlant();
+	plant->reinsertStems(this->stems);
 
 	for (auto &pair : this->splines) {
 		Stem *stem = pair.first;
@@ -127,12 +107,13 @@ void RemoveStem::undo()
 		stem->setPath(path);
 	}
 
-	for (auto &item : this->leaves) {
-		Stem *stem = item.first;
-		stem->addLeaf(item.second);
+	for (auto it = this->leaves.rbegin(); it != this->leaves.rend(); it++) {
+		Stem *stem = it->stem;
+		stem->insertLeaf(it->leaf, it->index);
 	}
 
 	this->stems.clear();
+	this->leaves.clear();
 	this->splines.clear();
 	*this->selection = this->prevSelection;
 }

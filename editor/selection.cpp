@@ -89,7 +89,7 @@ void Selection::addLeaf(Stem *stem, long leaf)
 {
 	auto it = this->leaves.find(stem);
 	if (it == this->leaves.end()) {
-		std::set<long> ids;
+		std::set<size_t> ids;
 		ids.insert(leaf);
 		this->leaves.emplace(stem, ids);
 	} else
@@ -106,7 +106,7 @@ std::map<Stem *, PointSelection> Selection::getStemInstances() const
 	return this->stems;
 }
 
-std::map<Stem *, std::set<long>> Selection::getLeafInstances() const
+std::map<Stem *, std::set<size_t>> Selection::getLeafInstances() const
 {
 	return this->leaves;
 }
@@ -158,7 +158,7 @@ void Selection::reduceToAncestors()
 	for (auto &instance : this->stems) {
 		Stem *stem1 = instance.first;
 		bool valid = true;
-		for (auto instance : stems) {
+		for (auto instance : this->stems) {
 			Stem *stem2 = instance.first;
 			if (stem1->isDescendantOf(stem2)) {
 				valid = false;
@@ -176,8 +176,7 @@ void Selection::selectStems(Stem *stem)
 	if (stem) {
 		Stem *child = stem->getChild();
 		while (child) {
-			this->stems.emplace(
-				child, PointSelection());
+			this->stems.emplace(child, PointSelection());
 			selectStems(child);
 			child = child->getSibling();
 		}
@@ -198,8 +197,9 @@ void Selection::selectLeaves()
 {
 	for (auto &instance : this->stems) {
 		Stem *stem = instance.first;
-		for (auto &leaf : stem->getLeaves())
-			addLeaf(stem, leaf.first);
+		size_t size = stem->getLeafCount();
+		for (size_t i = 0; i < size; i++)
+			addLeaf(stem, i);
 	}
 }
 

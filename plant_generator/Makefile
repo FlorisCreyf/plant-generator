@@ -20,6 +20,7 @@ path.o \
 plant.o \
 spline.o \
 stem.o \
+stem_pool.o \
 wind.o \
 xml_writer.o \
 )
@@ -29,6 +30,7 @@ tests/test_path.o \
 tests/test_math.o \
 tests/test_mesh.o \
 tests/test_spline.o \
+tests/test_pool.o \
 tests/test_wind.o \
 )
 

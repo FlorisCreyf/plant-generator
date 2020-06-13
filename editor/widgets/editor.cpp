@@ -193,13 +193,14 @@ void Editor::keyPressEvent(QKeyEvent *event)
 	bool hasOneStem = selection.getStemInstances().size() == 1;
 	bool hasLeaves = selection.hasLeaves();
 	bool containsRoot = selection.contains(plant.getRoot());
+	pg::Stem *root = plant.getRoot();
 
 	if (command == tr("Add Leaf") && hasOneStem) {
 		currentCommand = new AddLeaf(&selection, &camera, x, y);
 		currentCommand->execute();
 		change();
 		emit selectionChanged();
-	} else if (command == tr("Add Stem") && hasOneStem) {
+	} else if (command == tr("Add Stem") && (hasOneStem || !root)) {
 		currentCommand = new AddStem(
 			&selection, &translationAxes, &camera, x, y);
 		currentCommand->execute();
@@ -446,7 +447,7 @@ void Editor::paintGL()
 		glUseProgram(shared->getShader(SharedResources::Model));
 		glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
 		glUniform4f(1, position.x, position.y, position.z, 0.0f);
-		for (int i = 0; i < mesh.getMeshCount(); i++) {
+		for (size_t i = 0; i < mesh.getMeshCount(); i++) {
 			GLsizei size = mesh.getIndices(i)->size();
 			glDrawElements(
 				GL_TRIANGLES, size,
@@ -460,14 +461,14 @@ void Editor::paintGL()
 
 		glPointSize(4);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
-		for (int i = 0; i < mesh.getMeshCount(); i++) {
+		for (size_t i = 0; i < mesh.getMeshCount(); i++) {
 			GLsizei size = mesh.getVertices(i)->size();
 			glDrawArrays(GL_POINTS, 0, size);
 		}
 
 		size_t start = 0;
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		for (int i = 0; i < mesh.getMeshCount(); i++) {
+		for (size_t i = 0; i < mesh.getMeshCount(); i++) {
 			GLsizei size = mesh.getIndices(i)->size();
 			glDrawElements(
 				GL_TRIANGLES, size,
@@ -480,7 +481,7 @@ void Editor::paintGL()
 		size_t start = 0;
 		glUseProgram(shared->getShader(SharedResources::Material));
 		glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
-		for (int i = 0; i < mesh.getMeshCount(); i++) {
+		for (size_t i = 0; i < mesh.getMeshCount(); i++) {
 			long materialID = mesh.getMaterialID(i);
 			ShaderParams params = shared->getMaterial(materialID);
 			glActiveTexture(GL_TEXTURE0);
@@ -612,8 +613,10 @@ void Editor::updateSelection()
 		meshes.push_back(mesh.findStem(instance.first));
 	auto leafInstances = selection.getLeafInstances();
 	for (auto &instance : leafInstances) {
-		for (auto &leaf : instance.second)
-			meshes.push_back(mesh.findLeaf(leaf));
+		for (auto &leaf : instance.second) {
+			pg::Mesh::LeafID id(instance.first, leaf);
+			meshes.push_back(mesh.findLeaf(id));
+		}
 	}
 
 	if (!stemInstances.empty()) {
@@ -658,7 +661,7 @@ void Editor::change()
 
 	int pointOffset = 0;
 	int indexOffset = 0;
-	for (int m = 0; m < mesh.getMeshCount(); m++) {
+	for (size_t m = 0; m < mesh.getMeshCount(); m++) {
 		const std::vector<pg::Vertex> *v = mesh.getVertices(m);
 		const std::vector<unsigned> *i = mesh.getIndices(m);
 		if (!plantBuffer.update(v->data(), pointOffset, v->size())) {

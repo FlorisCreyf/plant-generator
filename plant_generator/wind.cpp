@@ -24,8 +24,11 @@ Wind::Wind(Plant *plant)
 
 void Wind::generate()
 {
-	this->plant->getRoot()->clearJoints();
-	generate(this->plant->getRoot(), -1, -1);
+	Stem *root = this->plant->getRoot();
+	if (root) {
+		root->clearJoints();
+		generate(root, -1, -1);
+	}
 }
 
 int Wind::generate(Stem *stem, int id, int parentID)

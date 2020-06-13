@@ -21,7 +21,6 @@
 #include "math/curve.h"
 #include "path.h"
 #include "joint.h"
-#include <map>
 #include <vector>
 
 #ifdef PG_SERIALIZE
@@ -31,28 +30,35 @@
 namespace pg {
 	class Stem {
 		friend class Plant;
+		friend class StemPool;
 
-		static long counter;
-		long id;
+		bool unused;
 
-		Stem *nextSibling;
-		Stem *prevSibling;
+		union {
+			Stem *nextAvailable;
+			Stem *nextSibling;
+		};
+		union {
+			Stem *prevSibling;
+			Stem *prevAvailable;
+		};
 		Stem *child;
 		Stem *parent;
-		std::map<long, Leaf> leaves;
 
 		int depth;
 		float position;
 		Vec3 location;
 		Path path;
-		int resolution = 10;
-		long material[2] = {0};
+		int resolution;
+		long material[2];
 		Vec2 swelling;
 
+		std::vector<Leaf> leaves;
 		std::vector<Joint> joints;
 
 		void updatePositions(Stem *stem);
 		void copy(const Stem &stem);
+		void init(Stem *parent = nullptr);
 
 		#ifdef PG_SERIALIZE
 		friend class boost::serialization::access;
@@ -60,8 +66,6 @@ namespace pg {
 		void serialize(Archive &ar, const unsigned int version)
 		{
 			(void)version;
-			ar & counter;
-			ar & id;
 			ar & nextSibling;
 			ar & prevSibling;
 			ar & child;
@@ -89,14 +93,13 @@ namespace pg {
 		bool operator==(const Stem &stem) const;
 		bool operator!=(const Stem &stem) const;
 
-		long getID() const;
-
-		int addLeaf(const Leaf &leaf);
-		int getLeafCount() const;
-		Leaf *getLeaf(long id);
-		const Leaf *getLeaf(long id) const;
-		const std::map<long, Leaf> &getLeaves() const;
-		void removeLeaf(long id);
+		size_t addLeaf(const Leaf &leaf);
+		void insertLeaf(const Leaf &leaf, size_t index);
+		size_t getLeafCount() const;
+		Leaf *getLeaf(size_t index);
+		const Leaf *getLeaf(size_t index) const;
+		const std::vector<Leaf> &getLeaves() const;
+		void removeLeaf(size_t index);
 
 		void setResolution(int resolution);
 		int getResolution() const;
