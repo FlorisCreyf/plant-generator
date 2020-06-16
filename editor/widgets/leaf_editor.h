@@ -35,6 +35,8 @@ public:
 	QSize sizeHint() const;
 
 public slots:
+	void finishChanging();
+	void changeCustom(int custom);
 	void changeXScale(double d);
 	void changeYScale(double d);
 	void changeZScale(double d);
@@ -48,6 +50,8 @@ private:
 	SharedResources *shared;
 	Editor *editor;
 
+	SaveStem *saveStem;
+
 	QGroupBox *leafGroup;
 	QLabel *scaleXLabel;
 	QDoubleSpinBox *scaleXValue;
@@ -59,10 +63,13 @@ private:
 	QComboBox *materialValue;
 	QLabel *meshLabel;
 	QComboBox *meshValue;
+	QLabel *customLabel;
+	QCheckBox *customValue;
 
 	void blockSignals(bool);
 	void createInterface();
 	void enable(bool);
+	void beginChanging();
 };
 
 #endif

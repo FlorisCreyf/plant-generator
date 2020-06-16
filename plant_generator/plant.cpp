@@ -105,26 +105,15 @@ const Stem *Plant::getRoot() const
 	return this->root;
 }
 
-void Plant::updateDepth(Stem *stem, int depth)
-{
-	stem->depth = depth;
-	Stem *child = stem->getChild();
-	while (child) {
-		updateDepth(child, depth + 1);
-		child = child->getSibling();
-	}
-}
-
 void Plant::insertStem(Stem *stem, Stem *parent)
 {
-	updateDepth(stem, parent->getDepth() + 1);
 	Stem *firstChild = parent->child;
 	parent->child = stem;
 	stem->parent = parent;
 	if (firstChild)
-		firstChild->prevSibling = parent->child;
-	parent->child->nextSibling = firstChild;
-	parent->child->prevSibling = nullptr;
+		firstChild->prevSibling = stem;
+	stem->nextSibling = firstChild;
+	stem->prevSibling = nullptr;
 }
 
 void Plant::removeRoot()
@@ -152,34 +141,39 @@ void Plant::deleteStem(Stem *stem)
 	deallocateStems(stem);
 }
 
-void Plant::copy(vector<pair<Stem *, Stem>> &stems, Stem *stem)
+void Plant::copy(vector<Plant::Extraction> &stems, Stem *stem)
 {
-	stems.push_back(pair<Stem *, Stem>(stem, *stem));
-	Stem *child = stem->getChild();
+	Extraction extraction;
+	extraction.address = stem;
+	extraction.value = *stem;
+	extraction.parent = stem->parent;
+	stems.push_back(extraction);
+	Stem *child = stem->child;
 	while (child) {
 		copy(stems, child);
-		child = child->getSibling();
+		child = child->nextSibling;
 	}
 }
 
-void Plant::extractStems(Stem *stem, vector<pair<Stem *, Stem>> &stems)
+void Plant::extractStems(Stem *stem, vector<Plant::Extraction> &stems)
 {
-	stem->depth = 0;
 	copy(stems, stem);
 	deleteStem(stem);
 }
 
-void Plant::reinsertStems(vector<pair<Stem *, Stem>> &stems)
+void Plant::reinsertStems(vector<Plant::Extraction> &stems)
 {
-	for (auto instance : stems) {
-		Stem *stem = instance.first;
-		this->stemPool.allocateAt(stem);
-		*stem = instance.second;
-		if (stem->depth == 0 && stem->parent)
-			insertStem(stem, stem->parent);
-		else if (!stem->parent && !this->root)
-			this->root = stem;
+	for (Extraction &extraction : stems) {
+		this->stemPool.allocateAt(extraction.address);
+		*extraction.address = extraction.value;
+		/* Assume that the parent stem is already inserted. */
+		extraction.address->child = nullptr;
+		if (extraction.parent)
+			insertStem(extraction.address, extraction.parent);
+		else if (!extraction.parent && !this->root)
+			this->root = extraction.address;
 	}
+
 }
 
 void Plant::addMaterial(Material material)

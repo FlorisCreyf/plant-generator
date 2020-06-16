@@ -24,6 +24,7 @@
 
 namespace pg {
 	class Leaf {
+		bool custom;
 		long material;
 		long mesh;
 		float position;
@@ -41,6 +42,7 @@ namespace pg {
 			ar & material;
 			ar & mesh;
 			ar & rotation;
+			ar & custom;
 		}
 		#endif
 
@@ -49,6 +51,8 @@ namespace pg {
 		bool operator==(const Leaf &leaf) const;
 		bool operator!=(const Leaf &leaf) const;
 
+		void setCustom(bool custom);
+		bool isCustom() const;
 		void setPosition(float position);
 		float getPosition() const;
 		void setRotation(Quat rotation);

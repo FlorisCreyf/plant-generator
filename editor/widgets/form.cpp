@@ -17,10 +17,9 @@
 
 #include "form.h"
 
-Form::Form(Editor *editor, QWidget *parent) : QWidget(parent)
+Form::Form(QWidget *parent) : QWidget(parent)
 {
-	this->editor = editor;
-	this->changing = false;
+
 }
 
 void Form::setValueWidths(QFormLayout *layout)
@@ -43,22 +42,4 @@ void Form::indicateDifferences(QWidget *widget)
 void Form::indicateSimilarities(QWidget *widget)
 {
 	widget->setStyleSheet("");
-}
-
-void Form::beginChanging()
-{
-	if (!this->changing) {
-		this->saveStem = new SaveStem(this->editor->getSelection());
-		this->saveStem->execute();
-	}
-	this->changing = true;
-}
-
-void Form::finishChanging()
-{
-	if (this->changing && !this->saveStem->isSameAsCurrent()) {
-		this->saveStem->setNewSelection();
-		this->editor->add(this->saveStem);
-	}
-	this->changing = false;
 }

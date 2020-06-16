@@ -30,12 +30,13 @@ using std::map;
 
 StemEditor::StemEditor(
 	SharedResources *shared, Editor *editor, QWidget *parent) :
-	Form(editor, parent)
+	Form(parent)
 {
 	this->shared = shared;
 	this->editor = editor;
 	this->selectedCurve = nullptr;
 	this->curveEditor = nullptr;
+	this->saveStem = nullptr;
 	this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
 	createInterface();
 	enable(false);
@@ -124,8 +125,14 @@ void StemEditor::createInterface()
 	this->collarYValue->setDecimals(3);
 	form->addRow(this->collarYLabel, this->collarYValue);
 
+	this->customLabel = new QLabel(tr("Custom"));
+	this->customValue = new QCheckBox;
+	form->addRow(this->customLabel, this->customValue);
+
 	setValueWidths(form);
 
+	connect(this->customValue, SIGNAL(stateChanged(int)),
+		this, SLOT(changeCustom(int)));
 	connect(this->degreeValue, SIGNAL(currentIndexChanged(int)),
 		this, SLOT(changePathDegree(int)));
 	connect(this->resolutionValue, SIGNAL(editingFinished()),
@@ -199,6 +206,18 @@ void StemEditor::setFields(map<Stem *, PointSelection> instances)
 	Stem *stem = instances.rbegin()->first;
 	auto nextIt = next(instances.begin());
 	blockSignals(true);
+
+	indicateSimilarities(this->customLabel);
+	for (auto it = nextIt; it != instances.end(); ++it) {
+		Stem *a = prev(it)->first;
+		Stem *b = it->first;
+		if (a->isCustom() != b->isCustom()) {
+			indicateDifferences(this->customLabel);
+			break;
+		}
+	}
+	this->customValue->setCheckState(
+		stem->isCustom() ? Qt::Checked : Qt::Unchecked);
 
 	indicateSimilarities(this->resolutionLabel);
 	for (auto it = nextIt; it != instances.end(); ++it) {
@@ -329,6 +348,7 @@ void StemEditor::blockSignals(bool block)
 	this->capMaterialValue->blockSignals(block);
 	this->collarXValue->blockSignals(block);
 	this->collarYValue->blockSignals(block);
+	this->customValue->blockSignals(block);
 }
 
 void StemEditor::enable(bool enable)
@@ -343,6 +363,7 @@ void StemEditor::enable(bool enable)
 		indicateSimilarities(this->capMaterialLabel);
 		indicateSimilarities(this->collarXLabel);
 		indicateSimilarities(this->collarYLabel);
+		indicateSimilarities(this->customLabel);
 	}
 	this->radiusValue->setEnabled(enable);
 	this->radiusButton->setEnabled(enable);
@@ -354,6 +375,7 @@ void StemEditor::enable(bool enable)
 	this->capMaterialValue->setEnabled(enable);
 	this->collarXValue->setEnabled(enable);
 	this->collarYValue->setEnabled(enable);
+	this->customValue->setEnabled(enable);
 }
 
 bool StemEditor::addMaterial(ShaderParams params)
@@ -393,6 +415,16 @@ void StemEditor::renameMaterial(QString before, QString after)
 	this->stemMaterialValue->setItemText(index, after);
 	index = this->capMaterialValue->findText(before);
 	this->capMaterialValue->setItemText(index, after);
+}
+
+void StemEditor::changeCustom(int custom)
+{
+	beginChanging();
+	indicateSimilarities(this->customLabel);
+	auto instances = this->editor->getSelection()->getStemInstances();
+	for (auto &instance : instances)
+		instance.first->setCustom(custom);
+	finishChanging();
 }
 
 void StemEditor::changePathDegree(int i)
@@ -525,4 +557,22 @@ void StemEditor::changeCapMaterial()
 		instance.first->setMaterial(Stem::Inner, id);
 	this->editor->change();
 	finishChanging();
+}
+
+void StemEditor::beginChanging()
+{
+	if (!this->saveStem) {
+		this->saveStem = new SaveStem(this->editor->getSelection());
+		this->saveStem->execute();
+	}
+}
+
+void StemEditor::finishChanging()
+{
+	if (this->saveStem && !this->saveStem->isSameAsCurrent()) {
+		this->saveStem->setNewSelection();
+		this->editor->add(this->saveStem);
+		/* The history will delete the command. */
+		this->saveStem = nullptr;
+	}
 }

@@ -19,27 +19,39 @@ using namespace pg;
 
 Leaf::Leaf()
 {
-	position = -1.0f;
-	scale = Vec3(1.0f, 1.0f, 1.0f);
-	material = 0;
-	mesh = 0;
-	rotation = Quat(0.0f, 0.0f, 0.0f, 1.0f);
+	this->position = -1.0f;
+	this->scale = Vec3(1.0f, 1.0f, 1.0f);
+	this->material = 0;
+	this->mesh = 0;
+	this->rotation = Quat(0.0f, 0.0f, 0.0f, 1.0f);
+	this->custom = false;
 }
 
 bool Leaf::operator==(const Leaf &leaf) const
 {
 	return (
-		position == leaf.position &&
-		scale == leaf.scale &&
-		material == leaf.material &&
-		rotation == leaf.rotation &&
-		mesh == leaf.mesh
+		this->position == leaf.position &&
+		this->scale == leaf.scale &&
+		this->material == leaf.material &&
+		this->rotation == leaf.rotation &&
+		this->mesh == leaf.mesh &&
+		this->custom == leaf.custom
 	);
 }
 
 bool Leaf::operator!=(const Leaf &leaf) const
 {
 	return !(*this == leaf);
+}
+
+void Leaf::setCustom(bool custom)
+{
+	this->custom = custom;
+}
+
+bool Leaf::isCustom() const
+{
+	return this->custom;
 }
 
 void Leaf::setPosition(float position)
@@ -49,7 +61,7 @@ void Leaf::setPosition(float position)
 
 float Leaf::getPosition() const
 {
-	return position;
+	return this->position;
 }
 
 void Leaf::setRotation(Quat rotation)
@@ -59,7 +71,7 @@ void Leaf::setRotation(Quat rotation)
 
 Quat Leaf::getRotation() const
 {
-	return rotation;
+	return this->rotation;
 }
 
 Quat Leaf::getStemTiltAlignment(Vec3 stemDirection) const
@@ -100,7 +112,7 @@ void Leaf::setScale(Vec3 scale)
 
 Vec3 Leaf::getScale() const
 {
-	return scale;
+	return this->scale;
 }
 
 void Leaf::setMaterial(long material)
@@ -110,7 +122,7 @@ void Leaf::setMaterial(long material)
 
 long Leaf::getMaterial() const
 {
-	return material;
+	return this->material;
 }
 
 void Leaf::setMesh(long mesh)
@@ -120,5 +132,5 @@ void Leaf::setMesh(long mesh)
 
 long Leaf::getMesh() const
 {
-	return mesh;
+	return this->mesh;
 }

@@ -43,7 +43,7 @@ public:
 	void removeStems();
 	void addStem(pg::Stem *stem);
 	void addStem(pg::Stem *stem, const PointSelection &selection);
-	void addLeaf(pg::Stem *stem, long leaf);
+	void addLeaf(pg::Stem *stem, size_t index);
 	void removeLeaves();
 
 	void setInstances(std::map<pg::Stem *, PointSelection> instances);

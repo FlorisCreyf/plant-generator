@@ -20,6 +20,7 @@
 
 #include "form.h"
 #include "editor.h"
+#include "../commands/generate.h"
 
 class GeneratorEditor : public Form {
 	Q_OBJECT
@@ -30,7 +31,7 @@ class GeneratorEditor : public Form {
 	QDoubleSpinBox *stemStart;
 	QDoubleSpinBox *leafDensity;
 	QDoubleSpinBox *leafStart;
-	QPushButton *createButton;
+	Generate *generate;
 
 	void createInterface();
 	void removeCurrent();
@@ -40,7 +41,8 @@ public:
 	GeneratorEditor(Editor *editor, QWidget *parent);
 
 public slots:
-	void submit();
+	void change();
+	void finishChanging();
 };
 
 #endif

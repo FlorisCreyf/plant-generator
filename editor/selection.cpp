@@ -85,15 +85,15 @@ void Selection::addStem(Stem *stem, const PointSelection &selection)
 		result.first->second = selection;
 }
 
-void Selection::addLeaf(Stem *stem, long leaf)
+void Selection::addLeaf(Stem *stem, size_t index)
 {
 	auto it = this->leaves.find(stem);
 	if (it == this->leaves.end()) {
-		std::set<size_t> ids;
-		ids.insert(leaf);
-		this->leaves.emplace(stem, ids);
+		std::set<size_t> indices;
+		indices.insert(index);
+		this->leaves.emplace(stem, indices);
 	} else
-		it->second.insert(leaf);
+		it->second.insert(index);
 }
 
 void Selection::setInstances(std::map<Stem *, PointSelection> instances)

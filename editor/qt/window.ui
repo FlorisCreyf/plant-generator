@@ -123,6 +123,18 @@ QWidget {
 	height:24px;
 	font-size:11px;
 	color:#eee;
+} QDockWidget QCheckBox {
+	height:20px;
+	width:20px;
+} QDockWidget QCheckBox:indicator {
+	background:#555;
+	height:18px;
+	width:18px;
+	border:1px solid #555;
+} QDockWidget QCheckBox::indicator:disabled {
+	image:none;
+} QCheckBox::indicator:checked {
+	image:url(&quot;resources/slash.png&quot;);
 } QDockWidget QSpinBox, QDockWidget QDoubleSpinBox {
 	font-size:11px;
 	padding-right:0px;

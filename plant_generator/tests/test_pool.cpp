@@ -1,6 +1,7 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
+#include "../plant.h"
 #include "../stem_pool.h"
 
 using namespace pg;
@@ -46,6 +47,25 @@ BOOST_AUTO_TEST_CASE(test_same_address)
 	Stem *stem = pool.allocate();
 	pool.deallocate(stem);
 	BOOST_TEST(stem == pool.allocate());
+}
+
+BOOST_AUTO_TEST_CASE(test_extract)
+{
+	Plant plant;
+	Stem *root = plant.createRoot();
+	Stem *stem1 = plant.addStem(root);
+	Stem *stem2 = plant.addStem(root);
+	Stem *stem3 = plant.addStem(root);
+	std::vector<Plant::Extraction> stems;
+	plant.extractStems(stem1, stems);
+	plant.extractStems(stem3, stems);
+	BOOST_TEST(stem2->getSibling() == nullptr);
+	BOOST_TEST(root->getChild() == stem2);
+	plant.reinsertStems(stems);
+	BOOST_TEST(root->getChild() == stem3);
+	BOOST_TEST(stem3->getSibling() == stem1);
+	BOOST_TEST(stem1->getSibling() == stem2);
+	BOOST_TEST(stem2->getSibling() == nullptr);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -37,17 +37,19 @@ void AddStem::create()
 	int pathDivisions = 1;
 	auto instances = this->selection->getStemInstances();
 	if (instances.size() == 1) {
-		Stem *parent = (*instances.begin()).first;
-		stem = plant->addStem(parent);
-		stem->setResolution(parent->getResolution());
-		stem->setMaterial(
-			Stem::Outer, parent->getMaterial(Stem::Outer));
-		stem->setMaterial(
-			Stem::Inner, parent->getMaterial(Stem::Inner));
-		pg::Path parentPath = parent->getPath();
+		this->parent = (*instances.begin()).first;
+		this->stem = plant->addStem(this->parent);
+		this->stem->setResolution(this->parent->getResolution());
+		this->stem->setMaterial(
+			Stem::Outer, this->parent->getMaterial(Stem::Outer));
+		this->stem->setMaterial(
+			Stem::Inner, this->parent->getMaterial(Stem::Inner));
+		pg::Path parentPath = this->parent->getPath();
 		pathDivisions = parentPath.getResolution();
-	} else
+	} else {
 		this->stem = plant->createRoot();
+		this->parent = nullptr;
+	}
 
 	pg::Path path = this->stem->getPath();
 	pg::Spline spline = path.getSpline();
@@ -70,10 +72,9 @@ void AddStem::create()
 
 void AddStem::setRadius()
 {
-	pg::Stem *parent = this->stem->getParent();
-	if (parent) {
+	if (this->parent) {
 		pg::Path path = this->stem->getPath();
-		pg::Path parentPath = parent->getPath();
+		pg::Path parentPath = this->parent->getPath();
 		float t = this->stem->getPosition();
 		float radius = parentPath.getIntermediateRadius(t);
 		radius /= this->stem->getSwelling().x + 0.1;
@@ -131,7 +132,7 @@ void AddStem::undo()
 void AddStem::redo()
 {
 	pg::Plant *plant = this->selection->getPlant();
-	this->stem = plant->addStem(this->stemCopy.getParent());
+	this->stem = plant->addStem(this->parent);
 	*this->stem = this->stemCopy;
 	this->selection->clear();
 	this->selection->addStem(this->stem);

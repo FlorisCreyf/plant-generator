@@ -29,6 +29,45 @@
 
 namespace pg {
 	class Plant {
+	public:
+		Plant();
+		~Plant();
+		StemPool *getStemPool();
+
+		/** Add a new stem to the plant at a parent stem. */
+		Stem *addStem(Stem *parent);
+		/** Remove all stems from the plant and create a new root. */
+		Stem *createRoot();
+		/** Delete a stem. */
+		void deleteStem(Stem *);
+		/** Return the root or trunk of the plant. */
+		Stem *getRoot();
+		const Stem *getRoot() const;
+		/** Remove all stems in the plant. */
+		void removeRoot();
+
+		struct Extraction {
+			Stem *address;
+			Stem *parent;
+			Stem value;
+		};
+		/** Remove a stem and its descendants from the plant. */
+		void extractStems(Stem *stem, std::vector<Extraction> &stems);
+		/** Reinsert extracted stems. */
+		void reinsertStems(std::vector<Extraction> &stem);
+
+		void addMaterial(Material material);
+		void removeMaterial(long id);
+		Material getMaterial(long id) const;
+		std::map<long, Material> getMaterials() const;
+
+		void addLeafMesh(Geometry mesh);
+		void removeLeafMesh(long id);
+		void removeLeafMeshes();
+		Geometry getLeafMesh(long id) const;
+		std::map<long, Geometry> getLeafMeshes() const;
+
+	private:
 		Stem *root;
 		std::map<long, Material> materials;
 		std::map<long, Geometry> leafMeshes;
@@ -40,7 +79,7 @@ namespace pg {
 		void insertStem(Stem *, Stem *);
 		void decouple(Stem *);
 		Stem *move(Stem *);
-		void copy(std::vector<std::pair<Stem *, Stem>> &, Stem *);
+		void copy(std::vector<Extraction> &, Stem *);
 
 		#ifdef PG_SERIALIZE
 		friend class boost::serialization::access;
@@ -63,39 +102,6 @@ namespace pg {
 		}
 		BOOST_SERIALIZATION_SPLIT_MEMBER()
 		#endif
-
-	public:
-		Plant();
-		~Plant();
-		StemPool *getStemPool();
-
-		/** Add a new stem to the plant at a parent stem. */
-		Stem *addStem(Stem *parent);
-		/** Remove all stems from the plant and create a new root. */
-		Stem *createRoot();
-		/** Remove a stem and its descendants from the plant. */
-		void extractStems(Stem *stem,
-			std::vector<std::pair<Stem *, Stem>> &stems);
-		/** Reinsert extracted stems. */
-		void reinsertStems(std::vector<std::pair<Stem *, Stem>> &stem);
-		/** Delete a stem. */
-		void deleteStem(Stem *);
-		/** Return the root or trunk of the plant. */
-		Stem *getRoot();
-		const Stem *getRoot() const;
-		/** Remove all stems in the plant. */
-		void removeRoot();
-
-		void addMaterial(Material material);
-		void removeMaterial(long id);
-		Material getMaterial(long id) const;
-		std::map<long, Material> getMaterials() const;
-
-		void addLeafMesh(Geometry mesh);
-		void removeLeafMesh(long id);
-		void removeLeafMeshes();
-		Geometry getLeafMesh(long id) const;
-		std::map<long, Geometry> getLeafMeshes() const;
 	};
 }
 

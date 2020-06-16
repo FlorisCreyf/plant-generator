@@ -22,7 +22,6 @@ using std::array;
 StemPool::StemPool()
 {
 	this->counter = 0;
-	addPool();
 }
 
 Stem *StemPool::allocate()
@@ -46,10 +45,10 @@ Stem *StemPool::allocate()
 
 bool StemPool::allocateAt(Stem *stem)
 {
-	stem->unused = false;
 	auto it = getPool(stem);
 	if (it == this->pools.end())
 		return false;
+	stem->unused = false;
 	it->remaining--;
 	if (stem->nextAvailable)
 		stem->nextAvailable->prevAvailable = stem->prevAvailable;
@@ -67,13 +66,19 @@ StemPool::Pool &StemPool::addPool()
 	pool.id = ++this->counter;
 	pool.remaining = PG_POOL_SIZE;
 	pool.firstAvailable = &pool.stems[0];
+
 	Stem *next = pool.firstAvailable;
+	Stem *prev = nullptr;
 	for (int i = 0; i < PG_POOL_SIZE-1; i++) {
-		pool.stems[i].nextAvailable = ++next;
 		pool.stems[i].unused = true;
+		pool.stems[i].prevAvailable = prev;
+		prev = next;
+		pool.stems[i].nextAvailable = ++next;
 	}
-	pool.stems[PG_POOL_SIZE-1].nextAvailable = nullptr;
 	pool.stems[PG_POOL_SIZE-1].unused = true;
+	pool.stems[PG_POOL_SIZE-1].prevAvailable = prev;
+	pool.stems[PG_POOL_SIZE-1].nextAvailable = nullptr;
+
 	return pool;
 }
 
@@ -82,7 +87,6 @@ size_t StemPool::deallocate(Stem *stem)
 	list<Pool>::iterator it = getPool(stem);
 	stem->unused = true;
 	it->remaining++;
-
 	if (it->firstAvailable) {
 		stem->prevAvailable = nullptr;
 		it->firstAvailable->prevAvailable = stem;
@@ -91,6 +95,7 @@ size_t StemPool::deallocate(Stem *stem)
 	} else {
 		it->firstAvailable = stem;
 		stem->prevAvailable = nullptr;
+		stem->nextAvailable = nullptr;
 	}
 	return it->remaining;
 }
@@ -138,12 +143,11 @@ size_t StemPool::getRemaining(long id) const
 
 void StemPool::removePool(long id)
 {
-	for (auto it = this->pools.begin(); it != this->pools.end(); it++) {
+	for (auto it = this->pools.begin(); it != this->pools.end(); it++)
 		if (it->id == id) {
 			this->pools.erase(it);
 			break;
 		}
-	}
 }
 
 void StemPool::clear()

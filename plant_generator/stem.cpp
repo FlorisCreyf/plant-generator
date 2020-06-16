@@ -42,6 +42,7 @@ void Stem::init(Stem *parent)
 	this->material[0] = 0;
 	this->material[1] = 0;
 	this->resolution = 10;
+	this->custom = false;
 	this->nextSibling = nullptr;
 	this->prevSibling = nullptr;
 	this->child = nullptr;
@@ -62,10 +63,6 @@ Stem &Stem::operator=(const Stem &stem)
 
 void Stem::copy(const Stem &stem)
 {
-	this->nextSibling = stem.nextAvailable;
-	this->prevSibling = stem.prevSibling;
-	this->parent = stem.parent;
-	this->child = stem.child;
 	this->depth = stem.depth;
 	this->path = stem.path;
 	this->resolution = stem.resolution;
@@ -75,15 +72,12 @@ void Stem::copy(const Stem &stem)
 	this->material[1] = stem.material[1];
 	this->leaves = stem.leaves;
 	this->swelling = stem.swelling;
+	this->custom = stem.custom;
 }
 
 bool Stem::operator==(const Stem &stem) const
 {
 	return (
-		this->nextSibling == stem.nextSibling &&
-		this->prevSibling == stem.prevSibling &&
-		this->child == stem.child &&
-		this->parent == stem.parent &&
 		this->depth == stem.depth &&
 		this->path == stem.path &&
 		this->resolution == stem.resolution &&
@@ -92,13 +86,24 @@ bool Stem::operator==(const Stem &stem) const
 		this->material[0] == stem.material[0] &&
 		this->material[1] == stem.material[1] &&
 		this->swelling == stem.swelling &&
-		this->leaves == stem.leaves
+		this->leaves == stem.leaves &&
+		this->custom == stem.custom
 	);
 }
 
 bool Stem::operator!=(const Stem &stem) const
 {
 	return !(*this == stem);
+}
+
+void Stem::setCustom(bool custom)
+{
+	this->custom = custom;
+}
+
+bool Stem::isCustom() const
+{
+	return this->custom;
 }
 
 size_t Stem::addLeaf(const Leaf &leaf)

@@ -30,6 +30,9 @@ class Generate : public Command {
 	RemoveStem removeRemovals;
 	pg::PseudoGenerator gen;
 
+	void createRemovalSelection(Selection *, Selection *);
+	void removeAdditions();
+
 public:
 	Generate(Selection *selection);
 	void setGenerator(pg::PseudoGenerator gen);

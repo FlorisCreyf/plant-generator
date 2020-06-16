@@ -16,13 +16,12 @@
  */
 
 #include "generator_editor.h"
-#include "../commands/generate.h"
 #include <limits>
 
-GeneratorEditor::GeneratorEditor(Editor *editor, QWidget *parent) :
-	Form(editor, parent)
+GeneratorEditor::GeneratorEditor(Editor *editor, QWidget *parent) : Form(parent)
 {
 	this->editor = editor;
+	this->generate = nullptr;
 	createInterface();
 }
 
@@ -58,22 +57,47 @@ void GeneratorEditor::createInterface()
 	this->leafStart = new QDoubleSpinBox(this);
 	this->leafStart->setSingleStep(0.1);
 	form->addRow(tr("Leaf Start"), this->leafStart);
-	this->createButton = new QPushButton(tr("Generate"), this);
-	this->createButton->setFixedHeight(22);
-	form->addRow(this->createButton);
 
-	connect(this->createButton, SIGNAL(clicked()),this, SLOT(submit()));
+	connect(this->seed, SIGNAL(valueChanged(int)),
+		this, SLOT(change()));
+	connect(this->seed, SIGNAL(editingFinished()),
+		this, SLOT(finishChanging()));
+	connect(this->stemDensity, SIGNAL(valueChanged(double)),
+		this, SLOT(change()));
+	connect(this->stemDensity, SIGNAL(editingFinished()),
+		this, SLOT(finishChanging()));
+	connect(this->stemStart, SIGNAL(valueChanged(double)),
+		this, SLOT(change()));
+	connect(this->stemStart, SIGNAL(editingFinished()),
+		this, SLOT(finishChanging()));
+	connect(this->leafDensity, SIGNAL(valueChanged(double)),
+		this, SLOT(change()));
+	connect(this->leafDensity, SIGNAL(editingFinished()),
+		this, SLOT(finishChanging()));
+	connect(this->leafStart, SIGNAL(valueChanged(double)),
+		this, SLOT(change()));
+	connect(this->leafStart, SIGNAL(editingFinished()),
+		this, SLOT(finishChanging()));
 }
 
-void GeneratorEditor::submit()
+void GeneratorEditor::change()
 {
-	Generate *generate = new Generate(this->editor->getSelection());
+	if (!this->generate)
+		this->generate = new Generate(this->editor->getSelection());
 	pg::PseudoGenerator gen(this->editor->getPlant());
 	gen.setLeafCount(this->leafDensity->value(), this->leafStart->value());
 	gen.setStemCount(this->stemDensity->value(), this->stemStart->value());
 	gen.setSeed(this->seed->value());
-	generate->setGenerator(std::move(gen));
-	generate->execute();
-	this->editor->add(generate);
+	this->generate->setGenerator(std::move(gen));
+	this->generate->execute();
 	this->editor->change();
+}
+
+void GeneratorEditor::finishChanging()
+{
+	if (this->generate) {
+		this->editor->add(this->generate);
+		/* The history will delete the command. */
+		this->generate = nullptr;
+	}
 }

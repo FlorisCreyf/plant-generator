@@ -33,7 +33,6 @@ namespace pg {
 		friend class StemPool;
 
 		bool unused;
-
 		union {
 			Stem *nextAvailable;
 			Stem *nextSibling;
@@ -45,6 +44,10 @@ namespace pg {
 		Stem *child;
 		Stem *parent;
 
+		std::vector<Leaf> leaves;
+		std::vector<Joint> joints;
+
+		bool custom;
 		int depth;
 		float position;
 		Vec3 location;
@@ -52,9 +55,6 @@ namespace pg {
 		int resolution;
 		long material[2];
 		Vec2 swelling;
-
-		std::vector<Leaf> leaves;
-		std::vector<Joint> joints;
 
 		void updatePositions(Stem *stem);
 		void copy(const Stem &stem);
@@ -79,6 +79,7 @@ namespace pg {
 			ar & material;
 			ar & swelling;
 			ar & joints;
+			ar & custom;
 		}
 		#endif
 
@@ -92,6 +93,9 @@ namespace pg {
 		Stem &operator=(const Stem &stem);
 		bool operator==(const Stem &stem) const;
 		bool operator!=(const Stem &stem) const;
+
+		void setCustom(bool custom);
+		bool isCustom() const;
 
 		size_t addLeaf(const Leaf &leaf);
 		void insertLeaf(const Leaf &leaf, size_t index);

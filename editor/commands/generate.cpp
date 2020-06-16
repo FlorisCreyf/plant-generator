@@ -17,6 +17,7 @@
 
 #include "generate.h"
 
+using pg::Leaf;
 using pg::Stem;
 
 Generate::Generate(Selection *selection) :
@@ -26,6 +27,32 @@ Generate::Generate(Selection *selection) :
 	gen(selection->getPlant())
 {
 	this->selection = selection;
+	createRemovalSelection(selection, &this->removals);
+	this->removeRemovals = RemoveStem(&this->removals);
+	this->removeRemovals.execute();
+}
+
+void Generate::createRemovalSelection(Selection *selection, Selection *removals)
+{
+	selection->reduceToAncestors();
+	selection->removeLeaves();
+
+	auto instances = selection->getStemInstances();
+	for (auto instance : instances) {
+		Stem *stem = instance.first;
+
+		size_t leafCount = stem->getLeafCount();
+		for (size_t i = 0; i < leafCount; i++)
+			if (!stem->getLeaf(i)->isCustom())
+				removals->addLeaf(stem, i);
+
+		Stem *child = stem->getChild();
+		while (child) {
+			if (!child->isCustom())
+				removals->addStem(child);
+			child = child->getSibling();
+		}
+	}
 }
 
 void Generate::setGenerator(pg::PseudoGenerator gen)
@@ -33,17 +60,19 @@ void Generate::setGenerator(pg::PseudoGenerator gen)
 	this->gen = gen;
 }
 
+void Generate::removeAdditions()
+{
+	Selection additions(this->selection->getPlant());
+	createRemovalSelection(this->selection, &additions);
+	RemoveStem removeStem(&additions);
+	removeStem.execute();
+}
+
 void Generate::execute()
 {
+	removeAdditions();
 	this->selection->reduceToAncestors();
-	Selection selection = *this->selection;
-	this->removals = selection;
-	this->removals.selectLeaves();
-	this->removals.selectChildren();
-	this->removeRemovals = RemoveStem(&this->removals);
-	this->removeRemovals.execute();
-
-	for (auto instance : selection.getStemInstances()) {
+	for (auto instance : this->selection->getStemInstances()) {
 		Stem *stem = instance.first;
 		this->gen.grow(stem);
 	}
@@ -51,13 +80,7 @@ void Generate::execute()
 
 void Generate::undo()
 {
-	Selection additions = *this->selection;
-	additions.reduceToAncestors();
-	additions.selectChildren();
-	auto stems = additions.getStemInstances();
-	for (auto it = stems.begin(); it != stems.end(); it++)
-		additions.getPlant()->deleteStem(it->first);
-
+	removeAdditions();
 	this->removeRemovals.undo();
 	*this->selection = this->prevSelection;
 }
@@ -65,5 +88,6 @@ void Generate::undo()
 void Generate::redo()
 {
 	this->gen.reset();
+	this->removeRemovals.redo();
 	execute();
 }

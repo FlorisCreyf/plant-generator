@@ -29,10 +29,11 @@ using std::map;
 
 LeafEditor::LeafEditor(
 	SharedResources *shared, Editor *editor, QWidget *parent) :
-	Form(editor, parent)
+	Form(parent)
 {
 	this->shared = shared;
 	this->editor = editor;
+	this->saveStem = nullptr;
 	this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
 	createInterface();
 	enable(false);
@@ -86,9 +87,15 @@ void LeafEditor::createInterface()
 	this->meshValue->addItem(tr(""), QVariant(0));
 	form->addRow(this->meshLabel, this->meshValue);
 
+	this->customLabel = new QLabel(tr("Custom"));
+	this->customValue = new QCheckBox;
+	form->addRow(this->customLabel, this->customValue);
+
 	enable(false);
 	setValueWidths(form);
 
+	connect(this->customValue, SIGNAL(stateChanged(int)),
+		this, SLOT(changeCustom(int)));
 	connect(this->scaleXValue, SIGNAL(valueChanged(double)),
 		this, SLOT(changeXScale(double)));
 	connect(this->scaleXValue, SIGNAL(editingFinished()),
@@ -115,17 +122,31 @@ void LeafEditor::setFields(map<Stem *, set<size_t>> instances)
 	}
 
 	Stem *stem = instances.rbegin()->first;
-	size_t leafIndex = *instances.rbegin()->second.begin();
-	Leaf *leaf = stem->getLeaf(leafIndex);
+	Leaf *leaf = stem->getLeaf(*instances.rbegin()->second.begin());
 	blockSignals(true);
+
+	indicateSimilarities(this->customLabel);
+	for (auto it = instances.begin(); it != instances.end(); it++) {
+		Stem *stem = it->first;
+		for (size_t index : it->second) {
+			bool a = stem->getLeaf(index)->isCustom();
+			bool b = stem->getLeaf(index)->isCustom();
+			if (a != b) {
+				indicateDifferences(this->customLabel);
+				break;
+			}
+		}
+	}
+	this->customValue->setCheckState(
+		leaf->isCustom() ? Qt::Checked : Qt::Unchecked);
 
 	indicateSimilarities(this->scaleXLabel);
 	indicateSimilarities(this->scaleYLabel);
 	indicateSimilarities(this->scaleZLabel);
 	for (auto it = instances.begin(); it != instances.end(); it++) {
 		Stem *stem = it->first;
-		for (auto &id : it->second) {
-			Vec3 scale = stem->getLeaf(id)->getScale();
+		for (size_t index : it->second) {
+			Vec3 scale = stem->getLeaf(index)->getScale();
 			if (scale.x != leaf->getScale().x)
 				indicateDifferences(this->scaleXLabel);
 			if (scale.y != leaf->getScale().y)
@@ -142,8 +163,8 @@ void LeafEditor::setFields(map<Stem *, set<size_t>> instances)
 	indicateSimilarities(this->meshLabel);
 	for (auto it = instances.begin(); it != instances.end(); it++) {
 		Stem *stem = it->first;
-		for (auto &id : it->second) {
-			Leaf *l = stem->getLeaf(id);
+		for (size_t index : it->second) {
+			Leaf *l = stem->getLeaf(index);
 			long material = l->getMaterial();
 			long mesh = l->getMesh();
 			if (material != leaf->getMaterial())
@@ -154,16 +175,16 @@ void LeafEditor::setFields(map<Stem *, set<size_t>> instances)
 	}
 
 	{
-		long id = leaf->getMaterial();
-		string s = this->shared->getMaterial(id).getName();
+		size_t index = leaf->getMaterial();
+		string s = this->shared->getMaterial(index).getName();
 		QString qs = QString::fromStdString(s);
 		this->materialValue->setCurrentText(qs);
 	}
 
 	if (leaf->getMesh() != 0) {
-		long id = leaf->getMesh();
+		size_t index = leaf->getMesh();
 		Plant *plant = this->editor->getPlant();
-		pg::Geometry geom = plant->getLeafMesh(id);
+		pg::Geometry geom = plant->getLeafMesh(index);
 		QString qs = QString::fromStdString(geom.getName());
 		this->meshValue->setCurrentText(qs);
 	} else
@@ -180,6 +201,7 @@ void LeafEditor::blockSignals(bool block)
 	this->scaleZValue->blockSignals(block);
 	this->materialValue->blockSignals(block);
 	this->meshValue->blockSignals(block);
+	this->customValue->blockSignals(block);
 }
 
 void LeafEditor::enable(bool enable)
@@ -190,12 +212,14 @@ void LeafEditor::enable(bool enable)
 		indicateSimilarities(this->scaleZValue);
 		indicateSimilarities(this->materialValue);
 		indicateSimilarities(this->meshValue);
+		indicateSimilarities(this->customValue);
 	}
 	this->scaleXValue->setEnabled(enable);
 	this->scaleYValue->setEnabled(enable);
 	this->scaleZValue->setEnabled(enable);
 	this->materialValue->setEnabled(enable);
 	this->meshValue->setEnabled(enable);
+	this->customValue->setEnabled(enable);
 }
 
 bool LeafEditor::addMaterial(ShaderParams params)
@@ -251,49 +275,61 @@ bool LeafEditor::removeMesh(QString name)
 	return false;
 }
 
-void LeafEditor::changeXScale(double d)
+void LeafEditor::changeCustom(int custom)
+{
+	beginChanging();
+	auto instances = this->editor->getSelection()->getLeafInstances();
+	for (auto &instance : instances) {
+		Stem *stem = instance.first;
+		for (size_t index : instance.second)
+			stem->getLeaf(index)->setCustom(custom);
+	}
+	finishChanging();
+}
+
+void LeafEditor::changeXScale(double xscale)
 {
 	beginChanging();
 	indicateSimilarities(this->scaleXLabel);
 	auto instances = this->editor->getSelection()->getLeafInstances();
 	for (auto &instance : instances) {
 		Stem *stem = instance.first;
-		for (auto &leaf : instance.second) {
-			Vec3 scale = stem->getLeaf(leaf)->getScale();
-			scale.x = d;
-			stem->getLeaf(leaf)->setScale(scale);
+		for (size_t index : instance.second) {
+			Vec3 scale = stem->getLeaf(index)->getScale();
+			scale.x = xscale;
+			stem->getLeaf(index)->setScale(scale);
 		}
 	}
 	this->editor->change();
 }
 
-void LeafEditor::changeYScale(double d)
+void LeafEditor::changeYScale(double yscale)
 {
 	beginChanging();
 	indicateSimilarities(this->scaleYLabel);
 	auto instances = this->editor->getSelection()->getLeafInstances();
 	for (auto &instance : instances) {
 		Stem *stem = instance.first;
-		for (auto &leaf : instance.second) {
-			Vec3 scale = stem->getLeaf(leaf)->getScale();
-			scale.y = d;
-			stem->getLeaf(leaf)->setScale(scale);
+		for (size_t index : instance.second) {
+			Vec3 scale = stem->getLeaf(index)->getScale();
+			scale.y = yscale;
+			stem->getLeaf(index)->setScale(scale);
 		}
 	}
 	this->editor->change();
 }
 
-void LeafEditor::changeZScale(double d)
+void LeafEditor::changeZScale(double zscale)
 {
 	beginChanging();
 	indicateSimilarities(this->scaleYLabel);
 	auto instances = this->editor->getSelection()->getLeafInstances();
 	for (auto &instance : instances) {
 		Stem *stem = instance.first;
-		for (auto &leaf : instance.second) {
-			Vec3 scale = stem->getLeaf(leaf)->getScale();
-			scale.z = d;
-			stem->getLeaf(leaf)->setScale(scale);
+		for (size_t index : instance.second) {
+			Vec3 scale = stem->getLeaf(index)->getScale();
+			scale.z = zscale;
+			stem->getLeaf(index)->setScale(scale);
 		}
 	}
 	this->editor->change();
@@ -307,8 +343,8 @@ void LeafEditor::changeLeafMaterial()
 	auto instances = this->editor->getSelection()->getLeafInstances();
 	for (auto &instance : instances) {
 		Stem *stem = instance.first;
-		for (long leaf : instance.second)
-			stem->getLeaf(leaf)->setMaterial(id);
+		for (size_t index : instance.second)
+			stem->getLeaf(index)->setMaterial(id);
 	}
 	this->editor->change();
 	finishChanging();
@@ -322,9 +358,27 @@ void LeafEditor::changeLeafMesh()
 	auto instances = this->editor->getSelection()->getLeafInstances();
 	for (auto &instance : instances) {
 		Stem *stem = instance.first;
-		for (auto &leaf : instance.second)
-			stem->getLeaf(leaf)->setMesh(id);
+		for (size_t index : instance.second)
+			stem->getLeaf(index)->setMesh(id);
 	}
 	this->editor->change();
 	finishChanging();
+}
+
+void LeafEditor::beginChanging()
+{
+	if (!this->saveStem) {
+		this->saveStem = new SaveStem(this->editor->getSelection());
+		this->saveStem->execute();
+	}
+}
+
+void LeafEditor::finishChanging()
+{
+	if (this->saveStem && !this->saveStem->isSameAsCurrent()) {
+		this->saveStem->setNewSelection();
+		this->editor->add(this->saveStem);
+		/* The history will delete the command. */
+		this->saveStem = nullptr;
+	}
 }

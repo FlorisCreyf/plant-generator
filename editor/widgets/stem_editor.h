@@ -38,7 +38,8 @@ public:
 public slots:
 	void setCurve(pg::Spline spline, QString names);
 	void toggleCurve(CurveButton *button);
-
+	void finishChanging();
+	void changeCustom(int custom);
 	void changePathDegree(int degree);
 	void changeResolution(int resolution);
 	void changeDivisions(int divisions);
@@ -53,6 +54,8 @@ public slots:
 private:
 	SharedResources *shared;
 	Editor *editor;
+
+	SaveStem *saveStem;
 
 	QGroupBox *stemGroup;
 	QLabel *radiusLabel;
@@ -74,6 +77,8 @@ private:
 	QDoubleSpinBox *collarYValue;
 	QLabel *capMaterialLabel;
 	QComboBox *capMaterialValue;
+	QLabel *customLabel;
+	QCheckBox *customValue;
 
 	CurveEditor *curveEditor;
 	CurveButton *selectedCurve;
@@ -81,6 +86,7 @@ private:
 	void blockSignals(bool);
 	void createInterface();
 	void enable(bool);
+	void beginChanging();
 };
 
 #endif

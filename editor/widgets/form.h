@@ -25,18 +25,12 @@
 class Form : public QWidget {
 	Q_OBJECT
 public:
-	Form(Editor *editor, QWidget *parent);
-
-public slots:
-	void finishChanging();
+	Form(QWidget *parent);	
 
 protected:
-	bool changing = false;
-	SaveStem *saveStem;
 	void setValueWidths(QFormLayout *layout);
 	void indicateDifferences(QWidget *widget);
 	void indicateSimilarities(QWidget *widget);
-	void beginChanging();
 
 private:
 	Editor *editor;
