@@ -23,13 +23,17 @@ using pg::Stem;
 Generate::Generate(Selection *selection) :
 	prevSelection(*selection),
 	removals(selection->getPlant()),
-	removeRemovals(&removals),
+	remove(&removals),
 	gen(selection->getPlant())
 {
 	this->selection = selection;
 	createRemovalSelection(selection, &this->removals);
-	this->removeRemovals = RemoveStem(&this->removals);
-	this->removeRemovals.execute();
+	this->remove = RemoveStem(&this->removals);
+	this->remove.execute();
+
+	auto instances = selection->getStemInstances();
+	for (auto &instance : instances)
+		this->derivations.push_back(instance.first->getDerivation());
 }
 
 void Generate::createRemovalSelection(Selection *selection, Selection *removals)
@@ -70,8 +74,8 @@ void Generate::removeAdditions()
 
 void Generate::execute()
 {
-	removeAdditions();
 	this->selection->reduceToAncestors();
+	removeAdditions();
 	for (auto instance : this->selection->getStemInstances()) {
 		Stem *stem = instance.first;
 		this->gen.grow(stem);
@@ -80,14 +84,27 @@ void Generate::execute()
 
 void Generate::undo()
 {
-	removeAdditions();
-	this->removeRemovals.undo();
+	size_t index = 0;
+	auto instances = this->selection->getStemInstances();
+	for (auto instance : instances)
+		instance.first->setDerivation(this->derivations[index++]);
+
+	createRemovalSelection(selection, &this->removals);
+	RemoveStem removeGenerated(&this->removals);
+	removeGenerated.execute();
+	this->removals.clear();
+	this->remove.undo();
+	this->remove = removeGenerated;
+
 	*this->selection = this->prevSelection;
 }
 
 void Generate::redo()
 {
-	this->gen.reset();
-	this->removeRemovals.redo();
-	execute();
+	createRemovalSelection(selection, &this->removals);
+	RemoveStem removeOriginal(&this->removals);
+	removeOriginal.execute();
+	this->removals.clear();
+	this->remove.undo();
+	this->remove = removeOriginal;
 }

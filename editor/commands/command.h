@@ -20,11 +20,14 @@
 
 #include <QMouseEvent>
 #include <QKeyEvent>
+#include <ctime>
 
 class Command {
 	/** Commands should not be copied if it makes ownership of stems and
 	other resources unclear. */
 	Command(const Command &);
+
+	time_t timer;
 
 protected:
 	bool done = false;
@@ -39,6 +42,7 @@ public:
 	virtual bool onMousePress(QMouseEvent *);
 	virtual bool onMouseRelease(QMouseEvent *);
 	virtual bool onKeyPress(QKeyEvent *);
+	time_t getTime() const;
 };
 
 #endif /* COMMAND_H */

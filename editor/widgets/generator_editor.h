@@ -36,12 +36,15 @@ class GeneratorEditor : public Form {
 	void createInterface();
 	void removeCurrent();
 	QSize sizeHint() const;
+	void blockSignals(bool);
+	void enable(bool);
 
 public:
 	GeneratorEditor(Editor *editor, QWidget *parent);
 
 public slots:
 	void change();
+	void setFields();
 	void finishChanging();
 };
 

@@ -26,7 +26,8 @@ Plant::Plant()
 
 Plant::~Plant()
 {
-	deallocateStems(this->root);
+	if (this->root)
+		deallocateStems(this->root);
 }
 
 Stem *Plant::move(Stem *value)
@@ -155,25 +156,38 @@ void Plant::copy(vector<Plant::Extraction> &stems, Stem *stem)
 	}
 }
 
+Plant::Extraction Plant::extractStem(Stem *stem)
+{
+	Extraction extraction;
+	extraction.address = stem;
+	extraction.value = *stem;
+	extraction.parent = stem->parent;
+	deleteStem(stem);
+	return extraction;
+}
+
 void Plant::extractStems(Stem *stem, vector<Plant::Extraction> &stems)
 {
 	copy(stems, stem);
 	deleteStem(stem);
 }
 
-void Plant::reinsertStems(vector<Plant::Extraction> &stems)
+void Plant::reinsertStem(Extraction &extraction)
 {
-	for (Extraction &extraction : stems) {
-		this->stemPool.allocateAt(extraction.address);
-		*extraction.address = extraction.value;
-		/* Assume that the parent stem is already inserted. */
-		extraction.address->child = nullptr;
-		if (extraction.parent)
-			insertStem(extraction.address, extraction.parent);
-		else if (!extraction.parent && !this->root)
-			this->root = extraction.address;
-	}
+	this->stemPool.allocateAt(extraction.address);
+	*extraction.address = extraction.value;
+	/* Assume that the parent stem is already inserted. */
+	extraction.address->child = nullptr;
+	if (extraction.parent)
+		insertStem(extraction.address, extraction.parent);
+	else if (!extraction.parent && !this->root)
+		this->root = extraction.address;
+}
 
+void Plant::reinsertStems(vector<Plant::Extraction> &extractions)
+{
+	for (Extraction &extraction : extractions)
+		reinsertStem(extraction);
 }
 
 void Plant::addMaterial(Material material)

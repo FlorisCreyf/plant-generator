@@ -100,6 +100,7 @@ plant_generator/math/quat.h \
 plant_generator/math/vec2.h \
 plant_generator/math/vec3.h \
 plant_generator/math/vec4.h \
+plant_generator/derivation.h \
 plant_generator/file.h \
 plant_generator/geometry.h \
 plant_generator/joint.h \

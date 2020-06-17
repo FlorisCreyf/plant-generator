@@ -27,7 +27,8 @@ class Generate : public Command {
 	Selection prevSelection;
 	Selection removals;
 	Selection *selection;
-	RemoveStem removeRemovals;
+	RemoveStem remove;
+	std::vector<pg::Derivation> derivations;
 	pg::PseudoGenerator gen;
 
 	void createRemovalSelection(Selection *, Selection *);

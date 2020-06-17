@@ -27,9 +27,7 @@
 class AddStem : public Command {
 	Selection *selection;
 	Selection prevSelection;
-	pg::Stem stemCopy;
-	pg::Stem *parent;
-	pg::Stem *stem;
+	pg::Plant::Extraction extraction;
 	MoveStem moveStem;
 	MovePath movePath;
 

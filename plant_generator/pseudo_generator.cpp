@@ -26,39 +26,46 @@ using namespace pg;
 
 PseudoGenerator::PseudoGenerator(Plant *plant)
 {
-	std::random_device rd;
-	this->seed = rd();
-	this->randomGenerator.seed(this->seed);
 	this->plant = plant;
-	this->stemDepth = 1;
-	this->stemDensity = 0.0f;
-	this->leafDensity = 0.0f;
-	this->stemStart = 0.0f;
-	this->leafStart = 0.0f;
-	this->requiredLength = 0.0f;
+	this->dvn.seed = 0;
+	this->randomGenerator.seed(this->dvn.seed);
+	this->dvn.depth = 1;
+	this->dvn.stemDensity = 0.0f;
+	this->dvn.leafDensity = 0.0f;
+	this->dvn.stemStart = 0.0f;
+	this->dvn.leafStart = 0.0f;
+	this->dvn.requiredLength = 0.0f;
 }
 
-void PseudoGenerator::setSeed(unsigned seed)
+Derivation PseudoGenerator::getDerivation() const
 {
-	this->seed = seed;
-	this->randomGenerator.seed(seed);
+	return this->dvn;
+}
+
+void PseudoGenerator::setDerivation(Derivation dvn)
+{
+	this->dvn = dvn;
 }
 
 void PseudoGenerator::reset()
 {
-	this->randomGenerator.seed(this->seed);
+	this->randomGenerator.seed(this->dvn.seed);
 }
 
 void PseudoGenerator::grow()
 {
 	Stem *root = this->plant->createRoot();
+	root->setDerivation(this->dvn);
 	root->setPosition(0.0f);
 	setPath(root, nullptr, Vec3(0.0f, 1.0f, 0.0f), 0.0f);
+	reset();
 	addLateralStems(root);
 }
 
 void PseudoGenerator::grow(Stem *stem)
 {
+	stem->setDerivation(this->dvn);
+	reset();
 	addLateralStems(stem);
 }
 
@@ -78,12 +85,12 @@ Vec3 PseudoGenerator::getStemDirection(Stem *stem)
 
 void PseudoGenerator::addLateralStems(Stem *parent)
 {
-	if (this->stemDensity == 0.0f)
+	if (this->dvn.stemDensity == 0.0f)
 		return;
 
 	float length = parent->getPath().getLength();
-	float distance = 1.0f / this->stemDensity;
-	float position = this->stemStart;
+	float distance = 1.0f / this->dvn.stemDensity;
+	float position = this->dvn.stemStart;
 
 	while (position < length) {
 		if (!growLateralStem(parent, position))
@@ -107,10 +114,10 @@ bool PseudoGenerator::growLateralStem(Stem *parent, float position)
 		return false;
 	}
 
-	if (this->leafDensity > 0.0f) {
+	if (this->dvn.leafDensity > 0.0f) {
 		float length = stem->getPath().getLength();
-		float distance = 1.0f / this->leafDensity;
-		float position = this->leafStart;
+		float distance = 1.0f / this->dvn.leafDensity;
+		float position = this->dvn.leafStart;
 		Quat rotation(0.0f, 0.0f, 0.0f, 1.0f);
 		while (position < length) {
 			Leaf leaf;
@@ -123,7 +130,7 @@ bool PseudoGenerator::growLateralStem(Stem *parent, float position)
 		}
 	}
 
-	if (stem->getDepth() < this->stemDepth)
+	if (stem->getDepth() < this->dvn.depth)
 		addLateralStems(stem);
 
 	return true;
@@ -154,7 +161,7 @@ bool PseudoGenerator::setPath(
 	float length = radius * 40.0f;
 	int points = static_cast<int>(length / 2.0f) + 1;
 	float increment = length / points;
-	if (length < this->requiredLength)
+	if (length < this->dvn.requiredLength)
 		return false;
 
 	Path path;
@@ -195,26 +202,4 @@ void PseudoGenerator::alternateLeaf(Leaf *leaf, Quat prevRotation)
 	else
 		rotation.w = 1.0f;
 	leaf->setRotation(rotation);
-}
-
-void PseudoGenerator::setStemCount(float density, float start)
-{
-	this->stemDensity = density;
-	this->stemStart = start;
-}
-
-void PseudoGenerator::setLeafCount(float density, float start)
-{
-	this->leafDensity = density;
-	this->leafStart = start;
-}
-
-void PseudoGenerator::setRequiredLength(float length)
-{
-	this->requiredLength = length;
-}
-
-void PseudoGenerator::setDepth(int depth)
-{
-	this->stemDepth = depth;
 }

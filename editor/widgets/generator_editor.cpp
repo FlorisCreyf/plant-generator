@@ -23,6 +23,9 @@ GeneratorEditor::GeneratorEditor(Editor *editor, QWidget *parent) : Form(parent)
 	this->editor = editor;
 	this->generate = nullptr;
 	createInterface();
+	enable(false);
+	connect(this->editor, SIGNAL(selectionChanged()),
+		this, SLOT(setFields()));
 }
 
 QSize GeneratorEditor::sizeHint() const
@@ -80,14 +83,56 @@ void GeneratorEditor::createInterface()
 		this, SLOT(finishChanging()));
 }
 
+void GeneratorEditor::setFields()
+{
+	auto instances = this->editor->getSelection()->getStemInstances();
+	if (instances.empty()) {
+		enable(false);
+		return;
+	}
+
+	blockSignals(true);
+	pg::Stem *stem = instances.rbegin()->first;
+	pg::Derivation derivation = stem->getDerivation();
+	this->seed->setValue(derivation.seed);
+	this->stemDensity->setValue(derivation.stemDensity);
+	this->stemStart->setValue(derivation.stemStart);
+	this->leafDensity->setValue(derivation.leafDensity);
+	this->leafStart->setValue(derivation.leafStart);
+	enable(true);
+	blockSignals(false);
+}
+
+void GeneratorEditor::enable(bool enable)
+{
+	this->seed->setEnabled(enable);
+	this->stemDensity->setEnabled(enable);
+	this->stemStart->setEnabled(enable);
+	this->leafDensity->setEnabled(enable);
+	this->leafStart->setEnabled(enable);
+}
+
+void GeneratorEditor::blockSignals(bool block)
+{
+	this->seed->blockSignals(block);
+	this->stemDensity->blockSignals(block);
+	this->stemStart->blockSignals(block);
+	this->leafDensity->blockSignals(block);
+	this->leafStart->blockSignals(block);
+}
+
 void GeneratorEditor::change()
 {
 	if (!this->generate)
 		this->generate = new Generate(this->editor->getSelection());
 	pg::PseudoGenerator gen(this->editor->getPlant());
-	gen.setLeafCount(this->leafDensity->value(), this->leafStart->value());
-	gen.setStemCount(this->stemDensity->value(), this->stemStart->value());
-	gen.setSeed(this->seed->value());
+	pg::Derivation dvn;
+	dvn.leafDensity = this->leafDensity->value();
+	dvn.leafStart = this->leafStart->value();
+	dvn.stemDensity = this->stemDensity->value();
+	dvn.stemStart = this->stemStart->value();
+	dvn.seed = this->seed->value();
+	gen.setDerivation(dvn);
 	this->generate->setGenerator(std::move(gen));
 	this->generate->execute();
 	this->editor->change();

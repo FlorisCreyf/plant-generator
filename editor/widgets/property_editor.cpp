@@ -31,7 +31,8 @@ PropertyEditor::PropertyEditor(
 	layout->addWidget(this->stemEditor);
 	layout->addWidget(this->leafEditor);
 	layout->addStretch(1);
-	connect(this->editor, SIGNAL(selectionChanged()), this, SLOT(fill()));
+	connect(this->editor, SIGNAL(selectionChanged()),
+		this, SLOT(setFields()));
 }
 
 void PropertyEditor::bind(CurveEditor *curveEditor)
@@ -39,7 +40,7 @@ void PropertyEditor::bind(CurveEditor *curveEditor)
 	this->stemEditor->bind(curveEditor);
 }
 
-void PropertyEditor::fill()
+void PropertyEditor::setFields()
 {
 	auto leafInstances = this->editor->getSelection()->getLeafInstances();
 	auto stemInstances = this->editor->getSelection()->getStemInstances();

@@ -32,6 +32,10 @@ Stem::~Stem()
 Stem::Stem(const Stem &original)
 {
 	copy(original);
+	this->parent = nullptr;
+	this->nextSibling = nullptr;
+	this->prevSibling = nullptr;
+	this->child = nullptr;
 }
 
 void Stem::init(Stem *parent)
@@ -43,6 +47,7 @@ void Stem::init(Stem *parent)
 	this->material[1] = 0;
 	this->resolution = 10;
 	this->custom = false;
+	this->derivation = Derivation();
 	this->nextSibling = nullptr;
 	this->prevSibling = nullptr;
 	this->child = nullptr;
@@ -104,6 +109,16 @@ void Stem::setCustom(bool custom)
 bool Stem::isCustom() const
 {
 	return this->custom;
+}
+
+void Stem::setDerivation(Derivation derivation)
+{
+	this->derivation = derivation;
+}
+
+Derivation Stem::getDerivation() const
+{
+	return this->derivation;
 }
 
 size_t Stem::addLeaf(const Leaf &leaf)

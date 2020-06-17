@@ -22,8 +22,18 @@ using std::vector;
 void History::add(Command *command)
 {
 	future.clear();
-	std::unique_ptr<Command> cmd(command);
-	past.push_back(std::move(cmd));
+
+	/* The ordering of signals and events might cause commands to be out
+	of order. For example, a click event changes the selection and then
+	an editingFinished signal adds an earlier command. */
+	if (!past.empty() && command->getTime() < past.back()->getTime()) {
+		auto it = past.end();
+		std::unique_ptr<Command> cmd(command);
+		past.insert(--it, std::move(cmd));
+	} else {
+		std::unique_ptr<Command> cmd(command);
+		past.push_back(std::move(cmd));
+	}
 }
 
 void History::undo()

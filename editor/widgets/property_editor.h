@@ -35,7 +35,7 @@ public:
 	QSize sizeHint() const;
 
 public slots:
-	void fill();
+	void setFields();
 	void addMaterial(ShaderParams params);
 	void renameMaterial(QString before, QString after);
 	void removeMaterial(QString name);

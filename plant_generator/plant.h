@@ -51,8 +51,12 @@ namespace pg {
 			Stem *parent;
 			Stem value;
 		};
+		/* Remove a stem that has no children. */
+		Extraction extractStem(Stem *stem);
 		/** Remove a stem and its descendants from the plant. */
 		void extractStems(Stem *stem, std::vector<Extraction> &stems);
+		/** Reinsert a single extracted stem. */
+		void reinsertStem(Extraction &stem);
 		/** Reinsert extracted stems. */
 		void reinsertStems(std::vector<Extraction> &stem);
 

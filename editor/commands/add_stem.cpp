@@ -34,24 +34,27 @@ AddStem::AddStem(
 void AddStem::create()
 {
 	Plant *plant = this->selection->getPlant();
+	Stem *stem;
 	int pathDivisions = 1;
 	auto instances = this->selection->getStemInstances();
 	if (instances.size() == 1) {
-		this->parent = (*instances.begin()).first;
-		this->stem = plant->addStem(this->parent);
-		this->stem->setResolution(this->parent->getResolution());
-		this->stem->setMaterial(
-			Stem::Outer, this->parent->getMaterial(Stem::Outer));
-		this->stem->setMaterial(
-			Stem::Inner, this->parent->getMaterial(Stem::Inner));
-		pg::Path parentPath = this->parent->getPath();
+		extraction.parent = (*instances.begin()).first;
+		stem = plant->addStem(extraction.parent);
+		extraction.address = stem;
+		stem->setResolution(extraction.parent->getResolution());
+		stem->setMaterial(Stem::Outer,
+			extraction.parent->getMaterial(Stem::Outer));
+		stem->setMaterial(Stem::Inner,
+			extraction.parent->getMaterial(Stem::Inner));
+		pg::Path parentPath = extraction.parent->getPath();
 		pathDivisions = parentPath.getResolution();
-	} else {
-		this->stem = plant->createRoot();
-		this->parent = nullptr;
+	} else if (instances.empty()) {
+		stem = plant->createRoot();
+		extraction.address = stem;
+		extraction.parent = nullptr;
 	}
 
-	pg::Path path = this->stem->getPath();
+	pg::Path path = stem->getPath();
 	pg::Spline spline = path.getSpline();
 	std::vector<pg::Vec3> controls;
 	controls.push_back(pg::getZeroVec3());
@@ -62,28 +65,29 @@ void AddStem::create()
 	path.setSpline(spline);
 	path.setResolution(pathDivisions);
 	path.setRadius(pg::getDefaultCurve(0));
-	this->stem->setPath(path);
-	this->stem->setPosition(0.0f);
+	stem->setPath(path);
+	stem->setPosition(0.0f);
 
 	this->selection->clear();
-	this->selection->addStem(this->stem);
+	this->selection->addStem(stem);
 	this->selection->selectLastPoints();
 }
 
 void AddStem::setRadius()
 {
-	if (this->parent) {
-		pg::Path path = this->stem->getPath();
-		pg::Path parentPath = this->parent->getPath();
-		float t = this->stem->getPosition();
+	if (extraction.parent) {
+		Stem *stem = extraction.address;
+		pg::Path path = stem->getPath();
+		pg::Path parentPath = extraction.parent->getPath();
+		float t = stem->getPosition();
 		float radius = parentPath.getIntermediateRadius(t);
-		radius /= this->stem->getSwelling().x + 0.1;
+		radius /= stem->getSwelling().x + 0.1;
 		path.setMaxRadius(radius);
 		if (parentPath.getMinRadius() > radius)
 			path.setMinRadius(radius);
 		else
 			path.setMinRadius(parentPath.getMinRadius());
-		this->stem->setPath(path);
+		stem->setPath(path);
 	}
 }
 
@@ -103,8 +107,6 @@ bool AddStem::onMousePress(QMouseEvent *event)
 	} if (this->moveStem.isDone()) {
 		bool update = this->movePath.onMouseRelease(event);
 		this->done = this->movePath.isDone();
-		if (this->done)
-			this->stemCopy = *this->stem;
 		return update;
 	}
 	return false;
@@ -125,16 +127,15 @@ void AddStem::execute()
 void AddStem::undo()
 {
 	pg::Plant *plant = this->selection->getPlant();
-	plant->deleteStem(this->stem);
+	extraction = plant->extractStem(extraction.address);
 	*this->selection = this->prevSelection;
 }
 
 void AddStem::redo()
 {
 	pg::Plant *plant = this->selection->getPlant();
-	this->stem = plant->addStem(this->parent);
-	*this->stem = this->stemCopy;
+	plant->reinsertStem(extraction);
 	this->selection->clear();
-	this->selection->addStem(this->stem);
+	this->selection->addStem(extraction.address);
 	this->selection->selectLastPoints();
 }

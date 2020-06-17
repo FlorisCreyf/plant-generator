@@ -664,14 +664,10 @@ void Editor::change()
 	for (size_t m = 0; m < mesh.getMeshCount(); m++) {
 		const std::vector<pg::Vertex> *v = mesh.getVertices(m);
 		const std::vector<unsigned> *i = mesh.getIndices(m);
-		if (!plantBuffer.update(v->data(), pointOffset, v->size())) {
-			printf("Failed to update vertices\n");
-			exit(1);
-		}
-		if (!plantBuffer.update(i->data(), indexOffset, i->size())) {
-			printf("Failed to update indices\n");
-			exit(1);
-		}
+		if (!plantBuffer.update(v->data(), pointOffset, v->size()))
+			throw "failed to update vertices\n";
+		if (!plantBuffer.update(i->data(), indexOffset, i->size()))
+			throw "failed to update indices\n";
 		pointOffset += v->size();
 		indexOffset += i->size();
 	}
@@ -683,9 +679,16 @@ void Editor::change()
 
 void Editor::createDefaultPlant()
 {
-	generator.setRequiredLength(1.0f);
-	generator.setStemCount(1.0f, 2.0f);
-	generator.setLeafCount(0.5f, 1.0f);
+	pg::Derivation derivation = generator.getDerivation();
+	std::random_device rd;
+	derivation.seed = rd();
+	derivation.depth = 1;
+	derivation.stemDensity = 1.0f;
+	derivation.stemStart = 2.0f;
+	derivation.leafDensity = 0.5f;
+	derivation.leafStart = 1.0f;
+	derivation.requiredLength = 0.5f;
+	generator.setDerivation(derivation);
 	generator.grow();
 }
 

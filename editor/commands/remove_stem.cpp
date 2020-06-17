@@ -60,8 +60,10 @@ bool shouldRemoveStem(PointSelection &pointSelection, int degree)
 void RemoveStem::removeStems()
 {
 	Plant *plant = this->selection->getPlant();
-	this->selection->reduceToAncestors();
-	auto instances = this->selection->getStemInstances();
+	Selection selection = *this->selection;
+	this->selection->clear();
+	selection.reduceToAncestors();
+	auto instances = selection.getStemInstances();
 	for (auto it = instances.begin(); it != instances.end(); it++) {
 		Stem *stem = it->first;
 		Path path = stem->getPath();
@@ -83,6 +85,8 @@ void RemoveStem::removeStems()
 
 			if (pointSelection.hasPoints())
 				plant->extractStems(stem, this->stems);
+			else
+				this->selection->addStem(stem);
 		}
 	}
 }
@@ -92,7 +96,6 @@ void RemoveStem::execute()
 	/* Remove leaves first to avoid checking for deleted stems. */
 	removeLeaves();
 	removeStems();
-	this->selection->clear();
 }
 
 void RemoveStem::undo()

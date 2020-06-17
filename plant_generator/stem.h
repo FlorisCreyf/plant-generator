@@ -16,6 +16,7 @@
 #ifndef PG_STEM_H
 #define PG_STEM_H
 
+#include "derivation.h"
 #include "leaf.h"
 #include "math/math.h"
 #include "math/curve.h"
@@ -47,7 +48,6 @@ namespace pg {
 		std::vector<Leaf> leaves;
 		std::vector<Joint> joints;
 
-		bool custom;
 		int depth;
 		float position;
 		Vec3 location;
@@ -55,6 +55,9 @@ namespace pg {
 		int resolution;
 		long material[2];
 		Vec2 swelling;
+
+		bool custom;
+		Derivation derivation;
 
 		void updatePositions(Stem *stem);
 		void copy(const Stem &stem);
@@ -80,8 +83,9 @@ namespace pg {
 			ar & swelling;
 			ar & joints;
 			ar & custom;
+			ar & derivation;
 		}
-		#endif
+		#endif /* PG_SERIALIZE */
 
 	public:
 		enum Type {Outer, Inner};
@@ -96,6 +100,8 @@ namespace pg {
 
 		void setCustom(bool custom);
 		bool isCustom() const;
+		void setDerivation(Derivation derivation);
+		Derivation getDerivation() const;
 
 		size_t addLeaf(const Leaf &leaf);
 		void insertLeaf(const Leaf &leaf, size_t index);
