@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(test_same_address)
 	BOOST_TEST(stem1 == pool.allocate());
 }
 
-BOOST_AUTO_TEST_CASE(test_extract_and_allocate)
+BOOST_AUTO_TEST_CASE(test_extract_and_reinsert)
 {
 	Plant plant;
 	Stem *root1 = plant.addStem(nullptr);
@@ -85,7 +85,7 @@ BOOST_AUTO_TEST_CASE(test_extract_and_allocate)
 	BOOST_TEST(stem3 == plant.addStem(root2));
 }
 
-BOOST_AUTO_TEST_CASE(test_undo_redo)
+BOOST_AUTO_TEST_CASE(test_add_and_extract)
 {
 	Plant plant;
 	Stem *root = plant.createRoot();

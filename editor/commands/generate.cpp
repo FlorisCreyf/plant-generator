@@ -89,7 +89,7 @@ void Generate::undo()
 	for (auto instance : instances)
 		instance.first->setDerivation(this->derivations[index++]);
 
-	createRemovalSelection(selection, &this->removals);
+	createRemovalSelection(this->selection, &this->removals);
 	RemoveStem removeGenerated(&this->removals);
 	removeGenerated.execute();
 	this->removals.clear();

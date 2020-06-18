@@ -176,8 +176,11 @@ void Plant::reinsertStem(Extraction &extraction)
 {
 	this->stemPool.allocateAt(extraction.address);
 	*extraction.address = extraction.value;
-	/* Assume that the parent stem is already inserted. */
 	extraction.address->child = nullptr;
+	extraction.address->parent = nullptr;
+	extraction.address->nextSibling = nullptr;
+	extraction.address->prevSibling = nullptr;
+	/* Assume that the parent stem is already inserted. */
 	if (extraction.parent)
 		insertStem(extraction.address, extraction.parent);
 	else if (!extraction.parent && !this->root)
