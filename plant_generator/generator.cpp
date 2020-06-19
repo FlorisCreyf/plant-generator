@@ -54,7 +54,7 @@ Generator::Generator()
 	Geometry geom;
 	geom.setPlane();
 	this->plant.addLeafMesh(geom);
-	this->leafGeomID = geom.getID();
+	this->leafGeomID = 0;
 
 	updateBoundingBox(control);
 }

@@ -41,8 +41,8 @@ Window::Window(int argc, char **argv)
 
 	connect(this->widget.actionReportIssue, SIGNAL(triggered()),
 		this, SLOT(reportIssue()));
-	connect(&this->shared, SIGNAL(materialModified(ShaderParams)),
-		this->editor, SLOT(updateMaterial(ShaderParams)));
+	connect(&this->shared, SIGNAL(materialModified(unsigned)),
+		this->editor, SLOT(updateMaterial(unsigned)));
 }
 
 QDockWidget *Window::createDockWidget(
@@ -73,10 +73,10 @@ void Window::createEditors()
 
 	connect(&shared, SIGNAL(materialAdded(ShaderParams)),
 		this->propertyEditor, SLOT(addMaterial(ShaderParams)));
-	connect(&shared, SIGNAL(materialRenamed(QString, QString)),
-		this->propertyEditor, SLOT(renameMaterial(QString, QString)));
-	connect(&shared, SIGNAL(materialRemoved(QString)),
-		this->propertyEditor, SLOT(removeMaterial(QString)));
+	connect(&shared, SIGNAL(materialModified(unsigned)),
+		this->propertyEditor, SLOT(updateMaterials()));
+	connect(&shared, SIGNAL(materialRemoved(unsigned)),
+		this->propertyEditor, SLOT(removeMaterial(unsigned)));
 
 	this->keyEditor = new KeyEditor(&keymap, this);
 	dw[1] = createDockWidget("Keys", this->keyEditor, true);
@@ -107,10 +107,10 @@ void Window::createEditors()
 		this, SLOT(initMeshEditor()));
 	connect(this->meshEditor, SIGNAL(meshAdded(pg::Geometry)),
 		this->propertyEditor, SLOT(addMesh(pg::Geometry)));
-	connect(this->meshEditor, SIGNAL(meshRenamed(QString, QString)),
-		this->propertyEditor, SLOT(renameMesh(QString, QString)));
-	connect(this->meshEditor, SIGNAL(meshRemoved(QString)),
-		this->propertyEditor, SLOT(removeMesh(QString)));
+	connect(this->meshEditor, SIGNAL(meshModified(pg::Geometry, unsigned)),
+		this->propertyEditor, SLOT(updateMesh(pg::Geometry, unsigned)));
+	connect(this->meshEditor, SIGNAL(meshRemoved(unsigned)),
+		this->propertyEditor, SLOT(removeMesh(unsigned)));
 
 	tabifyDockWidget(dw[1], dw[5]);
 	tabifyDockWidget(dw[1], dw[0]);
@@ -140,7 +140,7 @@ void Window::initMeshEditor()
 	if (!this->filename.isEmpty()) {
 		auto meshes = this->editor->getPlant()->getLeafMeshes();
 		for (auto &mesh : meshes)
-			this->meshEditor->addMesh(mesh.second);
+			this->meshEditor->addMesh(mesh);
 	} else
 		this->meshEditor->addMesh();
 }
@@ -150,7 +150,7 @@ void Window::initMaterialEditor()
 	if (!this->filename.isEmpty()) {
 		auto materials = this->editor->getPlant()->getMaterials();
 		for (auto &material : materials)
-			this->materialEditor->addMaterial(material.second);
+			this->materialEditor->addMaterial(material);
 	} else
 		this->materialEditor->addMaterial();
 }
@@ -228,10 +228,10 @@ void Window::openDialogBox()
 		this->editor->load(filename.toLatin1());
 		auto materials = this->editor->getPlant()->getMaterials();
 		for (auto &material : materials)
-			this->materialEditor->addMaterial(material.second);
+			this->materialEditor->addMaterial(material);
 		auto meshes = this->editor->getPlant()->getLeafMeshes();
 		for (auto &mesh : meshes)
-			this->meshEditor->addMesh(mesh.second);
+			this->meshEditor->addMesh(mesh);
 		setFilename(filename);
 	}
 }

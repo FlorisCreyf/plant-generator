@@ -79,12 +79,10 @@ void LeafEditor::createInterface()
 
 	this->materialLabel = new QLabel(tr("Material"));
 	this->materialValue = new QComboBox;
-	this->materialValue->addItem(tr(""), QVariant(0));
 	form->addRow(this->materialLabel, this->materialValue);
 
 	this->meshLabel = new QLabel(tr("Mesh"));
 	this->meshValue = new QComboBox;
-	this->meshValue->addItem(tr(""), QVariant(0));
 	form->addRow(this->meshLabel, this->meshValue);
 
 	this->customLabel = new QLabel(tr("Custom"));
@@ -165,8 +163,8 @@ void LeafEditor::setFields(map<Stem *, set<size_t>> instances)
 		Stem *stem = it->first;
 		for (size_t index : it->second) {
 			Leaf *l = stem->getLeaf(index);
-			long material = l->getMaterial();
-			long mesh = l->getMesh();
+			unsigned material = l->getMaterial();
+			unsigned mesh = l->getMesh();
 			if (material != leaf->getMaterial())
 				indicateDifferences(this->materialLabel);
 			if (mesh != leaf->getMesh())
@@ -181,14 +179,13 @@ void LeafEditor::setFields(map<Stem *, set<size_t>> instances)
 		this->materialValue->setCurrentText(qs);
 	}
 
-	if (leaf->getMesh() != 0) {
+	{
 		size_t index = leaf->getMesh();
 		Plant *plant = this->editor->getPlant();
 		pg::Geometry geom = plant->getLeafMesh(index);
 		QString qs = QString::fromStdString(geom.getName());
 		this->meshValue->setCurrentText(qs);
-	} else
-		this->meshValue->setCurrentText(tr(""));
+	}
 
 	blockSignals(false);
 	enable(true);
@@ -226,53 +223,53 @@ bool LeafEditor::addMaterial(ShaderParams params)
 {
 	QString name = QString::fromStdString(params.getName());
 	if (this->materialValue->findText(name) < 0) {
-		qlonglong id = params.getID();
-		this->materialValue->addItem(name, QVariant(id));
+		this->materialValue->addItem(name);
 		return true;
 	}
 	return false;
 }
 
-long LeafEditor::removeMaterial(QString name)
+void LeafEditor::removeMaterial(unsigned index)
 {
-	long id = 0;
-	int index = this->materialValue->findText(name);
-	if (index != 0) {
-		id = this->materialValue->itemData(index).toInt();
-		this->materialValue->removeItem(index);
-	}
-	return id;
+	this->materialValue->blockSignals(true);
+	unsigned currentIndex = this->materialValue->currentIndex();
+	if (index == currentIndex)
+		this->materialValue->setCurrentIndex(0);
+	this->materialValue->removeItem(index);
+	this->materialValue->blockSignals(false);
 }
 
-void LeafEditor::renameMaterial(QString before, QString after)
+void LeafEditor::updateMaterials()
 {
-	int index = this->materialValue->findText(before);
-	this->materialValue->setItemText(index, after);
+	unsigned size = this->shared->getMaterialCount();
+	for (unsigned i = 0; i < size; i++) {
+		ShaderParams params = this->shared->getMaterial(i);
+		QString name = QString::fromStdString(params.getName());
+		this->materialValue->setItemText(i, name);
+	}
 }
 
 void LeafEditor::addMesh(pg::Geometry geom)
 {
 	QString name = QString::fromStdString(geom.getName());
-	if (this->meshValue->findText(name) < 0) {
-		qlonglong id = geom.getID();
-		this->meshValue->addItem(name, QVariant(id));
-	}
+	if (this->meshValue->findText(name) < 0)
+		this->meshValue->addItem(name);
 }
 
-void LeafEditor::renameMesh(QString before, QString after)
+void LeafEditor::updateMesh(pg::Geometry geom, unsigned index)
 {
-	int index = this->meshValue->findText(before);
-	this->meshValue->setItemText(index, after);
+	QString name = QString::fromStdString(geom.getName());
+	this->meshValue->setItemText(index, name);
 }
 
-bool LeafEditor::removeMesh(QString name)
+void LeafEditor::removeMesh(unsigned index)
 {
-	int index = this->meshValue->findText(name);
-	if (index != 0) {
-		this->meshValue->removeItem(index);
-		return true;
-	}
-	return false;
+	this->meshValue->blockSignals(true);
+	unsigned currentIndex = this->meshValue->currentIndex();
+	if (index == currentIndex)
+		this->meshValue->setCurrentIndex(0);
+	this->meshValue->removeItem(index);
+	this->meshValue->blockSignals(false);
 }
 
 void LeafEditor::changeCustom(int custom)
@@ -339,12 +336,12 @@ void LeafEditor::changeLeafMaterial()
 {
 	beginChanging();
 	indicateSimilarities(this->materialLabel);
-	int id = this->materialValue->currentData().toInt();
+	unsigned index = this->materialValue->currentIndex();
 	auto instances = this->editor->getSelection()->getLeafInstances();
 	for (auto &instance : instances) {
 		Stem *stem = instance.first;
-		for (size_t index : instance.second)
-			stem->getLeaf(index)->setMaterial(id);
+		for (size_t leafIndex : instance.second)
+			stem->getLeaf(leafIndex)->setMaterial(index);
 	}
 	this->editor->change();
 	finishChanging();
@@ -354,12 +351,12 @@ void LeafEditor::changeLeafMesh()
 {
 	beginChanging();
 	indicateSimilarities(this->meshLabel);
-	int id = this->meshValue->currentData().toInt();
+	unsigned index = this->meshValue->currentIndex();
 	auto instances = this->editor->getSelection()->getLeafInstances();
 	for (auto &instance : instances) {
 		Stem *stem = instance.first;
-		for (size_t index : instance.second)
-			stem->getLeaf(index)->setMesh(id);
+		for (size_t leafIndex : instance.second)
+			stem->getLeaf(leafIndex)->setMesh(index);
 	}
 	this->editor->change();
 	finishChanging();

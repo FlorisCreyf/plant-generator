@@ -19,22 +19,10 @@ using pg::Vec3;
 using pg::Quat;
 using pg::Vertex;
 
-long pg::Geometry::counter = 1;
-
-pg::Geometry::Geometry()
-{
-	id = counter++;
-}
-
 void pg::Geometry::clear()
 {
 	points.clear();
 	indices.clear();
-}
-
-long pg::Geometry::getID() const
-{
-	return id;
 }
 
 std::string pg::Geometry::getName() const

@@ -47,23 +47,25 @@ public:
 	GLuint getTexture(Texture texture);
 	GLuint addTexture(const QImage &image);
 	void removeTexture(GLuint texture);
+
 	void addMaterial(ShaderParams params);
-	void removeMaterial(long id);
+	void updateMaterial(ShaderParams params, unsigned index);
+	void removeMaterial(unsigned index);
 	void clearMaterials();
-	ShaderParams getMaterial(long id);
+	ShaderParams getMaterial(unsigned index) const;
+	unsigned getMaterialCount() const;
 
 signals:
 	void materialAdded(ShaderParams params);
-	void materialRenamed(QString before, QString after);
-	void materialModified(ShaderParams params);
-	void materialRemoved(QString name);
+	void materialModified(unsigned index);
+	void materialRemoved(unsigned index);
 
 private:
 	GLuint programs[7];
 	GLuint textures[2];
 	bool initialized = false;
 	ShaderParams defaultMaterial;
-	std::map<long, ShaderParams> materials;
+	std::vector<ShaderParams> materials;
 
 	void createPrograms();
 	bool isCompiled(GLuint name, const char *filename);

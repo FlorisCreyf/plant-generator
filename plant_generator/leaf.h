@@ -25,8 +25,8 @@
 namespace pg {
 	class Leaf {
 		bool custom;
-		long material;
-		long mesh;
+		unsigned material;
+		unsigned mesh;
 		float position;
 		Vec3 scale;
 		Quat rotation;
@@ -62,10 +62,10 @@ namespace pg {
 		Vec3 getDirection(Vec3 stemDirection) const;
 		void setScale(Vec3 scale);
 		Vec3 getScale() const;
-		void setMaterial(long material);
-		long getMaterial() const;
-		void setMesh(long mesh);
-		long getMesh() const;
+		void setMaterial(unsigned material);
+		unsigned getMaterial() const;
+		void setMesh(unsigned mesh);
+		unsigned getMesh() const;
 	};
 }
 

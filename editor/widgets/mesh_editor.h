@@ -66,11 +66,9 @@ public slots:
 	void removeMesh();
 
 signals:
-	void meshModified();
-	void meshChanged(pg::Geometry mesh);
 	void meshAdded(pg::Geometry geom);
-	void meshRenamed(QString before, QString after);
-	void meshRemoved(QString name);
+	void meshModified(pg::Geometry geom, unsigned index);
+	void meshRemoved(unsigned index);
 };
 
 #endif /* MESH_EDITOR_H */

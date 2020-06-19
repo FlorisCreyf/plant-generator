@@ -195,52 +195,93 @@ void Plant::reinsertStems(vector<Plant::Extraction> &extractions)
 
 void Plant::addMaterial(Material material)
 {
-	this->materials[material.getID()] = material;
+	this->materials.push_back(material);
 }
 
-void Plant::removeMaterial(long id)
+void Plant::updateMaterial(Material material, unsigned index)
 {
-	if (this->root) {
-		if (this->root->getMaterial(Stem::Outer) == id)
-			this->root->setMaterial(Stem::Outer, 0);
-		if (this->root->getMaterial(Stem::Inner) == id)
-			this->root->setMaterial(Stem::Inner, 0);
-		removeMaterial(this->root, id);
+	this->materials[index] = material;
+}
+
+void Plant::removeMaterial(unsigned index)
+{
+	if (this->root)
+		removeMaterial(this->root, index);
+	this->materials.erase(this->materials.begin()+index);
+}
+
+void Plant::removeMaterial(Stem *stem, unsigned index)
+{
+	unsigned outerMaterial = stem->getMaterial(Stem::Outer);
+	unsigned innerMaterial = stem->getMaterial(Stem::Inner);
+	if (outerMaterial == index)
+		stem->setMaterial(Stem::Outer, 0);
+	else if (outerMaterial > index)
+		stem->setMaterial(Stem::Outer, outerMaterial-1);
+	if (innerMaterial == index)
+		stem->setMaterial(Stem::Inner, 0);
+	else if (innerMaterial > index)
+		stem->setMaterial(Stem::Inner, innerMaterial-1);
+
+	vector<Leaf> &leaves = stem->leaves;
+	for (Leaf &leaf : leaves) {
+		unsigned leafMaterial = leaf.getMaterial();
+		if (leafMaterial == index)
+			leaf.setMaterial(0);
+		else if (leafMaterial > index)
+			leaf.setMaterial(leafMaterial-1);
 	}
-	this->materials.erase(id);
-}
 
-void Plant::removeMaterial(Stem *stem, long id)
-{
 	Stem *child = stem->child;
 	while (child) {
-		if (child->getMaterial(Stem::Outer) == id)
-			child->setMaterial(Stem::Outer, 0);
-		if (child->getMaterial(Stem::Inner) == id)
-			child->setMaterial(Stem::Inner, 0);
-		removeMaterial(child, id);
+		removeMaterial(child, index);
 		child = child->nextSibling;
 	}
 }
 
-Material Plant::getMaterial(long id) const
+Material Plant::getMaterial(unsigned index) const
 {
-	return this->materials.at(id);
+	return this->materials.at(index);
 }
 
-std::map<long, Material> Plant::getMaterials() const
+std::vector<Material> Plant::getMaterials() const
 {
 	return this->materials;
 }
 
 void Plant::addLeafMesh(Geometry mesh)
 {
-	this->leafMeshes[mesh.getID()] = mesh;
+	this->leafMeshes.push_back(mesh);
 }
 
-void Plant::removeLeafMesh(long id)
+void Plant::updateLeafMesh(Geometry mesh, unsigned index)
 {
-	this->leafMeshes.erase(id);
+	this->leafMeshes[index] = mesh;
+}
+
+void Plant::removeLeafMesh(unsigned index)
+{
+	if (this->root)
+		removeLeafMesh(this->root, index);
+	this->leafMeshes.erase(this->leafMeshes.begin()+index);
+}
+
+void Plant::removeLeafMesh(Stem *stem, unsigned index)
+{
+	vector<Leaf> &leaves = stem->leaves;
+	for (Leaf &leaf : leaves) {
+		unsigned mesh = leaf.getMesh();
+		if (mesh == index)
+			leaf.setMesh(0);
+		else if (mesh > index)
+			leaf.setMesh(mesh-1);
+	}
+
+	Stem *child = stem->child;
+	while (child) {
+		removeLeafMesh(child, index);
+		child = child->nextSibling;
+	}
 }
 
 void Plant::removeLeafMeshes()
@@ -248,18 +289,12 @@ void Plant::removeLeafMeshes()
 	this->leafMeshes.clear();
 }
 
-Geometry Plant::getLeafMesh(long id) const
+Geometry Plant::getLeafMesh(unsigned index) const
 {
-	if (id != 0)
-		return this->leafMeshes.at(id);
-	else {
-		Geometry geom;
-		geom.setPerpendicularPlanes();
-		return geom;
-	}
+	return this->leafMeshes.at(index);
 }
 
-std::map<long, Geometry> Plant::getLeafMeshes() const
+std::vector<Geometry> Plant::getLeafMeshes() const
 {
 	return this->leafMeshes;
 }

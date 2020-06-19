@@ -34,7 +34,6 @@ void SharedResources::initialize()
 		textures[DefaultTexture] = addTexture(image2);
 
 		defaultMaterial.setDefaultTexture(0, textures[DefaultTexture]);
-		materials[0] = defaultMaterial;
 
 		initialized = true;
 	}
@@ -204,41 +203,39 @@ GLuint SharedResources::buildProgram(GLuint *shaders, int size)
 
 void SharedResources::addMaterial(ShaderParams params)
 {
-	auto it = materials.find(params.getID());
-	if (it != materials.end()) {
-		QString before = QString::fromStdString(it->second.getName());
-		QString after = QString::fromStdString(params.getName());
-		materials[params.getID()] = params;
-		if (before != after)
-			emit materialRenamed(before, after);
-		emit materialModified(params);
-	} else
-		materials[params.getID()] = params;
-
+	materials.push_back(params);
 	emit materialAdded(params);
 }
 
-void SharedResources::removeMaterial(long id)
+void SharedResources::updateMaterial(ShaderParams params, unsigned index)
 {
-	auto it = materials.find(id);
-	QString name = QString::fromStdString(it->second.getName());
-	it->second.clearTextures();
-	materials.erase(it);
-	emit materialRemoved(name);
+	materials[index] = params;
+	emit materialModified(index);
+}
+
+void SharedResources::removeMaterial(unsigned index)
+{
+	materials[index].clearTextures();
+	materials.erase(materials.begin()+index);
+	emit materialRemoved(index);
 }
 
 void SharedResources::clearMaterials()
 {
-	for (auto it = materials.begin(); it != materials.end(); it++) {
-		QString name = QString::fromStdString(it->second.getName());
-		it->second.clearTextures();
-		emit materialRemoved(name);
+	for (size_t i = 0; i < materials.size(); i++) {
+		materials[i].clearTextures();
+		emit materialRemoved(i);
 	}
 	materials.clear();
-	materials[0] = defaultMaterial;
+	materials.push_back(defaultMaterial);
 }
 
-ShaderParams SharedResources::getMaterial(long id)
+ShaderParams SharedResources::getMaterial(unsigned index) const
 {
-	return materials[id];
+	return materials[index];
+}
+
+unsigned SharedResources::getMaterialCount() const
+{
+	return materials.size();
 }

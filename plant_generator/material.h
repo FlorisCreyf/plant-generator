@@ -24,8 +24,6 @@
 
 namespace pg {
 	class Material {
-		static long counter;
-		long id;
 		std::string name;
 		std::string texture;
 		float ratio = 1.0f;
@@ -36,8 +34,6 @@ namespace pg {
 		void serialize(Archive &ar, const unsigned int version)
 		{
 			(void)version;
-			ar & counter;
-			ar & id;
 			ar & name;
 			ar & texture;
 			ar & ratio;
@@ -45,8 +41,6 @@ namespace pg {
 		#endif
 
 	public:
-		Material();
-		long getID() const;
 		void setName(const char *name);
 		void setName(std::string name);
 		std::string getName() const;

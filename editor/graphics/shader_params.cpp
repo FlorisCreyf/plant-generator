@@ -31,11 +31,6 @@ ShaderParams::ShaderParams(pg::Material material) : material(material)
 	loadTexture(0, filename);
 }
 
-long ShaderParams::getID()
-{
-	return material.getID();
-}
-
 void ShaderParams::setName(std::string name)
 {
 	material.setName(name);
@@ -46,12 +41,12 @@ std::string ShaderParams::getName()
 	return material.getName();
 }
 
-GLuint ShaderParams::getTexture(int index)
+GLuint ShaderParams::getTexture(unsigned index)
 {
 	return textures[index];
 }
 
-bool ShaderParams::loadTexture(int index, QString filename)
+bool ShaderParams::loadTexture(unsigned index, QString filename)
 {
 	QImageReader reader(filename);
 	reader.setAutoTransform(true);
@@ -94,11 +89,12 @@ GLuint ShaderParams::loadTexture(QImage image)
 	return name;
 }
 
-void ShaderParams::removeTexture(int index)
+void ShaderParams::removeTexture(unsigned index)
 {
 	auto context = QOpenGLContext::currentContext();
 	auto f = context->extraFunctions();
 
+	material.setRatio(1.0f);
 	material.setTexture("");
 	if (textures[index] != 0 && textures[index] != defaultTextures[index])
 		f->glDeleteTextures(1, &textures[index]);
@@ -116,7 +112,7 @@ pg::Material ShaderParams::getMaterial()
 	return material;
 }
 
-void ShaderParams::setDefaultTexture(int index, GLuint name)
+void ShaderParams::setDefaultTexture(unsigned index, GLuint name)
 {
 	defaultTextures[index] = name;
 	if (textures[index] == 0)

@@ -58,21 +58,18 @@ void PropertyEditor::addMaterial(ShaderParams params)
 	editor->change();
 }
 
-void PropertyEditor::removeMaterial(QString name)
+void PropertyEditor::removeMaterial(unsigned index)
 {
-	long id = 0;
-	id = this->stemEditor->removeMaterial(name);
-	id = this->leafEditor->removeMaterial(name);
-	if (id != 0) {
-		this->editor->getPlant()->removeMaterial(id);
-		this->editor->change();
-	}
+	this->stemEditor->removeMaterial(index);
+	this->leafEditor->removeMaterial(index);
+	this->editor->getPlant()->removeMaterial(index);
+	this->editor->change();
 }
 
-void PropertyEditor::renameMaterial(QString before, QString after)
+void PropertyEditor::updateMaterials()
 {
-	this->stemEditor->renameMaterial(before, after);
-	this->leafEditor->renameMaterial(before, after);
+	this->stemEditor->updateMaterials();
+	this->leafEditor->updateMaterials();
 }
 
 void PropertyEditor::addMesh(pg::Geometry geom)
@@ -81,16 +78,15 @@ void PropertyEditor::addMesh(pg::Geometry geom)
 	this->editor->change();
 }
 
-void PropertyEditor::renameMesh(QString before, QString after)
+void PropertyEditor::updateMesh(pg::Geometry geom, unsigned index)
 {
-	this->leafEditor->renameMesh(before, after);
+	this->leafEditor->updateMesh(geom, index);
 }
 
-void PropertyEditor::removeMesh(QString name)
+void PropertyEditor::removeMesh(unsigned index)
 {
-	bool removed = this->leafEditor->removeMesh(name);
-	if (removed)
-		this->editor->change();
+	this->leafEditor->removeMesh(index);
+	this->editor->change();
 }
 
 QSize PropertyEditor::sizeHint() const

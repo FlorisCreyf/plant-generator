@@ -30,8 +30,8 @@ public:
 	StemEditor(SharedResources *shared, Editor *editor, QWidget *parent);
 	void setFields(std::map<pg::Stem *, PointSelection> instances);
 	bool addMaterial(ShaderParams params);
-	long removeMaterial(QString name);
-	void renameMaterial(QString before, QString after);
+	void removeMaterial(unsigned index);
+	void updateMaterials();
 	void bind(CurveEditor *curveEditor);
 	QSize sizeHint() const;
 

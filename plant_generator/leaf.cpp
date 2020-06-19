@@ -115,22 +115,22 @@ Vec3 Leaf::getScale() const
 	return this->scale;
 }
 
-void Leaf::setMaterial(long material)
+void Leaf::setMaterial(unsigned material)
 {
 	this->material = material;
 }
 
-long Leaf::getMaterial() const
+unsigned Leaf::getMaterial() const
 {
 	return this->material;
 }
 
-void Leaf::setMesh(long mesh)
+void Leaf::setMesh(unsigned mesh)
 {
 	this->mesh = mesh;
 }
 
-long Leaf::getMesh() const
+unsigned Leaf::getMesh() const
 {
 	return this->mesh;
 }

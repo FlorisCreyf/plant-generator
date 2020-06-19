@@ -49,9 +49,6 @@ MeshEditor::MeshEditor(
 	initFields(layout);
 	columns->addLayout(layout);
 	columns->addStretch(1);
-
-	connect(this, SIGNAL(meshChanged(pg::Geometry)),
-		this->meshViewer, SLOT(updateMesh(pg::Geometry)));
 }
 
 QSize MeshEditor::sizeHint() const
@@ -124,7 +121,7 @@ void MeshEditor::initTopRow(QHBoxLayout *topRow)
 void MeshEditor::clear()
 {
 	for (int i = 0; i < this->meshBox->count(); i++)
-		emit meshRemoved(this->meshBox->itemText(i));
+		emit meshRemoved(i);
 	this->meshBox->clear();
 }
 
@@ -147,7 +144,7 @@ void MeshEditor::addMesh()
 	}
 
 	geom.setName(name);
-	geom.setPlane();
+	geom.setPerpendicularPlanes();
 	addMesh(geom);
 }
 
@@ -156,9 +153,9 @@ void MeshEditor::addMesh(pg::Geometry geom)
 	pg::Plant *plant = this->editor->getPlant();
 	QString qname = QString::fromStdString(geom.getName());
 	plant->addLeafMesh(geom);
-	this->meshBox->addItem(qname, QVariant((qlonglong)geom.getID()));
+	this->meshBox->addItem(qname);
 	this->meshBox->setCurrentIndex(this->meshBox->findText(qname));
-	emit meshChanged(geom);
+	this->meshViewer->updateMesh(geom);
 	emit meshAdded(geom);
 }
 
@@ -170,13 +167,14 @@ void MeshEditor::loadCustom()
 
 		if (!filename.isNull()) {
 			pg::Plant *plant = this->editor->getPlant();
-			int id = this->meshBox->currentData().toInt();
-			pg::Geometry geom = plant->getLeafMesh(id);
+			unsigned index = this->meshBox->currentIndex();
+			pg::Geometry geom = plant->getLeafMesh(index);
 			pg::File file;
 			std::string s = filename.toStdString();
 			file.importObj(s.c_str(), &geom);
-			plant->addLeafMesh(geom);
-			emit meshChanged(geom);
+			plant->updateLeafMesh(geom, index);
+			this->meshViewer->updateMesh(geom);
+			emit meshModified(geom, index);
 			this->editor->change();
 		}
 	}
@@ -186,11 +184,12 @@ void MeshEditor::loadPlane()
 {
 	if (this->meshBox->count() > 0) {
 		pg::Plant *plant = editor->getPlant();
-		int id = this->meshBox->currentData().toInt();
-		pg::Geometry geom = plant->getLeafMesh(id);
+		unsigned index = this->meshBox->currentIndex();
+		pg::Geometry geom = plant->getLeafMesh(index);
 		geom.setPlane();
-		plant->addLeafMesh(geom);
-		emit meshChanged(geom);
+		plant->updateLeafMesh(geom, index);
+		this->meshViewer->updateMesh(geom);
+		emit meshModified(geom, index);
 		this->editor->change();
 	}
 }
@@ -199,11 +198,12 @@ void MeshEditor::loadPerpPlane()
 {
 	if (this->meshBox->count() > 0) {
 		pg::Plant *plant = this->editor->getPlant();
-		int id = this->meshBox->currentData().toInt();
-		pg::Geometry geom = plant->getLeafMesh(id);
+		unsigned index = this->meshBox->currentIndex();
+		pg::Geometry geom = plant->getLeafMesh(index);
 		geom.setPerpendicularPlanes();
-		plant->addLeafMesh(geom);
-		emit meshChanged(geom);
+		plant->updateLeafMesh(geom, index);
+		this->meshViewer->updateMesh(geom);
+		emit meshModified(geom, index);
 		this->editor->change();
 	}
 }
@@ -212,11 +212,12 @@ void MeshEditor::loadEmpty()
 {
 	if (this->meshBox->count() > 0) {
 		pg::Plant *plant = this->editor->getPlant();
-		int id = this->meshBox->currentData().toInt();
-		pg::Geometry geom = plant->getLeafMesh(id);
+		unsigned index = this->meshBox->currentIndex();
+		pg::Geometry geom = plant->getLeafMesh(index);
 		geom.clear();
-		plant->addLeafMesh(geom);
-		emit meshChanged(geom);
+		plant->updateLeafMesh(geom, index);
+		this->meshViewer->updateMesh(geom);
+		emit meshModified(geom, index);
 		this->editor->change();
 	}
 }
@@ -224,39 +225,34 @@ void MeshEditor::loadEmpty()
 void MeshEditor::selectMesh()
 {
 	pg::Plant *plant = editor->getPlant();
-	this->selectedText = this->meshBox->currentText();
-	int id = this->meshBox->currentData().toInt();
-	if (id != 0) {
-		pg::Geometry geom = plant->getLeafMesh(id);
-		emit meshChanged(geom);
-	}
+	unsigned index = this->meshBox->currentIndex();
+	pg::Geometry geom = plant->getLeafMesh(index);
+	this->meshViewer->updateMesh(geom);
 }
 
 void MeshEditor::renameMesh()
 {
-	int index = this->meshBox->currentIndex();
-	QString value = this->meshBox->itemText(index);
-	int id = this->meshBox->currentData().toInt();
+	unsigned index = this->meshBox->currentIndex();
+	this->selectedText = this->meshBox->itemText(index);
 	pg::Plant *plant = this->editor->getPlant();
-	pg::Geometry geom = plant->getLeafMesh(id);
-	geom.setName(value.toStdString());
-	plant->addLeafMesh(geom);
-	emit meshRenamed(this->selectedText, value);
-	this->selectedText = value;
+	pg::Geometry geom = plant->getLeafMesh(index);
+	geom.setName(this->selectedText.toStdString());
+	plant->updateLeafMesh(geom, index);
+	emit meshModified(geom, index);
 }
 
 void MeshEditor::removeMesh()
 {
 	 if (this->meshBox->count() > 1) {
 		pg::Plant *plant = this->editor->getPlant();
-		int id = this->meshBox->currentData().toInt();
+		unsigned index = this->meshBox->currentIndex();
 		QString name = this->meshBox->currentText();
 
-		pg::Geometry geom = plant->getLeafMesh(id);
-		plant->removeLeafMesh(id);
+		pg::Geometry geom = plant->getLeafMesh(index);
+		plant->removeLeafMesh(index);
 
-		this->meshBox->removeItem(this->meshBox->currentIndex());
+		this->meshBox->removeItem(index);
 		selectMesh();
-		emit meshRemoved(name);
+		emit meshRemoved(index);
 	}
 }

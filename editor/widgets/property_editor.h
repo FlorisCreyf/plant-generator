@@ -37,11 +37,11 @@ public:
 public slots:
 	void setFields();
 	void addMaterial(ShaderParams params);
-	void renameMaterial(QString before, QString after);
-	void removeMaterial(QString name);
+	void updateMaterials();
+	void removeMaterial(unsigned index);
 	void addMesh(pg::Geometry geom);
-	void renameMesh(QString before, QString after);
-	void removeMesh(QString name);
+	void updateMesh(pg::Geometry geom, unsigned index);
+	void removeMesh(unsigned index);
 
 signals:
 	void isEnabled(bool enabled);

@@ -761,7 +761,7 @@ size_t Mesh::getIndexCount() const
 	return size;
 }
 
-long Mesh::getMaterialID(int mesh) const
+unsigned Mesh::getMaterialIndex(int mesh) const
 {
 	return this->materials.at(mesh);
 }

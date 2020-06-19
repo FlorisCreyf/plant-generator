@@ -15,18 +15,6 @@
 
 #include "material.h"
 
-long pg::Material::counter = 1;
-
-pg::Material::Material()
-{
-	id = counter++;
-}
-
-long pg::Material::getID() const
-{
-	return id;
-}
-
 void pg::Material::setName(const char *name)
 {
 	this->name = name;

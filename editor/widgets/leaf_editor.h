@@ -27,11 +27,11 @@ public:
 	LeafEditor(SharedResources *shared, Editor *editor, QWidget *parent);
 	void setFields(std::map<pg::Stem *, std::set<size_t>> instances);
 	bool addMaterial(ShaderParams params);
-	long removeMaterial(QString name);
-	void renameMaterial(QString before, QString after);
+	void removeMaterial(unsigned index);
+	void updateMaterials();
 	void addMesh(pg::Geometry geom);
-	void renameMesh(QString before, QString after);
-	bool removeMesh(QString name);
+	void updateMesh(pg::Geometry geom, unsigned index);
+	void removeMesh(unsigned);
 	QSize sizeHint() const;
 
 public slots:

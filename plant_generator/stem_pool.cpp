@@ -28,8 +28,7 @@ Stem *StemPool::allocate()
 {
 	for (auto it = this->pools.begin(); it != this->pools.end(); it++) {
 		Stem *stem = it->firstAvailable;
-		if (stem && stem->unused) {
-			stem->unused = false;
+		if (stem) {
 			it->firstAvailable = stem->nextAvailable;
 			it->remaining--;
 			return stem;
@@ -37,7 +36,6 @@ Stem *StemPool::allocate()
 	}
 	Pool &pool = addPool();
 	Stem *stem = pool.firstAvailable;
-	stem->unused = false;
 	pool.firstAvailable = stem->nextAvailable;
 	pool.remaining--;
 	return stem;
@@ -48,7 +46,6 @@ bool StemPool::allocateAt(Stem *stem)
 	auto it = getPool(stem);
 	if (it == this->pools.end())
 		return false;
-	stem->unused = false;
 	it->remaining--;
 	if (stem->nextAvailable)
 		stem->nextAvailable->prevAvailable = stem->prevAvailable;
@@ -70,12 +67,10 @@ StemPool::Pool &StemPool::addPool()
 	Stem *next = pool.firstAvailable;
 	Stem *prev = nullptr;
 	for (int i = 0; i < PG_POOL_SIZE-1; i++) {
-		pool.stems[i].unused = true;
 		pool.stems[i].prevAvailable = prev;
 		prev = next;
 		pool.stems[i].nextAvailable = ++next;
 	}
-	pool.stems[PG_POOL_SIZE-1].unused = true;
 	pool.stems[PG_POOL_SIZE-1].prevAvailable = prev;
 	pool.stems[PG_POOL_SIZE-1].nextAvailable = nullptr;
 
@@ -85,7 +80,6 @@ StemPool::Pool &StemPool::addPool()
 size_t StemPool::deallocate(Stem *stem)
 {
 	list<Pool>::iterator it = getPool(stem);
-	stem->unused = true;
 	it->remaining++;
 	if (it->firstAvailable) {
 		stem->prevAvailable = nullptr;

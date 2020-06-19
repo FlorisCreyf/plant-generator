@@ -216,12 +216,12 @@ Vec3 Stem::getLocation() const
 	return this->location;
 }
 
-void Stem::setMaterial(int feature, long material)
+void Stem::setMaterial(Stem::Type feature, unsigned material)
 {
 	this->material[feature] = material;
 }
 
-long Stem::getMaterial(int feature) const
+unsigned Stem::getMaterial(Stem::Type feature) const
 {
 	return this->material[feature];
 }

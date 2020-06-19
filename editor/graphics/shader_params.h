@@ -31,15 +31,14 @@ class ShaderParams {
 public:
  	ShaderParams();
 	ShaderParams(pg::Material material);
-	long getID();
 	void setName(std::string name);
 	std::string getName();
-	GLuint getTexture(int index);
-	bool loadTexture(int index, QString filename);
-	void removeTexture(int index);
+	GLuint getTexture(unsigned index);
+	bool loadTexture(unsigned index, QString filename);
+	void removeTexture(unsigned index);
 	void clearTextures();
 	pg::Material getMaterial();
-	void setDefaultTexture(int index, GLuint name);
+	void setDefaultTexture(unsigned index, GLuint name);
 };
 
 #endif /* SHADER_PARAMS_H */

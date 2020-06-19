@@ -29,8 +29,6 @@ namespace pg {
 	class Geometry {
 		std::vector<Vertex> points;
 		std::vector<unsigned> indices;
-		static long counter;
-		long id;
 		std::string name;
 
 		#ifdef PG_SERIALIZE
@@ -39,8 +37,6 @@ namespace pg {
 		void serialize(Archive &ar, const unsigned int version)
 		{
 			(void)version;
-			ar & counter;
-			ar & id;
 			ar & name;
 			ar & points;
 			ar & indices;
@@ -48,8 +44,6 @@ namespace pg {
 		#endif
 
 	public:
-		Geometry();
-		long getID() const;
 		std::string getName() const;
 		void setName(std::string name);
 		void setPlane();

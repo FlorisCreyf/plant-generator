@@ -53,7 +53,7 @@ namespace pg {
 		size_t getVertexCount() const;
 		size_t getIndexCount() const;
 		size_t getMeshCount() const;
-		long getMaterialID(int mesh) const;
+		unsigned getMaterialIndex(int mesh) const;
 
 	private:
 		struct State {

@@ -105,12 +105,10 @@ void StemEditor::createInterface()
 
 	this->stemMaterialLabel = new QLabel(tr("Material"));
 	this->stemMaterialValue = new QComboBox;
-	this->stemMaterialValue->addItem(tr(""), QVariant(0));
 	form->addRow(this->stemMaterialLabel, this->stemMaterialValue);
 
 	this->capMaterialLabel = new QLabel(tr("Cap Material"));
 	this->capMaterialValue = new QComboBox;
-	this->capMaterialValue->addItem(tr(""), QVariant(0));
 	form->addRow(this->capMaterialLabel, this->capMaterialValue);
 
 	this->collarXLabel = new QLabel(tr("Collar (X)"));
@@ -280,8 +278,8 @@ void StemEditor::setFields(map<Stem *, PointSelection> instances)
 
 	indicateSimilarities(this->stemMaterialLabel);
 	for (auto it = nextIt; it != instances.end(); ++it) {
-		int a = prev(it)->first->getMaterial(Stem::Outer);
-		int b = it->first->getMaterial(Stem::Outer);
+		unsigned a = prev(it)->first->getMaterial(Stem::Outer);
+		unsigned b = it->first->getMaterial(Stem::Outer);
 		if (a != b) {
 			indicateDifferences(this->stemMaterialLabel);
 			break;
@@ -296,8 +294,8 @@ void StemEditor::setFields(map<Stem *, PointSelection> instances)
 
 	indicateSimilarities(this->capMaterialLabel);
 	for (auto it = nextIt; it != instances.end(); ++it) {
-		int a = prev(it)->first->getMaterial(Stem::Inner);
-		int b = it->first->getMaterial(Stem::Inner);
+		unsigned a = prev(it)->first->getMaterial(Stem::Inner);
+		unsigned b = it->first->getMaterial(Stem::Inner);
 		if (a != b) {
 			indicateDifferences(this->capMaterialLabel);
 			break;
@@ -380,41 +378,40 @@ void StemEditor::enable(bool enable)
 
 bool StemEditor::addMaterial(ShaderParams params)
 {
-	QString name;
-	name = QString::fromStdString(params.getName());
+	QString name = QString::fromStdString(params.getName());
 	if (this->stemMaterialValue->findText(name) < 0) {
-		qlonglong id = params.getID();
-		this->stemMaterialValue->addItem(name, QVariant(id));
-		this->capMaterialValue->addItem(name, QVariant(id));
+		this->stemMaterialValue->addItem(name);
+		this->capMaterialValue->addItem(name);
 		return true;
 	}
 	return false;
 }
 
-long StemEditor::removeMaterial(QString name)
+void StemEditor::removeMaterial(unsigned index)
 {
-	long id = 0;
-	int index = 0;
-	index = this->stemMaterialValue->findText(name);
-	if (index != 0) {
-		id = this->stemMaterialValue->itemData(index).toInt();
-		this->stemMaterialValue->removeItem(index);
-	}
-	index = this->capMaterialValue->findText(name);
-	if (index != 0) {
-		id = this->capMaterialValue->itemData(index).toInt();
-		this->capMaterialValue->removeItem(index);
-	}
-	return id;
+	/* Blocking signals is important because otherwise material indices
+	will be decremented twice for selected stems. */
+	blockSignals(true);
+	unsigned stemIndex = this->stemMaterialValue->currentIndex();
+	unsigned capIndex = this->capMaterialValue->currentIndex();
+	if (index == stemIndex)
+		this->stemMaterialValue->setCurrentIndex(0);
+	if (index == capIndex)
+		this->capMaterialValue->setCurrentIndex(0);
+	this->stemMaterialValue->removeItem(index);
+	this->capMaterialValue->removeItem(index);
+	blockSignals(false);
 }
 
-void StemEditor::renameMaterial(QString before, QString after)
+void StemEditor::updateMaterials()
 {
-	int index;
-	index = this->stemMaterialValue->findText(before);
-	this->stemMaterialValue->setItemText(index, after);
-	index = this->capMaterialValue->findText(before);
-	this->capMaterialValue->setItemText(index, after);
+	unsigned size = this->shared->getMaterialCount();
+	for (unsigned i = 0; i < size; i++) {
+		ShaderParams params = this->shared->getMaterial(i);
+		QString name = QString::fromStdString(params.getName());
+		this->stemMaterialValue->setItemText(i, name);
+		this->capMaterialValue->setItemText(i, name);
+	}
 }
 
 void StemEditor::changeCustom(int custom)
@@ -513,10 +510,10 @@ void StemEditor::changeStemMaterial()
 {
 	beginChanging();
 	indicateSimilarities(this->stemMaterialLabel);
-	int id = this->stemMaterialValue->currentData().toInt();
+	unsigned index = this->stemMaterialValue->currentIndex();
 	auto instances = this->editor->getSelection()->getStemInstances();
 	for (auto &instance : instances)
-		instance.first->setMaterial(Stem::Outer, id);
+		instance.first->setMaterial(Stem::Outer, index);
 	this->editor->change();
 	finishChanging();
 }
@@ -551,10 +548,10 @@ void StemEditor::changeCapMaterial()
 {
 	beginChanging();
 	indicateSimilarities(this->capMaterialLabel);
-	int id = this->capMaterialValue->currentData().toInt();
+	unsigned index = this->capMaterialValue->currentIndex();
 	auto instances = this->editor->getSelection()->getStemInstances();
 	for (auto &instance : instances)
-		instance.first->setMaterial(Stem::Inner, id);
+		instance.first->setMaterial(Stem::Inner, index);
 	this->editor->change();
 	finishChanging();
 }

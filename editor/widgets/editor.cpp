@@ -482,8 +482,8 @@ void Editor::paintGL()
 		glUseProgram(shared->getShader(SharedResources::Material));
 		glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
 		for (size_t i = 0; i < mesh.getMeshCount(); i++) {
-			long materialID = mesh.getMaterialID(i);
-			ShaderParams params = shared->getMaterial(materialID);
+			unsigned material = mesh.getMaterialIndex(i);
+			ShaderParams params = shared->getMaterial(material);
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, params.getTexture(0));
 			GLsizei size = mesh.getIndices(i)->size();
@@ -746,9 +746,10 @@ void Editor::change(QAction *action)
 	update();
 }
 
-void Editor::updateMaterial(ShaderParams params)
+void Editor::updateMaterial(unsigned index)
 {
-	plant.addMaterial(params.getMaterial());
+	ShaderParams params = this->shared->getMaterial(index);
+	plant.updateMaterial(params.getMaterial(), index);
 }
 
 pg::Plant *Editor::getPlant()

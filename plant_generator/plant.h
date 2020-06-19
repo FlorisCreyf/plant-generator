@@ -61,24 +61,26 @@ namespace pg {
 		void reinsertStems(std::vector<Extraction> &stem);
 
 		void addMaterial(Material material);
-		void removeMaterial(long id);
-		Material getMaterial(long id) const;
-		std::map<long, Material> getMaterials() const;
+		void updateMaterial(Material material, unsigned index);
+		void removeMaterial(unsigned index);
+		Material getMaterial(unsigned index) const;
+		std::vector<Material> getMaterials() const;
 
 		void addLeafMesh(Geometry mesh);
-		void removeLeafMesh(long id);
+		void updateLeafMesh(Geometry mesh, unsigned index);
+		void removeLeafMesh(unsigned index);
 		void removeLeafMeshes();
-		Geometry getLeafMesh(long id) const;
-		std::map<long, Geometry> getLeafMeshes() const;
+		Geometry getLeafMesh(unsigned index) const;
+		std::vector<Geometry> getLeafMeshes() const;
 
 	private:
 		Stem *root;
-		std::map<long, Material> materials;
-		std::map<long, Geometry> leafMeshes;
+		std::vector<Material> materials;
+		std::vector<Geometry> leafMeshes;
 		StemPool stemPool;
 
-		void removeMaterial(Stem *, long);
-		void updateDepth(Stem *, int);
+		void removeMaterial(Stem *, unsigned);
+		void removeLeafMesh(Stem *, unsigned);
 		void deallocateStems(Stem *);
 		void insertStem(Stem *, Stem *);
 		void decouple(Stem *);

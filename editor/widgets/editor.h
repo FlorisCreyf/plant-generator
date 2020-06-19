@@ -55,7 +55,7 @@ signals:
 public slots:
 	void change();
 	void change(QAction *action);
-	void updateMaterial(ShaderParams params);
+	void updateMaterial(unsigned index);
 
 public:
 	Editor(SharedResources *shared, KeyMap *keymap, QWidget *parent = 0);

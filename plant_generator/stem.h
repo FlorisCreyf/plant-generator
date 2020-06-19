@@ -33,7 +33,6 @@ namespace pg {
 		friend class Plant;
 		friend class StemPool;
 
-		bool unused;
 		union {
 			Stem *nextAvailable;
 			Stem *nextSibling;
@@ -53,7 +52,7 @@ namespace pg {
 		Vec3 location;
 		Path path;
 		int resolution;
-		long material[2];
+		unsigned material[2];
 		Vec2 swelling;
 
 		bool custom;
@@ -121,8 +120,8 @@ namespace pg {
 		void setPosition(float position);
 		float getPosition() const;
 		Vec3 getLocation() const;
-		void setMaterial(int feature, long material);
-		long getMaterial(int feature) const;
+		void setMaterial(Type feature, unsigned material);
+		unsigned getMaterial(Type feature) const;
 
 		std::vector<Joint> getJoints() const;
 		bool hasJoints() const;

@@ -37,8 +37,7 @@ string pg::File::exportMtl(string filename, const Plant &plant)
 		return "";
 
 	file << "newmtl default\n";
-	for (auto instance : plant.getMaterials()) {
-		Material material = instance.second;
+	for (Material &material : plant.getMaterials()) {
 		file << "newmtl " << material.getName() << "\n";
 		string diffuse = material.getTexture();
 		if (!diffuse.empty())
@@ -64,9 +63,9 @@ void pg::File::exportObj(string filename, const Mesh &mesh, const Plant &plant)
 		const vector<Vertex> *vertices = mesh.getVertices(m);
 		const vector<unsigned> *indices = mesh.getIndices(m);
 
-		long materialID = mesh.getMaterialID(m);
-		if (materialID > 0) {
-			Material material = plant.getMaterial(materialID);
+		unsigned materialIndex = mesh.getMaterialIndex(m);
+		if (materialIndex > 0) {
+			Material material = plant.getMaterial(materialIndex);
 			file << "usemtl " << material.getName() << "\n";
 		} else
 			file << "usemtl default\n";
@@ -212,10 +211,10 @@ string getName(string name)
 	return name;
 }
 
-string getMaterialName(long materialID, const Plant &plant)
+string getMaterialName(unsigned materialIndex, const Plant &plant)
 {
-	if (materialID != 0) {
-		Material material = plant.getMaterial(materialID);
+	if (materialIndex != 0) {
+		Material material = plant.getMaterial(materialIndex);
 		return getName(material.getName());
 	} else
 		return "default";
@@ -302,8 +301,8 @@ void setGeometry(XMLWriter &xml, const Mesh &mesh, const Plant &plant)
 		if (mesh.getVertices(i)->size() == 0)
 			continue;
 
-		long materialID = mesh.getMaterialID(i);
-		string name = getMaterialName(materialID, plant) + "-material";
+		unsigned index = mesh.getMaterialIndex(i);
+		string name = getMaterialName(index, plant) + "-material";
 		const vector<unsigned> *indices = mesh.getIndices(i);
 		string value;
 		for (unsigned index : *indices) {
@@ -335,11 +334,11 @@ void setImages(XMLWriter &xml, const Mesh &mesh, const Plant &plant)
 		if (mesh.getVertices(i)->size() == 0)
 			continue;
 
-		long materialID = mesh.getMaterialID(i);
-		if (materialID == 0)
+		unsigned materialIndex = mesh.getMaterialIndex(i);
+		if (materialIndex == 0)
 			continue;
 
-		Material material = plant.getMaterial(materialID);
+		Material material = plant.getMaterial(materialIndex);
 		if (material.getTexture().empty())
 			continue;
 
@@ -360,15 +359,15 @@ void setEffects(XMLWriter &xml, const Mesh &mesh, const Plant &plant)
 		if (mesh.getVertices(i)->size() == 0)
 			continue;
 
-		long materialID = mesh.getMaterialID(i);
-		if (materialID == 0)
+		unsigned materialIndex = mesh.getMaterialIndex(i);
+		if (materialIndex == 0)
 			continue;
 
-		Material material = plant.getMaterial(materialID);
+		Material material = plant.getMaterial(materialIndex);
 		if (material.getTexture().empty())
 			continue;
 
-		std::string name = getMaterialName(materialID, plant);
+		std::string name = getMaterialName(materialIndex, plant);
 		string path = material.getTexture();
 		string texture = getName(path);
 
@@ -409,13 +408,13 @@ void setMaterials(XMLWriter &xml, const Mesh &mesh, const Plant &plant)
 		if (mesh.getVertices(i)->size() == 0)
 			continue;
 
-		long materialID = mesh.getMaterialID(i);
-		string name = getMaterialName(materialID, plant);
+		unsigned materialIndex = mesh.getMaterialIndex(i);
+		string name = getMaterialName(materialIndex, plant);
 		xml >> ("<material id='" + name + "-material' "
 			"name='" + name + "-material'>");
 
-		if (materialID != 0) {
-			Material material = plant.getMaterial(materialID);
+		if (materialIndex != 0) {
+			Material material = plant.getMaterial(materialIndex);
 			if (!material.getTexture().empty()) {
 				string url = "#" + name + "-effect";
 				xml += "<instance_effect url='" + url + "'/>";
@@ -609,7 +608,7 @@ void bindPlantMaterial(XMLWriter &xml, const Mesh &mesh, const Plant &plant)
 		if (mesh.getVertices(i)->size() == 0)
 			continue;
 
-		string name = getMaterialName(mesh.getMaterialID(i), plant);
+		string name = getMaterialName(mesh.getMaterialIndex(i), plant);
 		xml >> "<technique_common>";
 		xml >> ("<instance_material symbol='" + name + "-material' "
 			"target='#" + name + "-material'>");

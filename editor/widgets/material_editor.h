@@ -58,11 +58,6 @@ public slots:
 	void selectMaterial();
 	void renameMaterial();
 	void removeMaterial();
-
-signals:
-	void materialModified(ShaderParams params);
-	void materialChanged(ShaderParams params);
-	void materialAdded(ShaderParams params);
 };
 
 #endif /* MATERIAL_EDITOR_H */
