@@ -101,7 +101,7 @@ void Mesh::addSections(State &state)
 		}
 	}
 
-	if (stem->getPath().getMinRadius() > 0)
+	if (stem->getMinRadius() > 0)
 		capStem(stem, state.mesh, state.prevIndex);
 }
 
@@ -126,7 +126,7 @@ void Mesh::addSection(State &state, Quat rotation)
 	Stem *stem = state.segment.stem;
 	const float deltaAngle = 2.0f * PI / stem->getResolution();
 	const float uOffset = 1.0f / stem->getResolution();
-	float radius = stem->getPath().getRadius(state.section);
+	float radius = this->plant->getRadius(stem, state.section);
 	float angle = 0.0f;
 
 	Vertex vertex;
@@ -175,7 +175,7 @@ float Mesh::getTextureLength(Stem *stem, size_t section)
 {
 	if (section > 0) {
 		float length = stem->getPath().getSegmentLength(section);
-		float radius = stem->getPath().getRadius(section-1);
+		float radius = this->plant->getRadius(stem, section-1);
 		float aspect = getAspect(this->plant, stem);
 		return (length * aspect) / (radius * 2.0f * PI);
 	} else
@@ -404,7 +404,7 @@ void Mesh::setBranchCollarUVs(
 	size_t lastIndex, Stem *stem, int mesh, int resolution, int divisions)
 {
 	size_t size = resolution + 1;
-	float radius = stem->getPath().getRadius(1);
+	float radius = this->plant->getRadius(stem, 1);
 	float aspect = getAspect(this->plant, stem);
 
 	for (int i = 0; i <= resolution; i++) {

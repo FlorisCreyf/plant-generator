@@ -17,38 +17,27 @@
 
 #include "material_editor.h"
 #include "plant_generator/math/math.h"
-#include "item_delegate.h"
 
 using pg::Vec3;
 using pg::Mat4;
 
-MaterialEditor::MaterialEditor(SharedResources *shared, QWidget *parent) :
-	QWidget(parent)
+MaterialEditor::MaterialEditor(
+	SharedResources *shared, Editor *editor, QWidget *parent) :
+	ObjectEditor(parent)
 {
 	this->shared = shared;
-	setFocusPolicy(Qt::StrongFocus);
-	QVBoxLayout *columns = new QVBoxLayout(this);
-	columns->setSizeConstraint(QLayout::SetMinimumSize);
-	columns->setSpacing(0);
-	columns->setMargin(0);
-
-	QHBoxLayout *topRow = new QHBoxLayout();
-	topRow->setSizeConstraint(QLayout::SetMinimumSize);
-	topRow->setSpacing(0);
-	topRow->setMargin(0);
-	initTopRow(topRow);
-	columns->addLayout(topRow);
+	this->editor = editor;
 
 	this->materialViewer = new MaterialViewer(shared, this);
 	this->materialViewer->setMinimumHeight(200);
-	columns->addWidget(this->materialViewer);
+	this->layout->addWidget(this->materialViewer);
 
 	QFormLayout *form = new QFormLayout();
 	form->setMargin(5);
 	form->setSpacing(2);
 	initFields(form);
-	columns->addLayout(form);
-	columns->addStretch(1);
+	this->layout->addLayout(form);
+	this->layout->addStretch(1);
 }
 
 QSize MaterialEditor::sizeHint() const
@@ -88,123 +77,122 @@ void MaterialEditor::initFields(QFormLayout *form)
 		this, SLOT(removeDiffuseFile()));
 }
 
-void MaterialEditor::initTopRow(QHBoxLayout *topRow)
-{
-	this->addButton = new QPushButton("+", this);
-	this->addButton->setFixedHeight(22);
-	this->addButton->setFixedWidth(22);
-
-	this->removeButton = new QPushButton("-", this);
-	this->removeButton->setFixedHeight(22);
-	this->removeButton->setFixedWidth(22);
-
-	this->materialBox = new QComboBox(this);
-	this->materialBox->setEditable(true);
-	this->materialBox->setInsertPolicy(QComboBox::InsertAtCurrent);
-	this->materialBox->setItemDelegate(new ItemDelegate());
-
-	topRow->addWidget(this->materialBox);;
-	topRow->addWidget(this->removeButton);
-	topRow->addWidget(this->addButton);
-	topRow->setAlignment(Qt::AlignTop);
-
-	connect(this->materialBox->lineEdit(), SIGNAL(editingFinished()),
-		this, SLOT(renameMaterial()));
-	connect(this->addButton, SIGNAL(clicked()),
-		this, SLOT(addMaterial()));
-	connect(this->removeButton, SIGNAL(clicked()),
-		this, SLOT(removeMaterial()));
-	connect(this->materialBox, SIGNAL(currentIndexChanged(int)),
-		this, SLOT(selectMaterial()));
-}
-
 const MaterialViewer *MaterialEditor::getViewer() const
 {
 	return this->materialViewer;
 }
 
+void MaterialEditor::init(const std::vector<pg::Material> &materials)
+{
+	clear();
+	for (pg::Material material : materials) {
+		ShaderParams params(material);
+		QString name = QString::fromStdString(params.getName());
+		this->shared->addMaterial(params);
+		this->selectionBox->addItem(name);
+		if (!material.getTexture().empty()) {
+			QString filename =
+				QString::fromStdString(material.getTexture());
+			params.loadTexture(0, filename);
+		}
+	}
+	select();
+}
+
 /** Add an existing material to the material list. */
-void MaterialEditor::addMaterial(pg::Material material)
+void MaterialEditor::add(pg::Material material)
 {
 	ShaderParams params(material);
-	QString qname = QString::fromStdString(params.getName());
+	QString name = QString::fromStdString(params.getName());
 	this->shared->addMaterial(params);
-	this->materialBox->addItem(qname);
-	this->materialBox->setCurrentIndex(this->materialBox->count() - 1);
+	this->selectionBox->addItem(name);
+	this->selectionBox->setCurrentIndex(this->selectionBox->count() - 1);
 
 	if (!material.getTexture().empty()) {
-		std::string filename = material.getTexture();
-		QString qfilename = QString::fromStdString(filename);
-		this->diffuseBox->setText(qfilename);
-		params.loadTexture(0, qfilename);
+		QString filename;
+		filename = QString::fromStdString(material.getTexture());
+		this->diffuseBox->setText(filename);
+		params.loadTexture(0, filename);
 	}
 
+	this->editor->getPlant()->addMaterial(params.getMaterial());
 	this->materialViewer->updateMaterial(params);
 }
 
 /** Add an empty material with a unique name to the material list. */
-void MaterialEditor::addMaterial()
+void MaterialEditor::add()
 {
 	ShaderParams params;
 	std::string name;
 	QString qname;
-	GLuint tex = this->shared->getTexture(SharedResources::DefaultTexture);
 
 	for (int i = 1; true; i++) {
 		name = "Material " + std::to_string(i);
 		qname = QString::fromStdString(name);
-		if (this->materialBox->findText(qname) == -1)
+		if (this->selectionBox->findText(qname) == -1)
 			break;
 	}
 
 	params.setName(name);
-	params.setDefaultTexture(0, tex);
 	this->shared->addMaterial(params);
-	this->diffuseBox->setText(tr(""));
-	this->materialBox->addItem(qname);
-	this->materialBox->setCurrentIndex(this->materialBox->findText(qname));
+	this->editor->getPlant()->addMaterial(params.getMaterial());
 	this->materialViewer->updateMaterial(params);
+
+	this->diffuseBox->setText(tr(""));
+	this->selectionBox->addItem(qname);
+	this->selectionBox->setCurrentIndex(
+		this->selectionBox->findText(qname));
 }
 
 void MaterialEditor::clear()
 {
+	pg::Plant *plant = this->editor->getPlant();
+	int count = this->selectionBox->count();
+	while (count > 0) {
+		plant->removeMaterial(count-1);
+		count--;
+	}
+	this->selectionBox->clear();
 	this->shared->clearMaterials();
-	this->materialBox->clear();
 	this->diffuseBox->clear();
 }
 
-void MaterialEditor::renameMaterial()
+void MaterialEditor::rename()
 {
-	unsigned index = this->materialBox->currentIndex();
-	QString value = this->materialBox->itemText(index);
+	unsigned index = this->selectionBox->currentIndex();
+	QString value = this->selectionBox->itemText(index);
 	ShaderParams params = this->shared->getMaterial(index);
 	params.setName(value.toStdString());
-	this->shared->updateMaterial(params, index);
+	update(params, index);
 }
 
-void MaterialEditor::selectMaterial()
+void MaterialEditor::select()
 {
-	unsigned index = this->materialBox->currentIndex();
-	ShaderParams params = this->shared->getMaterial(index);
-	std::string filename = params.getMaterial().getTexture();
-	QString qfilename = QString::fromStdString(filename);
-	this->diffuseBox->setText(qfilename);
-	this->materialViewer->updateMaterial(params);
+	if (this->selectionBox->count()) {
+		unsigned index = this->selectionBox->currentIndex();
+		ShaderParams params = this->shared->getMaterial(index);
+		std::string filename = params.getMaterial().getTexture();
+		QString qfilename = QString::fromStdString(filename);
+		this->diffuseBox->setText(qfilename);
+		this->materialViewer->updateMaterial(params);
+	}
 }
 
-void MaterialEditor::removeMaterial()
+void MaterialEditor::remove()
 {
-	if (this->materialBox->count() > 1) {
-		unsigned index = this->materialBox->currentIndex();
+	if (this->selectionBox->count() > 1) {
+		unsigned index = this->selectionBox->currentIndex();
+		this->selectionBox->removeItem(index);
 		this->shared->removeMaterial(index);
-		this->materialBox->removeItem(index);
-		selectMaterial();
+		this->editor->getPlant()->removeMaterial(index);
+		this->editor->change();
+		select();
 	}
 }
 
 void MaterialEditor::openDiffuseFile()
 {
-	unsigned index = this->materialBox->currentIndex();
+	unsigned index = this->selectionBox->currentIndex();
 	ShaderParams params = this->shared->getMaterial(index);
 
 	QString filename = QFileDialog::getOpenFileName(
@@ -213,18 +201,24 @@ void MaterialEditor::openDiffuseFile()
 
 	if (!filename.isNull() || !filename.isEmpty())
 		if (params.loadTexture(0, filename)) {
-			this->shared->updateMaterial(params, index);
 			this->diffuseBox->setText(filename);
-			this->materialViewer->updateMaterial(params);
+			update(params, index);
 		}
 }
 
 void MaterialEditor::removeDiffuseFile()
 {
-	unsigned index = this->materialBox->currentIndex();
+	unsigned index = this->selectionBox->currentIndex();
 	ShaderParams params = this->shared->getMaterial(index);
 	params.removeTexture(0);
 	this->diffuseBox->clear();
+	update(params, index);
+}
+
+void MaterialEditor::update(ShaderParams params, unsigned index)
+{
 	this->shared->updateMaterial(params, index);
+	this->editor->getPlant()->updateMaterial(params.getMaterial(), index);
+	this->editor->change();
 	this->materialViewer->updateMaterial(params);
 }

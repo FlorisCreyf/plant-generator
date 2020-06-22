@@ -15,29 +15,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SELECTOR_H
-#define SELECTOR_H
+#ifndef OBJECT_EDITOR_H
+#define OBJECT_EDITOR_H
 
-#include "camera.h"
-#include "selection.h"
-#include "plant_generator/mesh.h"
-#include <QtGui/QMouseEvent>
+#include <QtWidgets>
 
-class Selector {
-	const Camera *camera;
+class ObjectEditor : public QWidget {
+	Q_OBJECT
 
-	bool selectPoint(const QMouseEvent *, Selection *);
-	void selectMesh(const QMouseEvent *, const pg::Mesh *, Selection *);
-	std::pair<float, pg::Stem *> getStem(
-		pg::Ray &, pg::Stem *, pg::Plant *);
-	std::pair<float, pg::Segment> getLeaf(pg::Ray, const pg::Mesh *);
+	void initTopRow(QHBoxLayout *topRow);
+
+protected:
+	QVBoxLayout *layout;
+	QComboBox *selectionBox;
+	QPushButton *addButton;
+	QPushButton *removeButton;
 
 public:
-	Selector(const Camera *camera);
-	void select(const QMouseEvent *event, const pg::Mesh *mesh,
-		Selection *selection);
-	int selectPoint(const QMouseEvent *event, const pg::Spline &spline,
-		pg::Vec3 location, PointSelection *selection);
+	ObjectEditor(QWidget *parent);
+
+public slots:
+	virtual void add() = 0;
+	virtual void rename() = 0;
+	virtual void remove() = 0;
+	virtual void select() = 0;
 };
 
-#endif
+#endif /* OBJECT_EDITOR_H */

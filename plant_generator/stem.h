@@ -54,6 +54,9 @@ namespace pg {
 		int resolution;
 		unsigned material[2];
 		Vec2 swelling;
+		unsigned radiusCurve;
+		float minRadius;
+		float maxRadius;
 
 		bool custom;
 		Derivation derivation;
@@ -80,6 +83,9 @@ namespace pg {
 			ar & location;
 			ar & material;
 			ar & swelling;
+			ar & radiusCurve;
+			ar & maxRadius;
+			ar & minRadius;
 			ar & joints;
 			ar & custom;
 			ar & derivation;
@@ -110,13 +116,18 @@ namespace pg {
 		const std::vector<Leaf> &getLeaves() const;
 		void removeLeaf(size_t index);
 
+		void setMaxRadius(float radius);
+		float getMaxRadius() const;
+		void setMinRadius(float radius);
+		float getMinRadius() const;
+		void setRadiusCurve(unsigned index);
+		unsigned getRadiusCurve() const;
 		void setResolution(int resolution);
 		int getResolution() const;
 		void setPath(Path &path);
 		Path getPath() const;
 		void setSwelling(Vec2 scale);
 		Vec2 getSwelling() const;
-		Vec2 getLimitedSwelling(float limit=1.0f) const;
 		void setPosition(float position);
 		float getPosition() const;
 		Vec3 getLocation() const;

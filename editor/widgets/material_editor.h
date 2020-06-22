@@ -18,46 +18,42 @@
 #ifndef MATERIAL_EDITOR_H
 #define MATERIAL_EDITOR_H
 
+#include "object_editor.h"
+#include "editor.h"
 #include "material_viewer.h"
 #include <QPushButton>
-#include <QtWidgets>
-#include <map>
+#include <vector>
 
-class MaterialEditor : public QWidget {
+class MaterialEditor : public ObjectEditor {
 	Q_OBJECT
 
 	SharedResources *shared;
+	Editor *editor;
 	MaterialViewer *materialViewer;
-	QComboBox *materialBox;
 
-	QLineEdit *materialField;
-	QPushButton *materialList;
-	QMenu *materialMenu;
-
-	QPushButton *addButton;
-	QPushButton *removeButton;
 	QLineEdit *diffuseBox;
 	QPushButton *addDiffuseButton;
 	QPushButton *removeDiffuseButton;
-	int selection;
 
 	void initFields(QFormLayout *form);
-	void initTopRow(QHBoxLayout *topRow);
+	void update(ShaderParams params, unsigned index);
 
 public:
-	MaterialEditor(SharedResources *shared, QWidget *parent = 0);
-	void addMaterial(pg::Material material);
+	MaterialEditor(
+		SharedResources *shared, Editor *editor, QWidget *parent = 0);
+	void add(pg::Material material);
+	void init(const std::vector<pg::Material> &materials);
 	void clear();
 	QSize sizeHint() const;
 	const MaterialViewer *getViewer() const;
 
 public slots:
-	void addMaterial();
+	void add();
+	void select();
+	void rename();
+	void remove();
 	void openDiffuseFile();
 	void removeDiffuseFile();
-	void selectMaterial();
-	void renameMaterial();
-	void removeMaterial();
 };
 
 #endif /* MATERIAL_EDITOR_H */

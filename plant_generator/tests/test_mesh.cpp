@@ -12,6 +12,7 @@ BOOST_AUTO_TEST_SUITE(mesh)
 BOOST_AUTO_TEST_CASE(test_index_bounds)
 {
 	Plant plant;
+	plant.addCurve(getDefaultCurve(0));
 	Stem *root = plant.createRoot();
 
 	{
@@ -21,9 +22,8 @@ BOOST_AUTO_TEST_CASE(test_index_bounds)
 		spline.addControl(Vec3(0.0f, 0.0f, 0.0f));
 		spline.addControl(Vec3(0.0f, 10.0f, 0.0f));
 		path.setSpline(spline);
-		path.setRadius(getDefaultCurve(0));
-		path.setMaxRadius(1.0f);
 		root->setPath(path);
+		root->setMaxRadius(1.0f);
 	}
 
 	{
@@ -34,10 +34,9 @@ BOOST_AUTO_TEST_CASE(test_index_bounds)
 		spline.addControl(Vec3(0.0f, 0.0f, 0.0f));
 		spline.addControl(Vec3(4.0f, 0.0f, 0.0f));
 		path.setSpline(spline);
-		path.setRadius(getDefaultCurve(0));
-		path.setMaxRadius(0.1f);
-		path.setMinRadius(0.0f);
 		stem->setPath(path);
+		stem->setMaxRadius(0.1f);
+		stem->setMinRadius(0.0f);
 		stem->setPosition(5.0f);
 		stem->setSwelling(Vec2(1.1f, 1.1f));
 	}

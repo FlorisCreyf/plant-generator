@@ -88,13 +88,6 @@ namespace pg {
 		#endif
 	};
 
-	inline pg::Vec3 getZeroVec3()
-	{
-		Vec3 v;
-		v.x = v.y = v.z = 0.0f;
-		return v;
-	}
-
 	inline Vec2 toVec2(const Vec3 &vec)
 	{
 		Vec2 v = {vec.x, vec.z};

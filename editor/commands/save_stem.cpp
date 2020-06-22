@@ -17,6 +17,7 @@
 
 #include "save_stem.h"
 
+using pg::Leaf;
 using pg::Stem;
 
 SaveStem::SaveStem(Selection *selection) : before(*selection), after(*selection)
@@ -75,6 +76,11 @@ void SaveStem::redo()
 
 void SaveStem::swap()
 {
+	pg::Plant *plant = this->selection->getPlant();
+	size_t materialCount = plant->getMaterials().size();
+	size_t meshCount = plant->getLeafMeshes().size();
+	size_t curveCount = plant->getCurves().size();
+
 	auto stemInstances = this->selection->getStemInstances();
 	auto leafInstances = this->selection->getLeafInstances();
 	for (auto instance : stemInstances) {
@@ -84,6 +90,13 @@ void SaveStem::swap()
 			Stem s = *stem;
 			*stem = it->second;
 			it->second = s;
+
+			if (materialCount <= stem->getMaterial(Stem::Outer))
+				stem->setMaterial(Stem::Outer, 0);
+			if (materialCount <= stem->getMaterial(Stem::Inner))
+				stem->setMaterial(Stem::Inner, 0);
+			if (curveCount <= stem->getRadiusCurve())
+				stem->setRadiusCurve(0);
 		}
 	}
 	for (auto instance : leafInstances) {
@@ -93,6 +106,14 @@ void SaveStem::swap()
 			Stem s = *stem;
 			*stem = it->second;
 			it->second = s;
+		}
+
+		for (size_t index : instance.second) {
+			Leaf *leaf = stem->getLeaf(index);
+			if (materialCount <= leaf->getMaterial())
+				leaf->setMaterial(0);
+			if (meshCount <= leaf->getMesh())
+				leaf->setMesh(0);
 		}
 	}
 }

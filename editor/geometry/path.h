@@ -32,11 +32,11 @@ public:
 		int resolution;
 		pg::Vec3 location;
 	};
-	
+
 	void setColor(pg::Vec3 curve, pg::Vec3 control, pg::Vec3 selection);
 	void set(const pg::Spline &spline, int resolution, pg::Vec3 location);
 	void set(std::vector<Segment> segments);
-	void setSelectedPoints(PointSelection &selection, int index = 0);
+	void setSelectedPoints(const PointSelection &selection, int index = 0);
 	const Geometry *getGeometry();
 	Geometry::Segment getLineSegment();
 	Geometry::Segment getPointSegment();
@@ -55,14 +55,14 @@ private:
 	std::vector<int> controlStart;
 	std::vector<int> pointStart;
 	std::vector<int> lineStart;
-	
+
 	int setPoints(const std::vector<Segment> &segments, int index);
 	void setControls(const std::vector<Segment> &segments, int index);
 	std::vector<pg::Vec3> getControls(Segment &segment);
-	
+
 	void set(const std::vector<pg::Vec3> &points,
 		const std::vector<pg::Vec3> &controls, int degree);
-		
+
 	void colorLinear(const std::set<int> &points, int index);
 	void colorBezier(const std::set<int> &points, int index);
 	void colorLine(int point, int index);

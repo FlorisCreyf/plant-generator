@@ -1,4 +1,4 @@
-/* Copyright 2017 Floris Creyf
+/* Copyright 2020 Floris Creyf
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,42 @@
  * limitations under the License.
  */
 
-#ifndef PG_MATH_CURVE_H
-#define PG_MATH_CURVE_H
+#include "curve.h"
 
-#include "math.h"
-#include <vector>
-#include <cstddef>
+using namespace pg;
 
-namespace pg {
-	Vec3 getBezierPath(float t, const Vec3 *points, int size);
-	Vec3 getBezier(float t, const Vec3 *points, int size);
+Curve::Curve()
+{
+	
 }
 
-#endif /* PG_MATH_CURVE_H */
+Curve::Curve(Spline spline)
+{
+	this->spline = spline;
+}
+
+Curve::Curve(Spline spline, std::string name)
+{
+	this->spline = spline;
+	this->name = name;
+}
+
+void Curve::setName(std::string name)
+{
+	this->name = name;
+}
+
+std::string Curve::getName() const
+{
+	return this->name;
+}
+
+void Curve::setSpline(Spline spline)
+{
+	this->spline = spline;
+}
+
+Spline Curve::getSpline() const
+{
+	return this->spline;
+}

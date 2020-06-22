@@ -27,9 +27,6 @@ namespace pg {
 		Spline spline;
 		int resolution = 2;
 		int subdivisions = 0;
-		Spline radius;
-		float minRadius = 0.015f;
-		float maxRadius = 0.2f;
 		bool linearStart;
 
 		#ifdef PG_SERIALIZE
@@ -42,9 +39,6 @@ namespace pg {
 			ar & spline;
 			ar & resolution;
 			ar & subdivisions;
-			ar & radius;
-			ar & minRadius;
-			ar & maxRadius;
 		}
 		#endif
 
@@ -86,15 +80,8 @@ namespace pg {
 		float getSegmentLength(size_t index) const;
 		/** Convert a spline control index to a path index. */
 		size_t toPathIndex(size_t control) const;
-
-		void setMaxRadius(float radius);
-		float getMaxRadius() const;
-		void setMinRadius(float radius);
-		float getMinRadius() const;
-		void setRadius(Spline spline);
-		Spline getRadius() const;
-		float getRadius(int index) const;
-		float getIntermediateRadius(float t) const;
+		/** Return a value between zero and one. */
+		float getPercentage(size_t index) const;
 	};
 }
 

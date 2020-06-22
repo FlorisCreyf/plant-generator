@@ -16,14 +16,14 @@
 #ifndef PG_PLANT_H
 #define PG_PLANT_H
 
-#include "stem.h"
-#include "material.h"
+#include "curve.h"
 #include "geometry.h"
+#include "material.h"
+#include "stem.h"
 #include "stem_pool.h"
-#include <map>
+#include <vector>
 
 #ifdef PG_SERIALIZE
-#include <boost/serialization/map.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #endif
 
@@ -60,6 +60,15 @@ namespace pg {
 		/** Reinsert extracted stems. */
 		void reinsertStems(std::vector<Extraction> &stem);
 
+		float getRadius(Stem *stem, unsigned index) const;
+		float getIntermediateRadius(Stem *stem, float t) const;
+
+		void addCurve(Curve curve);
+		void updateCurve(Curve curve, unsigned index);
+		void removeCurve(unsigned index);
+		Curve getCurve(unsigned index) const;
+		std::vector<Curve> getCurves() const;
+
 		void addMaterial(Material material);
 		void updateMaterial(Material material, unsigned index);
 		void removeMaterial(unsigned index);
@@ -77,10 +86,13 @@ namespace pg {
 		Stem *root;
 		std::vector<Material> materials;
 		std::vector<Geometry> leafMeshes;
+		std::vector<Curve> curves;
 		StemPool stemPool;
 
+		void removeCurve(Stem *, unsigned);
 		void removeMaterial(Stem *, unsigned);
 		void removeLeafMesh(Stem *, unsigned);
+
 		void deallocateStems(Stem *);
 		void insertStem(Stem *, Stem *);
 		void decouple(Stem *);
@@ -96,6 +108,7 @@ namespace pg {
 			ar & root;
 			ar & materials;
 			ar & leafMeshes;
+			ar & curves;
 		}
 		template<class Archive>
 		void load(Archive &ar, const unsigned int version)
@@ -105,6 +118,7 @@ namespace pg {
 			root = move(root);
 			ar & materials;
 			ar & leafMeshes;
+			ar & curves;
 		}
 		BOOST_SERIALIZATION_SPLIT_MEMBER()
 		#endif

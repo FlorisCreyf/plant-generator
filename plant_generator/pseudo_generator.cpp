@@ -143,8 +143,8 @@ bool PseudoGenerator::setPath(
 	float minRadius;
 	float parentRadius;
 	if (parent) {
-		const Path path = parent->getPath();
-		parentRadius = path.getIntermediateRadius(position);
+		parentRadius = this->plant->getIntermediateRadius(
+			parent, position);
 		radius = parentRadius / (stem->getSwelling().x + 0.1f);
 		minRadius = radius / 5.0f;
 		if (minRadius < 0.001f)
@@ -164,10 +164,10 @@ bool PseudoGenerator::setPath(
 	if (length < this->dvn.requiredLength)
 		return false;
 
+	stem->setMinRadius(minRadius);
+	stem->setMaxRadius(radius);
+
 	Path path;
-	path.setMinRadius(minRadius);
-	path.setMaxRadius(radius);
-	path.setRadius(getDefaultCurve(0));
 	path.setResolution(divisions);
 	std::vector<Vec3> controls;
 	std::uniform_real_distribution<float> dis(-0.05f, 0.05f);

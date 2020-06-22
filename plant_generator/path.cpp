@@ -26,10 +26,7 @@ bool Path::operator==(const Path &path) const
 		this->path == path.path &&
 		this->spline == path.spline &&
 		this->resolution == path.resolution &&
-		this->subdivisions == path.subdivisions &&
-		this->radius == path.radius &&
-		this->minRadius == path.minRadius &&
-		this->maxRadius == path.maxRadius);
+		this->subdivisions == path.subdivisions);
 }
 
 bool Path::operator!=(const Path &path) const
@@ -233,48 +230,10 @@ size_t Path::toPathIndex(size_t control) const
 		return control * this->resolution;
 }
 
-void Path::setMaxRadius(float radius)
-{
-	this->maxRadius = radius;
-}
-
-float Path::getMaxRadius() const
-{
-	return this->maxRadius;
-}
-
-void Path::setMinRadius(float radius)
-{
-	this->minRadius = radius;
-}
-
-float Path::getMinRadius() const
-{
-	return this->minRadius;
-}
-
-void Path::setRadius(Spline spline)
-{
-	this->radius = spline;
-}
-
-Spline Path::getRadius() const
-{
-	return this->radius;
-}
-
-float Path::getRadius(int index) const
+float Path::getPercentage(size_t index) const
 {
 	float length = 0.0f;
-	for (int i = 0; i < index; i++)
+	for (size_t i = 0; i < index; i++)
 		length += magnitude(this->path[i+1] - this->path[i]);
-	float t = length / getLength();
-	float z = this->radius.getPoint(t).z * this->maxRadius;
-	return z < this->minRadius ? this->minRadius : z;
-}
-
-float Path::getIntermediateRadius(float t) const
-{
-	float z = this->radius.getPoint(t / getLength()).z * this->maxRadius;
-	return z < this->minRadius ? this->minRadius : z;
+	return length / getLength();
 }

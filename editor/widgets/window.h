@@ -47,8 +47,6 @@ public Q_SLOTS:
 	void saveDialogBox();
 	void reportIssue();
 	void initEditor();
-	void initMeshEditor();
-	void initMaterialEditor();
 	void updateStatus();
 
 private:

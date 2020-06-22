@@ -19,8 +19,6 @@
 #define PROPERTY_EDITOR_H
 
 #include "editor.h"
-#include "curve_button.h"
-#include "curve_editor.h"
 #include "stem_editor.h"
 #include "leaf_editor.h"
 #include <QtWidgets>
@@ -29,13 +27,15 @@ class PropertyEditor : public QWidget {
 	Q_OBJECT
 
 public:
-	PropertyEditor(
-		SharedResources *shared, Editor *editor, QWidget *parent);
-	void bind(CurveEditor *curveEditor);
+	PropertyEditor(SharedResources *shared, Editor *editor,
+		QWidget *parent);
 	QSize sizeHint() const;
 
 public slots:
 	void setFields();
+	void addCurve(pg::Curve curve);
+	void updateCurve(pg::Curve curve, unsigned index);
+	void removeCurve(unsigned index);
 	void addMaterial(ShaderParams params);
 	void updateMaterials();
 	void removeMaterial(unsigned index);

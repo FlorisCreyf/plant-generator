@@ -57,14 +57,13 @@ void AddStem::create()
 	pg::Path path = stem->getPath();
 	pg::Spline spline = path.getSpline();
 	std::vector<pg::Vec3> controls;
-	controls.push_back(pg::getZeroVec3());
+	controls.push_back(pg::Vec3(0.0f, 0.0f, 0.0f));
 	/* Adjust the second point at a latter time. */
-	controls.push_back(pg::getZeroVec3());
+	controls.push_back(pg::Vec3(0.0f, 0.0f, 0.0f));
 	spline.setControls(controls);
 	spline.setDegree(1);
 	path.setSpline(spline);
 	path.setResolution(pathDivisions);
-	path.setRadius(pg::getDefaultCurve(0));
 	stem->setPath(path);
 	stem->setPosition(0.0f);
 
@@ -76,18 +75,17 @@ void AddStem::create()
 void AddStem::setRadius()
 {
 	if (extraction.parent) {
+		Plant *plant = this->selection->getPlant();
 		Stem *stem = extraction.address;
-		pg::Path path = stem->getPath();
-		pg::Path parentPath = extraction.parent->getPath();
+		Stem *parent = extraction.parent;
 		float t = stem->getPosition();
-		float radius = parentPath.getIntermediateRadius(t);
+		float radius = plant->getIntermediateRadius(parent, t);
 		radius /= stem->getSwelling().x + 0.1;
-		path.setMaxRadius(radius);
-		if (parentPath.getMinRadius() > radius)
-			path.setMinRadius(radius);
+		stem->setMaxRadius(radius);
+		if (parent->getMinRadius() > radius)
+			stem->setMinRadius(radius);
 		else
-			path.setMinRadius(parentPath.getMinRadius());
-		stem->setPath(path);
+			stem->setMinRadius(parent->getMinRadius());
 	}
 }
 

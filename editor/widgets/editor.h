@@ -49,7 +49,6 @@ class Editor : public QOpenGLWidget, protected QOpenGLFunctions_4_3_Core {
 signals:
 	void selectionChanged();
 	void modeChanged();
-	void ready();
 	void changed();
 
 public slots:
@@ -60,6 +59,7 @@ public slots:
 public:
 	Editor(SharedResources *shared, KeyMap *keymap, QWidget *parent = 0);
 	void load(const char *filename);
+	void reset();
 	pg::Plant *getPlant();
 	Selection *getSelection();
 	const pg::Mesh *getMesh();

@@ -22,15 +22,20 @@
 #include <QOpenGLFunctions_4_3_Core>
 
 class ShaderParams {
-	GLuint textures[4] = {0};
-	GLuint defaultTextures[4] = {0};
+	GLuint textures[4] = {};
+	GLuint defaultTextures[4] = {};
 	pg::Material material;
+
+	bool valid = false;
+	QString textureFiles[4];
 
 	GLuint loadTexture(QImage image);
 
 public:
  	ShaderParams();
 	ShaderParams(pg::Material material);
+	bool isValid() const;
+	void initialize();
 	void setName(std::string name);
 	std::string getName();
 	GLuint getTexture(unsigned index);

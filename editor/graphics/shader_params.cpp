@@ -28,12 +28,28 @@ ShaderParams::ShaderParams()
 ShaderParams::ShaderParams(pg::Material material) : material(material)
 {
 	QString filename = QString::fromStdString(material.getTexture());
+	this->textureFiles[0] = filename;
 	loadTexture(0, filename);
 }
 
 void ShaderParams::setName(std::string name)
 {
 	material.setName(name);
+}
+
+bool ShaderParams::isValid() const
+{
+	return this->valid;
+}
+
+void ShaderParams::initialize()
+{
+	if (!this->valid && QOpenGLContext::currentContext()) {
+		this->valid = true;
+		for (int i = 0; i < 4; i++)
+			if (!this->textureFiles[i].isEmpty())
+				loadTexture(i, this->textureFiles[i]);
+	}
 }
 
 std::string ShaderParams::getName()
@@ -48,6 +64,12 @@ GLuint ShaderParams::getTexture(unsigned index)
 
 bool ShaderParams::loadTexture(unsigned index, QString filename)
 {
+	this->textureFiles[index] = filename;
+	if (QOpenGLContext::currentContext())
+		this->valid = true;
+	else
+		return false;
+
 	QImageReader reader(filename);
 	reader.setAutoTransform(true);
 	QImage image = reader.read();

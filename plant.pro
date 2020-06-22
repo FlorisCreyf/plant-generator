@@ -32,6 +32,7 @@ plant_generator/math/quat.cpp \
 plant_generator/math/vec2.cpp \
 plant_generator/math/vec3.cpp \
 plant_generator/math/vec4.cpp \
+plant_generator/curve.cpp \
 plant_generator/file.cpp \
 plant_generator/geometry.cpp \
 plant_generator/joint.cpp \
@@ -69,8 +70,8 @@ editor/geometry/rotation_axes.cpp \
 editor/graphics/buffer.cpp \
 editor/graphics/shader_params.cpp \
 editor/graphics/shared_resources.cpp \
-editor/widgets/curve_button.cpp \
 editor/widgets/curve_editor.cpp \
+editor/widgets/curve_viewer.cpp \
 editor/widgets/editor.cpp \
 editor/widgets/form.cpp \
 editor/widgets/generator_editor.cpp \
@@ -80,6 +81,7 @@ editor/widgets/material_editor.cpp \
 editor/widgets/material_viewer.cpp \
 editor/widgets/mesh_editor.cpp \
 editor/widgets/mesh_viewer.cpp \
+editor/widgets/object_editor.cpp \
 editor/widgets/property_editor.cpp \
 editor/widgets/stem_editor.cpp \
 editor/widgets/window.cpp \
@@ -100,6 +102,7 @@ plant_generator/math/quat.h \
 plant_generator/math/vec2.h \
 plant_generator/math/vec3.h \
 plant_generator/math/vec4.h \
+plant_generator/curve.h \
 plant_generator/derivation.h \
 plant_generator/file.h \
 plant_generator/geometry.h \
@@ -139,8 +142,8 @@ editor/geometry/rotation_axes.h \
 editor/graphics/buffer.h \
 editor/graphics/shader_params.h \
 editor/graphics/shared_resources.h \
-editor/widgets/curve_button.h \
 editor/widgets/curve_editor.h \
+editor/widgets/curve_viewer.h \
 editor/widgets/editor.h \
 editor/widgets/form.h \
 editor/widgets/generator_editor.h \
@@ -150,6 +153,7 @@ editor/widgets/leaf_editor.h \
 editor/widgets/material_editor.h \
 editor/widgets/mesh_editor.h \
 editor/widgets/mesh_viewer.h \
+editor/widgets/object_editor.h \
 editor/widgets/material_viewer.h \
 editor/widgets/property_editor.h \
 editor/widgets/stem_editor.h \

@@ -110,14 +110,10 @@ void Editor::initializeGL()
 	glPrimitiveRestartIndex(Geometry::primitiveReset);
 
 	createFrameBuffers();
-
 	shared->initialize();
 	initializeBuffers();
-	if (!plant.getRoot())
-		createDefaultPlant();
 
 	change();
-	emit ready();
 }
 
 void Editor::createFrameBuffers()
@@ -161,8 +157,8 @@ void Editor::initializeBuffers()
 	staticBuffer.load(geometry);
 
 	plantBuffer.initialize(GL_DYNAMIC_DRAW);
-	plantBuffer.allocatePointMemory(10);
-	plantBuffer.allocateIndexMemory(10);
+	plantBuffer.allocatePointMemory(1000);
+	plantBuffer.allocateIndexMemory(1000);
 
 	pathBuffer.initialize(GL_DYNAMIC_DRAW);
 	pathBuffer.allocatePointMemory(100);
@@ -649,10 +645,12 @@ void Editor::updateSelection()
 void Editor::change()
 {
 	if (!isValid())
-	 	return;
+		return;
 
 	wind.generate();
 	mesh.generate();
+
+	makeCurrent();
 	plantBuffer.use();
 	if (mesh.getVertexCount() > plantBuffer.getCapacity(Buffer::Points))
 		plantBuffer.allocatePointMemory(mesh.getVertexCount() * 2);
@@ -695,8 +693,6 @@ void Editor::createDefaultPlant()
 void Editor::load(const char *filename)
 {
 	plant.removeRoot();
-	plant.removeLeafMeshes();
-
 	if (filename == nullptr)
 		createDefaultPlant();
 	else {
@@ -705,13 +701,15 @@ void Editor::load(const char *filename)
 		ia >> plant;
 		stream.close();
 	}
+}
 
-	if (isValid()) {
-		selection.clear();
-		history.clear();
-		emit selectionChanged();
+void Editor::reset()
+{
+	selection.clear();
+	history.clear();
+	if (isValid())
 		change();
-	}
+	emit selectionChanged();
 }
 
 void Editor::change(QAction *action)

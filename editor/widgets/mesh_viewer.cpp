@@ -123,6 +123,11 @@ void MeshViewer::wheelEvent(QWheelEvent *event)
 
 void MeshViewer::updateMesh(pg::Geometry mesh)
 {
+	if (!isValid())
+		return;
+	else
+		makeCurrent();
+
 	mesh.toCenter();
 	std::vector<Vertex> points;
 	for (Vertex vertex : mesh.getPoints())

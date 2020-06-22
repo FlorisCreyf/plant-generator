@@ -42,6 +42,9 @@ void Stem::init(Stem *parent)
 {
 	this->joints.clear();
 	this->leaves.clear();
+	this->maxRadius = 0.0f;
+	this->minRadius = 0.0f;
+	this->radiusCurve = 0;
 	this->swelling = Vec2(1.5, 3.0);
 	this->material[0] = 0;
 	this->material[1] = 0;
@@ -69,6 +72,9 @@ Stem &Stem::operator=(const Stem &stem)
 void Stem::copy(const Stem &stem)
 {
 	this->depth = stem.depth;
+	this->maxRadius = stem.maxRadius;
+	this->minRadius = stem.minRadius;
+	this->radiusCurve = stem.radiusCurve;
 	this->path = stem.path;
 	this->resolution = stem.resolution;
 	this->position = stem.position;
@@ -84,6 +90,9 @@ bool Stem::operator==(const Stem &stem) const
 {
 	return (
 		this->depth == stem.depth &&
+		this->radiusCurve == stem.radiusCurve &&
+		this->minRadius == stem.minRadius &&
+		this->maxRadius == stem.maxRadius &&
 		this->path == stem.path &&
 		this->resolution == stem.resolution &&
 		this->position == stem.position &&
@@ -274,6 +283,36 @@ int Stem::getDepth() const
 	return this->depth;
 }
 
+void Stem::setMaxRadius(float radius)
+{
+	this->maxRadius = radius;
+}
+
+float Stem::getMaxRadius() const
+{
+	return this->maxRadius;
+}
+
+void Stem::setMinRadius(float radius)
+{
+	this->minRadius = radius;
+}
+
+float Stem::getMinRadius() const
+{
+	return this->minRadius;
+}
+
+void Stem::setRadiusCurve(unsigned index)
+{
+	this->radiusCurve = index;
+}
+
+unsigned Stem::getRadiusCurve() const
+{
+	return this->radiusCurve;
+}
+
 void Stem::setSwelling(Vec2 scale)
 {
 	this->swelling = scale;
@@ -282,27 +321,6 @@ void Stem::setSwelling(Vec2 scale)
 Vec2 Stem::getSwelling() const
 {
 	return this->swelling;
-}
-
-Vec2 Stem::getLimitedSwelling(float limit) const
-{
-	if (!this->parent)
-		return this->swelling;
-	Vec2 swelling = this->swelling;
-	Path path = this->parent->getPath();
-	float parentRadius = path.getIntermediateRadius(this->position);
-	float radius = this->path.getMaxRadius();
-	float ratio = parentRadius / radius;
-	if (ratio < limit) {
-		swelling.x = 1.0f;
-		swelling.y = 1.0f;
-	} else if (this->swelling.x > ratio) {
-		swelling.x = ratio;
-		swelling.y /= ratio;
-		if (swelling.y < 1.0f)
-			swelling.y = 1.0f;
-	}
-	return swelling;
 }
 
 std::vector<Joint> Stem::getJoints() const

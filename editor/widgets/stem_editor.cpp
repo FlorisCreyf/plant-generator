@@ -34,8 +34,6 @@ StemEditor::StemEditor(
 {
 	this->shared = shared;
 	this->editor = editor;
-	this->selectedCurve = nullptr;
-	this->curveEditor = nullptr;
 	this->saveStem = nullptr;
 	this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
 	createInterface();
@@ -62,30 +60,21 @@ void StemEditor::createInterface()
 	form->setSpacing(2);
 	form->setMargin(5);
 
-	{
-		QWidget *sizeWidget = new QWidget();
-		QHBoxLayout *line = new QHBoxLayout();
-		sizeWidget->setLayout(line);
-		this->radiusLabel = new QLabel(tr("Radius"));
-		this->radiusValue = new QDoubleSpinBox;
-		this->radiusButton = new CurveButton(
-			"Radius", this->shared, this);
-		this->radiusButton->setFixedWidth(22);
-		this->radiusButton->setFixedHeight(22);
-		this->radiusValue->setSingleStep(0.001);
-		this->radiusValue->setDecimals(3);
-		line->addWidget(this->radiusValue);
-		line->addWidget(this->radiusButton);
-		line->setSpacing(0);
-		line->setMargin(0);
-		form->addRow(this->radiusLabel, sizeWidget);
-	}
+	this->radiusLabel = new QLabel(tr("Radius"));
+	this->radiusValue = new QDoubleSpinBox;
+	this->radiusValue->setSingleStep(0.001);
+	this->radiusValue->setDecimals(3);
+	form->addRow(this->radiusLabel, this->radiusValue);
 
 	this->minRadiusLabel = new QLabel(tr("Min Radius"));
 	this->minRadiusValue = new QDoubleSpinBox;
 	this->minRadiusValue->setSingleStep(0.001);
 	this->minRadiusValue->setDecimals(3);
 	form->addRow(this->minRadiusLabel, this->minRadiusValue);
+
+	this->radiusCurveLabel = new QLabel(tr("Radius Curve"));
+	this->radiusCurveValue = new QComboBox;
+	form->addRow(this->radiusCurveLabel, this->radiusCurveValue);
 
 	this->divisionLabel = new QLabel(tr("Divisions"));
 	this->divisionValue = new QSpinBox;
@@ -149,8 +138,8 @@ void StemEditor::createInterface()
 		this, SLOT(finishChanging()));
 	connect(this->minRadiusValue, SIGNAL(valueChanged(double)),
 		this, SLOT(changeMinRadius(double)));
-	connect(this->radiusButton, SIGNAL(selected(CurveButton *)),
-		this, SLOT(toggleCurve(CurveButton *)));
+	connect(this->radiusCurveValue, SIGNAL(currentIndexChanged(int)),
+		this, SLOT(changeRadiusCurve(int)));
 	connect(this->stemMaterialValue, SIGNAL(currentIndexChanged(int)),
 		this, SLOT(changeStemMaterial()));
 	connect(this->collarXValue, SIGNAL(editingFinished()),
@@ -165,170 +154,81 @@ void StemEditor::createInterface()
 		this, SLOT(changeCapMaterial()));
 }
 
-void StemEditor::bind(CurveEditor *curveEditor)
-{
-	this->curveEditor = curveEditor;
-	connect(curveEditor, SIGNAL(curveChanged(pg::Spline, QString)),
-		this, SLOT(setCurve(pg::Spline, QString)));
-	connect(curveEditor, SIGNAL(editingFinished()),
-		this, SLOT(finishChanging()));
-}
-
-void StemEditor::setCurve(pg::Spline spline, QString name)
-{
-	if (name == "Radius") {
-		this->radiusButton->setCurve(spline);
-		changeRadiusCurve(spline);
-	}
-}
-
-void StemEditor::toggleCurve(CurveButton *button)
-{
-	this->selectedCurve = button;
-	auto instances = this->editor->getSelection()->getStemInstances();
-	if (!instances.empty()) {
-		Stem *stem = instances.rbegin()->first;
-		QString name = button->getName();
-		this->curveEditor->setCurve(stem->getPath().getRadius(), name);
-	}
-}
-
 void StemEditor::setFields(map<Stem *, PointSelection> instances)
 {
-	if (instances.empty()) {
-		enable(false);
-		this->curveEditor->setEnabled(false);
+	enable(false);
+	if (instances.empty())
 		return;
-	}
 
 	Stem *stem = instances.rbegin()->first;
 	auto nextIt = next(instances.begin());
 	blockSignals(true);
 
-	indicateSimilarities(this->customLabel);
 	for (auto it = nextIt; it != instances.end(); ++it) {
-		Stem *a = prev(it)->first;
-		Stem *b = it->first;
-		if (a->isCustom() != b->isCustom()) {
+		Stem *stem1 = prev(it)->first;
+		Stem *stem2 = it->first;
+		if (stem1->isCustom() != stem2->isCustom())
 			indicateDifferences(this->customLabel);
-			break;
-		}
+		if (stem1->getResolution() != stem2->getResolution())
+			indicateDifferences(this->resolutionLabel);
+		if (stem1->getMaxRadius() != stem2->getMaxRadius())
+			indicateDifferences(this->radiusLabel);
+		if (stem1->getMinRadius() != stem2->getMinRadius())
+			indicateDifferences(this->minRadiusLabel);
+		if (stem1->getRadiusCurve() != stem2->getRadiusCurve())
+			indicateDifferences(this->radiusCurveLabel);
+
+		pg::Path path1 = prev(it)->first->getPath();
+		pg::Path path2 = it->first->getPath();
+		if (path1.getResolution() != path2.getResolution())
+			indicateDifferences(this->divisionLabel);
+
+		Spline spline1 = path1.getSpline();
+		Spline spline2 = path2.getSpline();
+		if (spline1.getDegree() != spline2.getDegree())
+			indicateDifferences(this->degreeLabel);
+
+		unsigned material1 = stem1->getMaterial(Stem::Outer);
+		unsigned material2 = stem2->getMaterial(Stem::Outer);
+		if (material1 != material2)
+			indicateDifferences(this->stemMaterialLabel);
+		material1 = stem1->getMaterial(Stem::Inner);
+		material2 = stem2->getMaterial(Stem::Inner);
+		if (stem1 != stem2)
+			indicateDifferences(this->capMaterialLabel);
+
+		Vec2 collar1 = stem1->getSwelling();
+		Vec2 collar2 = stem2->getSwelling();
+		if (collar1.x != collar2.x)
+			indicateDifferences(this->collarXLabel);
+		if (collar1.y != collar2.y)
+			indicateDifferences(this->collarYLabel);
 	}
+
 	this->customValue->setCheckState(
 		stem->isCustom() ? Qt::Checked : Qt::Unchecked);
-
-	indicateSimilarities(this->resolutionLabel);
-	for (auto it = nextIt; it != instances.end(); ++it) {
-		Stem *a = prev(it)->first;
-		Stem *b = it->first;
-		if (a->getResolution() != b->getResolution()) {
-			indicateDifferences(this->resolutionLabel);
-			break;
-		}
-	}
 	this->resolutionValue->setValue(stem->getResolution());
-
-	indicateSimilarities(this->divisionLabel);
-	for (auto it = nextIt; it != instances.end(); ++it) {
-		pg::Path a = prev(it)->first->getPath();
-		pg::Path b = it->first->getPath();
-		if (a.getResolution() != b.getResolution()) {
-			indicateDifferences(this->divisionLabel);
-			break;
-		}
-	}
 	this->divisionValue->setValue(stem->getPath().getResolution());
-
-	indicateSimilarities(this->radiusLabel);
-	for (auto it = nextIt; it != instances.end(); ++it) {
-		pg::Path a = prev(it)->first->getPath();
-		pg::Path b = it->first->getPath();
-		if (a.getMaxRadius() != b.getMaxRadius()) {
-			indicateDifferences(this->radiusLabel);
-			break;
-		}
-	}
-	this->radiusValue->setValue(stem->getPath().getMaxRadius());
-	this->radiusButton->setCurve(stem->getPath().getRadius());
-
-	indicateSimilarities(this->minRadiusLabel);
-	for (auto it = nextIt; it != instances.end(); ++it) {
-		pg::Path a = prev(it)->first->getPath();
-		pg::Path b = it->first->getPath();
-		if (a.getMinRadius() != b.getMinRadius()) {
-			indicateDifferences(this->minRadiusLabel);
-			break;
-		}
-	}
-	this->minRadiusValue->setValue(stem->getPath().getMinRadius());
-
-	indicateSimilarities(this->degreeLabel);
-	for (auto it = nextIt; it != instances.end(); ++it) {
-		Spline a = prev(it)->first->getPath().getSpline();
-		Spline b = it->first->getPath().getSpline();
-		if (a.getDegree() != b.getDegree()) {
-			indicateDifferences(this->degreeLabel);
-			break;
-		}
-	}
+	this->radiusValue->setValue(stem->getMaxRadius());
+	this->minRadiusValue->setValue(stem->getMinRadius());
+	this->radiusCurveValue->setCurrentIndex(stem->getRadiusCurve());
 	if (stem->getPath().getSpline().getDegree() == 3)
 		this->degreeValue->setCurrentIndex(1);
 	else
 		this->degreeValue->setCurrentIndex(0);
-
-	indicateSimilarities(this->stemMaterialLabel);
-	for (auto it = nextIt; it != instances.end(); ++it) {
-		unsigned a = prev(it)->first->getMaterial(Stem::Outer);
-		unsigned b = it->first->getMaterial(Stem::Outer);
-		if (a != b) {
-			indicateDifferences(this->stemMaterialLabel);
-			break;
-		}
-	}
 	{
-		int id = stem->getMaterial(Stem::Outer);
-		string s = this->shared->getMaterial(id).getName();
+		unsigned index = stem->getMaterial(Stem::Outer);
+		string s = this->shared->getMaterial(index).getName();
 		QString qs = QString::fromStdString(s);
 		this->stemMaterialValue->setCurrentText(qs);
-	}
-
-	indicateSimilarities(this->capMaterialLabel);
-	for (auto it = nextIt; it != instances.end(); ++it) {
-		unsigned a = prev(it)->first->getMaterial(Stem::Inner);
-		unsigned b = it->first->getMaterial(Stem::Inner);
-		if (a != b) {
-			indicateDifferences(this->capMaterialLabel);
-			break;
-		}
-	}
-	{
-		int id = stem->getMaterial(Stem::Inner);
-		string s = shared->getMaterial(id).getName();
-		QString qs = QString::fromStdString(s);
+		index = stem->getMaterial(Stem::Inner);
+		s = shared->getMaterial(index).getName();
+		qs = QString::fromStdString(s);
 		this->capMaterialValue->setCurrentText(qs);
-	}
-
-	indicateSimilarities(this->collarXLabel);
-	indicateSimilarities(this->collarYLabel);
-	for (auto it = nextIt; it != instances.end(); ++it) {
-		Vec2 a = prev(it)->first->getSwelling();
-		Vec2 b = it->first->getSwelling();
-		if (a.x != b.x)
-			indicateDifferences(this->collarXLabel);
-		if (a.y != b.y)
-			indicateDifferences(this->collarYLabel);
-		if (a.x != b.x && a.y != b.y)
-			break;
 	}
 	this->collarXValue->setValue(stem->getSwelling().x);
 	this->collarYValue->setValue(stem->getSwelling().y);
 
-	if (this->selectedCurve) {
-		toggleCurve(this->selectedCurve);
-		this->selectedCurve->select();
-	}
-
-	this->curveEditor->setEnabled(true);
 	enable(true);
 	blockSignals(false);
 }
@@ -339,8 +239,8 @@ void StemEditor::blockSignals(bool block)
 	this->resolutionValue->blockSignals(block);
 	this->divisionValue->blockSignals(block);
 	this->radiusValue->blockSignals(block);
-	this->radiusButton->blockSignals(block);
 	this->minRadiusValue->blockSignals(block);
+	this->radiusCurveValue->blockSignals(block);
 	this->degreeValue->blockSignals(block);
 	this->stemMaterialValue->blockSignals(block);
 	this->capMaterialValue->blockSignals(block);
@@ -354,6 +254,7 @@ void StemEditor::enable(bool enable)
 	if (!enable) {
 		indicateSimilarities(this->radiusLabel);
 		indicateSimilarities(this->minRadiusLabel);
+		indicateSimilarities(this->radiusCurveLabel);
 		indicateSimilarities(this->resolutionLabel);
 		indicateSimilarities(this->divisionLabel);
 		indicateSimilarities(this->degreeLabel);
@@ -364,8 +265,8 @@ void StemEditor::enable(bool enable)
 		indicateSimilarities(this->customLabel);
 	}
 	this->radiusValue->setEnabled(enable);
-	this->radiusButton->setEnabled(enable);
 	this->minRadiusValue->setEnabled(enable);
+	this->radiusCurveValue->setEnabled(enable);
 	this->resolutionValue->setEnabled(enable);
 	this->divisionValue->setEnabled(enable);
 	this->degreeValue->setEnabled(enable);
@@ -376,15 +277,56 @@ void StemEditor::enable(bool enable)
 	this->customValue->setEnabled(enable);
 }
 
+bool StemEditor::addCurve(pg::Curve curve)
+{
+	QString name = QString::fromStdString(curve.getName());
+	if (this->radiusCurveValue->findText(name) < 0) {
+		this->radiusCurveValue->blockSignals(true);
+		this->radiusCurveValue->addItem(name);
+		this->radiusCurveValue->blockSignals(false);
+		return true;
+	}
+	return false;
+}
+
+void StemEditor::updateCurve(pg::Curve curve, unsigned index)
+{
+	QString name = QString::fromStdString(curve.getName());
+	this->radiusCurveValue->setItemText(index, name);
+}
+
+void StemEditor::removeCurve(unsigned index)
+{
+	this->radiusCurveValue->blockSignals(true);
+	unsigned curveIndex = this->radiusCurveValue->currentIndex();
+	if (index == curveIndex)
+		this->radiusCurveValue->setCurrentIndex(0);
+	this->radiusCurveValue->removeItem(index);
+	this->radiusCurveValue->blockSignals(false);
+}
+
 bool StemEditor::addMaterial(ShaderParams params)
 {
 	QString name = QString::fromStdString(params.getName());
 	if (this->stemMaterialValue->findText(name) < 0) {
+		blockSignals(true);
 		this->stemMaterialValue->addItem(name);
 		this->capMaterialValue->addItem(name);
+		blockSignals(false);
 		return true;
 	}
 	return false;
+}
+
+void StemEditor::updateMaterials()
+{
+	unsigned size = this->shared->getMaterialCount();
+	for (unsigned i = 0; i < size; i++) {
+		ShaderParams params = this->shared->getMaterial(i);
+		QString name = QString::fromStdString(params.getName());
+		this->stemMaterialValue->setItemText(i, name);
+		this->capMaterialValue->setItemText(i, name);
+	}
 }
 
 void StemEditor::removeMaterial(unsigned index)
@@ -401,17 +343,6 @@ void StemEditor::removeMaterial(unsigned index)
 	this->stemMaterialValue->removeItem(index);
 	this->capMaterialValue->removeItem(index);
 	blockSignals(false);
-}
-
-void StemEditor::updateMaterials()
-{
-	unsigned size = this->shared->getMaterialCount();
-	for (unsigned i = 0; i < size; i++) {
-		ShaderParams params = this->shared->getMaterial(i);
-		QString name = QString::fromStdString(params.getName());
-		this->stemMaterialValue->setItemText(i, name);
-		this->capMaterialValue->setItemText(i, name);
-	}
 }
 
 void StemEditor::changeCustom(int custom)
@@ -473,11 +404,8 @@ void StemEditor::changeRadius(double d)
 	beginChanging();
 	indicateSimilarities(this->radiusLabel);
 	auto instances = this->editor->getSelection()->getStemInstances();
-	for (auto &instance : instances) {
-		pg::Path path = instance.first->getPath();
-		path.setMaxRadius(d);
-		instance.first->setPath(path);
-	}
+	for (auto &instance : instances)
+		instance.first->setMaxRadius(d);
 	this->editor->change();
 }
 
@@ -486,24 +414,19 @@ void StemEditor::changeMinRadius(double d)
 	beginChanging();
 	indicateSimilarities(this->minRadiusLabel);
 	auto instances = this->editor->getSelection()->getStemInstances();
-	for (auto &instance : instances) {
-		pg::Path path = instance.first->getPath();
-		path.setMinRadius(d);
-		instance.first->setPath(path);
-	}
+	for (auto &instance : instances)
+		instance.first->setMinRadius(d);
 	this->editor->change();
 }
 
-void StemEditor::changeRadiusCurve(pg::Spline &spline)
+void StemEditor::changeRadiusCurve(int curve)
 {
 	beginChanging();
 	auto instances = this->editor->getSelection()->getStemInstances();
-	for (auto &instance : instances) {
-		pg::Path vp = instance.first->getPath();
-		vp.setRadius(spline);
-		instance.first->setPath(vp);
-	}
+	for (auto &instance : instances)
+		instance.first->setRadiusCurve(curve);
 	this->editor->change();
+	finishChanging();
 }
 
 void StemEditor::changeStemMaterial()

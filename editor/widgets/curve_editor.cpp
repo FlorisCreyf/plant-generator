@@ -21,6 +21,7 @@
 #include "editor/commands/remove_spline.h"
 #include "editor/commands/save_point_selection.h"
 #include "editor/geometry/geometry.h"
+#include "plant_generator/patterns.h"
 #include "plant_generator/math/curve.h"
 #include "plant_generator/math/intersection.h"
 #include <QtGui/QMouseEvent>
@@ -32,33 +33,27 @@ using pg::Vec3;
 using pg::Mat4;
 
 CurveEditor::CurveEditor(
-	SharedResources *shared, KeyMap *keymap, QWidget *parent) :
-	QOpenGLWidget(parent)
+	SharedResources *shared, KeyMap *keymap, Editor *editor,
+	QWidget *parent) : ObjectEditor(parent), editor(editor), keymap(keymap)
 {
-	this->shared = shared;
-	this->keymap = keymap;
-	this->enabled = false;
+	this->command = nullptr;
 
-	QVBoxLayout *layout = new QVBoxLayout(this);
-	layout->setSizeConstraint(QLayout::SetMinimumSize);
-	layout->setSpacing(0);
-	layout->setMargin(0);
 	this->degree = new QComboBox(this);
 	this->degree->addItem(QString("Linear"));
 	this->degree->addItem(QString("Cubic"));
 	this->degree->setFixedHeight(22);
-	this->degree->setEnabled(false);
-	layout->addWidget(this->degree);
-	layout->addStretch(1);
-	setFocusPolicy(Qt::StrongFocus);
-	setMouseTracking(true);
+	this->layout->addWidget(this->degree);
 
-	this->camera.setTarget(Vec3(0.5f, 0.0f, 0.5f));
-	this->camera.setOrientation(180.0f, -180.0f);
-	this->camera.setDistance(1.0f);
-	this->camera.setPanSpeed(0.004f);
-	this->camera.setZoom(0.01f, 0.3f, 2.0f);
+	this->viewer = new CurveViewer(shared, this);
+	this->layout->addWidget(this->viewer);
+	connect(this->viewer, SIGNAL(ready()), this, SLOT(select()));
 
+	connect(this->viewer, SIGNAL(mousePressed(QMouseEvent *)),
+		this, SLOT(mousePressed(QMouseEvent *)));
+	connect(this->viewer, SIGNAL(mouseReleased(QMouseEvent *)),
+		this, SLOT(mouseReleased(QMouseEvent *)));
+	connect(this->viewer, SIGNAL(mouseMoved(QMouseEvent *)),
+		this, SLOT(mouseMoved(QMouseEvent *)));
 	connect(this->degree, SIGNAL(currentIndexChanged(int)),
 		this, SLOT(setDegree(int)));
 }
@@ -68,84 +63,118 @@ QSize CurveEditor::sizeHint() const
 	return QSize(300, 40);
 }
 
-void CurveEditor::initializeGL()
+CurveViewer *CurveEditor::getViewer() const
 {
-	initializeOpenGLFunctions();
+	return this->viewer;
+}
 
-	glPointSize(8);
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_LINE_SMOOTH);
-	glDepthMask(GL_TRUE);
-	glDepthFunc(GL_ALWAYS);
-	glDepthRange(0.0f, 1.0f);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_PRIMITIVE_RESTART);
+void CurveEditor::init(const std::vector<pg::Curve> &curves)
+{
+	clear();
+	this->selectionBox->blockSignals(true);
+	for (pg::Curve curve : curves) {
+		QString name = QString::fromStdString(curve.getName());
+		this->selectionBox->addItem(name);
+		emit curveAdded(curve);
+	}
+	this->selectionBox->blockSignals(false);
+	select();
+}
 
-	this->buffer.initialize(GL_DYNAMIC_DRAW);
-	this->buffer.allocatePointMemory(1000);
-	this->buffer.allocateIndexMemory(1000);
+void CurveEditor::add()
+{
+	pg::Curve curve;
+	std::string name;
+	QString qname;
 
-	this->path.setColor(
-		Vec3(0.5f, 0.5f, 0.5f),
-		Vec3(0.6f, 0.6f, 0.6f),
-		Vec3(0.1f, 1.0f, 0.4f));
-	glPrimitiveRestartIndex(Geometry::primitiveReset);
+	for (int i = 1; true; i++) {
+		name = "Curve " + std::to_string(i);
+		qname = QString::fromStdString(name);
+		if (this->selectionBox->findText(qname) == -1)
+			break;
+	}
 
-	change();
+	curve.setName(name);
+	curve.setSpline(pg::getDefaultCurve(0));
+	add(curve);
+}
+
+void CurveEditor::add(pg::Curve curve)
+{
+	this->selection.clear();
+	this->history.clear();
+	pg::Plant *plant = this->editor->getPlant();
+	plant->addCurve(curve);
+
+	this->selectionBox->blockSignals(true);
+	QString name = QString::fromStdString(curve.getName());
+	this->selectionBox->addItem(name);
+	this->selectionBox->setCurrentIndex(this->selectionBox->findText(name));
+	this->selectionBox->blockSignals(false);
+
+	select();
+	emit curveAdded(curve);
+}
+
+void CurveEditor::select()
+{
+	if (this->selectionBox->count()) {
+		pg::Plant *plant = editor->getPlant();
+		unsigned index = this->selectionBox->currentIndex();
+		pg::Curve curve = plant->getCurve(index);
+		this->spline = curve.getSpline();
+
+		this->degree->blockSignals(true);
+		int degree = this->spline.getDegree();
+		this->degree->setCurrentIndex(degree == 3 ? 1 : 0);
+		this->degree->blockSignals(false);
+
+		this->viewer->change(this->spline, this->selection);
+	}
+}
+
+void CurveEditor::rename()
+{
+	unsigned index = this->selectionBox->currentIndex();
+	QString name = this->selectionBox->itemText(index);
+	pg::Plant *plant = this->editor->getPlant();
+	pg::Curve curve = plant->getCurve(index);
+	curve.setName(name.toStdString());
+	plant->updateCurve(curve, index);
+	emit curveModified(curve, index);
+}
+
+void CurveEditor::remove()
+{
+	if (this->selectionBox->count() > 1) {
+		unsigned index = this->selectionBox->currentIndex();
+		QString name = this->selectionBox->currentText();
+		pg::Plant *plant = this->editor->getPlant();
+		plant->removeCurve(index);
+		this->selectionBox->removeItem(index);
+		select();
+		this->editor->change();
+		emit curveRemoved(index);
+	}
+}
+
+void CurveEditor::clear()
+{
+	pg::Plant *plant = this->editor->getPlant();
+	int count = this->selectionBox->count();
+	while (count > 0) {
+		plant->removeCurve(count-1);
+		emit curveRemoved(count-1);
+		count--;
+	}
+	this->selectionBox->clear();
+	this->selection.clear();
+	this->history.clear();
 }
 
 void CurveEditor::focusOutEvent(QFocusEvent *)
 {
 	emit editingFinished();
-}
-
-void CurveEditor::createInterface()
-{
-	Geometry geometry;
-
-	{
-		this->path.set(this->spline, 20, Vec3(0.0f, 0.0f, 0.0f));
-		this->path.setSelectedPoints(selection);
-		geometry.append(*this->path.getGeometry());
-	}
-
-	{
-		Geometry plane;
-		Vec3 a(1.0f, 0.0f, 0.0f);
-		Vec3 b(0.0f, 0.0f, 1.0f);
-		Vec3 center(0.0f, 0.2f, 0.0f);
-		Vec3 color(0.34f, 0.34f, 0.34f);
-		plane.addPlane(a, b, center, color);
-		this->planeSegment = geometry.append(plane);
-	}
-
-	{
-		Geometry grid;
-		Vec3 colors[2];
-		colors[0] = Vec3(0.3f, 0.3f, 0.3f);
-		colors[1] = Vec3(0.3f, 0.3f, 0.3f);
-		Mat4 t(
-			1.0f/6.0f, 0.0f, 0.0f, 0.0f,
-			0.0f, 1.0f/6.0f, 0.0f, 0.0f,
-			0.0f, 0.0f, 1.0f/6.0f, 0.0f,
-			0.5f, 0.0f, 0.5f, 1.0f);
-		grid.addGrid(100, colors, colors[0]);
-		Geometry::Segment segment = grid.getSegment();
-		grid.transform(segment.pstart, segment.pcount, t);
-		this->gridSegment = geometry.append(grid);
-	}
-
-	this->buffer.update(geometry);
-}
-
-void CurveEditor::resizeGL(int width, int height)
-{
-	height -= this->toolBarHeight;
-	float ratio = static_cast<float>(width) / static_cast<float>(height);
-	this->camera.setWindowSize(width, height);
-	this->camera.setOrthographic(
-		Vec3(-ratio, -1.0f, 0.0f), Vec3(ratio, 1.0f, 100.0f));
 }
 
 void CurveEditor::keyPressEvent(QKeyEvent *event)
@@ -206,7 +235,6 @@ void CurveEditor::keyPressEvent(QKeyEvent *event)
 		this->spline = this->origSpline;
 		change();
 		this->history.add(removeSpline);
-		emit curveChanged(this->spline, this->name);
 	} else if (key == Qt::Key_Z && ctrl) {
 		if (event->modifiers() && shift)
 			this->history.redo();
@@ -215,7 +243,6 @@ void CurveEditor::keyPressEvent(QKeyEvent *event)
 		this->spline = this->origSpline;
 		applyRestrictions();
 		change();
-		emit curveChanged(this->spline, this->name);
 	}
 }
 
@@ -243,16 +270,16 @@ void CurveEditor::extrude()
 
 	this->selection.setPoints(points);
 
-	Vec3 avg = pg::getZeroVec3();
+	Vec3 avg(0.0f, 0.0f, 0.0f);
 	avg = this->selection.getAveragePosition(this->spline, avg);
 	this->axes.setPosition(avg);
 
 	this->origSpline = this->spline;
+	const Camera *camera = this->viewer->getCamera();
 	ExtrudeSpline *extrude = new ExtrudeSpline(
-		&this->selection, &this->origSpline, &this->axes,
-		&this->camera);
-	pg::Vec3 s = this->camera.toScreenSpace(avg);
-	QPoint pos = mapFromGlobal(QCursor::pos());
+		&this->selection, &this->origSpline, &this->axes, camera);
+	pg::Vec3 s = camera->toScreenSpace(avg);
+	QPoint pos = this->viewer->mapFromGlobal(QCursor::pos());
 	extrude->setClickOffset(s.x - pos.x(), s.y - pos.y());
 	extrude->execute();
 	this->command = extrude;
@@ -261,54 +288,42 @@ void CurveEditor::extrude()
 	initiateMovePoint();
 	applyRestrictions();
 	change();
-
-	emit curveChanged(this->spline, this->name);
 }
 
-void CurveEditor::mousePressEvent(QMouseEvent *event)
+void CurveEditor::mousePressed(QMouseEvent *event)
 {
 	QPoint pos = event->pos();
+	const Camera *camera = this->viewer->getCamera();
 
-	if (this->command) {
+	if (this->command)
 		exitCommand(this->command->onMousePress(event));
-	} else if (event->button() == Qt::MidButton) {
-		int x = pos.x();
-		int y = pos.y() - this->toolBarHeight;
-		this->camera.setStartCoordinates(x, y);
-		if (event->modifiers() & Qt::ControlModifier)
-			this->camera.setAction(Camera::Zoom);
-		else if (event->modifiers() & Qt::ShiftModifier)
-			this->camera.setAction(Camera::Pan);
-	} else if (this->enabled && event->button() == Qt::RightButton) {
+	else if (event->button() == Qt::RightButton) {
 		SavePointSelection *selectionCopy =
 			new SavePointSelection(&this->selection);
-		QMouseEvent modifiedEvent(
-			QEvent::MouseMove,
-			QPoint(pos.x(), pos.y() - this->toolBarHeight),
-			event->button(), event->buttons(), event->modifiers());
-		Selector selector(&this->camera);
+
+		Selector selector(camera);
 		selector.selectPoint(
-			&modifiedEvent, this->spline, pg::getZeroVec3(),
+			event, this->spline, Vec3(0.0, 0.0f, 0.0f),
 			&this->selection);
+
 		if (selectionCopy->hasChanged()) {
 			selectionCopy->setAfter();
 			this->history.add(selectionCopy);
 			Vec3 avg = this->selection.getAveragePosition(
-				this->spline, pg::getZeroVec3());
-			this->path.setSelectedPoints(this->selection);
+				this->spline, Vec3(0.0f, 0.0f, 0.0f));
 			this->axes.setPosition(avg);
 			change();
 		}
-	} else if (this->enabled && event->button() == Qt::LeftButton) {
+	} else if (event->button() == Qt::LeftButton) {
 		if (!this->selection.getPoints().empty()) {
 			Vec3 s = this->axes.getPosition();
-			s = this->camera.toScreenSpace(s);
+			s = camera->toScreenSpace(s);
 			int x = s.x - pos.x();
 			int y = s.y - pos.y();
 			initiateMovePoint();
 			MoveSpline *moveSpline = new MoveSpline(
 				&this->selection, &this->origSpline,
-				&this->axes, &this->camera);
+				&this->axes, camera);
 			moveSpline->preservePositions();
 			moveSpline->setClickOffset(x, y);
 			this->command = moveSpline;
@@ -316,45 +331,23 @@ void CurveEditor::mousePressEvent(QMouseEvent *event)
 	}
 }
 
-void CurveEditor::mouseReleaseEvent(QMouseEvent *event)
+void CurveEditor::mouseReleased(QMouseEvent *event)
 {
-	if (event->button() == Qt::MidButton)
-		this->camera.setAction(Camera::None);
-	else if (this->command)
+	if (this->command)
 		exitCommand(this->command->onMouseRelease(event));
-
 	this->axes.clearSelection();
 }
 
-void CurveEditor::mouseMoveEvent(QMouseEvent *event)
+void CurveEditor::mouseMoved(QMouseEvent *event)
 {
-	QPoint p = event->pos();
-	float x = p.x();
-	float y = p.y();
-
 	if (this->command) {
 		this->ctrl = event->modifiers() & Qt::ControlModifier;
 		if (this->command->onMouseMove(event)) {
 			this->spline = this->origSpline;
 			applyRestrictions();
 			change();
-			emit curveChanged(this->spline, this->name);
-		}
-	} else if (this->camera.executeAction(x, y - this->toolBarHeight))
-		change();
-}
-
-void CurveEditor::wheelEvent(QWheelEvent *event)
-{
-	QPoint angleDelta = event->angleDelta();
-	if (!angleDelta.isNull()) {
-		float y = angleDelta.y() / 10.0f;
-		if (y != 0.0f) {
-			this->camera.zoom(y);
-			update();
 		}
 	}
-	event->accept();
 }
 
 void CurveEditor::initiateMovePoint()
@@ -616,8 +609,8 @@ void CurveEditor::truncateCubicControl(std::vector<Vec3> &controls, int i)
 		if (tangent.direction.y < 0)
 			t = -1.0f;
 
-		boundary.origin =  Vec2(0.0f, 0.0f);
-		boundary.direction =  Vec2(1.0f, 0.0f);
+		boundary.origin = Vec2(0.0f, 0.0f);
+		boundary.direction = Vec2(1.0f, 0.0f);
 		r = intersectsLine(tangent, boundary);
 		/* Discard result if the direction is inward. */
 		if (tangent.direction.y > 0)
@@ -625,14 +618,14 @@ void CurveEditor::truncateCubicControl(std::vector<Vec3> &controls, int i)
 		if (t < 0 || (r < t && r >= 0))
 			t = r;
 
-		boundary.origin =  Vec2(controls[k].x, 0.0f);
-		boundary.direction =  Vec2(0.0f, 1.0f);
+		boundary.origin = Vec2(controls[k].x, 0.0f);
+		boundary.direction = Vec2(0.0f, 1.0f);
 		r = intersectsLine(tangent, boundary);
 		if (t < 0 || (r < t && r >= 0))
 			t = r;
 
 		if (length > t) {
-			pg::Vec2 p = t * normalize(tangent.direction);
+			pg::Vec2 p = t * pg::normalize(tangent.direction);
 			p += tangent.origin;
 			controls[i].x = p.x;
 			controls[i].z = p.y;
@@ -640,56 +633,15 @@ void CurveEditor::truncateCubicControl(std::vector<Vec3> &controls, int i)
 	}
 }
 
-void CurveEditor::paintGL()
-{
-	glViewport(0, 0, width(), height() - this->toolBarHeight);
-	glClearColor(0.32f, 0.32f, 0.32f, 1.0);
-	glClearDepth(1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	this->camera.updateVP();
-	Mat4 vp = this->camera.getVP();
-
-	this->buffer.use();
-	glUseProgram(this->shared->getShader(SharedResources::Flat));
-	glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
-
-	{
-		auto size = sizeof(unsigned);
-		GLvoid *start = (GLvoid *)(this->planeSegment.istart * size);
-		GLsizei count = this->planeSegment.icount;
-		glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, start);
-	}
-
-	glDrawArrays(GL_LINES, this->gridSegment.pstart,
-		this->gridSegment.pcount);
-
-	if (this->enabled && this->spline.getControls().size() > 0) {
-		glUseProgram(this->shared->getShader(SharedResources::Line));
-		glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
-		glUniform2f(1, QWidget::width(), QWidget::height());
-
-		Geometry::Segment segment = this->path.getLineSegment();
-		GLvoid *start = (GLvoid *)(segment.istart * sizeof(unsigned));
-		glDrawElements(
-			GL_LINE_STRIP, segment.icount, GL_UNSIGNED_INT, start);
-
-		segment = this->path.getPointSegment();
-		GLuint texture =
-			this->shared->getTexture(SharedResources::DotTexture);
-		glBindTexture(GL_TEXTURE_2D, texture);
-		glUseProgram(this->shared->getShader(SharedResources::Point));
-		glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
-		glDrawArrays(GL_POINTS, segment.pstart, segment.pcount);
-	}
-
-	glFlush();
-}
-
 void CurveEditor::change()
 {
-	createInterface();
-	update();
+	this->viewer->change(this->spline, this->selection);
+	pg::Plant *plant = this->editor->getPlant();
+	unsigned index = this->selectionBox->currentIndex();
+	pg::Curve curve = plant->getCurve(index);
+	curve.setSpline(this->spline);
+	plant->updateCurve(curve, index);
+	this->editor->change();
 }
 
 void CurveEditor::exitCommand(bool changed)
@@ -703,21 +655,17 @@ void CurveEditor::exitCommand(bool changed)
 	}
 }
 
-void CurveEditor::setCurve(pg::Spline spline, QString name)
+void CurveEditor::setCurve(pg::Spline spline)
 {
-	parentWidget()->setWindowTitle(name + " Curve");
-
 	this->degree->blockSignals(true);
 	if (spline.getDegree() == 1)
 		this->degree->setCurrentIndex(0);
 	else if (spline.getDegree() == 3)
 		this->degree->setCurrentIndex(1);
-	this->degree->setEnabled(true);
 	this->degree->blockSignals(false);
 
 	this->spline = spline;
 	this->origSpline = spline;
-	this->name = name;
 	this->selection.clear();
 	this->history.clear();
 
@@ -732,21 +680,6 @@ void CurveEditor::setDegree(int degree)
 		this->selection.clear();
 		this->history.clear();
 		change();
-		emit curveChanged(this->spline, this->name);
 		emit editingFinished();
 	}
-}
-
-void CurveEditor::setEnabled(bool enabled)
-{
-	if (enabled && this->name.size() > 0) {
-		this->degree->setEnabled(true);
-		parentWidget()->setWindowTitle(this->name + " Curve");
-	} else {
-		this->degree->setEnabled(false);
-		parentWidget()->setWindowTitle("Curves");
-	}
-
-	this->enabled = enabled;
-	update();
 }

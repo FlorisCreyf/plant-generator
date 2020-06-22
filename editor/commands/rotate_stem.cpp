@@ -34,7 +34,7 @@ RotateStem::RotateStem(
 	axes->selectCenter();
 	axis = axes->getSelection();
 
-	firstDirection = pg::getZeroVec3();
+	firstDirection = Vec3(0.0f, 0.0f, 0.0f);
 	pg::Ray ray = camera->getRay(x, y);
 	Vec3 normal = camera->getDirection();
 	set(ray, normal);

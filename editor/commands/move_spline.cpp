@@ -25,7 +25,7 @@ MoveSpline::MoveSpline(
 {
 	this->parallel = true;
 	this->clickOffset[0] = this->clickOffset[1] = 0.0f;
-	this->totalDirection = pg::getZeroVec3();
+	this->totalDirection = Vec3(0.0f, 0.0f, 0.0f);
 	this->selection = selection;
 	this->spline = spline;
 	this->axes = axes;

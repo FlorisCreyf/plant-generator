@@ -28,6 +28,14 @@ Window::Window(int argc, char **argv)
 	if (argc > 1)
 		this->filename = QString(argv[1]);
 
+	this->objectLabel = new QLabel(this);
+	this->fileLabel = new QLabel(this);
+	this->commandLabel = new QLabel(this);
+	statusBar()->addWidget(this->fileLabel, 1);
+	statusBar()->addWidget(this->commandLabel, 1);
+	statusBar()->addWidget(this->objectLabel, 0);
+	setFilename(this->filename);
+
 	this->editor = new Editor(&this->shared, &this->keymap, this);
 	setCentralWidget(this->editor);
 	createEditors();
@@ -39,10 +47,9 @@ Window::Window(int argc, char **argv)
 	menu->setTitle("Window");
 	menuBar()->insertMenu(this->widget.menuHelp->menuAction(), menu);
 
+	connect(this->editor, SIGNAL(changed()), this, SLOT(updateStatus()));
 	connect(this->widget.actionReportIssue, SIGNAL(triggered()),
 		this, SLOT(reportIssue()));
-	connect(&this->shared, SIGNAL(materialModified(unsigned)),
-		this->editor, SLOT(updateMaterial(unsigned)));
 }
 
 QDockWidget *Window::createDockWidget(
@@ -83,17 +90,22 @@ void Window::createEditors()
 	dw[1]->setMinimumWidth(350);
 	addDockWidget(static_cast<Qt::DockWidgetArea>(1), dw[1]);
 
-	this->curveEditor = new CurveEditor(&this->shared, &this->keymap, this);
+	this->curveEditor = new CurveEditor(
+		&this->shared, &this->keymap, this->editor, this);
 	dw[2] = createDockWidget("Curves", this->curveEditor, false);
 	addDockWidget(static_cast<Qt::DockWidgetArea>(1), dw[2]);
-	this->propertyEditor->bind(this->curveEditor);
 
-	this->materialEditor = new MaterialEditor(&this->shared, this);
+	connect(this->curveEditor, SIGNAL(curveAdded(pg::Curve)),
+		this->propertyEditor, SLOT(addCurve(pg::Curve)));
+	connect(this->curveEditor, SIGNAL(curveModified(pg::Curve, unsigned)),
+		this->propertyEditor, SLOT(updateCurve(pg::Curve, unsigned)));
+	connect(this->curveEditor, SIGNAL(curveRemoved(unsigned)),
+		this->propertyEditor, SLOT(removeCurve(unsigned)));
+
+	this->materialEditor = new MaterialEditor(
+		&this->shared, this->editor, this);
 	dw[3] = createDockWidget("Materials", this->materialEditor, true);
 	addDockWidget(static_cast<Qt::DockWidgetArea>(1), dw[3]);
-
-	connect(this->materialEditor->getViewer(), SIGNAL(ready()),
-		this, SLOT(initMaterialEditor()));
 
 	this->meshEditor = new MeshEditor(&this->shared, this->editor, this);
 	dw[4] = createDockWidget("Meshes", this->meshEditor, true);
@@ -103,8 +115,6 @@ void Window::createEditors()
 	dw[5] = createDockWidget("Generator", this->genEditor, true);
 	addDockWidget(static_cast<Qt::DockWidgetArea>(1), dw[5]);
 
-	connect(this->meshEditor->getViewer(), SIGNAL(ready()),
-		this, SLOT(initMeshEditor()));
 	connect(this->meshEditor, SIGNAL(meshAdded(pg::Geometry)),
 		this->propertyEditor, SLOT(addMesh(pg::Geometry)));
 	connect(this->meshEditor, SIGNAL(meshModified(pg::Geometry, unsigned)),
@@ -121,38 +131,17 @@ void Window::createEditors()
 void Window::initEditor()
 {
 	if (this->filename.isEmpty())
-		this->editor->load(nullptr);
-	else
+		newFile();
+	else {
 		this->editor->load(this->filename.toLatin1());
-
-	this->objectLabel = new QLabel(this);
-	this->fileLabel = new QLabel(this);
-	this->commandLabel = new QLabel(this);
-	statusBar()->addWidget(this->fileLabel, 1);
-	statusBar()->addWidget(this->commandLabel, 1);
-	statusBar()->addWidget(this->objectLabel, 0);
-	connect(this->editor, SIGNAL(changed()), this, SLOT(updateStatus()));
-	setFilename(this->filename);
-}
-
-void Window::initMeshEditor()
-{
-	if (!this->filename.isEmpty()) {
+		auto curves = this->editor->getPlant()->getCurves();
+		this->curveEditor->init(curves);
 		auto meshes = this->editor->getPlant()->getLeafMeshes();
-		for (auto &mesh : meshes)
-			this->meshEditor->addMesh(mesh);
-	} else
-		this->meshEditor->addMesh();
-}
-
-void Window::initMaterialEditor()
-{
-	if (!this->filename.isEmpty()) {
+		this->meshEditor->init(meshes);
 		auto materials = this->editor->getPlant()->getMaterials();
-		for (auto &material : materials)
-			this->materialEditor->addMaterial(material);
-	} else
-		this->materialEditor->addMaterial();
+		this->materialEditor->init(materials);
+		this->editor->reset();
+	}
 }
 
 void Window::updateStatus()
@@ -209,12 +198,15 @@ void Window::setFilename(QString filename)
 
 void Window::newFile()
 {
-	this->editor->load(nullptr);
+	this->curveEditor->clear();
+	this->curveEditor->add();
 	this->materialEditor->clear();
-	this->materialEditor->addMaterial();
+	this->materialEditor->add();
 	this->meshEditor->clear();
-	this->meshEditor->addMesh();
-	setFilename(tr(""));
+	this->meshEditor->add();
+	this->editor->load(nullptr);
+	this->editor->reset();
+	setFilename("");
 }
 
 void Window::openDialogBox()
@@ -223,15 +215,13 @@ void Window::openDialogBox()
 		this, tr("Open File"), "", tr("Plant (*.plant)"));
 
 	if (!filename.isNull() || !filename.isEmpty()) {
-		this->meshEditor->clear();
-		this->materialEditor->clear();
 		this->editor->load(filename.toLatin1());
-		auto materials = this->editor->getPlant()->getMaterials();
-		for (auto &material : materials)
-			this->materialEditor->addMaterial(material);
+		auto curves = this->editor->getPlant()->getCurves();
+		this->curveEditor->init(curves);
 		auto meshes = this->editor->getPlant()->getLeafMeshes();
-		for (auto &mesh : meshes)
-			this->meshEditor->addMesh(mesh);
+		this->meshEditor->init(meshes);
+		auto materials = this->editor->getPlant()->getMaterials();
+		this->materialEditor->init(materials);
 		setFilename(filename);
 	}
 }

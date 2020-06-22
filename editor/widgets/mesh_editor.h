@@ -18,52 +18,47 @@
 #ifndef MESH_EDITOR_H
 #define MESH_EDITOR_H
 
+#include "object_editor.h"
 #include "mesh_viewer.h"
 #include "editor.h"
-#include <QtWidgets>
 
-class MeshEditor : public QWidget {
+class MeshEditor : public ObjectEditor {
 	Q_OBJECT
 
 	SharedResources *shared;
 	Editor *editor;
 	MeshViewer *meshViewer;
-	QComboBox *meshBox;
 	pg::Geometry mesh;
 
 	QLineEdit *meshField;
 	QPushButton *meshList;
 	QMenu *meshMenu;
 
-	QPushButton *addButton;
-	QPushButton *removeButton;
-
 	QPushButton *customButton;
 	QPushButton *planeButton;
 	QPushButton *perpPlaneButton;
 	QPushButton *emptyButton;
 
-	QString selectedText;
-
 	void initFields(QVBoxLayout *form);
-	void initTopRow(QHBoxLayout *topRow);
+	void modify(pg::Geometry &, unsigned);
 
 public:
 	MeshEditor(SharedResources *shared, Editor *editor, QWidget *parent);
 	QSize sizeHint() const;
-	void clear();
+	void init(std::vector<pg::Geometry> geometry);
 	const MeshViewer *getViewer() const;
+	void clear();
 
 public slots:
-	void addMesh();
-	void addMesh(pg::Geometry);
+	void add();
+	void add(pg::Geometry);
+	void select();
+	void rename();
+	void remove();
 	void loadCustom();
 	void loadPlane();
 	void loadPerpPlane();
 	void loadEmpty();
-	void selectMesh();
-	void renameMesh();
-	void removeMesh();
 
 signals:
 	void meshAdded(pg::Geometry geom);

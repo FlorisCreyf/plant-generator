@@ -9,6 +9,7 @@ math/quat.o \
 math/vec2.o \
 math/vec3.o \
 math/vec4.o \
+curve.o \
 file.o \
 generator.o \
 geometry.o \

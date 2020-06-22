@@ -19,6 +19,7 @@
 
 using pg::Mesh;
 using pg::Path;
+using pg::Plant;
 using pg::Spline;
 using pg::Stem;
 using pg::Vec3;
@@ -64,8 +65,9 @@ void Selector::selectMesh(
 	bool ctrl = event->modifiers() & Qt::ControlModifier;
 	QPoint point = event->pos();
 	pg::Ray ray = this->camera->getRay(point.x(), point.y());
-	Stem *root = selection->getPlant()->getRoot();
-	pair<float, Stem *> stemPair = getStem(ray, root);
+	Plant *plant = selection->getPlant();
+	Stem *root = plant->getRoot();
+	pair<float, Stem *> stemPair = getStem(ray, root, plant);
 	pair<float, pg::Segment> leafPair = getLeaf(ray, mesh);
 
 	/* Remove previous selections if no modifier key is pressed. */
@@ -86,7 +88,7 @@ void Selector::selectMesh(
 
 /** Performs cylinder intersection tests to determine which stem was clicked
 on. A stem and the distance to its intersection is returned. */
-pair<float, Stem *> Selector::getStem(pg::Ray &ray, Stem *stem)
+pair<float, Stem *> Selector::getStem(pg::Ray &ray, Stem *stem, Plant *plant)
 {
 	float max = std::numeric_limits<float>::max();
 	pair<float, Stem *> selection1(max, nullptr);
@@ -100,19 +102,20 @@ pair<float, Stem *> Selector::getStem(pg::Ray &ray, Stem *stem)
 			line[0] = line[0] + stem->getLocation();
 			line[1] = line[1] + stem->getLocation();
 			float length = pg::magnitude(line[1] - line[0]);
-			float r[2] = {path.getRadius(i), path.getRadius(j)};
 			float t = pg::intersectsTaperedCylinder(
-				ray, line[0], direction, length, r[0], r[1]);
+				ray, line[0], direction, length,
+				plant->getRadius(stem, i),
+				plant->getRadius(stem, j));
 			if (t > 0 && selection1.first > t) {
 				selection1.first = t;
 				selection1.second = stem;
 			}
 		}
 
-		selection2 = getStem(ray, stem->getChild());
+		selection2 = getStem(ray, stem->getChild(), plant);
 		if (selection2.second && selection2.first < selection1.first)
 			selection1 = selection2;
-		selection2 = getStem(ray, stem->getSibling());
+		selection2 = getStem(ray, stem->getSibling(), plant);
 		if (selection2.second && selection2.first < selection1.first)
 			selection1 = selection2;
 	}

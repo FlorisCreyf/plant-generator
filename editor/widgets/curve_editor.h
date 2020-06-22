@@ -1,5 +1,5 @@
 /* Plant Generator
- * Copyright (C) 2016-2018  Floris Creyf
+ * Copyright (C) 2020  Floris Creyf
  *
  * Plant Generator is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,91 +18,80 @@
 #ifndef CURVE_EDITOR_H
 #define CURVE_EDITOR_H
 
-#include "editor/camera.h"
+#include "curve_viewer.h"
+#include "editor.h"
+#include "object_editor.h"
 #include "editor/history.h"
 #include "editor/keymap.h"
-#include "editor/point_selection.h"
 #include "editor/commands/move_spline.h"
-#include "editor/geometry/path.h"
-#include "editor/graphics/buffer.h"
-#include "editor/graphics/shared_resources.h"
 #include "editor/geometry/translation_axes.h"
+#include "plant_generator/curve.h"
 #include "plant_generator/math/math.h"
-#include <QOpenGLFunctions_4_3_Core>
-#include <QOpenGLWidget>
-#include <QtWidgets>
+#include <vector>
 
-class CurveEditor : public QOpenGLWidget, protected QOpenGLFunctions_4_3_Core {
+class CurveEditor : public ObjectEditor {
 	Q_OBJECT
 
 public:
-	CurveEditor(
-		SharedResources *shared, KeyMap *keymap,
+	CurveEditor(SharedResources *shared, KeyMap *keymap, Editor *editor,
 		QWidget *parent = 0);
 	QSize sizeHint() const;
+	void setCurve(pg::Spline spline);
+	CurveViewer *getViewer() const;
+	void clear();
 
 public slots:
-	void setCurve(pg::Spline spline, QString name);
+	void add();
+	void add(pg::Curve curve);
+	void init(const std::vector<pg::Curve> &curves);
+	void select();
+	void rename();
+	void remove();
 	void setDegree(int degree);
-	void setEnabled(bool enabled);
+	void mousePressed(QMouseEvent *event);
+	void mouseReleased(QMouseEvent *event);
+	void mouseMoved(QMouseEvent *event);
 
 signals:
-	void curveChanged(pg::Spline spline, QString name);
+	void curveAdded(pg::Curve curve);
+	void curveModified(pg::Curve curve, unsigned index);
+	void curveRemoved(unsigned index);
 	void editingFinished();
 
-protected:
-	void initializeGL();
-	void paintGL();
-	void resizeGL(int width, int height);
-	void mousePressEvent(QMouseEvent *);
-	void mouseReleaseEvent(QMouseEvent *);
-	void mouseMoveEvent(QMouseEvent *);
-	void keyPressEvent(QKeyEvent *event);
-	void wheelEvent(QWheelEvent *event);
-
 private:
-	SharedResources *shared;
+	CurveViewer *viewer;
+	Editor *editor;
 	KeyMap *keymap;
 	PointSelection selection;
-	Camera camera;
 	History history;
-	Buffer buffer;
-	Path path;
+	TranslationAxes axes;
+
 	pg::Spline spline;
 	pg::Spline origSpline; /* The original spline without restrictions. */
-	TranslationAxes axes;
-	Command *command = nullptr;
-	Geometry::Segment gridSegment;
-	Geometry::Segment planeSegment;
-	Geometry::Segment controlSegment;
-	Geometry::Segment curveSegment;
+	Command *command;
 
-	QString name;
-	bool enabled;
 	bool ctrl;
 	bool moveLeft;
 	pg::Vec3 origPoint;
-	int toolBarHeight = 22;
 
 	QComboBox *degree;
 
 	void initiateMovePoint();
 	void applyRestrictions();
 	void restrictLinearControls();
-	void restrictLinearControl(std::vector<pg::Vec3> &controls, int i);
-	void restrictOuterCubicControls(std::vector<pg::Vec3> &controls);
-	void restrictCubicControls(std::vector<pg::Vec3> &controls);
-	void restrictCubicControl(std::vector<pg::Vec3> &controls, int i);
-	bool isCenterSelected(std::set<int>::iterator &it);
+	void restrictLinearControl(std::vector<pg::Vec3> &, int);
+	void restrictOuterCubicControls(std::vector<pg::Vec3> &);
+	void restrictCubicControls(std::vector<pg::Vec3> &);
+	void restrictCubicControl(std::vector<pg::Vec3> &, int);
+	bool isCenterSelected(std::set<int>::iterator &);
 	void parallelizeTangents();
 	void restrictOppositeCubicControls();
-	void truncateCubicControl(std::vector<pg::Vec3> &controls, int i);
-	void focusOutEvent(QFocusEvent *event);
-	void createInterface();
-	void paintCurve(pg::Mat4 &vp);
+	void truncateCubicControl(std::vector<pg::Vec3> &, int);
 	void extrude();
-	void setClickOffset(int x, int y, pg::Vec3 point);
-	void exitCommand(bool changed);
+
+	void focusOutEvent(QFocusEvent *);
+	void keyPressEvent(QKeyEvent *);
+	void exitCommand(bool);
 	void change();
 };
 

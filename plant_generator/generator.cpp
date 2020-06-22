@@ -35,20 +35,20 @@ Generator::Generator()
 	this->maxSwelling = Vec2(1.5f, 3.0f);
 
 	Stem *root = this->plant.createRoot();
-	root->setResolution(6);
+	this->plant.addCurve(getDefaultCurve(0));
 
 	Path path;
 	Spline spline;
 	std::vector<Vec3> controls;
-	Vec3 control = {};
+	Vec3 control(0.0f, 0.0f, 0.0f);
 	controls.push_back(control);
 	spline.setControls(controls);
 	spline.setDegree(1);
 	path.setSpline(spline);
-	path.setMinRadius(this->minRadius);
-	path.setMaxRadius(this->minRadius);
-	path.setRadius(getDefaultCurve(0));
 	root->setPath(path);
+	root->setResolution(6);
+	root->setMinRadius(this->minRadius);
+	root->setMaxRadius(this->minRadius);
 	root->setSwelling(Vec2(1.0f, 1.0f));
 
 	Geometry geom;
@@ -151,10 +151,9 @@ void Generator::addNode(Stem *stem, Light light, int node)
 
 	spline.setControls(controls);
 	path.setSpline(spline);
-	path.setMaxRadius(path.getMaxRadius()+this->secondaryGrowthRate);
 	stem->setPath(path);
+	stem->setMaxRadius(stem->getMaxRadius()+this->secondaryGrowthRate);
 	stem->setSwelling(this->maxSwelling);
-	stem->setSwelling(stem->getLimitedSwelling(1.2f));
 
 	if (!firstNode)
 		addLeaves(stem, stem->getPath().getLength());
@@ -269,10 +268,9 @@ void Generator::addStems(Stem *stem)
 		spline.addControl(point);
 		spline.setDegree(1);
 		path.setSpline(spline);
-		path.setMinRadius(this->minRadius);
-		path.setMaxRadius(this->minRadius);
-		path.setRadius(getDefaultCurve(0));
 		child->setPath(path);
+		child->setMinRadius(this->minRadius);
+		child->setMaxRadius(this->minRadius);
 
 		Leaf childLeaf = createLeaf();
 		childLeaf.setPosition(this->primaryGrowthRate);

@@ -35,11 +35,6 @@ PropertyEditor::PropertyEditor(
 		this, SLOT(setFields()));
 }
 
-void PropertyEditor::bind(CurveEditor *curveEditor)
-{
-	this->stemEditor->bind(curveEditor);
-}
-
 void PropertyEditor::setFields()
 {
 	auto leafInstances = this->editor->getSelection()->getLeafInstances();
@@ -48,22 +43,31 @@ void PropertyEditor::setFields()
 	this->leafEditor->setFields(leafInstances);
 }
 
+void PropertyEditor::addCurve(pg::Curve curve)
+{
+	this->stemEditor->addCurve(curve);
+}
+
+void PropertyEditor::updateCurve(pg::Curve curve, unsigned index)
+{
+	this->stemEditor->updateCurve(curve, index);
+}
+
+void PropertyEditor::removeCurve(unsigned index)
+{
+	this->stemEditor->removeCurve(index);
+}
+
 void PropertyEditor::addMaterial(ShaderParams params)
 {
-	bool added = false;
-	added = this->stemEditor->addMaterial(params);
-	added = this->leafEditor->addMaterial(params);
-	if (added)
-		this->editor->getPlant()->addMaterial(params.getMaterial());
-	editor->change();
+	this->stemEditor->addMaterial(params);
+	this->leafEditor->addMaterial(params);
 }
 
 void PropertyEditor::removeMaterial(unsigned index)
 {
 	this->stemEditor->removeMaterial(index);
 	this->leafEditor->removeMaterial(index);
-	this->editor->getPlant()->removeMaterial(index);
-	this->editor->change();
 }
 
 void PropertyEditor::updateMaterials()
@@ -75,7 +79,6 @@ void PropertyEditor::updateMaterials()
 void PropertyEditor::addMesh(pg::Geometry geom)
 {
 	this->leafEditor->addMesh(geom);
-	this->editor->change();
 }
 
 void PropertyEditor::updateMesh(pg::Geometry geom, unsigned index)
@@ -86,7 +89,6 @@ void PropertyEditor::updateMesh(pg::Geometry geom, unsigned index)
 void PropertyEditor::removeMesh(unsigned index)
 {
 	this->leafEditor->removeMesh(index);
-	this->editor->change();
 }
 
 QSize PropertyEditor::sizeHint() const

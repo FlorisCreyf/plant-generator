@@ -22,6 +22,12 @@
 #include <sstream>
 #include <iostream>
 
+SharedResources::SharedResources()
+{
+	initialized = false;
+	textures[0] = textures[1] = 0;
+}
+
 void SharedResources::initialize()
 {
 	if (!initialized) {
@@ -33,7 +39,9 @@ void SharedResources::initialize()
 		QImage image2("resources/default.png");
 		textures[DefaultTexture] = addTexture(image2);
 
-		defaultMaterial.setDefaultTexture(0, textures[DefaultTexture]);
+		for (ShaderParams &param : materials)
+			if (!param.isValid())
+				param.initialize();
 
 		initialized = true;
 	}
@@ -203,6 +211,7 @@ GLuint SharedResources::buildProgram(GLuint *shaders, int size)
 
 void SharedResources::addMaterial(ShaderParams params)
 {
+	params.setDefaultTexture(0, textures[DefaultTexture]);
 	materials.push_back(params);
 	emit materialAdded(params);
 }
@@ -227,7 +236,6 @@ void SharedResources::clearMaterials()
 		emit materialRemoved(i);
 	}
 	materials.clear();
-	materials.push_back(defaultMaterial);
 }
 
 ShaderParams SharedResources::getMaterial(unsigned index) const

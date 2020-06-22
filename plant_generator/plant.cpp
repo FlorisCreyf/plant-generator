@@ -193,6 +193,64 @@ void Plant::reinsertStems(vector<Plant::Extraction> &extractions)
 		reinsertStem(extraction);
 }
 
+float Plant::getRadius(Stem *stem, unsigned index) const
+{
+	float t = stem->path.getPercentage(index);
+	const Spline spline = this->curves[stem->getRadiusCurve()].getSpline();
+	float z = spline.getPoint(t).z * stem->maxRadius;
+	return z < stem->minRadius ? stem->minRadius : z;
+}
+
+float Plant::getIntermediateRadius(Stem *stem, float t) const
+{
+	float length = stem->path.getLength();
+	const Spline spline = this->curves[stem->getRadiusCurve()].getSpline();
+	float z = spline.getPoint(t / length).z * stem->maxRadius;
+	return z < stem->minRadius ? stem->minRadius : z;
+}
+
+void Plant::addCurve(Curve curve)
+{
+	this->curves.push_back(curve);
+}
+
+void Plant::updateCurve(Curve curve, unsigned index)
+{
+	this->curves[index] = curve;
+}
+
+void Plant::removeCurve(unsigned index)
+{
+	if (this->root)
+		removeCurve(this->root, index);
+	this->curves.erase(this->curves.begin()+index);
+}
+
+void Plant::removeCurve(Stem *stem, unsigned index)
+{
+	unsigned curve = stem->getRadiusCurve();
+	if (index == curve)
+		stem->setRadiusCurve(0);
+	else if (curve > index)
+		stem->setRadiusCurve(curve-1);
+
+	Stem *child = stem->child;
+	while (child) {
+		removeCurve(child, index);
+		child = child->nextSibling;
+	}
+}
+
+Curve Plant::getCurve(unsigned index) const
+{
+	return this->curves.at(index);
+}
+
+std::vector<Curve> Plant::getCurves() const
+{
+	return this->curves;
+}
+
 void Plant::addMaterial(Material material)
 {
 	this->materials.push_back(material);

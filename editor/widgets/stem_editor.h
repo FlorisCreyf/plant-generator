@@ -19,7 +19,6 @@
 #define STEM_EDITOR_H
 
 #include "form.h"
-#include "curve_button.h"
 #include "curve_editor.h"
 #include <map>
 
@@ -29,15 +28,15 @@ class StemEditor : public Form {
 public:
 	StemEditor(SharedResources *shared, Editor *editor, QWidget *parent);
 	void setFields(std::map<pg::Stem *, PointSelection> instances);
+	bool addCurve(pg::Curve curve);
+	void updateCurve(pg::Curve curve, unsigned index);
+	void removeCurve(unsigned index);
 	bool addMaterial(ShaderParams params);
-	void removeMaterial(unsigned index);
 	void updateMaterials();
-	void bind(CurveEditor *curveEditor);
+	void removeMaterial(unsigned index);
 	QSize sizeHint() const;
 
 public slots:
-	void setCurve(pg::Spline spline, QString names);
-	void toggleCurve(CurveButton *button);
 	void finishChanging();
 	void changeCustom(int custom);
 	void changePathDegree(int degree);
@@ -45,7 +44,7 @@ public slots:
 	void changeDivisions(int divisions);
 	void changeRadius(double radius);
 	void changeMinRadius(double minRadius);
-	void changeRadiusCurve(pg::Spline &spline);
+	void changeRadiusCurve(int curve);
 	void changeStemMaterial();
 	void changeXCollar(double x);
 	void changeYCollar(double y);
@@ -62,7 +61,8 @@ private:
 	QDoubleSpinBox *radiusValue;
 	QLabel *minRadiusLabel;
 	QDoubleSpinBox *minRadiusValue;
-	CurveButton *radiusButton;
+	QLabel *radiusCurveLabel;
+	QComboBox *radiusCurveValue;
 	QLabel *resolutionLabel;
 	QSpinBox *resolutionValue;
 	QLabel *divisionLabel;
@@ -79,9 +79,6 @@ private:
 	QComboBox *capMaterialValue;
 	QLabel *customLabel;
 	QCheckBox *customValue;
-
-	CurveEditor *curveEditor;
-	CurveButton *selectedCurve;
 
 	void blockSignals(bool);
 	void createInterface();

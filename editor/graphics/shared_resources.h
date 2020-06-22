@@ -42,6 +42,7 @@ public:
 		DefaultTexture
 	};
 
+	SharedResources();
 	void initialize();
 	GLuint getShader(Shader shader);
 	GLuint getTexture(Texture texture);
@@ -63,7 +64,7 @@ signals:
 private:
 	GLuint programs[7];
 	GLuint textures[2];
-	bool initialized = false;
+	bool initialized;
 	ShaderParams defaultMaterial;
 	std::vector<ShaderParams> materials;
 

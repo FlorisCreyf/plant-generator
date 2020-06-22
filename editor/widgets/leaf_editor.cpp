@@ -114,71 +114,50 @@ void LeafEditor::createInterface()
 
 void LeafEditor::setFields(map<Stem *, set<size_t>> instances)
 {
-	if (instances.empty()) {
-		enable(false);
+	enable(false);
+	if (instances.empty())
 		return;
-	}
 
 	Stem *stem = instances.rbegin()->first;
 	Leaf *leaf = stem->getLeaf(*instances.rbegin()->second.begin());
 	blockSignals(true);
 
-	indicateSimilarities(this->customLabel);
+	Leaf *leaf1 = nullptr;
 	for (auto it = instances.begin(); it != instances.end(); it++) {
 		Stem *stem = it->first;
 		for (size_t index : it->second) {
-			bool a = stem->getLeaf(index)->isCustom();
-			bool b = stem->getLeaf(index)->isCustom();
-			if (a != b) {
-				indicateDifferences(this->customLabel);
-				break;
+			Leaf *leaf2 = stem->getLeaf(index);
+			if (!leaf1) {
+				leaf1 = leaf2;
+				continue;
 			}
-		}
-	}
-	this->customValue->setCheckState(
-		leaf->isCustom() ? Qt::Checked : Qt::Unchecked);
 
-	indicateSimilarities(this->scaleXLabel);
-	indicateSimilarities(this->scaleYLabel);
-	indicateSimilarities(this->scaleZLabel);
-	for (auto it = instances.begin(); it != instances.end(); it++) {
-		Stem *stem = it->first;
-		for (size_t index : it->second) {
-			Vec3 scale = stem->getLeaf(index)->getScale();
-			if (scale.x != leaf->getScale().x)
+			if (leaf1->isCustom() != leaf2->isCustom())
+				indicateDifferences(this->customLabel);
+			if (leaf1->getScale().x != leaf2->getScale().x)
 				indicateDifferences(this->scaleXLabel);
-			if (scale.y != leaf->getScale().y)
+			if (leaf1->getScale().y != leaf2->getScale().y)
 				indicateDifferences(this->scaleYLabel);
-			if (scale.z != leaf->getScale().z)
+			if (leaf1->getScale().z != leaf2->getScale().z)
 				indicateDifferences(this->scaleZLabel);
-		}
-	}
-	this->scaleXValue->setValue(leaf->getScale().x);
-	this->scaleYValue->setValue(leaf->getScale().y);
-	this->scaleZValue->setValue(leaf->getScale().z);
-
-	indicateSimilarities(this->materialLabel);
-	indicateSimilarities(this->meshLabel);
-	for (auto it = instances.begin(); it != instances.end(); it++) {
-		Stem *stem = it->first;
-		for (size_t index : it->second) {
-			Leaf *l = stem->getLeaf(index);
-			unsigned material = l->getMaterial();
-			unsigned mesh = l->getMesh();
-			if (material != leaf->getMaterial())
+			if (leaf1->getMaterial() != leaf2->getMaterial())
 				indicateDifferences(this->materialLabel);
-			if (mesh != leaf->getMesh())
+			if (leaf1->getMesh() != leaf2->getMesh())
 				indicateDifferences(this->meshLabel);
 		}
 	}
 
+	this->customValue->setCheckState(
+		leaf->isCustom() ? Qt::Checked : Qt::Unchecked);
+	this->scaleXValue->setValue(leaf->getScale().x);
+	this->scaleYValue->setValue(leaf->getScale().y);
+	this->scaleZValue->setValue(leaf->getScale().z);
 	{
 		size_t index = leaf->getMaterial();
 		string s = this->shared->getMaterial(index).getName();
 		QString qs = QString::fromStdString(s);
 		this->materialValue->setCurrentText(qs);
 	}
-
 	{
 		size_t index = leaf->getMesh();
 		Plant *plant = this->editor->getPlant();
@@ -223,7 +202,9 @@ bool LeafEditor::addMaterial(ShaderParams params)
 {
 	QString name = QString::fromStdString(params.getName());
 	if (this->materialValue->findText(name) < 0) {
+		this->materialValue->blockSignals(true);
 		this->materialValue->addItem(name);
+		this->materialValue->blockSignals(false);
 		return true;
 	}
 	return false;
