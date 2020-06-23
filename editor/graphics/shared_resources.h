@@ -49,7 +49,7 @@ public:
 	GLuint addTexture(const QImage &image);
 	void removeTexture(GLuint texture);
 
-	void addMaterial(ShaderParams params);
+	unsigned addMaterial(ShaderParams params);
 	void updateMaterial(ShaderParams params, unsigned index);
 	void removeMaterial(unsigned index);
 	void clearMaterials();

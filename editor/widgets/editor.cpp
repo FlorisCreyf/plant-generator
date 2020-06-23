@@ -438,57 +438,12 @@ void Editor::paintGL()
 
 	/* Paint the plant. */
 	plantBuffer.use();
-	if (shader == SharedResources::Model) {
-		size_t start = 0;
-		glUseProgram(shared->getShader(SharedResources::Model));
-		glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
-		glUniform4f(1, position.x, position.y, position.z, 0.0f);
-		for (size_t i = 0; i < mesh.getMeshCount(); i++) {
-			GLsizei size = mesh.getIndices(i)->size();
-			glDrawElements(
-				GL_TRIANGLES, size,
-				GL_UNSIGNED_INT, (GLvoid *)start);
-			start += mesh.getIndices(i)->size() * sizeof(unsigned);
-		}
-	} else if (shader == SharedResources::Wire) {
-		glUseProgram(shared->getShader(SharedResources::Wire));
-		glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
-		glUniform4f(1, 0.13f, 0.13f, 0.13f, 1.0f);
-
-		glPointSize(4);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
-		for (size_t i = 0; i < mesh.getMeshCount(); i++) {
-			GLsizei size = mesh.getVertices(i)->size();
-			glDrawArrays(GL_POINTS, 0, size);
-		}
-
-		size_t start = 0;
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		for (size_t i = 0; i < mesh.getMeshCount(); i++) {
-			GLsizei size = mesh.getIndices(i)->size();
-			glDrawElements(
-				GL_TRIANGLES, size,
-				GL_UNSIGNED_INT, (GLvoid *)start);
-			start += mesh.getIndices(i)->size() * sizeof(unsigned);
-		}
-
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	} else if (shader == SharedResources::Material) {
-		size_t start = 0;
-		glUseProgram(shared->getShader(SharedResources::Material));
-		glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
-		for (size_t i = 0; i < mesh.getMeshCount(); i++) {
-			unsigned material = mesh.getMaterialIndex(i);
-			ShaderParams params = shared->getMaterial(material);
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, params.getTexture(0));
-			GLsizei size = mesh.getIndices(i)->size();
-			glDrawElements(
-				GL_TRIANGLES, size,
-				GL_UNSIGNED_INT, (GLvoid *)start);
-			start += mesh.getIndices(i)->size() * sizeof(unsigned);
-		}
-	}
+	if (shader == SharedResources::Model)
+		paintModel(projection, position);
+	else if (shader == SharedResources::Wire)
+		paintWire(projection);
+	else if (shader == SharedResources::Material)
+		paintMaterial(projection);
 
 	/* Create a texture for selection objects. */
 	glBindFramebuffer(GL_FRAMEBUFFER, outlineFrameBuffer);
@@ -552,6 +507,62 @@ void Editor::paintGL()
 		paintAxes();
 
 	glFlush();
+}
+
+void Editor::paintWire(const Mat4 &projection)
+{
+	glUseProgram(shared->getShader(SharedResources::Wire));
+	glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
+	glUniform4f(1, 0.13f, 0.13f, 0.13f, 1.0f);
+
+	glPointSize(4);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
+	for (size_t i = 0; i < mesh.getMeshCount(); i++) {
+		GLsizei size = mesh.getVertices(i)->size();
+		glDrawArrays(GL_POINTS, 0, size);
+	}
+
+	size_t start = 0;
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	for (size_t i = 0; i < mesh.getMeshCount(); i++) {
+		GLsizei size = mesh.getIndices(i)->size();
+		glDrawElements(GL_TRIANGLES, size,
+			GL_UNSIGNED_INT, (GLvoid *)start);
+		start += mesh.getIndices(i)->size() * sizeof(unsigned);
+	}
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+}
+
+void Editor::paintModel(const Mat4 &projection, const Vec3 &position)
+{
+	size_t start = 0;
+	glUseProgram(shared->getShader(SharedResources::Model));
+	glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
+	glUniform4f(1, position.x, position.y, position.z, 0.0f);
+	for (size_t i = 0; i < mesh.getMeshCount(); i++) {
+		GLsizei size = mesh.getIndices(i)->size();
+		glDrawElements(GL_TRIANGLES, size,
+			GL_UNSIGNED_INT, (GLvoid *)start);
+		start += mesh.getIndices(i)->size() * sizeof(unsigned);
+	}
+}
+
+void Editor::paintMaterial(const Mat4 &projection)
+{
+	size_t start = 0;
+	glUseProgram(shared->getShader(SharedResources::Material));
+	glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
+	for (size_t i = 0; i < mesh.getMeshCount(); i++) {
+		unsigned index = mesh.getMaterialIndex(i);
+		ShaderParams params = shared->getMaterial(index);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, params.getTexture(0));
+		GLsizei size = mesh.getIndices(i)->size();
+		glDrawElements(GL_TRIANGLES, size,
+			GL_UNSIGNED_INT, (GLvoid *)start);
+		start += mesh.getIndices(i)->size() * sizeof(unsigned);
+	}
 }
 
 void Editor::paintAxes()

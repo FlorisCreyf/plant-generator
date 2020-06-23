@@ -41,9 +41,9 @@ QSize MaterialViewer::sizeHint() const
 	return QSize(width(), 200);
 }
 
-void MaterialViewer::updateMaterial(ShaderParams params)
+void MaterialViewer::updateMaterial(unsigned materialIndex)
 {
-	this->params = params;
+	this->materialIndex = materialIndex;
 	update();
 }
 
@@ -86,6 +86,8 @@ void MaterialViewer::paintGL()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	camera.updateVP();
+	ShaderParams params = shared->getMaterial(this->materialIndex);
+
 	float aspect = params.getMaterial().getRatio();
 	Mat4 scale;
 	if (aspect < 1.0f)

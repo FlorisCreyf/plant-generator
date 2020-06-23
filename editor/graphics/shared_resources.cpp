@@ -40,8 +40,11 @@ void SharedResources::initialize()
 		textures[DefaultTexture] = addTexture(image2);
 
 		for (ShaderParams &param : materials)
-			if (!param.isValid())
+			if (!param.isValid()) {
+				GLuint tex = textures[DefaultTexture];
+				param.setDefaultTexture(0, tex);
 				param.initialize();
+			}
 
 		initialized = true;
 	}
@@ -209,11 +212,12 @@ GLuint SharedResources::buildProgram(GLuint *shaders, int size)
 	return program;
 }
 
-void SharedResources::addMaterial(ShaderParams params)
+unsigned SharedResources::addMaterial(ShaderParams params)
 {
 	params.setDefaultTexture(0, textures[DefaultTexture]);
 	materials.push_back(params);
 	emit materialAdded(params);
+	return materials.size()-1;
 }
 
 void SharedResources::updateMaterial(ShaderParams params, unsigned index)

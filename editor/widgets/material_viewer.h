@@ -35,7 +35,7 @@ class MaterialViewer :
 	Camera camera;
 	Buffer buffer;
 	Geometry::Segment planeSegment;
-	ShaderParams params;
+	unsigned materialIndex;
 
 	void createInterface();
 
@@ -53,7 +53,7 @@ public:
 	QSize sizeHint() const;
 
 public slots:
-	void updateMaterial(ShaderParams params);
+	void updateMaterial(unsigned materialIndex);
 
 signals:
 	void ready();

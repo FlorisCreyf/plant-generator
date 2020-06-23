@@ -104,7 +104,7 @@ void MaterialEditor::add(pg::Material material)
 {
 	ShaderParams params(material);
 	QString name = QString::fromStdString(params.getName());
-	this->shared->addMaterial(params);
+	unsigned index = this->shared->addMaterial(params);
 	this->selectionBox->addItem(name);
 	this->selectionBox->setCurrentIndex(this->selectionBox->count() - 1);
 
@@ -116,7 +116,7 @@ void MaterialEditor::add(pg::Material material)
 	}
 
 	this->editor->getPlant()->addMaterial(params.getMaterial());
-	this->materialViewer->updateMaterial(params);
+	this->materialViewer->updateMaterial(index);
 }
 
 /** Add an empty material with a unique name to the material list. */
@@ -134,9 +134,9 @@ void MaterialEditor::add()
 	}
 
 	params.setName(name);
-	this->shared->addMaterial(params);
+	unsigned index = this->shared->addMaterial(params);
 	this->editor->getPlant()->addMaterial(params.getMaterial());
-	this->materialViewer->updateMaterial(params);
+	this->materialViewer->updateMaterial(index);
 
 	this->diffuseBox->setText(tr(""));
 	this->selectionBox->addItem(qname);
@@ -174,7 +174,7 @@ void MaterialEditor::select()
 		std::string filename = params.getMaterial().getTexture();
 		QString qfilename = QString::fromStdString(filename);
 		this->diffuseBox->setText(qfilename);
-		this->materialViewer->updateMaterial(params);
+		this->materialViewer->updateMaterial(index);
 	}
 }
 
@@ -220,5 +220,5 @@ void MaterialEditor::update(ShaderParams params, unsigned index)
 	this->shared->updateMaterial(params, index);
 	this->editor->getPlant()->updateMaterial(params.getMaterial(), index);
 	this->editor->change();
-	this->materialViewer->updateMaterial(params);
+	this->materialViewer->updateMaterial(index);
 }

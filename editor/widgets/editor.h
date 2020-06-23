@@ -122,20 +122,23 @@ private:
 	bool rotating = false;
 
 	void createDefaultPlant();
-	void addSelectionToHistory(SaveSelection *selection);
+	void addSelectionToHistory(SaveSelection *);
 	void createToolBar();
 	void createFrameBuffers();
-	void exitCommand(bool changed);
+	void exitCommand(bool);
 	void initializeGL();
 	void initializeBuffers();
 	void paintGL();
+	void paintWire(const pg::Mat4 &);
+	void paintModel(const pg::Mat4 &, const pg::Vec3 &);
+	void paintMaterial(const pg::Mat4 &);
 	void paintAxes();
-	void resizeGL(int width, int height);
-	void selectStem(QMouseEvent *event);
-	void selectPoint(QMouseEvent *event);
-	void selectAxis(int x, int y);
-	void setClickOffset(int x, int y, pg::Vec3 point);
-	void updateCamera(int width, int height);
+	void resizeGL(int, int);
+	void selectStem(QMouseEvent *);
+	void selectPoint(QMouseEvent *);
+	void selectAxis(int, int);
+	void setClickOffset(int, int, pg::Vec3);
+	void updateCamera(int, int);
 };
 
 #endif /* EDITOR_H */
