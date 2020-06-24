@@ -128,9 +128,8 @@ QWidget {
 	width:20px;
 } QDockWidget QCheckBox:indicator {
 	background:#555;
-	height:18px;
-	width:18px;
-	border:1px solid #555;
+	height:20px;
+	width:20px;
 } QDockWidget QCheckBox::indicator:disabled {
 	image:none;
 } QCheckBox::indicator:checked {
@@ -139,7 +138,6 @@ QWidget {
 	font-size:11px;
 	padding-right:0px;
 	background:#555;
-	border:1px solid #555;
 	height:20px;
 } QDockWidget QSpinBox::up-button,
   QDockWidget QDoubleSpinBox::up-button {
@@ -309,7 +307,7 @@ QWidget {
 	border:0;
 	padding-left:4px;
 	padding-right:15px;
-	height:22px;
+	height:20px;
 } QComboBox:editable {
 	background:#555;
 } QComboBox:!editable, QComboBox::drop-down:editable {

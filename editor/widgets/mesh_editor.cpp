@@ -17,6 +17,7 @@
 
 #include "mesh_editor.h"
 #include "plant_generator/file.h"
+#include "definitions.h"
 
 MeshEditor::MeshEditor(
 	SharedResources *shared, Editor *editor, QWidget *parent) :
@@ -39,21 +40,16 @@ MeshEditor::MeshEditor(
 	this->layout->addStretch(1);
 }
 
-QSize MeshEditor::sizeHint() const
-{
-	return QSize(350, 200);
-}
-
 void MeshEditor::initFields(QVBoxLayout *layout)
 {
 	this->customButton = new QPushButton("Custom", this);
-	this->customButton->setFixedHeight(22);
+	this->customButton->setFixedHeight(UI_FIELD_HEIGHT);
 	this->planeButton = new QPushButton("Plane", this);
-	this->planeButton->setFixedHeight(22);
+	this->planeButton->setFixedHeight(UI_FIELD_HEIGHT);
 	this->perpPlaneButton = new QPushButton("Perpendicular Planes", this);
-	this->perpPlaneButton->setFixedHeight(22);
+	this->perpPlaneButton->setFixedHeight(UI_FIELD_HEIGHT);
 	this->emptyButton = new QPushButton("Empty", this);
-	this->emptyButton->setFixedHeight(22);
+	this->emptyButton->setFixedHeight(UI_FIELD_HEIGHT);
 
 	QString style = tr("text-align:left;padding:0 5px;");
 	this->customButton->setStyleSheet(style);

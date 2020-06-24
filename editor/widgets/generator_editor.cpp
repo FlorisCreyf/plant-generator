@@ -16,6 +16,7 @@
  */
 
 #include "generator_editor.h"
+#include "definitions.h"
 #include <limits>
 
 GeneratorEditor::GeneratorEditor(Editor *editor, QWidget *parent) : Form(parent)
@@ -30,7 +31,7 @@ GeneratorEditor::GeneratorEditor(Editor *editor, QWidget *parent) : Form(parent)
 
 QSize GeneratorEditor::sizeHint() const
 {
-	return QSize(350, 200);
+	return QSize(UI_WIDGET_WIDTH, UI_WIDGET_HEIGHT);
 }
 
 void GeneratorEditor::createInterface()

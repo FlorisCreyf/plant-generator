@@ -35,7 +35,6 @@ class CurveEditor : public ObjectEditor {
 public:
 	CurveEditor(SharedResources *shared, KeyMap *keymap, Editor *editor,
 		QWidget *parent = 0);
-	QSize sizeHint() const;
 	void setCurve(pg::Spline spline);
 	CurveViewer *getViewer() const;
 	void clear();

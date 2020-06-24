@@ -16,6 +16,7 @@
  */
 
 #include "form.h"
+#include "definitions.h"
 
 Form::Form(QWidget *parent) : QWidget(parent)
 {
@@ -30,7 +31,7 @@ void Form::setValueWidths(QFormLayout *layout)
 	for(int i = 0; i < layout->rowCount(); i++) {
 		QLayoutItem *item = layout->itemAt(i, QFormLayout::FieldRole);
 		if (item && item->widget())
-			item->widget()->setFixedWidth(250);
+			item->widget()->setFixedWidth(UI_FIELD_WIDTH);
 	}
 }
 

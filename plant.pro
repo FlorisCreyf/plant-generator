@@ -144,6 +144,7 @@ editor/graphics/shader_params.h \
 editor/graphics/shared_resources.h \
 editor/widgets/curve_editor.h \
 editor/widgets/curve_viewer.h \
+editor/widgets/definitions.h \
 editor/widgets/editor.h \
 editor/widgets/form.h \
 editor/widgets/generator_editor.h \

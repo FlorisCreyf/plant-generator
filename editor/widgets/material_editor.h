@@ -44,7 +44,6 @@ public:
 	void add(pg::Material material);
 	void init(const std::vector<pg::Material> &materials);
 	void clear();
-	QSize sizeHint() const;
 	const MaterialViewer *getViewer() const;
 
 public slots:

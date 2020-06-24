@@ -17,6 +17,7 @@
 
 #include "object_editor.h"
 #include "item_delegate.h"
+#include "definitions.h"
 
 ObjectEditor::ObjectEditor(QWidget *parent) : QWidget(parent)
 {
@@ -33,15 +34,20 @@ ObjectEditor::ObjectEditor(QWidget *parent) : QWidget(parent)
 	this->layout->addLayout(topRow);
 }
 
+QSize ObjectEditor::sizeHint() const
+{
+	return QSize(UI_WIDGET_WIDTH, UI_WIDGET_WIDTH);
+}
+
 void ObjectEditor::initTopRow(QHBoxLayout *topRow)
 {
 	this->addButton = new QPushButton("+", this);
-	this->addButton->setFixedHeight(22);
-	this->addButton->setFixedWidth(22);
+	this->addButton->setFixedHeight(UI_FIELD_HEIGHT);
+	this->addButton->setFixedWidth(UI_FIELD_HEIGHT);
 
 	this->removeButton = new QPushButton("-", this);
-	this->removeButton->setFixedHeight(22);
-	this->removeButton->setFixedWidth(22);
+	this->removeButton->setFixedHeight(UI_FIELD_HEIGHT);
+	this->removeButton->setFixedWidth(UI_FIELD_HEIGHT);
 
 	this->selectionBox = new QComboBox(this);
 	this->selectionBox->setEditable(true);

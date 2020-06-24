@@ -17,6 +17,7 @@
 
 #include "material_editor.h"
 #include "plant_generator/math/math.h"
+#include "definitions.h"
 
 using pg::Vec3;
 using pg::Mat4;
@@ -40,23 +41,18 @@ MaterialEditor::MaterialEditor(
 	this->layout->addStretch(1);
 }
 
-QSize MaterialEditor::sizeHint() const
-{
-	return QSize(350, 200);
-}
-
 void MaterialEditor::initFields(QFormLayout *form)
 {
 	QHBoxLayout *diffuseLayout = new QHBoxLayout();
 	this->diffuseBox = new QLineEdit(this);
-	this->diffuseBox->setFixedHeight(22);
+	this->diffuseBox->setFixedHeight(UI_FIELD_HEIGHT);
 	this->diffuseBox->setReadOnly(true);
 	this->addDiffuseButton = new QPushButton("+", this);
-	this->addDiffuseButton->setFixedWidth(22);
-	this->addDiffuseButton->setFixedHeight(22);
+	this->addDiffuseButton->setFixedWidth(UI_FIELD_HEIGHT);
+	this->addDiffuseButton->setFixedHeight(UI_FIELD_HEIGHT);
 	this->removeDiffuseButton = new QPushButton("-", this);
-	this->removeDiffuseButton->setFixedWidth(22);
-	this->removeDiffuseButton->setFixedHeight(22);
+	this->removeDiffuseButton->setFixedWidth(UI_FIELD_HEIGHT);
+	this->removeDiffuseButton->setFixedHeight(UI_FIELD_HEIGHT);
 
 	QWidget *sizeWidget = new QWidget();
 	sizeWidget->setLayout(diffuseLayout);

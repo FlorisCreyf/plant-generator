@@ -16,6 +16,7 @@
  */
 
 #include "curve_editor.h"
+#include "definitions.h"
 #include "editor/selector.h"
 #include "editor/commands/extrude_spline.h"
 #include "editor/commands/remove_spline.h"
@@ -41,7 +42,7 @@ CurveEditor::CurveEditor(
 	this->degree = new QComboBox(this);
 	this->degree->addItem(QString("Linear"));
 	this->degree->addItem(QString("Cubic"));
-	this->degree->setFixedHeight(22);
+	this->degree->setFixedHeight(UI_FIELD_HEIGHT);
 	this->layout->addWidget(this->degree);
 
 	this->viewer = new CurveViewer(shared, this);
@@ -56,11 +57,6 @@ CurveEditor::CurveEditor(
 		this, SLOT(mouseMoved(QMouseEvent *)));
 	connect(this->degree, SIGNAL(currentIndexChanged(int)),
 		this, SLOT(setDegree(int)));
-}
-
-QSize CurveEditor::sizeHint() const
-{
-	return QSize(300, 40);
 }
 
 CurveViewer *CurveEditor::getViewer() const

@@ -16,6 +16,7 @@
  */
 
 #include "key_editor.h"
+#include "definitions.h"
 
 KeyEditor::KeyEditor(KeyMap *keymap, QWidget *parent) : QWidget(parent)
 {
@@ -38,15 +39,15 @@ KeyEditor::KeyEditor(KeyMap *keymap, QWidget *parent) : QWidget(parent)
 
 QSize KeyEditor::sizeHint() const
 {
-	return QSize(350, 200);
+	return QSize(UI_WIDGET_WIDTH, UI_WIDGET_WIDTH);
 }
 
 void KeyEditor::initField(QPushButton **widget, QString name)
 {
 	QHBoxLayout *layout = new QHBoxLayout();
 	*widget = new QPushButton();
-	(*widget)->setFixedHeight(22);
-	(*widget)->setFixedWidth(250);
+	(*widget)->setFixedHeight(UI_FIELD_HEIGHT);
+	(*widget)->setFixedWidth(UI_FIELD_WIDTH);
 	(*widget)->setEnabled(false);
 	layout->addWidget(*widget);
 	form->addRow(name, layout);
@@ -60,6 +61,6 @@ void KeyEditor::setValueWidths(QFormLayout *layout)
 	for(int i = 0; i < layout->rowCount(); i++) {
 		QLayoutItem *item = layout->itemAt(i, QFormLayout::FieldRole);
 		if (item && item->widget())
-			item->widget()->setFixedWidth(250);
+			item->widget()->setFixedWidth(UI_FIELD_WIDTH);
 	}
 }

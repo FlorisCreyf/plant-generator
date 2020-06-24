@@ -44,7 +44,6 @@ class MeshEditor : public ObjectEditor {
 
 public:
 	MeshEditor(SharedResources *shared, Editor *editor, QWidget *parent);
-	QSize sizeHint() const;
 	void init(std::vector<pg::Geometry> geometry);
 	const MeshViewer *getViewer() const;
 	void clear();

@@ -16,6 +16,7 @@
  */
 
 #include "window.h"
+#include "definitions.h"
 #include "plant_generator/file.h"
 #include <boost/archive/text_iarchive.hpp>
 #include <fstream>
@@ -57,6 +58,7 @@ QDockWidget *Window::createDockWidget(
 {
 	QDockWidget *dw = new QDockWidget(tr(name), this);
 	dw->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+	dw->setMinimumWidth(UI_WIDGET_WIDTH);
 	if (scrollbar) {
 		QScrollArea *sa = new QScrollArea();
 		sa->setWidgetResizable(true);
@@ -75,7 +77,6 @@ void Window::createEditors()
 	this->propertyEditor = new PropertyEditor(
 		&this->shared, this->editor, this);
 	dw[0] = createDockWidget("Properties", this->propertyEditor, true);
-	dw[0]->setMinimumWidth(350);
 	addDockWidget(static_cast<Qt::DockWidgetArea>(1), dw[0]);
 
 	connect(&shared, SIGNAL(materialAdded(ShaderParams)),
@@ -87,7 +88,6 @@ void Window::createEditors()
 
 	this->keyEditor = new KeyEditor(&keymap, this);
 	dw[1] = createDockWidget("Keys", this->keyEditor, true);
-	dw[1]->setMinimumWidth(350);
 	addDockWidget(static_cast<Qt::DockWidgetArea>(1), dw[1]);
 
 	this->curveEditor = new CurveEditor(

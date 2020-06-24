@@ -33,6 +33,7 @@ protected:
 
 public:
 	ObjectEditor(QWidget *parent);
+	QSize sizeHint() const;
 
 public slots:
 	virtual void add() = 0;
