@@ -696,7 +696,7 @@ void Editor::createDefaultPlant()
 	derivation.stemStart = 2.0f;
 	derivation.leafDensity = 0.5f;
 	derivation.leafStart = 1.0f;
-	derivation.requiredLength = 0.5f;
+	derivation.lengthFactor = 50.0f;
 	generator.setDerivation(derivation);
 	generator.grow();
 }

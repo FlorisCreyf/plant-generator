@@ -22,12 +22,20 @@
 
 namespace pg {
 	struct Derivation {
-		int depth = 0;
+		enum Arrangement {
+			Alternate,
+			Opposite,
+			Whorled
+		};
+
+		int depth = 1;
 		float stemDensity = 0.0f;
 		float leafDensity = 0.0f;
 		float stemStart = 0.0f;
 		float leafStart = 0.0f;
-		float requiredLength = 0.0f;
+		float lengthFactor = 1.0f;
+		float radiusThreshold = 0.0f;
+		Arrangement arrangement = Arrangement::Alternate;
 		unsigned seed = 0;
 
 		#ifdef PG_SERIALIZE
@@ -41,7 +49,9 @@ namespace pg {
 			ar & leafDensity;
 			ar & stemStart;
 			ar & leafStart;
-			ar & requiredLength;
+			ar & radiusThreshold;
+			ar & lengthFactor;
+			ar & arrangement;
 			ar & seed;
 		}
 		#endif /* PG_SERIALIZE */

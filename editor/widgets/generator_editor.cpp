@@ -60,26 +60,49 @@ void GeneratorEditor::createInterface()
 	this->leafStart = new QDoubleSpinBox(this);
 	this->leafStart->setSingleStep(0.1);
 	form->addRow(tr("Leaf Start"), this->leafStart);
+	this->arrangement = new QComboBox(this);
+	this->arrangement->addItem(tr("Alternate"));
+	this->arrangement->addItem(tr("Opposite"));
+	this->arrangement->addItem(tr("Whorled"));
+	form->addRow(tr("Arrangment"), arrangement);
+	this->radiusThreshold = new QDoubleSpinBox(this);
+	this->radiusThreshold->setSingleStep(0.001);
+	this->radiusThreshold->setDecimals(3);
+	form->addRow(tr("Radius Threshold"), this->radiusThreshold);
+	this->lengthFactor = new QDoubleSpinBox(this);
+	this->lengthFactor->setSingleStep(0.1);
+	form->addRow(tr("Length Factor"), this->lengthFactor);
+	this->depth = new QSpinBox(this);
+	form->addRow(tr("Depth"), this->depth);
 
-	connect(this->seed, SIGNAL(valueChanged(int)),
+	setValueWidths(form);
+
+	connect(this->arrangement, SIGNAL(currentIndexChanged(int)),
+		this, SLOT(changeOption()));
+
+	connectField(this->seed);
+	connectField(this->depth);
+	connectField(this->stemDensity);
+	connectField(this->stemStart);
+	connectField(this->leafDensity);
+	connectField(this->leafStart);
+	connectField(this->radiusThreshold);
+	connectField(this->lengthFactor);
+}
+
+void GeneratorEditor::connectField(QSpinBox *field)
+{
+	connect(field, SIGNAL(valueChanged(int)),
 		this, SLOT(change()));
-	connect(this->seed, SIGNAL(editingFinished()),
+	connect(field, SIGNAL(editingFinished()),
 		this, SLOT(finishChanging()));
-	connect(this->stemDensity, SIGNAL(valueChanged(double)),
+}
+
+void GeneratorEditor::connectField(QDoubleSpinBox *field)
+{
+	connect(field, SIGNAL(valueChanged(double)),
 		this, SLOT(change()));
-	connect(this->stemDensity, SIGNAL(editingFinished()),
-		this, SLOT(finishChanging()));
-	connect(this->stemStart, SIGNAL(valueChanged(double)),
-		this, SLOT(change()));
-	connect(this->stemStart, SIGNAL(editingFinished()),
-		this, SLOT(finishChanging()));
-	connect(this->leafDensity, SIGNAL(valueChanged(double)),
-		this, SLOT(change()));
-	connect(this->leafDensity, SIGNAL(editingFinished()),
-		this, SLOT(finishChanging()));
-	connect(this->leafStart, SIGNAL(valueChanged(double)),
-		this, SLOT(change()));
-	connect(this->leafStart, SIGNAL(editingFinished()),
+	connect(field, SIGNAL(editingFinished()),
 		this, SLOT(finishChanging()));
 }
 
@@ -99,6 +122,10 @@ void GeneratorEditor::setFields()
 	this->stemStart->setValue(derivation.stemStart);
 	this->leafDensity->setValue(derivation.leafDensity);
 	this->leafStart->setValue(derivation.leafStart);
+	this->radiusThreshold->setValue(derivation.radiusThreshold);
+	this->depth->setValue(derivation.depth);
+	this->lengthFactor->setValue(derivation.lengthFactor);
+	this->arrangement->setCurrentIndex(derivation.arrangement);
 	enable(true);
 	blockSignals(false);
 }
@@ -110,6 +137,10 @@ void GeneratorEditor::enable(bool enable)
 	this->stemStart->setEnabled(enable);
 	this->leafDensity->setEnabled(enable);
 	this->leafStart->setEnabled(enable);
+	this->radiusThreshold->setEnabled(enable);
+	this->depth->setEnabled(enable);
+	this->lengthFactor->setEnabled(enable);
+	this->arrangement->setEnabled(enable);
 }
 
 void GeneratorEditor::blockSignals(bool block)
@@ -119,6 +150,10 @@ void GeneratorEditor::blockSignals(bool block)
 	this->stemStart->blockSignals(block);
 	this->leafDensity->blockSignals(block);
 	this->leafStart->blockSignals(block);
+	this->radiusThreshold->blockSignals(block);
+	this->depth->blockSignals(block);
+	this->lengthFactor->blockSignals(block);
+	this->arrangement->blockSignals(block);
 }
 
 void GeneratorEditor::change()
@@ -131,7 +166,12 @@ void GeneratorEditor::change()
 	dvn.leafStart = this->leafStart->value();
 	dvn.stemDensity = this->stemDensity->value();
 	dvn.stemStart = this->stemStart->value();
+	dvn.radiusThreshold = this->radiusThreshold->value();
 	dvn.seed = this->seed->value();
+	dvn.depth = this->depth->value();
+	dvn.lengthFactor = this->lengthFactor->value();
+	int index = this->arrangement->currentIndex();
+	dvn.arrangement = static_cast<pg::Derivation::Arrangement>(index);
 	gen.setDerivation(dvn);
 	this->generate->setGenerator(std::move(gen));
 	this->generate->execute();
@@ -145,4 +185,10 @@ void GeneratorEditor::finishChanging()
 		/* The history will delete the command. */
 		this->generate = nullptr;
 	}
+}
+
+void GeneratorEditor::changeOption()
+{
+	change();
+	finishChanging();
 }

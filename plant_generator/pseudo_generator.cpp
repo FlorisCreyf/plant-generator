@@ -27,14 +27,7 @@ using namespace pg;
 PseudoGenerator::PseudoGenerator(Plant *plant)
 {
 	this->plant = plant;
-	this->dvn.seed = 0;
 	this->randomGenerator.seed(this->dvn.seed);
-	this->dvn.depth = 1;
-	this->dvn.stemDensity = 0.0f;
-	this->dvn.leafDensity = 0.0f;
-	this->dvn.stemStart = 0.0f;
-	this->dvn.leafStart = 0.0f;
-	this->dvn.requiredLength = 0.0f;
 }
 
 Derivation PseudoGenerator::getDerivation() const
@@ -57,7 +50,9 @@ void PseudoGenerator::grow()
 	Stem *root = this->plant->createRoot();
 	root->setDerivation(this->dvn);
 	root->setPosition(0.0f);
-	setPath(root, nullptr, Vec3(0.0f, 1.0f, 0.0f), 0.0f);
+	root->setMaxRadius(0.2f);
+	root->setMinRadius(0.01f);
+	setPath(root, Vec3(0.0f, 1.0f, 0.0f));
 	reset();
 	addLateralStems(root);
 }
@@ -93,79 +88,54 @@ void PseudoGenerator::addLateralStems(Stem *parent)
 	float position = this->dvn.stemStart;
 
 	while (position < length) {
-		if (!growLateralStem(parent, position))
-			break;
+		addLateralStem(parent, position);
 		position += distance;
 	}
 }
 
-bool PseudoGenerator::growLateralStem(Stem *parent, float position)
+void PseudoGenerator::addLateralStem(Stem *parent, float position)
 {
+	Vec2 swelling(1.5f, 3.0f);
+	float radius = getRadius(parent, swelling.x, position);
+	if (radius < this->dvn.radiusThreshold)
+		return;
+
 	Stem *stem = plant->addStem(parent);
+	stem->setMaxRadius(radius);
+	stem->setMinRadius(getMinRadius(radius));
+	stem->setSwelling(swelling);
 	stem->setPosition(position);
-
-	if (parent->getResolution() - 4 < 3)
-		stem->setResolution(3);
-	else
-		stem->setResolution(parent->getResolution() - 2);
-
-	if (!setPath(stem, parent, getStemDirection(stem), position)) {
-		this->plant->deleteStem(stem);
-		return false;
-	}
-
-	if (this->dvn.leafDensity > 0.0f) {
-		float length = stem->getPath().getLength();
-		float distance = 1.0f / this->dvn.leafDensity;
-		float position = this->dvn.leafStart;
-		Quat rotation(0.0f, 0.0f, 0.0f, 1.0f);
-		while (position < length) {
-			Leaf leaf;
-			leaf.setPosition(position);
-			leaf.setScale(Vec3(2.0f, 2.0f, 2.0f));
-			alternateLeaf(&leaf, rotation);
-			rotation = leaf.getRotation();
-			stem->addLeaf(leaf);
-			position += distance;
-		}
-	}
+	stem->setResolution(5);
+	setPath(stem, getStemDirection(stem));
+	addLeaves(stem);
 
 	if (stem->getDepth() < this->dvn.depth)
 		addLateralStems(stem);
-
-	return true;
 }
 
-bool PseudoGenerator::setPath(
-	Stem *stem, Stem *parent, Vec3 direction, float position)
+float PseudoGenerator::getRadius(Stem *parent, float swelling, float position)
 {
-	float radius;
-	float minRadius;
-	float parentRadius;
-	if (parent) {
-		parentRadius = this->plant->getIntermediateRadius(
-			parent, position);
-		radius = parentRadius / (stem->getSwelling().x + 0.1f);
-		minRadius = radius / 5.0f;
-		if (minRadius < 0.001f)
-			minRadius = 0.001f;
-		else if (minRadius > 0.01f)
-			minRadius = 0.01f;
-	} else {
-		radius = 0.2f;
-		minRadius = 0.01f;
-		parentRadius = 1.0f;
-	}
+	float r = this->plant->getIntermediateRadius(parent, position);
+	return r / (swelling + 0.1f);
+}
 
+float PseudoGenerator::getMinRadius(float radius)
+{
+	float minRadius = radius / 5.0f;
+	if (minRadius < 0.001f)
+		minRadius = 0.001f;
+	else if (minRadius > 0.01f)
+		minRadius = 0.01f;
+	return minRadius;
+}
+
+void PseudoGenerator::setPath(Stem *stem, Vec3 direction)
+{
 	int divisions = 1;
-	float length = radius * 40.0f;
+	float radius = stem->getMaxRadius();
+	float length = radius * this->dvn.lengthFactor;
 	int points = static_cast<int>(length / 2.0f) + 1;
 	float increment = length / points;
-	if (length < this->dvn.requiredLength)
-		return false;
-
-	stem->setMinRadius(minRadius);
-	stem->setMaxRadius(radius);
 
 	Path path;
 	path.setResolution(divisions);
@@ -174,7 +144,7 @@ bool PseudoGenerator::setPath(
 
 	Vec3 control(0.0f, 0.0f, 0.0f);
 	controls.push_back(control);
-	control += parentRadius * 4.0f * direction;
+	control += radius * 5.0f * direction;
 	controls.push_back(control);
 
 	for (int i = 0; i < points; i++) {
@@ -191,15 +161,62 @@ bool PseudoGenerator::setPath(
 	spline.setControls(controls);
 	path.setSpline(spline);
 	stem->setPath(path);
-	return true;
 }
 
-void PseudoGenerator::alternateLeaf(Leaf *leaf, Quat prevRotation)
+void PseudoGenerator::addLeaves(Stem *stem)
+{
+	if (this->dvn.leafDensity <= 0.0f)
+		return;
+
+	float length = stem->getPath().getLength();
+	float distance = 1.0f / this->dvn.leafDensity;
+	float position = this->dvn.leafStart;
+	Quat rotation(0.0f, 0.0f, 0.0f, 1.0f);
+
+	if (this->dvn.arrangement == Derivation::Alternate) {
+		while (position < length) {
+			addLeaf(stem, position, rotation);
+			rotation = alternate(rotation);
+			position += distance;
+		}
+	} else if (this->dvn.arrangement == Derivation::Opposite) {
+		while (position < length) {
+			addLeaf(stem, position, rotation);
+			rotation = alternate(rotation);
+			addLeaf(stem, position, rotation);
+			rotation = alternate(rotation);
+			position += distance;
+		}
+	} else if (this->dvn.arrangement == Derivation::Whorled) {
+		Vec3 axis = Vec3(1.0f, 0.0f, 0.0f);
+		Quat increment = fromAxisAngle(axis, 2.0f*PI/3.0f);
+		while (position < length) {
+			rotation = Quat(1.0f, 0.0f, 0.0f, 0.0f);
+			addLeaf(stem, position, rotation);
+			rotation *= increment;
+			addLeaf(stem, position, rotation);
+			rotation *= increment;
+			addLeaf(stem, position, rotation);
+			position += distance;
+		}
+	}
+}
+
+void PseudoGenerator::addLeaf(Stem *stem, float position, Quat rotation)
+{
+	Leaf leaf;
+	leaf.setPosition(position);
+	leaf.setScale(Vec3(2.0f, 2.0f, 2.0f));
+	leaf.setRotation(rotation);
+	stem->addLeaf(leaf);
+}
+
+Quat PseudoGenerator::alternate(Quat prevRotation)
 {
 	Quat rotation(0.0f, 0.0f, 0.0f, 0.0f);
 	if (prevRotation.w == 1.0f)
 		rotation.y = 1.0f;
 	else
 		rotation.w = 1.0f;
-	leaf->setRotation(rotation);
+	return rotation;
 }

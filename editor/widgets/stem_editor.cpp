@@ -194,7 +194,7 @@ void StemEditor::setFields(map<Stem *, PointSelection> instances)
 			indicateDifferences(this->stemMaterialLabel);
 		material1 = stem1->getMaterial(Stem::Inner);
 		material2 = stem2->getMaterial(Stem::Inner);
-		if (stem1 != stem2)
+		if (material1 != material2)
 			indicateDifferences(this->capMaterialLabel);
 
 		Vec2 collar1 = stem1->getSwelling();

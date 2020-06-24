@@ -107,4 +107,9 @@ void Generate::redo()
 	this->removals.clear();
 	this->remove.undo();
 	this->remove = removeOriginal;
+
+	pg::Derivation dv = this->gen.getDerivation();
+	auto instances = this->selection->getStemInstances();
+	for (auto instance : instances)
+		instance.first->setDerivation(dv);
 }

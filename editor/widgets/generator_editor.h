@@ -27,12 +27,18 @@ class GeneratorEditor : public Form {
 
 	Editor *editor;
 	QSpinBox *seed;
+	QSpinBox *depth;
 	QDoubleSpinBox *stemDensity;
 	QDoubleSpinBox *stemStart;
 	QDoubleSpinBox *leafDensity;
 	QDoubleSpinBox *leafStart;
+	QDoubleSpinBox *radiusThreshold;
+	QDoubleSpinBox *lengthFactor;
+	QComboBox *arrangement;
 	Generate *generate;
 
+	void connectField(QDoubleSpinBox *);
+	void connectField(QSpinBox *);
 	void createInterface();
 	void removeCurrent();
 	QSize sizeHint() const;
@@ -46,6 +52,7 @@ public slots:
 	void change();
 	void setFields();
 	void finishChanging();
+	void changeOption();
 };
 
 #endif

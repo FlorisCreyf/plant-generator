@@ -50,7 +50,7 @@ void Stem::init(Stem *parent)
 	this->material[1] = 0;
 	this->resolution = 10;
 	this->custom = false;
-	this->derivation = Derivation();
+	this->derivation.reset();
 	this->nextSibling = nullptr;
 	this->prevSibling = nullptr;
 	this->child = nullptr;
@@ -84,6 +84,10 @@ void Stem::copy(const Stem &stem)
 	this->leaves = stem.leaves;
 	this->swelling = stem.swelling;
 	this->custom = stem.custom;
+	if (stem.derivation) {
+		this->derivation = std::unique_ptr<Derivation>(new Derivation);
+		*this->derivation = *stem.derivation;
+	}
 }
 
 bool Stem::operator==(const Stem &stem) const
@@ -122,12 +126,17 @@ bool Stem::isCustom() const
 
 void Stem::setDerivation(Derivation derivation)
 {
-	this->derivation = derivation;
+	if (!this->derivation)
+		this->derivation = std::unique_ptr<Derivation>(new Derivation);
+	*this->derivation = derivation;
 }
 
 Derivation Stem::getDerivation() const
 {
-	return this->derivation;
+	if (this->derivation)
+		return *this->derivation;
+	else
+		return Derivation();
 }
 
 size_t Stem::addLeaf(const Leaf &leaf)

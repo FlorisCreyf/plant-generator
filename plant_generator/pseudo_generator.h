@@ -27,10 +27,14 @@ namespace pg {
 		Derivation dvn;
 
 		Vec3 getStemDirection(Stem *);
-		bool setPath(Stem *, Stem *, Vec3, float);
+		float getRadius(Stem *, float, float);
+		float getMinRadius(float);
+		void setPath(Stem *, Vec3);
 		void addLateralStems(Stem *);
-		bool growLateralStem(Stem *, float);
-		void alternateLeaf(Leaf *, Quat);
+		void addLateralStem(Stem *, float);
+		void addLeaves(Stem *);
+		void addLeaf(Stem *, float, Quat);
+		Quat alternate(Quat);
 
 	public:
 		PseudoGenerator(Plant *plant);

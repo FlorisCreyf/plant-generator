@@ -29,7 +29,7 @@ sudo dnf install qt5-devel
 sudo dnf install boost-devel
 cd ~/plant
 git submodule update --init --recursive
-make all
+make release
 ```
 
 ### Windows (VS)

@@ -23,8 +23,10 @@
 #include "path.h"
 #include "joint.h"
 #include <vector>
+#include <memory>
 
 #ifdef PG_SERIALIZE
+#include <boost/serialization/unique_ptr.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #endif
 
@@ -59,7 +61,7 @@ namespace pg {
 		float maxRadius;
 
 		bool custom;
-		Derivation derivation;
+		std::unique_ptr<Derivation> derivation;
 
 		void updatePositions(Stem *stem);
 		void copy(const Stem &stem);
