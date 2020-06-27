@@ -36,7 +36,6 @@ string pg::File::exportMtl(string filename, const Plant &plant)
 	if (file.fail())
 		return "";
 
-	file << "newmtl default\n";
 	for (Material &material : plant.getMaterials()) {
 		file << "newmtl " << material.getName() << "\n";
 		string diffuse = material.getTexture();
@@ -64,11 +63,8 @@ void pg::File::exportObj(string filename, const Mesh &mesh, const Plant &plant)
 		const vector<unsigned> *indices = mesh.getIndices(m);
 
 		unsigned materialIndex = mesh.getMaterialIndex(m);
-		if (materialIndex > 0) {
-			Material material = plant.getMaterial(materialIndex);
-			file << "usemtl " << material.getName() << "\n";
-		} else
-			file << "usemtl default\n";
+		Material material = plant.getMaterial(materialIndex);
+		file << "usemtl " << material.getName() << "\n";
 
 		for (size_t i = 0; i < vertices->size(); i++) {
 			Vec3 p = (*vertices)[i].position;
@@ -213,11 +209,8 @@ string getName(string name)
 
 string getMaterialName(unsigned materialIndex, const Plant &plant)
 {
-	if (materialIndex != 0) {
-		Material material = plant.getMaterial(materialIndex);
-		return getName(material.getName());
-	} else
-		return "default";
+	Material material = plant.getMaterial(materialIndex);
+	return getName(material.getName());
 }
 
 void setSources(XMLWriter &xml, const Mesh &mesh)
@@ -335,9 +328,6 @@ void setImages(XMLWriter &xml, const Mesh &mesh, const Plant &plant)
 			continue;
 
 		unsigned materialIndex = mesh.getMaterialIndex(i);
-		if (materialIndex == 0)
-			continue;
-
 		Material material = plant.getMaterial(materialIndex);
 		if (material.getTexture().empty())
 			continue;
@@ -360,9 +350,6 @@ void setEffects(XMLWriter &xml, const Mesh &mesh, const Plant &plant)
 			continue;
 
 		unsigned materialIndex = mesh.getMaterialIndex(i);
-		if (materialIndex == 0)
-			continue;
-
 		Material material = plant.getMaterial(materialIndex);
 		if (material.getTexture().empty())
 			continue;
@@ -413,12 +400,10 @@ void setMaterials(XMLWriter &xml, const Mesh &mesh, const Plant &plant)
 		xml >> ("<material id='" + name + "-material' "
 			"name='" + name + "-material'>");
 
-		if (materialIndex != 0) {
-			Material material = plant.getMaterial(materialIndex);
-			if (!material.getTexture().empty()) {
-				string url = "#" + name + "-effect";
-				xml += "<instance_effect url='" + url + "'/>";
-			}
+		Material material = plant.getMaterial(materialIndex);
+		if (!material.getTexture().empty()) {
+			string url = "#" + name + "-effect";
+			xml += "<instance_effect url='" + url + "'/>";
 		}
 
 		xml << "</material>";
