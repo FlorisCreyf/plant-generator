@@ -16,31 +16,77 @@
  */
 
 #include "mesh_editor.h"
-#include "plant_generator/file.h"
 #include "definitions.h"
+#include "item_delegate.h"
+#include "plant_generator/file.h"
 
 MeshEditor::MeshEditor(
 	SharedResources *shared, Editor *editor, QWidget *parent) :
-	ObjectEditor(parent)
+	QWidget(parent)
 {
 	this->shared = shared;
 	this->editor = editor;
 	setFocusPolicy(Qt::StrongFocus);
 
+	this->layout = new QVBoxLayout(this);
+	this->layout->setSizeConstraint(QLayout::SetMinimumSize);
+	this->layout->setSpacing(0);
+	this->layout->setMargin(0);
+
+	createSelectionBar();
+
 	this->meshViewer = new MeshViewer(shared, this);
 	this->meshViewer->setMinimumHeight(200);
 	this->layout->addWidget(this->meshViewer);
-	connect(this->meshViewer, SIGNAL(ready()), this, SLOT(select()));
 
 	QVBoxLayout *buttonLayout = new QVBoxLayout();
-	buttonLayout->setMargin(5);
-	buttonLayout->setSpacing(2);
-	initFields(buttonLayout);
+	buttonLayout->setMargin(UI_FORM_MARGIN);
+	buttonLayout->setSpacing(UI_FORM_SPACING);
+	createFields(buttonLayout);
 	this->layout->addLayout(buttonLayout);
 	this->layout->addStretch(1);
 }
 
-void MeshEditor::initFields(QVBoxLayout *layout)
+QSize MeshEditor::sizeHint() const
+{
+	return QSize(UI_WIDGET_WIDTH, UI_WIDGET_WIDTH);
+}
+
+void MeshEditor::createSelectionBar()
+{
+	QHBoxLayout *row = new QHBoxLayout();
+	row->setSizeConstraint(QLayout::SetMinimumSize);
+	row->setSpacing(0);
+	row->setMargin(0);
+
+	QPushButton *addButton = new QPushButton("+", this);
+	addButton->setFixedHeight(UI_FIELD_HEIGHT);
+	addButton->setFixedWidth(UI_FIELD_HEIGHT);
+
+	QPushButton *removeButton = new QPushButton("-", this);
+	removeButton->setFixedHeight(UI_FIELD_HEIGHT);
+	removeButton->setFixedWidth(UI_FIELD_HEIGHT);
+
+	this->selectionBox = new QComboBox(this);
+	this->selectionBox->setEditable(true);
+	this->selectionBox->setInsertPolicy(QComboBox::InsertAtCurrent);
+	this->selectionBox->setItemDelegate(new ItemDelegate());
+
+	row->addWidget(this->selectionBox);
+	row->addWidget(removeButton);
+	row->addWidget(addButton);
+	row->setAlignment(Qt::AlignTop);
+	this->layout->addLayout(row);
+
+	connect(this->selectionBox, SIGNAL(currentIndexChanged(int)),
+		this, SLOT(select()));
+	connect(this->selectionBox->lineEdit(), SIGNAL(editingFinished()),
+		this, SLOT(rename()));
+	connect(addButton, SIGNAL(clicked()), this, SLOT(add()));
+	connect(removeButton, SIGNAL(clicked()), this, SLOT(remove()));
+}
+
+void MeshEditor::createFields(QVBoxLayout *layout)
 {
 	this->customButton = new QPushButton("Custom", this);
 	this->customButton->setFixedHeight(UI_FIELD_HEIGHT);

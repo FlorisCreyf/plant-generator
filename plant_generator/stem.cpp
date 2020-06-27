@@ -135,8 +135,12 @@ Derivation Stem::getDerivation() const
 {
 	if (this->derivation)
 		return *this->derivation;
-	else
-		return Derivation();
+	else {
+		Derivation derivation;
+		derivation.stemDensityCurve.setDefault(1);
+		derivation.leafDensityCurve.setDefault(1);
+		return derivation;
+	}
 }
 
 size_t Stem::addLeaf(const Leaf &leaf)

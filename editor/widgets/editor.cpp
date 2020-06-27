@@ -354,7 +354,6 @@ void Editor::mousePressEvent(QMouseEvent *event)
 			currentCommand = movePath;
 		}
 	}
-
 	setFocus();
 }
 
@@ -648,7 +647,9 @@ void Editor::updateSelection()
 			path.setSelectedPoints(instance.second, i++);
 
 		const Geometry *geometry = path.getGeometry();
+		makeCurrent();
 		pathBuffer.update(*geometry);
+		doneCurrent();
 	}
 }
 
@@ -680,10 +681,11 @@ void Editor::change()
 		pointOffset += v->size();
 		indexOffset += i->size();
 	}
+	doneCurrent();
 
-	emit changed();
 	updateSelection();
 	update();
+	emit changed();
 }
 
 void Editor::createDefaultPlant()
@@ -693,8 +695,10 @@ void Editor::createDefaultPlant()
 	derivation.seed = rd();
 	derivation.depth = 1;
 	derivation.stemDensity = 1.0f;
+	derivation.stemDensityCurve.setDefault(1);
 	derivation.stemStart = 2.0f;
 	derivation.leafDensity = 0.5f;
+	derivation.leafDensityCurve.setDefault(1);
 	derivation.leafStart = 1.0f;
 	derivation.lengthFactor = 50.0f;
 	generator.setDerivation(derivation);

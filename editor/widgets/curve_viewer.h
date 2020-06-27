@@ -35,6 +35,7 @@ class CurveViewer : public QOpenGLWidget, protected QOpenGLFunctions_4_3_Core {
 	Camera camera;
 	Buffer buffer;
 	Path path;
+	Geometry geometry;
 
 	Geometry::Segment gridSegment;
 	Geometry::Segment planeSegment;
@@ -56,12 +57,12 @@ public:
 	CurveViewer(SharedResources *shared, QWidget *parent = 0);
 	const Camera *getCamera() const;
 	void change(const pg::Spline &spline, const PointSelection &selection);
+	void clear();
 
 signals:
 	void mousePressed(QMouseEvent *event);
 	void mouseReleased(QMouseEvent *event);
 	void mouseMoved(QMouseEvent *event);
-	void ready();
 };
 
 #endif /* CURVE_VIEWER_H */

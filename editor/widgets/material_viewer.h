@@ -51,12 +51,7 @@ protected:
 public:
 	MaterialViewer(SharedResources *shared, QWidget *parent);
 	QSize sizeHint() const;
-
-public slots:
 	void updateMaterial(unsigned materialIndex);
-
-signals:
-	void ready();
 };
 
 #endif /* MATERIAL_VIEWER_H */

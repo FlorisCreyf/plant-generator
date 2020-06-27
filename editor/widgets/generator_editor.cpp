@@ -19,10 +19,12 @@
 #include "definitions.h"
 #include <limits>
 
-GeneratorEditor::GeneratorEditor(Editor *editor, QWidget *parent) : Form(parent)
+using pg::Derivation;
+using pg::Stem;
+
+GeneratorEditor::GeneratorEditor(Editor *editor, QWidget *parent) :
+	Form(parent), editor(editor), generate(nullptr)
 {
-	this->editor = editor;
-	this->generate = nullptr;
 	createInterface();
 	enable(false);
 	connect(this->editor, SIGNAL(selectionChanged()),
@@ -40,143 +42,304 @@ void GeneratorEditor::createInterface()
 	form->setSizeConstraint(QLayout::SetMinimumSize);
 	form->setSpacing(0);
 	form->setMargin(0);
-	form->setSpacing(2);
-	form->setMargin(5);
+	form->setSpacing(UI_FORM_SPACING);
+	form->setMargin(UI_FORM_MARGIN);
 
-	this->seed = new QSpinBox(this);
-	this->seed->setRange(
+	this->seedLabel = new QLabel(tr("Seed"));
+	this->seedValue = new QSpinBox(this);
+	this->seedValue->setRange(
 		std::numeric_limits<int>::min(),
 		std::numeric_limits<int>::max());
-	this->seed->setSingleStep(1);
-	form->addRow(tr("Seed"), this->seed);
-	this->stemDensity = new QDoubleSpinBox(this);
-	this->stemDensity->setSingleStep(0.1);
-	form->addRow(tr("Stem Density"), this->stemDensity);
-	this->stemStart = new QDoubleSpinBox(this);
-	this->stemStart->setSingleStep(0.1);
-	form->addRow(tr("Stem Start"), this->stemStart);
-	this->leafDensity = new QDoubleSpinBox(this);
-	this->leafDensity->setSingleStep(0.1);
-	form->addRow(tr("Leaf Density"), this->leafDensity);
-	this->leafStart = new QDoubleSpinBox(this);
-	this->leafStart->setSingleStep(0.1);
-	form->addRow(tr("Leaf Start"), this->leafStart);
-	this->arrangement = new QComboBox(this);
-	this->arrangement->addItem(tr("Alternate"));
-	this->arrangement->addItem(tr("Opposite"));
-	this->arrangement->addItem(tr("Whorled"));
-	form->addRow(tr("Arrangment"), arrangement);
-	this->radiusThreshold = new QDoubleSpinBox(this);
-	this->radiusThreshold->setSingleStep(0.001);
-	this->radiusThreshold->setDecimals(3);
-	form->addRow(tr("Radius Threshold"), this->radiusThreshold);
-	this->lengthFactor = new QDoubleSpinBox(this);
-	this->lengthFactor->setSingleStep(0.1);
-	form->addRow(tr("Length Factor"), this->lengthFactor);
-	this->depth = new QSpinBox(this);
-	form->addRow(tr("Depth"), this->depth);
+	this->seedValue->setSingleStep(1);
+	form->addRow(this->seedLabel, this->seedValue);
+
+	this->stemDensityLabel = new QLabel(tr("Stem Density"));
+	this->stemDensityValue = new QDoubleSpinBox(this);
+	this->stemDensityValue->setSingleStep(0.1);
+	form->addRow(this->stemDensityLabel, this->stemDensityValue);
+
+	this->stemStartLabel = new QLabel(tr("Stem Start"));
+	this->stemStartValue = new QDoubleSpinBox(this);
+	this->stemStartValue->setSingleStep(0.1);
+	form->addRow(this->stemStartLabel, this->stemStartValue);
+
+	this->leafDensityLabel = new QLabel(tr("Leaf Density"));
+	this->leafDensityValue = new QDoubleSpinBox();
+	this->leafDensityValue->setSingleStep(0.1);
+	form->addRow(this->leafDensityLabel, this->leafDensityValue);
+
+	this->leafStartLabel = new QLabel(tr("Leaf Start"));
+	this->leafStartValue = new QDoubleSpinBox(this);
+	this->leafStartValue->setSingleStep(0.1);
+	form->addRow(this->leafStartLabel, this->leafStartValue);
+
+	this->arrangementLabel = new QLabel(tr("Arrangement"));
+	this->arrangementValue = new QComboBox(this);
+	this->arrangementValue->addItem(tr("Alternate"));
+	this->arrangementValue->addItem(tr("Opposite"));
+	this->arrangementValue->addItem(tr("Whorled"));
+	form->addRow(this->arrangementLabel, this->arrangementValue);
+
+	this->radiusThresholdLabel = new QLabel(tr("Radius Threshold"));
+	this->radiusThresholdValue = new QDoubleSpinBox(this);
+	this->radiusThresholdValue->setSingleStep(0.001);
+	this->radiusThresholdValue->setDecimals(3);
+	form->addRow(this->radiusThresholdLabel, this->radiusThresholdValue);
+
+	this->lengthFactorLabel = new QLabel(tr("Length Factor"));
+	this->lengthFactorValue = new QDoubleSpinBox(this);
+	this->lengthFactorValue->setSingleStep(1.0f);
+	this->lengthFactorValue->setRange(0, std::numeric_limits<float>::max());
+	form->addRow(this->lengthFactorLabel, this->lengthFactorValue);
+
+	this->depthLabel = new QLabel(tr("Depth"));
+	this->depthValue = new QSpinBox(this);
+	this->depthValue->setRange(1, 10);
+	form->addRow(this->depthLabel, this->depthValue);
 
 	setValueWidths(form);
 
-	connect(this->arrangement, SIGNAL(currentIndexChanged(int)),
-		this, SLOT(changeOption()));
-
-	connectField(this->seed);
-	connectField(this->depth);
-	connectField(this->stemDensity);
-	connectField(this->stemStart);
-	connectField(this->leafDensity);
-	connectField(this->leafStart);
-	connectField(this->radiusThreshold);
-	connectField(this->lengthFactor);
-}
-
-void GeneratorEditor::connectField(QSpinBox *field)
-{
-	connect(field, SIGNAL(valueChanged(int)),
-		this, SLOT(change()));
-	connect(field, SIGNAL(editingFinished()),
+	connect(this->seedValue, SIGNAL(valueChanged(int)),
+		this, SLOT(changeSeed(int)));
+	connect(this->seedValue, SIGNAL(editingFinished()),
 		this, SLOT(finishChanging()));
-}
-
-void GeneratorEditor::connectField(QDoubleSpinBox *field)
-{
-	connect(field, SIGNAL(valueChanged(double)),
-		this, SLOT(change()));
-	connect(field, SIGNAL(editingFinished()),
+	connect(this->arrangementValue, SIGNAL(currentIndexChanged(int)),
+		this, SLOT(changeArrangement(int)));
+	connect(this->depthValue, SIGNAL(valueChanged(int)),
+		this, SLOT(changeDepth(int)));
+	connect(this->depthValue, SIGNAL(editingFinished()),
+		this, SLOT(finishChanging()));
+	connect(this->stemDensityValue, SIGNAL(valueChanged(double)),
+		this, SLOT(changeStemDensity(double)));
+	connect(this->stemDensityValue, SIGNAL(editingFinished()),
+		this, SLOT(finishChanging()));
+	connect(this->stemStartValue, SIGNAL(valueChanged(double)),
+		this, SLOT(changeStemStart(double)));
+	connect(this->stemStartValue, SIGNAL(editingFinished()),
+		this, SLOT(finishChanging()));
+	connect(this->leafDensityValue, SIGNAL(valueChanged(double)),
+		this, SLOT(changeLeafDensity(double)));
+	connect(this->leafDensityValue, SIGNAL(editingFinished()),
+		this, SLOT(finishChanging()));
+	connect(this->leafStartValue, SIGNAL(valueChanged(double)),
+		this, SLOT(changeLeafStart(double)));
+	connect(this->leafStartValue, SIGNAL(editingFinished()),
+		this, SLOT(finishChanging()));
+	connect(this->radiusThresholdValue, SIGNAL(valueChanged(double)),
+		this, SLOT(changeRadiusThreshold(double)));
+	connect(this->radiusThresholdValue, SIGNAL(editingFinished()),
+		this, SLOT(finishChanging()));
+	connect(this->lengthFactorValue, SIGNAL(valueChanged(double)),
+		this, SLOT(changeLengthFactor(double)));
+	connect(this->lengthFactorValue, SIGNAL(editingFinished()),
 		this, SLOT(finishChanging()));
 }
 
 void GeneratorEditor::setFields()
 {
+	enable(false);
 	auto instances = this->editor->getSelection()->getStemInstances();
-	if (instances.empty()) {
-		enable(false);
+	if (instances.empty())
 		return;
-	}
 
 	blockSignals(true);
-	pg::Stem *stem = instances.rbegin()->first;
-	pg::Derivation derivation = stem->getDerivation();
-	this->seed->setValue(derivation.seed);
-	this->stemDensity->setValue(derivation.stemDensity);
-	this->stemStart->setValue(derivation.stemStart);
-	this->leafDensity->setValue(derivation.leafDensity);
-	this->leafStart->setValue(derivation.leafStart);
-	this->radiusThreshold->setValue(derivation.radiusThreshold);
-	this->depth->setValue(derivation.depth);
-	this->lengthFactor->setValue(derivation.lengthFactor);
-	this->arrangement->setCurrentIndex(derivation.arrangement);
+	auto it = instances.begin();
+	Derivation derivation = it->first->getDerivation();
+	Derivation dvn1 = it->first->getDerivation();
+	while (++it != instances.end()) {
+		Derivation dvn2 = it->first->getDerivation();
+		if (dvn1.seed != dvn2.seed)
+			indicateDifferences(this->seedLabel);
+		if (dvn1.stemDensity != dvn2.stemDensity)
+			indicateDifferences(this->stemDensityLabel);
+		if (dvn1.stemStart != dvn2.stemStart)
+			indicateDifferences(this->stemStartLabel);
+		if (dvn1.leafDensity != dvn2.leafDensity)
+			indicateDifferences(this->leafDensityLabel);
+		if (dvn1.leafStart != dvn2.leafStart)
+			indicateDifferences(this->leafStartLabel);
+		if (dvn1.radiusThreshold != dvn2.radiusThreshold)
+			indicateDifferences(this->radiusThresholdLabel);
+		if (dvn1.depth != dvn2.depth)
+			indicateDifferences(this->depthLabel);
+		if (dvn1.lengthFactor != dvn2.lengthFactor)
+			indicateDifferences(this->lengthFactorLabel);
+		if (dvn1.arrangement != dvn2.arrangement)
+			indicateDifferences(this->arrangementLabel);
+		dvn1 = dvn2;
+	}
+	this->seedValue->setValue(derivation.seed);
+	this->stemDensityValue->setValue(derivation.stemDensity);
+	this->stemStartValue->setValue(derivation.stemStart);
+	this->leafDensityValue->setValue(derivation.leafDensity);
+	this->leafStartValue->setValue(derivation.leafStart);
+	this->radiusThresholdValue->setValue(derivation.radiusThreshold);
+	this->depthValue->setValue(derivation.depth);
+	this->lengthFactorValue->setValue(derivation.lengthFactor);
+	this->arrangementValue->setCurrentIndex(derivation.arrangement);
 	enable(true);
 	blockSignals(false);
 }
 
 void GeneratorEditor::enable(bool enable)
 {
-	this->seed->setEnabled(enable);
-	this->stemDensity->setEnabled(enable);
-	this->stemStart->setEnabled(enable);
-	this->leafDensity->setEnabled(enable);
-	this->leafStart->setEnabled(enable);
-	this->radiusThreshold->setEnabled(enable);
-	this->depth->setEnabled(enable);
-	this->lengthFactor->setEnabled(enable);
-	this->arrangement->setEnabled(enable);
+	if (!enable) {
+		indicateSimilarities(this->seedLabel);
+		indicateSimilarities(this->stemDensityLabel);
+		indicateSimilarities(this->stemStartLabel);
+		indicateSimilarities(this->leafDensityLabel);
+		indicateSimilarities(this->leafStartLabel);
+		indicateSimilarities(this->radiusThresholdLabel);
+		indicateSimilarities(this->depthLabel);
+		indicateSimilarities(this->lengthFactorLabel);
+		indicateSimilarities(this->arrangementLabel);
+	}
+	this->seedValue->setEnabled(enable);
+	this->stemDensityValue->setEnabled(enable);
+	this->stemStartValue->setEnabled(enable);
+	this->leafDensityValue->setEnabled(enable);
+	this->leafStartValue->setEnabled(enable);
+	this->radiusThresholdValue->setEnabled(enable);
+	this->depthValue->setEnabled(enable);
+	this->lengthFactorValue->setEnabled(enable);
+	this->arrangementValue->setEnabled(enable);
 }
 
 void GeneratorEditor::blockSignals(bool block)
 {
-	this->seed->blockSignals(block);
-	this->stemDensity->blockSignals(block);
-	this->stemStart->blockSignals(block);
-	this->leafDensity->blockSignals(block);
-	this->leafStart->blockSignals(block);
-	this->radiusThreshold->blockSignals(block);
-	this->depth->blockSignals(block);
-	this->lengthFactor->blockSignals(block);
-	this->arrangement->blockSignals(block);
+	this->seedValue->blockSignals(block);
+	this->stemDensityValue->blockSignals(block);
+	this->stemStartValue->blockSignals(block);
+	this->leafDensityValue->blockSignals(block);
+	this->leafStartValue->blockSignals(block);
+	this->radiusThresholdValue->blockSignals(block);
+	this->depthValue->blockSignals(block);
+	this->lengthFactorValue->blockSignals(block);
+	this->arrangementValue->blockSignals(block);
+}
+
+void GeneratorEditor::changeSeed(int seed)
+{
+	beginChanging(this->seedLabel);
+	auto instances = this->editor->getSelection()->getStemInstances();
+	for (auto &instance : instances) {
+		Derivation dvn = instance.first->getDerivation();
+		dvn.seed = seed;
+		instance.first->setDerivation(dvn);
+	}
+	change();
+}
+
+void GeneratorEditor::changeStemDensity(double density)
+{
+	beginChanging(this->stemDensityLabel);
+	auto instances = this->editor->getSelection()->getStemInstances();
+	for (auto &instance : instances) {
+		Derivation dvn = instance.first->getDerivation();
+		dvn.stemDensity = density;
+		instance.first->setDerivation(dvn);
+	}
+	change();
+}
+
+void GeneratorEditor::changeLeafDensity(double density)
+{
+	beginChanging(this->leafDensityLabel);
+	auto instances = this->editor->getSelection()->getStemInstances();
+	for (auto &instance : instances) {
+		Derivation dvn = instance.first->getDerivation();
+		dvn.leafDensity = density;
+		instance.first->setDerivation(dvn);
+	}
+	change();
+}
+
+void GeneratorEditor::changeStemStart(double start)
+{
+	beginChanging(this->stemStartLabel);
+	auto instances = this->editor->getSelection()->getStemInstances();
+	for (auto &instance : instances) {
+		Derivation dvn = instance.first->getDerivation();
+		dvn.stemStart = start;
+		instance.first->setDerivation(dvn);
+	}
+	change();
+}
+
+void GeneratorEditor::changeLeafStart(double start)
+{
+	beginChanging(this->leafStartLabel);
+	auto instances = this->editor->getSelection()->getStemInstances();
+	for (auto &instance : instances) {
+		Derivation dvn = instance.first->getDerivation();
+		dvn.leafStart = start;
+		instance.first->setDerivation(dvn);
+	}
+	change();
+}
+
+void GeneratorEditor::changeRadiusThreshold(double threshold)
+{
+	beginChanging(this->radiusThresholdLabel);
+	auto instances = this->editor->getSelection()->getStemInstances();
+	for (auto &instance : instances) {
+		Derivation dvn = instance.first->getDerivation();
+		dvn.radiusThreshold = threshold;
+		instance.first->setDerivation(dvn);
+	}
+	change();
+}
+
+void GeneratorEditor::changeLengthFactor(double factor)
+{
+	beginChanging(this->lengthFactorLabel);
+	auto instances = this->editor->getSelection()->getStemInstances();
+	for (auto &instance : instances) {
+		Derivation dvn = instance.first->getDerivation();
+		dvn.lengthFactor = factor;
+		instance.first->setDerivation(dvn);
+	}
+	change();
+}
+
+void GeneratorEditor::changeArrangement(int index)
+{
+	beginChanging(this->arrangementLabel);
+	auto instances = this->editor->getSelection()->getStemInstances();
+	Derivation::Arrangement arrangement;
+	arrangement = static_cast<pg::Derivation::Arrangement>(index);
+	for (auto &instance : instances) {
+		Derivation dvn = instance.first->getDerivation();
+		dvn.arrangement = arrangement;
+		instance.first->setDerivation(dvn);
+	}
+	change();
+	finishChanging();
+}
+
+void GeneratorEditor::changeDepth(int depth)
+{
+	beginChanging(this->depthLabel);
+	auto instances = this->editor->getSelection()->getStemInstances();
+	for (auto &instance : instances) {
+		Derivation dvn = instance.first->getDerivation();
+		dvn.depth = depth;
+		instance.first->setDerivation(dvn);
+	}
+	change();
 }
 
 void GeneratorEditor::change()
 {
-	if (!this->generate)
-		this->generate = new Generate(this->editor->getSelection());
-	pg::PseudoGenerator gen(this->editor->getPlant());
-	pg::Derivation dvn;
-	dvn.leafDensity = this->leafDensity->value();
-	dvn.leafStart = this->leafStart->value();
-	dvn.stemDensity = this->stemDensity->value();
-	dvn.stemStart = this->stemStart->value();
-	dvn.radiusThreshold = this->radiusThreshold->value();
-	dvn.seed = this->seed->value();
-	dvn.depth = this->depth->value();
-	dvn.lengthFactor = this->lengthFactor->value();
-	int index = this->arrangement->currentIndex();
-	dvn.arrangement = static_cast<pg::Derivation::Arrangement>(index);
-	gen.setDerivation(dvn);
-	this->generate->setGenerator(std::move(gen));
 	this->generate->execute();
 	this->editor->change();
+}
+
+void GeneratorEditor::beginChanging(QLabel *label)
+{
+	indicateSimilarities(label);
+	if (!this->generate)
+		this->generate = new Generate(this->editor->getSelection());
 }
 
 void GeneratorEditor::finishChanging()
@@ -186,10 +349,4 @@ void GeneratorEditor::finishChanging()
 		/* The history will delete the command. */
 		this->generate = nullptr;
 	}
-}
-
-void GeneratorEditor::changeOption()
-{
-	change();
-	finishChanging();
 }

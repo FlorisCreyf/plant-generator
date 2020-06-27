@@ -46,6 +46,7 @@ void SharedResources::initialize()
 				param.initialize();
 			}
 
+		surface.create();
 		initialized = true;
 	}
 }
@@ -228,17 +229,23 @@ void SharedResources::updateMaterial(ShaderParams params, unsigned index)
 
 void SharedResources::removeMaterial(unsigned index)
 {
+	auto context = QOpenGLContext::globalShareContext();
+	context->makeCurrent(&this->surface);
 	materials[index].clearTextures();
 	materials.erase(materials.begin()+index);
 	emit materialRemoved(index);
+	context->doneCurrent();
 }
 
 void SharedResources::clearMaterials()
 {
+	auto context = QOpenGLContext::globalShareContext();
+	context->makeCurrent(&this->surface);
 	for (size_t i = 0; i < materials.size(); i++) {
 		materials[i].clearTextures();
 		emit materialRemoved(i);
 	}
+	context->doneCurrent();
 	materials.clear();
 }
 
@@ -250,4 +257,9 @@ ShaderParams SharedResources::getMaterial(unsigned index) const
 unsigned SharedResources::getMaterialCount() const
 {
 	return materials.size();
+}
+
+QOffscreenSurface *SharedResources::getSurface()
+{
+	return &this->surface;
 }

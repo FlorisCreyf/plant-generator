@@ -2,7 +2,6 @@
 #include <boost/test/unit_test.hpp>
 
 #include "../mesh.h"
-#include "../patterns.h"
 
 using namespace pg;
 namespace bt = boost::unit_test;
@@ -12,7 +11,9 @@ BOOST_AUTO_TEST_SUITE(mesh)
 BOOST_AUTO_TEST_CASE(test_index_bounds)
 {
 	Plant plant;
-	plant.addCurve(getDefaultCurve(0));
+	Spline radiusCurve;
+	radiusCurve.setDefault(0);
+	plant.addCurve(Curve(radiusCurve));
 	Stem *root = plant.createRoot();
 
 	{

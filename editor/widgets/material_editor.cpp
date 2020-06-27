@@ -16,29 +16,76 @@
  */
 
 #include "material_editor.h"
-#include "plant_generator/math/math.h"
 #include "definitions.h"
+#include "item_delegate.h"
+#include "plant_generator/math/math.h"
 
 using pg::Vec3;
 using pg::Mat4;
 
 MaterialEditor::MaterialEditor(
 	SharedResources *shared, Editor *editor, QWidget *parent) :
-	ObjectEditor(parent)
+	QWidget(parent)
 {
 	this->shared = shared;
 	this->editor = editor;
+
+	this->layout = new QVBoxLayout(this);
+	this->layout->setSizeConstraint(QLayout::SetMinimumSize);
+	this->layout->setSpacing(0);
+	this->layout->setMargin(0);
+
+	createSelectionBar();
 
 	this->materialViewer = new MaterialViewer(shared, this);
 	this->materialViewer->setMinimumHeight(200);
 	this->layout->addWidget(this->materialViewer);
 
 	QFormLayout *form = new QFormLayout();
-	form->setMargin(5);
-	form->setSpacing(2);
+	form->setMargin(UI_FORM_MARGIN);
+	form->setSpacing(UI_FORM_SPACING);
 	initFields(form);
 	this->layout->addLayout(form);
 	this->layout->addStretch(1);
+}
+
+QSize MaterialEditor::sizeHint() const
+{
+	return QSize(UI_WIDGET_WIDTH, UI_WIDGET_WIDTH);
+}
+
+void MaterialEditor::createSelectionBar()
+{
+	QHBoxLayout *row = new QHBoxLayout();
+	row->setSizeConstraint(QLayout::SetMinimumSize);
+	row->setSpacing(0);
+	row->setMargin(0);
+
+	QPushButton *addButton = new QPushButton("+", this);
+	addButton->setFixedHeight(UI_FIELD_HEIGHT);
+	addButton->setFixedWidth(UI_FIELD_HEIGHT);
+
+	QPushButton *removeButton = new QPushButton("-", this);
+	removeButton->setFixedHeight(UI_FIELD_HEIGHT);
+	removeButton->setFixedWidth(UI_FIELD_HEIGHT);
+
+	this->selectionBox = new QComboBox(this);
+	this->selectionBox->setEditable(true);
+	this->selectionBox->setInsertPolicy(QComboBox::InsertAtCurrent);
+	this->selectionBox->setItemDelegate(new ItemDelegate());
+
+	row->addWidget(this->selectionBox);
+	row->addWidget(removeButton);
+	row->addWidget(addButton);
+	row->setAlignment(Qt::AlignTop);
+	this->layout->addLayout(row);
+
+	connect(this->selectionBox, SIGNAL(currentIndexChanged(int)),
+		this, SLOT(select()));
+	connect(this->selectionBox->lineEdit(), SIGNAL(editingFinished()),
+		this, SLOT(rename()));
+	connect(addButton, SIGNAL(clicked()), this, SLOT(add()));
+	connect(removeButton, SIGNAL(clicked()), this, SLOT(remove()));
 }
 
 void MaterialEditor::initFields(QFormLayout *form)

@@ -1,5 +1,5 @@
 /* Plant Generator
- * Copyright (C) 2018  Floris Creyf
+ * Copyright (C) 2020  Floris Creyf
  *
  * Plant Generator is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,48 +15,38 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef MATERIAL_EDITOR_H
-#define MATERIAL_EDITOR_H
+#ifndef PROPERTY_CURVE_EDITOR_H
+#define PROPERTY_CURVE_EDITOR_H
 
-#include "editor.h"
-#include "material_viewer.h"
-#include <QPushButton>
-#include <vector>
-#include <QtWidgets>
+#include "curve_editor.h"
 
-class MaterialEditor : public QWidget {
+class PropertyCurveEditor : public CurveEditor {
 	Q_OBJECT
 
 	Editor *editor;
-	MaterialViewer *materialViewer;
-	SharedResources *shared;
-
-	QVBoxLayout *layout;
 	QComboBox *selectionBox;
-	QLineEdit *diffuseBox;
-	QPushButton *addDiffuseButton;
-	QPushButton *removeDiffuseButton;
 
-	void initFields(QFormLayout *form);
+	void change(bool curveChanged);
 	void createSelectionBar();
-	void update(ShaderParams params, unsigned index);
 
 public:
-	MaterialEditor(
-		SharedResources *shared, Editor *editor, QWidget *parent=0);
-	void add(pg::Material material);
-	void init(const std::vector<pg::Material> &materials);
+	PropertyCurveEditor(SharedResources *shared, KeyMap *keymap,
+		Editor *editor, QWidget *parent);
 	void clear();
-	const MaterialViewer *getViewer() const;
-	QSize sizeHint() const;
 
 public slots:
 	void add();
+	void add(pg::Curve curve);
+	void init(const std::vector<pg::Curve> &curves);
 	void select();
 	void rename();
 	void remove();
-	void openDiffuseFile();
-	void removeDiffuseFile();
+
+signals:
+	void curveAdded(pg::Curve curve);
+	void curveModified(pg::Curve curve, unsigned index);
+	void curveRemoved(unsigned index);
+	void editingFinished();
 };
 
-#endif /* MATERIAL_EDITOR_H */
+#endif /* PROPERTY_CURVE_EDITOR_H */

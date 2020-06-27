@@ -16,6 +16,7 @@
  */
 
 #include "stem_editor.h"
+#include "definitions.h"
 #include <iterator>
 #include <string>
 
@@ -57,8 +58,8 @@ void StemEditor::createInterface()
 	layout->addWidget(this->stemGroup);
 
 	QFormLayout *form = new QFormLayout(this->stemGroup);
-	form->setSpacing(2);
-	form->setMargin(5);
+	form->setSpacing(UI_FORM_SPACING);
+	form->setMargin(UI_FORM_MARGIN);
 
 	this->radiusLabel = new QLabel(tr("Radius"));
 	this->radiusValue = new QDoubleSpinBox;
@@ -167,6 +168,7 @@ void StemEditor::setFields(map<Stem *, PointSelection> instances)
 	for (auto it = nextIt; it != instances.end(); ++it) {
 		Stem *stem1 = prev(it)->first;
 		Stem *stem2 = it->first;
+
 		if (stem1->isCustom() != stem2->isCustom())
 			indicateDifferences(this->customLabel);
 		if (stem1->getResolution() != stem2->getResolution())
@@ -347,19 +349,17 @@ void StemEditor::removeMaterial(unsigned index)
 
 void StemEditor::changeCustom(int custom)
 {
-	beginChanging();
-	indicateSimilarities(this->customLabel);
+	beginChanging(this->customLabel);
 	auto instances = this->editor->getSelection()->getStemInstances();
 	for (auto &instance : instances)
 		instance.first->setCustom(custom);
 	finishChanging();
 }
 
-void StemEditor::changePathDegree(int i)
+void StemEditor::changePathDegree(int index)
 {
-	beginChanging();
-	indicateSimilarities(this->degreeLabel);
-	int degree = i == 1 ? 3 : 1;
+	beginChanging(this->degreeLabel);
+	int degree = index == 1 ? 3 : 1;
 	auto instances = this->editor->getSelection()->getStemInstances();
 	for (auto &instance : instances) {
 		pg::Path path = instance.first->getPath();
@@ -376,52 +376,48 @@ void StemEditor::changePathDegree(int i)
 	finishChanging();
 }
 
-void StemEditor::changeResolution(int i)
+void StemEditor::changeResolution(int resolution)
 {
-	beginChanging();
-	indicateSimilarities(this->resolutionLabel);
+	beginChanging(this->resolutionLabel);
 	auto instances = this->editor->getSelection()->getStemInstances();
 	for (auto &instance : instances)
-		instance.first->setResolution(i);
+		instance.first->setResolution(resolution);
 	this->editor->change();
 }
 
-void StemEditor::changeDivisions(int i)
+void StemEditor::changeDivisions(int divisions)
 {
-	beginChanging();
-	indicateSimilarities(this->divisionLabel);
+	beginChanging(this->divisionLabel);
 	auto instances = this->editor->getSelection()->getStemInstances();
 	for (auto &instance : instances) {
 		pg::Path path = instance.first->getPath();
-		path.setResolution(i);
+		path.setResolution(divisions);
 		instance.first->setPath(path);
 	}
 	this->editor->change();
 }
 
-void StemEditor::changeRadius(double d)
+void StemEditor::changeRadius(double radius)
 {
-	beginChanging();
-	indicateSimilarities(this->radiusLabel);
+	beginChanging(this->radiusLabel);
 	auto instances = this->editor->getSelection()->getStemInstances();
 	for (auto &instance : instances)
-		instance.first->setMaxRadius(d);
+		instance.first->setMaxRadius(radius);
 	this->editor->change();
 }
 
-void StemEditor::changeMinRadius(double d)
+void StemEditor::changeMinRadius(double minRadius)
 {
-	beginChanging();
-	indicateSimilarities(this->minRadiusLabel);
+	beginChanging(this->minRadiusLabel);
 	auto instances = this->editor->getSelection()->getStemInstances();
 	for (auto &instance : instances)
-		instance.first->setMinRadius(d);
+		instance.first->setMinRadius(minRadius);
 	this->editor->change();
 }
 
 void StemEditor::changeRadiusCurve(int curve)
 {
-	beginChanging();
+	beginChanging(this->radiusCurveLabel);
 	auto instances = this->editor->getSelection()->getStemInstances();
 	for (auto &instance : instances)
 		instance.first->setRadiusCurve(curve);
@@ -431,8 +427,7 @@ void StemEditor::changeRadiusCurve(int curve)
 
 void StemEditor::changeStemMaterial()
 {
-	beginChanging();
-	indicateSimilarities(this->stemMaterialLabel);
+	beginChanging(this->stemMaterialLabel);
 	unsigned index = this->stemMaterialValue->currentIndex();
 	auto instances = this->editor->getSelection()->getStemInstances();
 	for (auto &instance : instances)
@@ -441,27 +436,25 @@ void StemEditor::changeStemMaterial()
 	finishChanging();
 }
 
-void StemEditor::changeXCollar(double d)
+void StemEditor::changeXCollar(double xcollar)
 {
-	beginChanging();
-	indicateSimilarities(this->collarXLabel);
+	beginChanging(this->collarXLabel);
 	auto instances = this->editor->getSelection()->getStemInstances();
 	for (auto &instance : instances) {
 		Vec2 swelling = instance.first->getSwelling();
-		swelling.x = d;
+		swelling.x = xcollar;
 		instance.first->setSwelling(swelling);
 	}
 	this->editor->change();
 }
 
-void StemEditor::changeYCollar(double d)
+void StemEditor::changeYCollar(double ycollar)
 {
-	beginChanging();
-	indicateSimilarities(this->collarYLabel);
+	beginChanging(this->collarYLabel);
 	auto instances = this->editor->getSelection()->getStemInstances();
 	for (auto &instance : instances) {
 		Vec2 swelling = instance.first->getSwelling();
-		swelling.y = d;
+		swelling.y = ycollar;
 		instance.first->setSwelling(swelling);
 	}
 	this->editor->change();
@@ -469,8 +462,7 @@ void StemEditor::changeYCollar(double d)
 
 void StemEditor::changeCapMaterial()
 {
-	beginChanging();
-	indicateSimilarities(this->capMaterialLabel);
+	beginChanging(this->capMaterialLabel);
 	unsigned index = this->capMaterialValue->currentIndex();
 	auto instances = this->editor->getSelection()->getStemInstances();
 	for (auto &instance : instances)
@@ -479,8 +471,9 @@ void StemEditor::changeCapMaterial()
 	finishChanging();
 }
 
-void StemEditor::beginChanging()
+void StemEditor::beginChanging(QLabel *label)
 {
+	indicateSimilarities(label);
 	if (!this->saveStem) {
 		this->saveStem = new SaveStem(this->editor->getSelection());
 		this->saveStem->execute();

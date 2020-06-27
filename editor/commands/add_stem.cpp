@@ -16,7 +16,6 @@
  */
 
 #include "add_stem.h"
-#include "plant_generator/patterns.h"
 
 using pg::Stem;
 using pg::Plant;

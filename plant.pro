@@ -74,6 +74,7 @@ editor/widgets/curve_editor.cpp \
 editor/widgets/curve_viewer.cpp \
 editor/widgets/editor.cpp \
 editor/widgets/form.cpp \
+editor/widgets/generator_curve_editor.cpp \
 editor/widgets/generator_editor.cpp \
 editor/widgets/key_editor.cpp \
 editor/widgets/leaf_editor.cpp \
@@ -81,7 +82,7 @@ editor/widgets/material_editor.cpp \
 editor/widgets/material_viewer.cpp \
 editor/widgets/mesh_editor.cpp \
 editor/widgets/mesh_viewer.cpp \
-editor/widgets/object_editor.cpp \
+editor/widgets/property_curve_editor.cpp \
 editor/widgets/property_editor.cpp \
 editor/widgets/stem_editor.cpp \
 editor/widgets/window.cpp \
@@ -111,7 +112,6 @@ plant_generator/leaf.h \
 plant_generator/material.h \
 plant_generator/mesh.h \
 plant_generator/path.h \
-plant_generator/patterns.h \
 plant_generator/plant.h \
 plant_generator/pseudo_generator.h \
 plant_generator/spline.h \
@@ -147,6 +147,7 @@ editor/widgets/curve_viewer.h \
 editor/widgets/definitions.h \
 editor/widgets/editor.h \
 editor/widgets/form.h \
+editor/widgets/generator_curve_editor.h \
 editor/widgets/generator_editor.h \
 editor/widgets/item_delegate.h \
 editor/widgets/key_editor.h \
@@ -154,7 +155,7 @@ editor/widgets/leaf_editor.h \
 editor/widgets/material_editor.h \
 editor/widgets/mesh_editor.h \
 editor/widgets/mesh_viewer.h \
-editor/widgets/object_editor.h \
+editor/widgets/property_curve_editor.h \
 editor/widgets/material_viewer.h \
 editor/widgets/property_editor.h \
 editor/widgets/stem_editor.h \

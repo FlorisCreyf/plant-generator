@@ -26,33 +26,50 @@ class GeneratorEditor : public Form {
 	Q_OBJECT
 
 	Editor *editor;
-	QSpinBox *seed;
-	QSpinBox *depth;
-	QDoubleSpinBox *stemDensity;
-	QDoubleSpinBox *stemStart;
-	QDoubleSpinBox *leafDensity;
-	QDoubleSpinBox *leafStart;
-	QDoubleSpinBox *radiusThreshold;
-	QDoubleSpinBox *lengthFactor;
-	QComboBox *arrangement;
+
+	QLabel *seedLabel;
+	QSpinBox *seedValue;
+	QLabel *depthLabel;
+	QSpinBox *depthValue;
+	QLabel *stemDensityLabel;
+	QDoubleSpinBox *stemDensityValue;
+	QLabel *stemStartLabel;
+	QDoubleSpinBox *stemStartValue;
+	QLabel *leafDensityLabel;
+	QDoubleSpinBox *leafDensityValue;
+	QLabel *leafStartLabel;
+	QDoubleSpinBox *leafStartValue;
+	QLabel *radiusThresholdLabel;
+	QDoubleSpinBox *radiusThresholdValue;
+	QLabel *lengthFactorLabel;
+	QDoubleSpinBox *lengthFactorValue;
+	QLabel *arrangementLabel;
+	QComboBox *arrangementValue;
 	Generate *generate;
 
-	void connectField(QDoubleSpinBox *);
-	void connectField(QSpinBox *);
 	void createInterface();
 	void removeCurrent();
-	QSize sizeHint() const;
 	void blockSignals(bool);
 	void enable(bool);
+	void beginChanging(QLabel *label);
 
 public:
 	GeneratorEditor(Editor *editor, QWidget *parent);
+	QSize sizeHint() const;
 
 public slots:
 	void change();
 	void setFields();
 	void finishChanging();
-	void changeOption();
+	void changeSeed(int seed);
+	void changeStemDensity(double density);
+	void changeLeafDensity(double density);
+	void changeStemStart(double start);
+	void changeLeafStart(double start);
+	void changeRadiusThreshold(double threshold);
+	void changeLengthFactor(double factor);
+	void changeDepth(int depth);
+	void changeArrangement(int arrangement);
 };
 
 #endif

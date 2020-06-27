@@ -72,7 +72,7 @@ QDockWidget *Window::createDockWidget(
 
 void Window::createEditors()
 {
-	QDockWidget *dw[6];
+	QDockWidget *dw[7];
 
 	this->propertyEditor = new PropertyEditor(
 		&this->shared, this->editor, this);
@@ -90,16 +90,16 @@ void Window::createEditors()
 	dw[1] = createDockWidget("Keys", this->keyEditor, true);
 	addDockWidget(static_cast<Qt::DockWidgetArea>(1), dw[1]);
 
-	this->curveEditor = new CurveEditor(
+	this->pCurveEditor = new PropertyCurveEditor(
 		&this->shared, &this->keymap, this->editor, this);
-	dw[2] = createDockWidget("Curves", this->curveEditor, false);
+	dw[2] = createDockWidget("Curves", this->pCurveEditor, false);
 	addDockWidget(static_cast<Qt::DockWidgetArea>(1), dw[2]);
 
-	connect(this->curveEditor, SIGNAL(curveAdded(pg::Curve)),
+	connect(this->pCurveEditor, SIGNAL(curveAdded(pg::Curve)),
 		this->propertyEditor, SLOT(addCurve(pg::Curve)));
-	connect(this->curveEditor, SIGNAL(curveModified(pg::Curve, unsigned)),
+	connect(this->pCurveEditor, SIGNAL(curveModified(pg::Curve, unsigned)),
 		this->propertyEditor, SLOT(updateCurve(pg::Curve, unsigned)));
-	connect(this->curveEditor, SIGNAL(curveRemoved(unsigned)),
+	connect(this->pCurveEditor, SIGNAL(curveRemoved(unsigned)),
 		this->propertyEditor, SLOT(removeCurve(unsigned)));
 
 	this->materialEditor = new MaterialEditor(
@@ -122,9 +122,15 @@ void Window::createEditors()
 	connect(this->meshEditor, SIGNAL(meshRemoved(unsigned)),
 		this->propertyEditor, SLOT(removeMesh(unsigned)));
 
+	this->gCurveEditor = new GeneratorCurveEditor(
+		&this->shared, &this->keymap, this->editor, this);
+	dw[6] = createDockWidget("Generator Curves", this->gCurveEditor, false);
+	addDockWidget(static_cast<Qt::DockWidgetArea>(1), dw[6]);
+
 	tabifyDockWidget(dw[1], dw[5]);
 	tabifyDockWidget(dw[1], dw[0]);
 	tabifyDockWidget(dw[4], dw[3]);
+	tabifyDockWidget(dw[4], dw[6]);
 	tabifyDockWidget(dw[4], dw[2]);
 }
 
@@ -135,7 +141,7 @@ void Window::initEditor()
 	else {
 		this->editor->load(this->filename.toLatin1());
 		auto curves = this->editor->getPlant()->getCurves();
-		this->curveEditor->init(curves);
+		this->pCurveEditor->init(curves);
 		auto meshes = this->editor->getPlant()->getLeafMeshes();
 		this->meshEditor->init(meshes);
 		auto materials = this->editor->getPlant()->getMaterials();
@@ -198,8 +204,8 @@ void Window::setFilename(QString filename)
 
 void Window::newFile()
 {
-	this->curveEditor->clear();
-	this->curveEditor->add();
+	this->pCurveEditor->clear();
+	this->pCurveEditor->add();
 	this->materialEditor->clear();
 	this->materialEditor->add();
 	this->meshEditor->clear();
@@ -217,7 +223,7 @@ void Window::openDialogBox()
 	if (!filename.isNull() || !filename.isEmpty()) {
 		this->editor->load(filename.toLatin1());
 		auto curves = this->editor->getPlant()->getCurves();
-		this->curveEditor->init(curves);
+		this->pCurveEditor->init(curves);
 		auto meshes = this->editor->getPlant()->getLeafMeshes();
 		this->meshEditor->init(meshes);
 		auto materials = this->editor->getPlant()->getMaterials();

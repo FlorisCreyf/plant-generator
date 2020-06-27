@@ -16,6 +16,8 @@
 #ifndef PG_DERIVATION_H
 #define PG_DERIVATION_H
 
+#include "spline.h"
+
 #ifdef PG_SERIALIZE
 #include <boost/archive/text_oarchive.hpp>
 #endif
@@ -31,6 +33,8 @@ namespace pg {
 		int depth = 1;
 		float stemDensity = 0.0f;
 		float leafDensity = 0.0f;
+		Spline stemDensityCurve;
+		Spline leafDensityCurve;
 		float stemStart = 0.0f;
 		float leafStart = 0.0f;
 		float lengthFactor = 1.0f;
@@ -47,6 +51,8 @@ namespace pg {
 			ar & depth;
 			ar & stemDensity;
 			ar & leafDensity;
+			ar & stemDensityCurve;
+			ar & leafDensityCurve;
 			ar & stemStart;
 			ar & leafStart;
 			ar & radiusThreshold;

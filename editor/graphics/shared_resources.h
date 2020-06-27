@@ -21,6 +21,7 @@
 #include "shader_params.h"
 #include "plant_generator/material.h"
 #include <QOpenGLFunctions_4_3_Core>
+#include <QOffscreenSurface>
 #include <QObject>
 #include <map>
 
@@ -55,6 +56,7 @@ public:
 	void clearMaterials();
 	ShaderParams getMaterial(unsigned index) const;
 	unsigned getMaterialCount() const;
+	QOffscreenSurface *getSurface();
 
 signals:
 	void materialAdded(ShaderParams params);
@@ -67,6 +69,7 @@ private:
 	bool initialized;
 	ShaderParams defaultMaterial;
 	std::vector<ShaderParams> materials;
+	QOffscreenSurface surface;
 
 	void createPrograms();
 	bool isCompiled(GLuint name, const char *filename);

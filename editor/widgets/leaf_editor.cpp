@@ -16,6 +16,7 @@
  */
 
 #include "leaf_editor.h"
+#include "definitions.h"
 #include <iterator>
 #include <string>
 
@@ -56,8 +57,8 @@ void LeafEditor::createInterface()
 	layout->addWidget(this->leafGroup);
 
 	QFormLayout *form = new QFormLayout(this->leafGroup);
-	form->setSpacing(2);
-	form->setMargin(5);
+	form->setSpacing(UI_FORM_SPACING);
+	form->setMargin(UI_FORM_MARGIN);
 
 	this->scaleXLabel = new QLabel(tr("Scale (X)"));
 	this->scaleXValue = new QDoubleSpinBox;
@@ -255,7 +256,7 @@ void LeafEditor::removeMesh(unsigned index)
 
 void LeafEditor::changeCustom(int custom)
 {
-	beginChanging();
+	beginChanging(this->customLabel);
 	auto instances = this->editor->getSelection()->getLeafInstances();
 	for (auto &instance : instances) {
 		Stem *stem = instance.first;
@@ -267,8 +268,7 @@ void LeafEditor::changeCustom(int custom)
 
 void LeafEditor::changeXScale(double xscale)
 {
-	beginChanging();
-	indicateSimilarities(this->scaleXLabel);
+	beginChanging(this->scaleXLabel);
 	auto instances = this->editor->getSelection()->getLeafInstances();
 	for (auto &instance : instances) {
 		Stem *stem = instance.first;
@@ -283,8 +283,7 @@ void LeafEditor::changeXScale(double xscale)
 
 void LeafEditor::changeYScale(double yscale)
 {
-	beginChanging();
-	indicateSimilarities(this->scaleYLabel);
+	beginChanging(this->scaleYLabel);
 	auto instances = this->editor->getSelection()->getLeafInstances();
 	for (auto &instance : instances) {
 		Stem *stem = instance.first;
@@ -299,8 +298,7 @@ void LeafEditor::changeYScale(double yscale)
 
 void LeafEditor::changeZScale(double zscale)
 {
-	beginChanging();
-	indicateSimilarities(this->scaleYLabel);
+	beginChanging(this->scaleYLabel);
 	auto instances = this->editor->getSelection()->getLeafInstances();
 	for (auto &instance : instances) {
 		Stem *stem = instance.first;
@@ -315,8 +313,7 @@ void LeafEditor::changeZScale(double zscale)
 
 void LeafEditor::changeLeafMaterial()
 {
-	beginChanging();
-	indicateSimilarities(this->materialLabel);
+	beginChanging(this->materialLabel);
 	unsigned index = this->materialValue->currentIndex();
 	auto instances = this->editor->getSelection()->getLeafInstances();
 	for (auto &instance : instances) {
@@ -330,8 +327,7 @@ void LeafEditor::changeLeafMaterial()
 
 void LeafEditor::changeLeafMesh()
 {
-	beginChanging();
-	indicateSimilarities(this->meshLabel);
+	beginChanging(this->meshLabel);
 	unsigned index = this->meshValue->currentIndex();
 	auto instances = this->editor->getSelection()->getLeafInstances();
 	for (auto &instance : instances) {
@@ -343,8 +339,9 @@ void LeafEditor::changeLeafMesh()
 	finishChanging();
 }
 
-void LeafEditor::beginChanging()
+void LeafEditor::beginChanging(QLabel *label)
 {
+	indicateSimilarities(label);
 	if (!this->saveStem) {
 		this->saveStem = new SaveStem(this->editor->getSelection());
 		this->saveStem->execute();

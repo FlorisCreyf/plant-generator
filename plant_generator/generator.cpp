@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-#include "patterns.h"
 #include "generator.h"
 #include <cmath>
 #include <limits>
@@ -35,7 +34,9 @@ Generator::Generator()
 	this->maxSwelling = Vec2(1.5f, 3.0f);
 
 	Stem *root = this->plant.createRoot();
-	this->plant.addCurve(getDefaultCurve(0));
+	Spline radiusCurve;
+	radiusCurve.setDefault(0);
+	this->plant.addCurve(Curve(radiusCurve));
 
 	Path path;
 	Spline spline;

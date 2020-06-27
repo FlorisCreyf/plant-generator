@@ -34,6 +34,9 @@ class MeshViewer : public QOpenGLWidget, protected QOpenGLFunctions_4_3_Core {
 	Camera camera;
 	Buffer buffer;
 	GLsizei count;
+	pg::Geometry mesh;
+
+	void updateBuffer();
 
 protected:
 	void initializeGL();
@@ -47,12 +50,7 @@ protected:
 public:
 	MeshViewer(SharedResources *shared, QWidget *parent);
 	QSize sizeHint() const;
-
-public slots:
 	void updateMesh(pg::Geometry mesh);
-
-signals:
-	void ready();
 };
 
 #endif /* MESH_VIEWER_H */

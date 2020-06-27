@@ -44,20 +44,27 @@ void Path::set(const pg::Spline &spline, int resolution, Vec3 location)
 
 void Path::set(vector<Segment> segments)
 {
+	clearPoints();
+	for (auto &segment : segments) {
+		this->resolution.push_back(segment.resolution);
+		this->degree.push_back(segment.spline.getDegree());
+	}
+	int index = setPoints(segments, 0);
+	setControls(segments, index);
+}
+
+void Path::clearPoints()
+{
 	this->path.clear();
 	this->controlStart.clear();
 	this->pointStart.clear();
 	this->lineStart.clear();
 	this->resolution.clear();
 	this->degree.clear();
-
-	for (auto &segment : segments) {
-		this->resolution.push_back(segment.resolution);
-		this->degree.push_back(segment.spline.getDegree());
-	}
-
-	int index = setPoints(segments, 0);
-	setControls(segments, index);
+	this->points.clear();
+	this->indices.clear();
+	this->lineSegment = {};
+	this->pointSegment = {};
 }
 
 int Path::setPoints(const vector<Path::Segment> &segments, int index)

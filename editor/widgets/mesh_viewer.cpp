@@ -57,7 +57,7 @@ void MeshViewer::initializeGL()
 	buffer.allocateIndexMemory(100);
 	glPrimitiveRestartIndex(Geometry::primitiveReset);
 	shared->initialize();
-	emit ready();
+	updateBuffer();
 }
 
 void MeshViewer::paintGL()
@@ -123,16 +123,20 @@ void MeshViewer::wheelEvent(QWheelEvent *event)
 
 void MeshViewer::updateMesh(pg::Geometry mesh)
 {
-	if (!isValid())
-		return;
-	else
+	this->mesh = mesh;
+	this->mesh.toCenter();
+	if (isValid()) {
 		makeCurrent();
+		updateBuffer();
+		doneCurrent();
+	}
+}
 
-	mesh.toCenter();
+void MeshViewer::updateBuffer()
+{
 	std::vector<Vertex> points;
 	for (Vertex vertex : mesh.getPoints())
 		points.push_back(vertex);
-
 	unsigned indexCount = mesh.getIndices().size();
 	buffer.update(
 		points.data(), points.size(),

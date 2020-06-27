@@ -83,7 +83,7 @@ private:
 	void blockSignals(bool);
 	void createInterface();
 	void enable(bool);
-	void beginChanging();
+	void beginChanging(QLabel *label);
 };
 
 #endif

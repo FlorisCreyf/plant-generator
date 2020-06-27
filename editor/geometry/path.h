@@ -40,6 +40,7 @@ public:
 	const Geometry *getGeometry();
 	Geometry::Segment getLineSegment();
 	Geometry::Segment getPointSegment();
+	void clearPoints();
 
 private:
 	Geometry path;

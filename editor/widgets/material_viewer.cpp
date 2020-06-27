@@ -76,7 +76,6 @@ void MaterialViewer::initializeGL()
 	glPrimitiveRestartIndex(Geometry::primitiveReset);
 	createInterface();
 	shared->initialize();
-	emit ready();
 }
 
 void MaterialViewer::paintGL()

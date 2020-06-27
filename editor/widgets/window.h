@@ -24,7 +24,8 @@
 #include "editor/qt/ui_window.h"
 #include "editor/graphics/shared_resources.h"
 #include "editor.h"
-#include "curve_editor.h"
+#include "generator_curve_editor.h"
+#include "property_curve_editor.h"
 #include "generator_editor.h"
 #include "material_editor.h"
 #include "mesh_editor.h"
@@ -56,7 +57,8 @@ private:
 
 	Editor *editor;
 	PropertyEditor *propertyEditor;
-	CurveEditor *curveEditor;
+	GeneratorCurveEditor *gCurveEditor;
+	PropertyCurveEditor *pCurveEditor;
 	GeneratorEditor *genEditor;
 	MaterialEditor *materialEditor;
 	MeshEditor *meshEditor;

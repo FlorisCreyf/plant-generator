@@ -49,6 +49,7 @@ namespace pg {
 	public:
 		bool operator==(const Spline &spline) const;
 		bool operator!=(const Spline &spline) const;
+		void setDefault(unsigned type);
 		void setControls(std::vector<Vec3> controls);
 		void addControl(Vec3 control);
 		std::vector<Vec3> getControls() const;

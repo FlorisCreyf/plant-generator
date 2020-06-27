@@ -29,6 +29,25 @@ bool Spline::operator!=(const Spline &spline) const
 	return controls != spline.controls || degree != spline.degree;
 }
 
+void Spline::setDefault(unsigned type)
+{
+	clear();
+	switch (type) {
+	case 0:
+		this->controls.push_back(Vec3(0.0f, 0.3f, 1.0f));
+		this->controls.push_back(Vec3(0.0f, 0.3f, 0.25f));
+		this->controls.push_back(Vec3(1.0f, 0.3f, 0.5f));
+		this->controls.push_back(Vec3(1.0f, 0.3f, 0.0f));
+		this->degree = 3;
+		break;
+	case 1:
+		this->controls.push_back(Vec3(0.0f, 0.3f, 1.0f));
+		this->controls.push_back(Vec3(1.0f, 0.3f, 1.0f));
+		this->degree = 1;
+		break;
+	}
+}
+
 void Spline::setControls(std::vector<Vec3> controls)
 {
 	this->controls = controls;

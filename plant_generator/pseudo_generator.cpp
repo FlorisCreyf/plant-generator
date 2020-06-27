@@ -15,7 +15,6 @@
 
 #include "plant.h"
 #include "pseudo_generator.h"
-#include "patterns.h"
 #include "math.h"
 #include <cstdlib>
 #include <cmath>
@@ -59,7 +58,7 @@ void PseudoGenerator::grow()
 
 void PseudoGenerator::grow(Stem *stem)
 {
-	stem->setDerivation(this->dvn);
+	this->dvn = stem->getDerivation();
 	reset();
 	addLateralStems(stem);
 }
@@ -88,8 +87,12 @@ void PseudoGenerator::addLateralStems(Stem *parent)
 	float position = this->dvn.stemStart;
 
 	while (position < length) {
+		float t = position / length;
+		float percentage = dvn.stemDensityCurve.getPoint(t).z;
+		if (percentage == 0.0f)
+			break;
 		addLateralStem(parent, position);
-		position += distance;
+		position += distance * (1.0f/percentage);
 	}
 }
 
@@ -175,29 +178,44 @@ void PseudoGenerator::addLeaves(Stem *stem)
 
 	if (this->dvn.arrangement == Derivation::Alternate) {
 		while (position < length) {
+			float t = position / length;
+			float percentage = dvn.leafDensityCurve.getPoint(t).z;
+			if (percentage == 0.0f)
+				break;
+
 			addLeaf(stem, position, rotation);
 			rotation = alternate(rotation);
-			position += distance;
+			position += distance * (1.0f/percentage);
 		}
 	} else if (this->dvn.arrangement == Derivation::Opposite) {
 		while (position < length) {
+			float t = position / length;
+			float percentage = dvn.leafDensityCurve.getPoint(t).z;
+			if (percentage == 0.0f)
+				break;
+
 			addLeaf(stem, position, rotation);
 			rotation = alternate(rotation);
 			addLeaf(stem, position, rotation);
 			rotation = alternate(rotation);
-			position += distance;
+			position += distance * (1.0f/percentage);
 		}
 	} else if (this->dvn.arrangement == Derivation::Whorled) {
 		Vec3 axis = Vec3(1.0f, 0.0f, 0.0f);
 		Quat increment = fromAxisAngle(axis, 2.0f*PI/3.0f);
 		while (position < length) {
+			float t = position / length;
+			float percentage = dvn.leafDensityCurve.getPoint(t).z;
+			if (percentage == 0.0f)
+				break;
+
 			rotation = Quat(1.0f, 0.0f, 0.0f, 0.0f);
 			addLeaf(stem, position, rotation);
 			rotation *= increment;
 			addLeaf(stem, position, rotation);
 			rotation *= increment;
 			addLeaf(stem, position, rotation);
-			position += distance;
+			position += distance * (1.0f/percentage);
 		}
 	}
 }

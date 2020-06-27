@@ -44,7 +44,7 @@ bool ShaderParams::isValid() const
 
 void ShaderParams::initialize()
 {
-	if (!this->valid && QOpenGLContext::currentContext()) {
+	if (!this->valid && QOpenGLContext::globalShareContext()) {
 		this->valid = true;
 		for (int i = 0; i < 4; i++)
 			if (!this->textureFiles[i].isEmpty())
@@ -65,10 +65,12 @@ GLuint ShaderParams::getTexture(unsigned index)
 bool ShaderParams::loadTexture(unsigned index, QString filename)
 {
 	this->textureFiles[index] = filename;
-	if (QOpenGLContext::currentContext())
+	if (QOpenGLContext::globalShareContext())
 		this->valid = true;
-	else
+	else {
+		this->valid = false;
 		return false;
+	}
 
 	QImageReader reader(filename);
 	reader.setAutoTransform(true);
@@ -88,7 +90,7 @@ bool ShaderParams::loadTexture(unsigned index, QString filename)
 
 GLuint ShaderParams::loadTexture(QImage image)
 {
-	auto context = QOpenGLContext::currentContext();
+	auto context = QOpenGLContext::globalShareContext();
 	auto f = context->extraFunctions();
 
 	GLuint name;
@@ -113,7 +115,7 @@ GLuint ShaderParams::loadTexture(QImage image)
 
 void ShaderParams::removeTexture(unsigned index)
 {
-	auto context = QOpenGLContext::currentContext();
+	auto context = QOpenGLContext::globalShareContext();
 	auto f = context->extraFunctions();
 
 	material.setRatio(1.0f);

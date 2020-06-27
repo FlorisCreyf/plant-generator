@@ -18,11 +18,12 @@
 #ifndef MESH_EDITOR_H
 #define MESH_EDITOR_H
 
-#include "object_editor.h"
 #include "mesh_viewer.h"
+#include "item_delegate.h"
 #include "editor.h"
+#include <QtWidgets>
 
-class MeshEditor : public ObjectEditor {
+class MeshEditor : public QWidget {
 	Q_OBJECT
 
 	SharedResources *shared;
@@ -34,19 +35,23 @@ class MeshEditor : public ObjectEditor {
 	QPushButton *meshList;
 	QMenu *meshMenu;
 
+	QVBoxLayout *layout;
+	QComboBox *selectionBox;
 	QPushButton *customButton;
 	QPushButton *planeButton;
 	QPushButton *perpPlaneButton;
 	QPushButton *emptyButton;
 
-	void initFields(QVBoxLayout *form);
+	void createSelectionBar();
+	void createFields(QVBoxLayout *form);
 	void modify(pg::Geometry &, unsigned);
 
 public:
 	MeshEditor(SharedResources *shared, Editor *editor, QWidget *parent);
 	void init(std::vector<pg::Geometry> geometry);
-	const MeshViewer *getViewer() const;
 	void clear();
+	const MeshViewer *getViewer() const;
+	QSize sizeHint() const;
 
 public slots:
 	void add();

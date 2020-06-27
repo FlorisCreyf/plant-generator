@@ -28,17 +28,23 @@ CurveViewer::CurveViewer(SharedResources *shared, QWidget *parent) :
 	setMouseTracking(true);
 
 	QSizePolicy policy;
-        policy.setHorizontalPolicy(QSizePolicy::Preferred);
-        policy.setVerticalPolicy(QSizePolicy::Preferred);
-        policy.setVerticalStretch(1);
-        policy.setHorizontalStretch(1);
-        this->setSizePolicy(policy);
+	policy.setHorizontalPolicy(QSizePolicy::Preferred);
+	policy.setVerticalPolicy(QSizePolicy::Preferred);
+	policy.setVerticalStretch(1);
+	policy.setHorizontalStretch(1);
+	this->setSizePolicy(policy);
 
 	this->camera.setTarget(Vec3(0.5f, 0.0f, 0.5f));
 	this->camera.setOrientation(180.0f, -180.0f);
 	this->camera.setDistance(1.0f);
 	this->camera.setPanSpeed(0.004f);
 	this->camera.setZoom(0.01f, 0.3f, 2.0f);
+
+	this->path.setColor(
+		Vec3(0.5f, 0.5f, 0.5f),
+		Vec3(0.6f, 0.6f, 0.6f),
+		Vec3(0.1f, 1.0f, 0.4f));
+	appendInterface(this->geometry);
 }
 
 const Camera *CurveViewer::getCamera() const
@@ -49,7 +55,6 @@ const Camera *CurveViewer::getCamera() const
 void CurveViewer::initializeGL()
 {
 	initializeOpenGLFunctions();
-
 	glPointSize(8);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_LINE_SMOOTH);
@@ -59,22 +64,13 @@ void CurveViewer::initializeGL()
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_PRIMITIVE_RESTART);
-
-	this->buffer.initialize(GL_DYNAMIC_DRAW);
-	this->buffer.allocatePointMemory(1000);
-	this->buffer.allocateIndexMemory(1000);
-
-	this->path.setColor(
-		Vec3(0.5f, 0.5f, 0.5f),
-		Vec3(0.6f, 0.6f, 0.6f),
-		Vec3(0.1f, 1.0f, 0.4f));
 	glPrimitiveRestartIndex(Geometry::primitiveReset);
-
-	Geometry geometry;
-	appendInterface(geometry);
+	this->buffer.initialize(GL_DYNAMIC_DRAW);
+	this->buffer.allocatePointMemory(100);
+	this->buffer.allocateIndexMemory(100);
 	this->buffer.update(geometry);
-
-	emit ready();
+	shared->initialize();
+	update();
 }
 
 void CurveViewer::appendInterface(Geometry &geometry)
@@ -104,18 +100,32 @@ void CurveViewer::appendInterface(Geometry &geometry)
 
 void CurveViewer::change(const Spline &spline, const PointSelection &selection)
 {
-	if (!isValid())
-		return;
-	else
-		makeCurrent();
-
-	Geometry geometry;
-	this->path.set(spline, 20, Vec3(0.0f, 0.0f, 0.0f));
+	int resolution = spline.getDegree() == 3 ? 20 : 1;
+	this->path.set(spline, resolution, Vec3(0.0f, 0.0f, 0.0f));
 	this->path.setSelectedPoints(selection);
-	geometry.append(*this->path.getGeometry());
-	appendInterface(geometry);
-	this->buffer.update(geometry);
-	update();
+	this->geometry = Geometry();
+	this->geometry.append(*this->path.getGeometry());
+
+	appendInterface(this->geometry);
+	if (isValid()) {
+		makeCurrent();
+		this->buffer.update(this->geometry);
+		doneCurrent();
+		update();
+	}
+}
+
+void CurveViewer::clear()
+{
+	this->path.clearPoints();
+	this->geometry.clear();
+	appendInterface(this->geometry);
+	if (isValid()) {
+		makeCurrent();
+		this->buffer.update(this->geometry);
+		doneCurrent();
+		update();
+	}
 }
 
 void CurveViewer::wheelEvent(QWheelEvent *event)
@@ -141,7 +151,6 @@ void CurveViewer::mousePressEvent(QMouseEvent *event)
 		else if (event->modifiers() & Qt::ShiftModifier)
 			this->camera.setAction(Camera::Pan);
 	}
-	emit mousePressed(event);
 }
 
 void CurveViewer::mouseMoveEvent(QMouseEvent *event)
@@ -149,14 +158,12 @@ void CurveViewer::mouseMoveEvent(QMouseEvent *event)
 	QPoint pos = event->pos();
 	if (this->camera.executeAction(pos.x(), pos.y()))
 		update();
-	emit mouseMoved(event);
 }
 
 void CurveViewer::mouseReleaseEvent(QMouseEvent *event)
 {
 	if (event->button() == Qt::MidButton)
 		this->camera.setAction(Camera::None);
-	emit mouseReleased(event);
 }
 
 void CurveViewer::resizeGL(int width, int height)

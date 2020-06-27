@@ -15,31 +15,34 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef OBJECT_EDITOR_H
-#define OBJECT_EDITOR_H
+#ifndef GENERATOR_CURVE_EDITOR_H
+#define GENERATOR_CURVE_EDITOR_H
 
-#include <QtWidgets>
+#include "curve_editor.h"
+#include "definitions.h"
+#include "../commands/generate.h"
 
-class ObjectEditor : public QWidget {
+class GeneratorCurveEditor : public CurveEditor {
 	Q_OBJECT
 
-	void initTopRow(QHBoxLayout *topRow);
-
-protected:
-	QVBoxLayout *layout;
+	Editor *editor;
 	QComboBox *selectionBox;
-	QPushButton *addButton;
-	QPushButton *removeButton;
+	Generate *generate;
+
+	void createSelectionBar();
+	void change(bool curveChanged);
+	void enable(bool enable);
+	bool eventFilter(QObject *object, QEvent *event);
+	bool isDescendant(QWidget *);
+	void updateDerivation();
+
+private slots:
+	void select();
 
 public:
-	ObjectEditor(QWidget *parent);
-	QSize sizeHint() const;
-
-public slots:
-	virtual void add() = 0;
-	virtual void rename() = 0;
-	virtual void remove() = 0;
-	virtual void select() = 0;
+	GeneratorCurveEditor(SharedResources *shared, KeyMap *keymap,
+		Editor *editor, QWidget *parent);
+	void clear();
 };
 
-#endif /* OBJECT_EDITOR_H */
+#endif /* GENERATOR_CURVE_EDITOR_H */

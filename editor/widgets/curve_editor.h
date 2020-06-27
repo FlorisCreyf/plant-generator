@@ -20,7 +20,6 @@
 
 #include "curve_viewer.h"
 #include "editor.h"
-#include "object_editor.h"
 #include "editor/history.h"
 #include "editor/keymap.h"
 #include "editor/commands/move_spline.h"
@@ -28,52 +27,16 @@
 #include "plant_generator/curve.h"
 #include "plant_generator/math/math.h"
 #include <vector>
+#include <QtWidgets>
 
-class CurveEditor : public ObjectEditor {
+class CurveEditor : public QWidget {
 	Q_OBJECT
 
-public:
-	CurveEditor(SharedResources *shared, KeyMap *keymap, Editor *editor,
-		QWidget *parent = 0);
-	void setCurve(pg::Spline spline);
-	CurveViewer *getViewer() const;
-	void clear();
-
-public slots:
-	void add();
-	void add(pg::Curve curve);
-	void init(const std::vector<pg::Curve> &curves);
-	void select();
-	void rename();
-	void remove();
-	void setDegree(int degree);
-	void mousePressed(QMouseEvent *event);
-	void mouseReleased(QMouseEvent *event);
-	void mouseMoved(QMouseEvent *event);
-
-signals:
-	void curveAdded(pg::Curve curve);
-	void curveModified(pg::Curve curve, unsigned index);
-	void curveRemoved(unsigned index);
-	void editingFinished();
-
-private:
-	CurveViewer *viewer;
-	Editor *editor;
 	KeyMap *keymap;
-	PointSelection selection;
-	History history;
 	TranslationAxes axes;
-
-	pg::Spline spline;
-	pg::Spline origSpline; /* The original spline without restrictions. */
-	Command *command;
-
 	bool ctrl;
 	bool moveLeft;
-	pg::Vec3 origPoint;
-
-	QComboBox *degree;
+	pg::Vec3 originalPoint;
 
 	void initiateMovePoint();
 	void applyRestrictions();
@@ -88,10 +51,39 @@ private:
 	void truncateCubicControl(std::vector<pg::Vec3> &, int);
 	void extrude();
 
+	void mousePressed(QMouseEvent *event);
+	void mouseReleased(QMouseEvent *event);
+	void mouseMoved(QMouseEvent *event);
 	void focusOutEvent(QFocusEvent *);
 	void keyPressEvent(QKeyEvent *);
 	void exitCommand(bool);
-	void change();
+
+protected:
+	QVBoxLayout *layout;
+	PointSelection selection;
+	pg::Spline spline;
+	/* The original spline without restrictions. */
+	pg::Spline originalSpline;
+	Command *command;
+	QComboBox *degree;
+	CurveViewer *viewer;
+	History history;
+
+	CurveEditor(KeyMap *keymap, QWidget *parent);
+	bool eventFilter(QObject *object, QEvent *event);
+	void createInterface(SharedResources *shared);
+	void setSpline(const pg::Spline &spline);
+	virtual void change(bool curveChanged) = 0;
+
+public:
+	const CurveViewer *getViewer() const;
+	QSize sizeHint() const;
+
+public slots:
+	void setDegree(int degree);
+
+signals:
+	void editingFinished();
 };
 
 #endif /* CURVE_EDITOR_H */

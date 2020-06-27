@@ -17,8 +17,6 @@
 
 #include "history.h"
 
-using std::vector;
-#include <iostream>
 void History::add(Command *command)
 {
 	future.clear();
