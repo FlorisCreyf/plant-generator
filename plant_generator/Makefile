@@ -2,6 +2,9 @@ CPPFLAGS += --pedantic -W -g
 BUILDDIR := build
 LIBS = /usr/lib/x86_64-linux-gnu/libboost_program_options.a
 OBJECTS := $(addprefix $(BUILDDIR)/, \
+file/collada.o \
+file/wavefront.o \
+file/xml_writer.o \
 math/curve.o \
 math/intersection.o \
 math/mat4.o \
@@ -10,7 +13,6 @@ math/vec2.o \
 math/vec3.o \
 math/vec4.o \
 curve.o \
-file.o \
 generator.o \
 geometry.o \
 joint.o \
@@ -23,7 +25,6 @@ spline.o \
 stem.o \
 stem_pool.o \
 wind.o \
-xml_writer.o \
 )
 TEST_OBJECTS := $(addprefix $(BUILDDIR)/, \
 tests/test.o \

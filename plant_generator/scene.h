@@ -13,21 +13,20 @@
  * limitations under the License.
  */
 
-#ifndef PG_WIND_GENERATOR_H
-#define PG_WIND_GENERATOR_H
+#ifndef PG_SCENE_H
+#define PG_SCENE_H
 
 #include "plant.h"
+#include "wind.h"
 
 #ifdef PG_SERIALIZE
 #include <boost/archive/text_oarchive.hpp>
 #endif
 
 namespace pg {
-	class Wind {
-		Vec3 direction;
-		float speed;
-
-		int generate(Stem *, int, int);
+	struct Scene {
+		Plant plant;
+		Wind wind;
 
 		#ifdef PG_SERIALIZE
 		friend class boost::serialization::access;
@@ -35,15 +34,11 @@ namespace pg {
 		void serialize(Archive &ar, const unsigned int version)
 		{
 			(void)version;
-			ar & direction;
-			ar & speed;
+			ar & plant;
+			ar & wind;
 		}
 		#endif /* PG_SERIALIZE */
-
-	public:
-		Wind();
-		void generate(Plant *plant);
 	};
 }
 
-#endif
+#endif /* PG_SCENE_H */

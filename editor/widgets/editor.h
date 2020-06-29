@@ -34,6 +34,7 @@
 #include "plant_generator/plant.h"
 #include "plant_generator/mesh.h"
 #include "plant_generator/pseudo_generator.h"
+#include "plant_generator/scene.h"
 #include "plant_generator/wind.h"
 
 #include <QOpenGLFunctions_4_3_Core>
@@ -61,6 +62,7 @@ public:
 	void load(const char *filename);
 	void reset();
 	pg::Plant *getPlant();
+	pg::Scene *getScene();
 	Selection *getSelection();
 	const pg::Mesh *getMesh();
 	void add(Command *command);
@@ -86,13 +88,13 @@ private:
 	QComboBox *shaderBox;
 	QToolBar *toolbar;
 
-	struct Scene {
+	struct Segments {
 		Geometry::Segment axesArrows;
 		Geometry::Segment axesLines;
 		Geometry::Segment grid;
 		Geometry::Segment rotation;
 		Geometry::Segment selection;
-	} scene;
+	} segments;
 
 	Command *currentCommand;
 	KeyMap *keymap;
@@ -107,9 +109,8 @@ private:
 
 	std::vector<pg::Segment> meshes;
 	pg::PseudoGenerator generator;
-	pg::Wind wind;
+	pg::Scene scene;
 	pg::Mesh mesh;
-	pg::Plant plant;
 	Path path;
 
 	Camera camera;

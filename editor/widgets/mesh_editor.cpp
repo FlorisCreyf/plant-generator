@@ -18,7 +18,7 @@
 #include "mesh_editor.h"
 #include "definitions.h"
 #include "item_delegate.h"
-#include "plant_generator/file.h"
+#include "plant_generator/file/wavefront.h"
 
 MeshEditor::MeshEditor(
 	SharedResources *shared, Editor *editor, QWidget *parent) :
@@ -189,9 +189,9 @@ void MeshEditor::loadCustom()
 			pg::Plant *plant = this->editor->getPlant();
 			unsigned index = this->selectionBox->currentIndex();
 			pg::Geometry geom = plant->getLeafMesh(index);
-			pg::File file;
+			pg::Wavefront obj;
 			std::string s = filename.toStdString();
-			file.importObj(s.c_str(), &geom);
+			obj.importFile(s.c_str(), &geom);
 			modify(geom, index);
 		}
 	}

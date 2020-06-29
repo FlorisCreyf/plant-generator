@@ -16,7 +16,7 @@
 #include "plant.h"
 #include "generator.h"
 #include "mesh.h"
-#include "file.h"
+#include "file/wavefront.h"
 #include <iostream>
 #include <string>
 #include <boost/program_options.hpp>
@@ -88,11 +88,11 @@ int main(int argc, char **argv)
 	pg::Mesh mesh = pg::Mesh(gen.getPlant());
 	mesh.generate();
 
-	pg::File file;
+	pg::Wavefront obj;
 	if (argc == 2)
-		file.exportObj(argv[1], mesh, *gen.getPlant());
+		obj.exportObj(argv[1], mesh, *gen.getPlant());
 	else
-		file.exportObj(filename.c_str(), mesh, *gen.getPlant());
+		obj.exportObj(filename.c_str(), mesh, *gen.getPlant());
 
 	return 0;
 }

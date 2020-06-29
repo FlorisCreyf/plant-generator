@@ -13,37 +13,21 @@
  * limitations under the License.
  */
 
-#ifndef PG_WIND_GENERATOR_H
-#define PG_WIND_GENERATOR_H
+#ifndef PG_COLLADA_H
+#define PG_COLLADA_H
 
-#include "plant.h"
-
-#ifdef PG_SERIALIZE
-#include <boost/archive/text_oarchive.hpp>
-#endif
+#include "../scene.h"
+#include "../mesh.h"
+#include <string>
 
 namespace pg {
-	class Wind {
-		Vec3 direction;
-		float speed;
-
-		int generate(Stem *, int, int);
-
-		#ifdef PG_SERIALIZE
-		friend class boost::serialization::access;
-		template<class Archive>
-		void serialize(Archive &ar, const unsigned int version)
-		{
-			(void)version;
-			ar & direction;
-			ar & speed;
-		}
-		#endif /* PG_SERIALIZE */
+	class Collada {
+		bool exportArmature = true;
 
 	public:
-		Wind();
-		void generate(Plant *plant);
+		void exportFile(std::string filename, const Mesh &mesh,
+			const Scene &scene);
 	};
 }
 
-#endif
+#endif /* PG_COLLADA_H */

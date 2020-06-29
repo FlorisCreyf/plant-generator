@@ -17,7 +17,8 @@
 
 #include "window.h"
 #include "definitions.h"
-#include "plant_generator/file.h"
+#include "plant_generator/file/collada.h"
+#include "plant_generator/file/wavefront.h"
 #include <boost/archive/text_iarchive.hpp>
 #include <fstream>
 #include <QFileDialog>
@@ -242,7 +243,7 @@ void Window::saveAsDialogBox()
 		std::ofstream stream(filename.toLatin1());
 		if (stream.good()) {
 			boost::archive::text_oarchive oa(stream);
-			oa << *(this->editor->getPlant());
+			oa << *(this->editor->getScene());
 		}
 		stream.close();
 		setFilename(filename);
@@ -256,7 +257,7 @@ void Window::saveDialogBox()
 	else {
 		std::ofstream stream(this->filename.toLatin1());
 		boost::archive::text_oarchive oa(stream);
-		oa << *(this->editor->getPlant());
+		oa << *(this->editor->getScene());
 		stream.close();
 		setFilename(this->filename);
 	}
@@ -272,25 +273,25 @@ void Window::exportWavefrontDialogBox()
 		tr("Wavefront (*.obj);;All Files (*)"));
 
 	if (!filename.isEmpty()) {
-		pg::File f;
+		pg::Wavefront obj;
 		QByteArray b = filename.toLatin1();
-		f.exportObj(b.data(), *mesh, *plant);
+		obj.exportFile(b.data(), *mesh, *plant);
 	}
 }
 
 void Window::exportColladaDialogBox()
 {
 	const pg::Mesh *mesh = this->editor->getMesh();
-	const pg::Plant *plant = this->editor->getPlant();
+	const pg::Scene *scene = this->editor->getScene();
 
 	QString filename = QFileDialog::getSaveFileName(
 		this, tr("Export File"), "saved/plant.dae",
 		tr("Collada (*.dae);;All Files (*)"));
 
 	if (!filename.isEmpty()) {
-		pg::File f;
+		pg::Collada dae;
 		QByteArray b = filename.toLatin1();
-		f.exportDae(b.data(), *mesh, *plant);
+		dae.exportFile(b.data(), *mesh, *scene);
 	}
 }
 

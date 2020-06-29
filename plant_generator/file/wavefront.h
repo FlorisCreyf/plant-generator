@@ -13,28 +13,23 @@
  * limitations under the License.
  */
 
-#ifndef PG_FILE_H
-#define PG_FILE_H
+#ifndef PG_WAVEFRONT_H
+#define PG_WAVEFRONT_H
 
-#include "plant.h"
-#include "geometry.h"
-#include "mesh.h"
-#include <cstddef>
-#include <vector>
+#include "../plant.h"
+#include "../geometry.h"
+#include "../mesh.h"
 #include <string>
 
 namespace pg {
-	class File {
-		std::string exportMtl(std::string, const Plant &);
-		bool exportArmature = true;
+	class Wavefront {
+		std::string exportMaterials(std::string, const Plant &);
 
 	public:
-		void importObj(const char *filename, Geometry *geom);
-		void exportDae(std::string filename, const Mesh &mesh,
-			const Plant &plant);
-		void exportObj(std::string filename, const Mesh &mesh,
+		void importFile(const char *filename, Geometry *geom);
+		void exportFile(std::string filename, const Mesh &mesh,
 			const Plant &plant);
 	};
 }
 
-#endif /* PG_FILE_H */
+#endif /* PG_WAVEFRONT_H */

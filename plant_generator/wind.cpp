@@ -17,14 +17,14 @@
 
 using namespace pg;
 
-Wind::Wind(Plant *plant)
+Wind::Wind()
 {
-	this->plant = plant;
+
 }
 
-void Wind::generate()
+void Wind::generate(Plant *plant)
 {
-	Stem *root = this->plant->getRoot();
+	Stem *root = plant->getRoot();
 	if (root) {
 		root->clearJoints();
 		generate(root, -1, -1);

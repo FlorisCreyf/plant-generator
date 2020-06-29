@@ -46,10 +46,9 @@ using pg::Ray;
 
 Editor::Editor(SharedResources *shared, KeyMap *keymap, QWidget *parent) :
 	QOpenGLWidget(parent),
-	generator(&plant),
-	wind(&plant),
-	mesh(&plant),
-	selection(&plant)
+	generator(&scene.plant),
+	mesh(&scene.plant),
+	selection(&scene.plant)
 {
 	this->shared = shared;
 	this->keymap = keymap;
@@ -148,10 +147,10 @@ void Editor::initializeBuffers()
 	colors[0] = Vec3(0.4f, 0.4f, 0.4f);
 	colors[1] = Vec3(0.4f, 0.4f, 0.4f);
 	geometry.addGrid(5, colors, Vec3(0.3, 0.3, 0.3));
-	scene.grid = geometry.getSegment();
-	scene.axesLines = geometry.append(axesLines);
-	scene.axesArrows = geometry.append(axesArrows);
-	scene.rotation = geometry.append(rotationLines);
+	segments.grid = geometry.getSegment();
+	segments.axesLines = geometry.append(axesLines);
+	segments.axesArrows = geometry.append(axesArrows);
+	segments.rotation = geometry.append(rotationLines);
 
 	staticBuffer.initialize(GL_STATIC_DRAW);
 	staticBuffer.load(geometry);
@@ -183,13 +182,13 @@ void Editor::keyPressEvent(QKeyEvent *event)
 	bool alt = event->modifiers() & Qt::AltModifier;
 	QString command = keymap->getBinding(key, ctrl, shift, alt);
 
+	pg::Stem *root = scene.plant.getRoot();
 	bool hasPoints = selection.hasPoints();
 	bool hasFirstPoint = selection.hasPoint(0);
 	bool hasStems = selection.hasStems();
 	bool hasOneStem = selection.getStemInstances().size() == 1;
 	bool hasLeaves = selection.hasLeaves();
-	bool containsRoot = selection.contains(plant.getRoot());
-	pg::Stem *root = plant.getRoot();
+	bool containsRoot = selection.contains(root);
 
 	if (command == tr("Add Leaf") && hasOneStem) {
 		currentCommand = new AddLeaf(&selection, &camera, x, y);
@@ -433,7 +432,7 @@ void Editor::paintGL()
 	staticBuffer.use();
 	glUseProgram(shared->getShader(SharedResources::Flat));
 	glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
-	glDrawArrays(GL_LINES, scene.grid.pstart, scene.grid.pcount);
+	glDrawArrays(GL_LINES, segments.grid.pstart, segments.grid.pcount);
 
 	/* Paint the plant. */
 	plantBuffer.use();
@@ -592,20 +591,20 @@ void Editor::paintAxes()
 			projection *
 			rotationAxes.getTransformation(distance, direction);
 		glUniformMatrix4fv(0, 1, GL_FALSE, &transformation[0][0]);
-		unsigned index = scene.rotation.istart;
+		unsigned index = segments.rotation.istart;
 		GLvoid *offset = (GLvoid *)(index * sizeof(unsigned));
-		GLsizei size = scene.rotation.icount;
+		GLsizei size = segments.rotation.icount;
 		glDrawElements(GL_LINE_STRIP, size, GL_UNSIGNED_INT, offset);
 	} else {
 		Mat4 transformation = projection;
 		transformation *= translationAxes.getTransformation(distance);
 		glUniformMatrix4fv(0, 1, GL_FALSE, &transformation[0][0]);
 		glDrawArrays(
-			GL_LINES, scene.axesLines.pstart,
-			scene.axesLines.pcount);
-		unsigned index = scene.axesArrows.istart;
+			GL_LINES, segments.axesLines.pstart,
+			segments.axesLines.pcount);
+		unsigned index = segments.axesArrows.istart;
 		GLvoid *offset = (GLvoid *)(index * sizeof(unsigned));
-		GLsizei size = scene.axesArrows.icount;
+		GLsizei size = segments.axesArrows.icount;
 		glDrawElements(GL_TRIANGLES, size, GL_UNSIGNED_INT, offset);
 	}
 }
@@ -659,7 +658,7 @@ void Editor::change()
 	if (!isValid())
 		return;
 
-	wind.generate();
+	scene.wind.generate(&scene.plant);
 	mesh.generate();
 
 	makeCurrent();
@@ -707,13 +706,13 @@ void Editor::createDefaultPlant()
 
 void Editor::load(const char *filename)
 {
-	plant.removeRoot();
+	scene.plant.removeRoot();
 	if (filename == nullptr)
 		createDefaultPlant();
 	else {
 		std::ifstream stream(filename);
 		boost::archive::text_iarchive ia(stream);
-		ia >> plant;
+		ia >> scene;
 		stream.close();
 	}
 }
@@ -762,12 +761,17 @@ void Editor::change(QAction *action)
 void Editor::updateMaterial(unsigned index)
 {
 	ShaderParams params = this->shared->getMaterial(index);
-	plant.updateMaterial(params.getMaterial(), index);
+	scene.plant.updateMaterial(params.getMaterial(), index);
 }
 
 pg::Plant *Editor::getPlant()
 {
-	return &plant;
+	return &scene.plant;
+}
+
+pg::Scene *Editor::getScene()
+{
+	return &scene;
 }
 
 Selection *Editor::getSelection()

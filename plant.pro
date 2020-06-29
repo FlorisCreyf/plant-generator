@@ -25,6 +25,9 @@ RCC_DIR = editor/qt
 UI_DIR = editor/qt
 
 SOURCES += \
+plant_generator/file/collada.cpp \
+plant_generator/file/wavefront.cpp \
+plant_generator/file/xml_writer.cpp \
 plant_generator/math/curve.cpp \
 plant_generator/math/intersection.cpp \
 plant_generator/math/mat4.cpp \
@@ -33,7 +36,6 @@ plant_generator/math/vec2.cpp \
 plant_generator/math/vec3.cpp \
 plant_generator/math/vec4.cpp \
 plant_generator/curve.cpp \
-plant_generator/file.cpp \
 plant_generator/geometry.cpp \
 plant_generator/joint.cpp \
 plant_generator/leaf.cpp \
@@ -46,7 +48,6 @@ plant_generator/spline.cpp \
 plant_generator/stem.cpp \
 plant_generator/stem_pool.cpp \
 plant_generator/wind.cpp \
-plant_generator/xml_writer.cpp \
 editor/commands/add_stem.cpp \
 editor/commands/add_leaf.cpp \
 editor/commands/command.cpp \
@@ -95,6 +96,9 @@ editor/selection.cpp \
 editor/selector.cpp
 
 HEADERS += \
+plant_generator/file/collada.h \
+plant_generator/file/wavefront.h \
+plant_generator/file/xml_writer.h \
 plant_generator/math/curve.h \
 plant_generator/math/intersection.h \
 plant_generator/math/mat4.h \
@@ -105,7 +109,6 @@ plant_generator/math/vec3.h \
 plant_generator/math/vec4.h \
 plant_generator/curve.h \
 plant_generator/derivation.h \
-plant_generator/file.h \
 plant_generator/geometry.h \
 plant_generator/joint.h \
 plant_generator/leaf.h \
@@ -114,11 +117,11 @@ plant_generator/mesh.h \
 plant_generator/path.h \
 plant_generator/plant.h \
 plant_generator/pseudo_generator.h \
+plant_generator/scene.h \
 plant_generator/spline.h \
 plant_generator/stem.h \
 plant_generator/stem_pool.h \
 plant_generator/wind.h \
-plant_generator/xml_writer.h \
 editor/commands/add_stem.h \
 editor/commands/add_leaf.h \
 editor/commands/command.h \
