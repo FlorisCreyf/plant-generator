@@ -51,6 +51,9 @@ void validateJoints(Stem *stem)
 BOOST_AUTO_TEST_CASE(test_path_index)
 {
 	Plant plant;
+	plant.addMaterial(Material());
+	plant.addCurve(Curve(1));
+
 	Path path = createPath();
 	Stem *root = plant.createRoot();
 	root->setPath(path);
@@ -61,8 +64,8 @@ BOOST_AUTO_TEST_CASE(test_path_index)
 	addStem(plant, root, path, 2.5f);
 	addStem(plant, root, path, 3.0f);
 
-	Wind wind(&plant);
-	wind.generate();
+	Wind wind;
+	wind.generate(&plant);
 	validateJoints(root);
 }
 

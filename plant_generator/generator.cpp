@@ -34,9 +34,8 @@ Generator::Generator()
 	this->maxSwelling = Vec2(1.5f, 3.0f);
 
 	Stem *root = this->plant.createRoot();
-	Spline radiusCurve;
-	radiusCurve.setDefault(0);
-	this->plant.addCurve(Curve(radiusCurve));
+	this->plant.addMaterial(Material());
+	this->plant.addCurve(Curve(0));
 
 	Path path;
 	Spline spline;

@@ -41,6 +41,7 @@ namespace pg {
 
 	public:
 		Curve();
+		Curve(int type);
 		Curve(Spline spline);
 		Curve(Spline spline, std::string name);
 		void setName(std::string name);

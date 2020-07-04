@@ -90,9 +90,9 @@ int main(int argc, char **argv)
 
 	pg::Wavefront obj;
 	if (argc == 2)
-		obj.exportObj(argv[1], mesh, *gen.getPlant());
+		obj.exportFile(argv[1], mesh, *gen.getPlant());
 	else
-		obj.exportObj(filename.c_str(), mesh, *gen.getPlant());
+		obj.exportFile(filename.c_str(), mesh, *gen.getPlant());
 
 	return 0;
 }

@@ -16,7 +16,9 @@
 #ifndef PG_WIND_GENERATOR_H
 #define PG_WIND_GENERATOR_H
 
-#include "plant.h"
+#include "animation.h"
+#include <vector>
+#include <random>
 
 #ifdef PG_SERIALIZE
 #include <boost/archive/text_oarchive.hpp>
@@ -24,10 +26,25 @@
 
 namespace pg {
 	class Wind {
+	public:
+		Wind();
+		void setSpeed(float speed);
+		void setDirection(Vec3 direction);
+		Animation generate(Plant *plant);
+
+	private:
 		Vec3 direction;
 		float speed;
+		int frameCount;
+		std::mt19937 randomGenerator;
 
-		int generate(Stem *, int, int);
+		void animateJoint(int, float, float, Vec3, Animation &);
+		void setInverseTransform(int, Vec3, Vec3, Animation &);
+		void transformJoint(Plant *, Stem *, Vec3, Animation &);
+		void transformChildJoint(
+			Stem *, unsigned, Plant *, Vec3, Animation &);
+		int generateJoint(Stem *, int, int, size_t &);
+		void initFrames(Stem *, size_t, Animation &);
 
 		#ifdef PG_SERIALIZE
 		friend class boost::serialization::access;
@@ -39,10 +56,6 @@ namespace pg {
 			ar & speed;
 		}
 		#endif /* PG_SERIALIZE */
-
-	public:
-		Wind();
-		void generate(Plant *plant);
 	};
 }
 

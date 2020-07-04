@@ -19,7 +19,14 @@ using namespace pg;
 
 Curve::Curve()
 {
-	
+
+}
+
+Curve::Curve(int type)
+{
+	Spline spline;
+	spline.setDefault(type);
+	this->spline = spline;
 }
 
 Curve::Curve(Spline spline)

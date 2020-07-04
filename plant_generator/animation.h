@@ -13,34 +13,50 @@
  * limitations under the License.
  */
 
-#ifndef PG_SCENE_H
-#define PG_SCENE_H
+#ifndef PG_ANIMATION_H
+#define PG_ANIMATION_H
 
 #include "plant.h"
-#include "wind.h"
 
 #ifdef PG_SERIALIZE
 #include <boost/archive/text_oarchive.hpp>
+#include <boost/serialization/vector.hpp>
 #endif
 
 namespace pg {
-	struct Scene {
-		Plant plant;
-		Animation animation;
-		Wind wind;
+	struct KeyFrame {
+		float time;
+		Quat rotation;
+		Vec3 translation;
+		Quat inverseRotation;
+		Vec3 inverseTranslation;
 
 		#ifdef PG_SERIALIZE
-		friend class boost::serialization::access;
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned int version)
 		{
 			(void)version;
-			ar & plant;
-			ar & animation;
-			ar & wind;
+			ar & time;
+			ar & rotation;
+			ar & translation;
+			ar & inverseRotation;
+			ar & inverseTranslation;
+		}
+		#endif /* PG_SERIALIZE */
+	};
+
+	struct Animation {
+		std::vector<std::vector<KeyFrame>> frames;
+
+		#ifdef PG_SERIALIZE
+		template<class Archive>
+		void serialize(Archive &ar, const unsigned int version)
+		{
+			(void)version;
+			ar & frames;
 		}
 		#endif /* PG_SERIALIZE */
 	};
 }
 
-#endif /* PG_SCENE_H */
+#endif /* PG_ANIMATION_H */

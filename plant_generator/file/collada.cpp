@@ -24,10 +24,20 @@ using std::vector;
 using std::string;
 
 template<class T>
-string toString(T x) {
+string toString(T x)
+{
 	std::ostringstream out;
 	out << x;
 	return out.str();
+}
+
+string toString(Mat4 mat)
+{
+	string result;
+	for (int i = 0; i < 4; i++)
+		for (int j = 0; j < 4; j++)
+			result += toString(mat[j][i]) + " ";
+	return result;
 }
 
 bool isInvalidChar(char c)
@@ -245,6 +255,91 @@ void setMaterials(XMLWriter &xml, const Mesh &mesh, const Plant &plant)
 		xml << "</material>";
 	}
 	xml << "</library_materials>";
+}
+
+void setJointAnimation(XMLWriter &xml, const Animation &animation, size_t joint)
+{
+	vector<KeyFrame> frames = animation.frames[joint];
+	string id = "joint" + toString(joint);
+	string value;
+
+	xml >> ("<animation id='plant-animation-" + id + "' "
+		"name='plant-animation-" + id + "'>");
+
+	value.clear();
+	for (KeyFrame frame : frames)
+		value += toString(frame.time) + " ";
+	value.pop_back();
+	xml >> ("<source id='plant-input-" + id + "'>");
+	xml += ("<float_array id='plant-input-array-" + id + "' "
+		"count='" + toString(frames.size()) + "'>" + value +
+		"</float_array>");
+	xml >> "<technique_common>";
+	xml >> ("<accessor source='#plant-input-array-" + id + "' stride='1' "
+		"count='" + toString(frames.size()) + "'>");
+	xml += "<param name='TIME' type='float'/>";
+	xml << "</accessor>";
+	xml << "</technique_common>";
+	xml << "</source>";
+
+	value.clear();
+	for (KeyFrame frame : frames) {
+		Mat4 transform = toMat4(frame.rotation);
+		Vec3 translation = frame.inverseTranslation;
+		transform = translate(translation) * transform;
+		value += toString(transform);
+	}
+	value.pop_back();
+	xml >> ("<source id='plant-output-" + id + "'>");
+	xml += ("<float_array id='plant-output-array-" + id + "' "
+		"count='" + toString(frames.size()*16) + "'>" + value +
+		"</float_array>");
+	xml >> "<technique_common>";
+	xml >> ("<accessor source='#plant-output-array-" + id + "' "
+		"stride='16' count='" + toString(frames.size()) + "'>");
+	xml += "<param name='TRANSFORM' type='float4x4'/>";
+	xml << "</accessor>";
+	xml << "</technique_common>";
+	xml << "</source>";
+
+	value.clear();
+	for (size_t i = 0; i < frames.size(); i++)
+		value += "LINEAR ";
+	value.pop_back();
+	xml >> ("<source id='plant-interpolation-" + id + "'>");
+	xml += ("<Name_array id='plant-interpolation-array-" + id + "' "
+		"count='" + toString(frames.size()) + "'>" + value +
+		"</Name_array>");
+	xml >> "<technique_common>";
+	xml >> ("<accessor source='#plant-interpolation-array-" + id + "' "
+		"stride='1' count='" + toString(frames.size()) + "'>");
+	xml += "<param name='INTERPOLATION' type='name'/>";
+	xml << "</accessor>";
+	xml << "</technique_common>";
+	xml << "</source>";
+
+	xml >> ("<sampler id='plant-animation-sampler-" + id + "'>");
+	xml += "<input semantic='INPUT' source='#plant-input-" + id + "'/>";
+	xml += "<input semantic='OUTPUT' source='#plant-output-" + id + "'/>";
+	xml += ("<input semantic='INTERPOLATION' "
+		"source='#plant-interpolation-" + id + "'/>");
+	xml << "</sampler>";
+
+	xml += ("<channel source='#plant-animation-sampler-" + id + "' "
+		"target='plant-armature-" + id + "/transform'/>");
+
+	xml << "</animation>";
+}
+
+void setAnimations(XMLWriter &xml, const Animation &animation)
+{
+	xml >> ("<library_animations>");
+	xml >> "<animation id='plant-animation' name='plant-animation'>";
+	size_t size = animation.frames.size();
+	for (size_t i = 0; i < size; i++)
+		setJointAnimation(xml, animation, i);
+	xml << "</animation>";
+	xml << "</library_animations>";
 }
 
 /** Create a list of bind poses that is ordered by joint ID.*/
@@ -498,8 +593,10 @@ void Collada::exportFile(string filename, const Mesh &mesh, const Scene &scene)
 	setEffects(xml, mesh, scene.plant);
 	setMaterials(xml, mesh, scene.plant);
 	setGeometry(xml, mesh, scene.plant);
-	if (this->exportArmature)
+	if (this->exportArmature) {
 		setControllers(xml, mesh, scene.plant);
+		setAnimations(xml, scene.animation);
+	}
 	setScene(xml, mesh, scene.plant, this->exportArmature);
 
 	xml << "</COLLADA>";

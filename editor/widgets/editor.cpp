@@ -658,7 +658,7 @@ void Editor::change()
 	if (!isValid())
 		return;
 
-	scene.wind.generate(&scene.plant);
+	scene.animation = scene.wind.generate(&scene.plant);
 	mesh.generate();
 
 	makeCurrent();
@@ -702,6 +702,8 @@ void Editor::createDefaultPlant()
 	derivation.lengthFactor = 50.0f;
 	generator.setDerivation(derivation);
 	generator.grow();
+	scene.wind.setSpeed(0.5f);
+	scene.wind.setDirection(Vec3(0.0f, 0.0f, 1.0f));
 }
 
 void Editor::load(const char *filename)
