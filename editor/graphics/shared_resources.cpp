@@ -53,69 +53,58 @@ void SharedResources::initialize()
 
 void SharedResources::createPrograms()
 {
-	GLuint vertModel = buildShader(GL_VERTEX_SHADER,
-		"shaders/basic.vert");
-	GLuint fragModel = buildShader(GL_FRAGMENT_SHADER,
-		"shaders/basic.frag");
-	GLuint vertFlat = buildShader(GL_VERTEX_SHADER,
-		"shaders/flat.vert");
-	GLuint fragFlat = buildShader(GL_FRAGMENT_SHADER,
-		"shaders/flat.frag");
+	GLuint vertSolid = buildShader(GL_VERTEX_SHADER,
+		"shaders/model.vert", "#define SOLID\n");
+	GLuint fragSolid = buildShader(GL_FRAGMENT_SHADER,
+		"shaders/model.frag", "#define SOLID\n");
 	GLuint vertWireframe = buildShader(GL_VERTEX_SHADER,
-		"shaders/solid.vert");
-	GLuint fragPoint = buildShader(GL_FRAGMENT_SHADER,
-		"shaders/point.frag");
-	GLuint vertLine = buildShader(GL_VERTEX_SHADER,
-		"shaders/line.vert");
-	GLuint geomLine = buildShader(GL_GEOMETRY_SHADER,
-		"shaders/line.geom");
-	GLuint fragLine = buildShader(GL_FRAGMENT_SHADER,
-		"shaders/line.frag");
+		"shaders/model.vert", "#define WIREFRAME\n");
+	GLuint fragWireframe = buildShader(GL_FRAGMENT_SHADER,
+		"shaders/model.frag", "#define WIREFRAME\n");
+	GLuint vertMaterial = buildShader(GL_VERTEX_SHADER,
+		"shaders/model.vert", "#define MATERIAL\n");
 	GLuint fragMaterial = buildShader(GL_FRAGMENT_SHADER,
-		"shaders/material.frag");
+		"shaders/model.frag", "#define MATERIAL\n");
+	GLuint vertFlat = buildShader(GL_VERTEX_SHADER,
+		"shaders/flat.vert", nullptr);
+	GLuint fragFlat = buildShader(GL_FRAGMENT_SHADER,
+		"shaders/flat.frag", nullptr);
+	GLuint fragPoint = buildShader(GL_FRAGMENT_SHADER,
+		"shaders/point.frag", nullptr);
+	GLuint vertLine = buildShader(GL_VERTEX_SHADER,
+		"shaders/line.vert", nullptr);
+	GLuint geomLine = buildShader(GL_GEOMETRY_SHADER,
+		"shaders/line.geom", nullptr);
+	GLuint fragLine = buildShader(GL_FRAGMENT_SHADER,
+		"shaders/line.frag", nullptr);
 	GLuint vertOutline = buildShader(GL_VERTEX_SHADER,
-		"shaders/outline.vert");
+		"shaders/outline.vert", nullptr);
 	GLuint fragOutline = buildShader(GL_FRAGMENT_SHADER,
-		"shaders/outline.frag");
+		"shaders/outline.frag", nullptr);
 
 	GLuint shaders[3];
-	GLuint program;
-
-	shaders[0] = vertModel;
-	shaders[1] = fragModel;
-	program = buildProgram(shaders, 2);
-	programs[Shader::Model] = program;
-
+	shaders[0] = vertSolid;
+	shaders[1] = fragSolid;
+	programs[Shader::Solid] = buildProgram(shaders, 2);
+	shaders[0] = vertWireframe;
+	shaders[1] = fragWireframe;
+	programs[Shader::Wireframe] = buildProgram(shaders, 2);
+	shaders[0] = vertMaterial;
+	shaders[1] = fragMaterial;
+	programs[Shader::Material] = buildProgram(shaders, 2);
 	shaders[0] = vertFlat;
 	shaders[1] = fragFlat;
-	program = buildProgram(shaders, 2);
-	programs[Shader::Flat] = program;
-
-	shaders[0] = vertWireframe;
-	shaders[1] = fragFlat;
-	program = buildProgram(shaders, 2);
-	programs[Shader::Wire] = program;
-
+	programs[Shader::Flat] = buildProgram(shaders, 2);
 	shaders[0] = vertFlat;
 	shaders[1] = fragPoint;
-	program = buildProgram(shaders, 2);
-	programs[Shader::Point] = program;
-
+	programs[Shader::Point] = buildProgram(shaders, 2);
 	shaders[0] = vertLine;
 	shaders[1] = geomLine;
 	shaders[2] = fragLine;
-	program = buildProgram(shaders, 3);
-	programs[Shader::Line] = program;
-
-	shaders[0] = vertFlat;
-	shaders[1] = fragMaterial;
-	program = buildProgram(shaders, 2);
-	programs[Shader::Material] = program;
-
+	programs[Shader::Line] = buildProgram(shaders, 3);
 	shaders[0] = vertOutline;
 	shaders[1] = fragOutline;
-	program = buildProgram(shaders, 2);
-	programs[Shader::Outline] = program;
+	programs[Shader::Outline] = buildProgram(shaders, 2);
 }
 
 GLuint SharedResources::addTexture(const QImage &image)
@@ -134,7 +123,8 @@ GLuint SharedResources::addTexture(const QImage &image)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
 	glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, width, height);
-	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_BGRA,
+	glTexSubImage2D(
+		GL_TEXTURE_2D, 0, 0, 0, width, height, GL_BGRA,
 		GL_UNSIGNED_BYTE, image.bits());
 
 	return name;
@@ -181,11 +171,17 @@ bool SharedResources::openFile(const char *filename, std::string &buffer)
 	return true;
 }
 
-GLuint SharedResources::buildShader(GLenum type, const char *filename)
+GLuint SharedResources::buildShader(
+	GLenum type, const char *filename, const char *line)
 {
 	std::string buffer;
 	if(!openFile(filename, buffer))
 		return 0;
+
+	if (line) {
+		size_t offset = buffer.find("\n") + 1;
+		buffer.insert(offset, line);
+	}
 
 	GLuint shader = glCreateShader(type);
 	const GLint size = static_cast<GLint>(buffer.size());

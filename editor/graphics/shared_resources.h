@@ -30,12 +30,12 @@ class SharedResources : public QObject, protected QOpenGLFunctions_4_3_Core {
 
 public:
 	enum Shader {
-		Model = 0,
-		Point = 1,
-		Wire = 2,
-		Line = 3,
-		Flat = 4,
-		Material = 5,
+		Solid = 0,
+		Wireframe = 1,
+		Material = 2,
+		Point = 3,
+		Line = 4,
+		Flat = 5,
 		Outline = 6
 	};
 	enum Texture {
@@ -72,10 +72,10 @@ private:
 	QOffscreenSurface surface;
 
 	void createPrograms();
-	bool isCompiled(GLuint name, const char *filename);
-	bool openFile(const char *filename, std::string &buffer);
-	GLuint buildShader(GLenum type, const char *filename);
-	GLuint buildProgram(GLuint *shaders, int size);
+	bool isCompiled(GLuint, const char *);
+	bool openFile(const char *, std::string &);
+	GLuint buildShader(GLenum, const char *, const char *);
+	GLuint buildProgram(GLuint *, int);
 };
 
 #endif /* SHARED_RESOURCES_H */

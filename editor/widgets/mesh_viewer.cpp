@@ -69,7 +69,7 @@ void MeshViewer::paintGL()
 	Mat4 vp = camera.updateVP();
 	Vec3 cp = camera.getPosition();
 	buffer.use();
-	glUseProgram(shared->getShader(SharedResources::Model));
+	glUseProgram(shared->getShader(SharedResources::Solid));
 	glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
 	glUniform4f(1, cp.x, cp.y, cp.z, 0.0f);
 	glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, 0);

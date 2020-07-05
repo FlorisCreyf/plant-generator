@@ -55,7 +55,7 @@ Editor::Editor(SharedResources *shared, KeyMap *keymap, QWidget *parent) :
 
 	currentCommand = nullptr;
 	perspective = true;
-	shader = SharedResources::Model;
+	shader = SharedResources::Solid;
 
 	Vec3 color1(0.102f, 0.212f, 0.6f);
 	Vec3 color2(0.102f, 0.212f, 0.6f);
@@ -436,9 +436,9 @@ void Editor::paintGL()
 
 	/* Paint the plant. */
 	plantBuffer.use();
-	if (shader == SharedResources::Model)
+	if (shader == SharedResources::Solid)
 		paintModel(projection, position);
-	else if (shader == SharedResources::Wire)
+	else if (shader == SharedResources::Wireframe)
 		paintWire(projection);
 	else if (shader == SharedResources::Material)
 		paintMaterial(projection);
@@ -509,7 +509,7 @@ void Editor::paintGL()
 
 void Editor::paintWire(const Mat4 &projection)
 {
-	glUseProgram(shared->getShader(SharedResources::Wire));
+	glUseProgram(shared->getShader(SharedResources::Wireframe));
 	glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
 	glUniform4f(1, 0.13f, 0.13f, 0.13f, 1.0f);
 
@@ -524,7 +524,8 @@ void Editor::paintWire(const Mat4 &projection)
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	for (size_t i = 0; i < mesh.getMeshCount(); i++) {
 		GLsizei size = mesh.getIndices(i)->size();
-		glDrawElements(GL_TRIANGLES, size,
+		glDrawElements(
+			GL_TRIANGLES, size,
 			GL_UNSIGNED_INT, (GLvoid *)start);
 		start += mesh.getIndices(i)->size() * sizeof(unsigned);
 	}
@@ -535,12 +536,13 @@ void Editor::paintWire(const Mat4 &projection)
 void Editor::paintModel(const Mat4 &projection, const Vec3 &position)
 {
 	size_t start = 0;
-	glUseProgram(shared->getShader(SharedResources::Model));
+	glUseProgram(shared->getShader(SharedResources::Solid));
 	glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
 	glUniform4f(1, position.x, position.y, position.z, 0.0f);
 	for (size_t i = 0; i < mesh.getMeshCount(); i++) {
 		GLsizei size = mesh.getIndices(i)->size();
-		glDrawElements(GL_TRIANGLES, size,
+		glDrawElements(
+			GL_TRIANGLES, size,
 			GL_UNSIGNED_INT, (GLvoid *)start);
 		start += mesh.getIndices(i)->size() * sizeof(unsigned);
 	}
@@ -557,7 +559,8 @@ void Editor::paintMaterial(const Mat4 &projection)
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, params.getTexture(0));
 		GLsizei size = mesh.getIndices(i)->size();
-		glDrawElements(GL_TRIANGLES, size,
+		glDrawElements(
+			GL_TRIANGLES, size,
 			GL_UNSIGNED_INT, (GLvoid *)start);
 		start += mesh.getIndices(i)->size() * sizeof(unsigned);
 	}
@@ -742,12 +745,12 @@ void Editor::change(QAction *action)
 		perspectiveAction->setChecked(false);
 		updateCamera(width(), height());
 	} else if (text == "Wireframe") {
-		shader = SharedResources::Wire;
+		shader = SharedResources::Wireframe;
 		wireframeAction->setChecked(true);
 		solidAction->setChecked(false);
 		materialAction->setChecked(false);
 	} else if (text == "Solid") {
-		shader = SharedResources::Model;
+		shader = SharedResources::Solid;
 		wireframeAction->setChecked(false);
 		solidAction->setChecked(true);
 		materialAction->setChecked(false);

@@ -107,7 +107,8 @@ GLuint ShaderParams::loadTexture(QImage image)
 	f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
 	f->glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, width, height);
-	f->glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_BGRA,
+	f->glTexSubImage2D(
+		GL_TEXTURE_2D, 0, 0, 0, width, height, GL_BGRA,
 		GL_UNSIGNED_BYTE, image.bits());
 
 	return name;
