@@ -1,5 +1,5 @@
 /* Plant Generator
- * Copyright (C) 2018  Floris Creyf
+ * Copyright (C) 2020  Floris Creyf
  *
  * Plant Generator is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,12 +15,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "buffer.h"
+#include "vertex_buffer.h"
 
 using pg::Vertex;
 using std::vector;
 
-void Buffer::initialize(GLenum mode)
+void VertexBuffer::initialize(GLenum mode)
 {
 	initializeOpenGLFunctions();
 	glGenVertexArrays(1, &vao);
@@ -29,7 +29,7 @@ void Buffer::initialize(GLenum mode)
 	this->mode = mode;
 }
 
-void Buffer::allocatePointMemory(size_t size)
+void VertexBuffer::allocatePointMemory(size_t size)
 {
 	capacity[Points] = size;
 	size *= sizeof(Vertex);
@@ -38,7 +38,7 @@ void Buffer::allocatePointMemory(size_t size)
 	setVertexFormat();
 }
 
-void Buffer::allocateIndexMemory(size_t size)
+void VertexBuffer::allocateIndexMemory(size_t size)
 {
 	capacity[Indices] = size;
 	size *= sizeof(unsigned);
@@ -46,14 +46,14 @@ void Buffer::allocateIndexMemory(size_t size)
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, NULL, mode);
 }
 
-void Buffer::load(const Geometry &geometry)
+void VertexBuffer::load(const Geometry &geometry)
 {
 	const vector<Vertex> *p = geometry.getPoints();
 	const vector<unsigned> *i = geometry.getIndices();
 	load(p->data(), p->size(), i->data(), i->size());
 }
 
-void Buffer::load(
+void VertexBuffer::load(
 	const Vertex *points, size_t psize,
 	const unsigned *indices, size_t isize)
 {
@@ -71,14 +71,14 @@ void Buffer::load(
 	}
 }
 
-void Buffer::update(const Geometry &geometry)
+void VertexBuffer::update(const Geometry &geometry)
 {
 	const vector<Vertex> *p = geometry.getPoints();
 	const vector<unsigned> *i = geometry.getIndices();
 	update(p->data(), p->size(), i->data(), i->size());
 }
 
-void Buffer::update(
+void VertexBuffer::update(
 	const Vertex *points, size_t psize,
 	const unsigned *indices, size_t isize)
 {
@@ -106,7 +106,7 @@ void Buffer::update(
 	}
 }
 
-bool Buffer::update(const Vertex *points, size_t start, size_t size)
+bool VertexBuffer::update(const Vertex *points, size_t start, size_t size)
 {
 	size_t newSize = start + size;
 	if (newSize <= capacity[Points])
@@ -121,7 +121,7 @@ bool Buffer::update(const Vertex *points, size_t start, size_t size)
 	return true;
 }
 
-bool Buffer::update(const unsigned *indices, size_t start, size_t size)
+bool VertexBuffer::update(const unsigned *indices, size_t start, size_t size)
 {
 	size_t newSize = start + size;
 	if (newSize <= capacity[Indices])
@@ -136,7 +136,7 @@ bool Buffer::update(const unsigned *indices, size_t start, size_t size)
 	return true;
 }
 
-void Buffer::setVertexFormat()
+void VertexBuffer::setVertexFormat()
 {
 	GLsizei stride = sizeof(Vertex);
 	GLvoid *ptr = (GLvoid *)(offsetof(Vertex, position));
@@ -156,17 +156,17 @@ void Buffer::setVertexFormat()
 	glEnableVertexAttribArray(4);
 }
 
-void Buffer::use()
+void VertexBuffer::use()
 {
 	glBindVertexArray(vao);
 }
 
-size_t Buffer::getSize(int type) const
+size_t VertexBuffer::getSize(int type) const
 {
 	return size[type];
 }
 
-size_t Buffer::getCapacity(int type) const
+size_t VertexBuffer::getCapacity(int type) const
 {
 	return capacity[type];
 }

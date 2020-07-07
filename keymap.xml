@@ -1,5 +1,9 @@
 <keymap>
 	<command>
+		<name>Animate</name>
+		<key>N</key>
+	</command>
+	<command>
 		<name>Add Leaf</name>
 		<key>L</key>
 	</command>

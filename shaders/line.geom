@@ -2,7 +2,6 @@
 
 layout(lines) in;
 layout(triangle_strip, max_vertices = 4) out;
-
 layout(location = 1) uniform vec2 viewport;
 
 in VertexData {

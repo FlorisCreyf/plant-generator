@@ -73,9 +73,9 @@ void AddStem::create()
 
 void AddStem::setRadius()
 {
+	Stem *stem = extraction.address;
 	if (extraction.parent) {
 		Plant *plant = this->selection->getPlant();
-		Stem *stem = extraction.address;
 		Stem *parent = extraction.parent;
 		float t = stem->getPosition();
 		float radius = plant->getIntermediateRadius(parent, t);
@@ -85,7 +85,8 @@ void AddStem::setRadius()
 			stem->setMinRadius(radius);
 		else
 			stem->setMinRadius(parent->getMinRadius());
-	}
+	} else
+		stem->setMaxRadius(0.2f);
 }
 
 bool AddStem::onMouseMove(QMouseEvent *event)

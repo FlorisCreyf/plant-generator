@@ -21,7 +21,7 @@
 #include "editor/camera.h"
 #include "editor/point_selection.h"
 #include "editor/geometry/path.h"
-#include "editor/graphics/buffer.h"
+#include "editor/graphics/vertex_buffer.h"
 #include "editor/graphics/shared_resources.h"
 #include <QOpenGLFunctions_4_3_Core>
 #include <QOpenGLWidget>
@@ -33,7 +33,7 @@ class CurveViewer : public QOpenGLWidget, protected QOpenGLFunctions_4_3_Core {
 
 	SharedResources *shared;
 	Camera camera;
-	Buffer buffer;
+	VertexBuffer buffer;
 	Path path;
 	Geometry geometry;
 

@@ -22,8 +22,24 @@ using std::vector;
 
 Wind::Wind()
 {
+	this->timeStep = 30;
 	this->frameCount = 21;
 	this->randomGenerator.seed(0);
+}
+
+void Wind::setFrameCount(int count)
+{
+	this->frameCount = count;
+}
+
+void Wind::setTimeStep(int step)
+{
+	this->timeStep = step;
+}
+
+int Wind::getDuration() const
+{
+	return (this->frameCount-1) * this->timeStep;
 }
 
 void Wind::setSpeed(float speed)
@@ -40,31 +56,20 @@ Animation Wind::generate(Plant *plant)
 {
 	Animation animation;
 	Stem *root = plant->getRoot();
-	if (root) {
-		root->clearJoints();
-		size_t count = 0;
-		generateJoint(root, -1, -1, count);
-		initFrames(root, count, animation);
-		transformJoint(plant, root, root->getLocation(), animation);
-	}
+	if (!root)
+		return animation;
+
+	animation.timeStep = this->timeStep;
+	root->clearJoints();
+	size_t count = 0;
+	generateJoint(root, -1, -1, count);
+	animation.frames.clear();
+	animation.frames.resize(count, vector<KeyFrame>(this->frameCount));
+	transformJoint(plant, root, root->getLocation(), animation);
 	return animation;
 }
 
-void Wind::initFrames(Stem *stem, size_t count, Animation &animation)
-{
-	animation.frames.clear();
-	animation.frames.resize(count, vector<KeyFrame>(this->frameCount));
-	for (int i = 0; i < this->frameCount; i++) {
-		KeyFrame &frame = animation.frames[0][i];
-		frame.time = i;
-		frame.rotation = Quat(0.0f, 0.0f, 0.0f, 1.0f);
-		frame.inverseTranslation = -1.0f * stem->getLocation();
-		frame.inverseRotation = Quat(0.0f, 0.0f, 0.0f, 1.0f);
-	}
-}
-
-void Wind::animateJoint(
-	int joint, float distance, float radius, Vec3 direction,
+void Wind::setRotation(int joint, float distance, float radius, Vec3 direction,
 	Animation &animation)
 {
 	radius += 1.0f;
@@ -76,7 +81,6 @@ void Wind::animateJoint(
 
 	for (int i = 0; i < this->frameCount; i++) {
 		KeyFrame &frame = animation.frames[joint][i];
-		frame.time = i*0.5f;
 
 		float x = i * 2.0f*PI/(this->frameCount-1) + offset;
 		float wave = sin(x) * cos(2.0f*x+PI*0.25f);
@@ -91,19 +95,35 @@ void Wind::animateJoint(
 	}
 }
 
-void Wind::setInverseTransform(
-	int joint, Vec3 point, Vec3 origin, Animation &animation)
+void Wind::setNoRotation(int joint, Animation &animation)
+{
+	for (int i = 0; i < this->frameCount; i++) {
+		KeyFrame &frame = animation.frames[joint][i];
+		frame.rotation = Quat(0.0f, 0.0f, 0.0f, 1.0f);
+	}
+}
+
+void Wind::setTranslation(int joint, Vec3 point, Vec3 origin,
+	Animation &animation)
 {
 	size_t size = animation.frames[joint].size();
 	for (size_t i = 0; i < size; i++) {
 		KeyFrame &frame = animation.frames[joint][i];
-		frame.inverseTranslation = point - origin;
+		frame.translation = toVec4(point - origin, 0.0f);
 	}
 }
 
-void Wind::transformChildJoint(
-	Stem *child, unsigned parentID, Plant *plant, Vec3 location,
-	Animation &animation)
+void Wind::setRootTranslation(Stem *root, Animation &animation)
+{
+	size_t size = animation.frames[0].size();
+	for (size_t i = 0; i < size; i++) {
+		KeyFrame &frame = animation.frames[0][i];
+		frame.translation = toVec4(root->getLocation(), 0.0f);
+	}
+}
+
+void Wind::transformChildJoint(Stem *child, unsigned parentID, Plant *plant,
+	Vec3 location, Animation &animation)
 {
 	if (child->hasJoints()) {
 		Joint joint = child->getJoints()[0];
@@ -112,8 +132,8 @@ void Wind::transformChildJoint(
 	}
 }
 
-void Wind::transformJoint(
-	Plant *plant, Stem *stem, Vec3 prevLocation, Animation &animation)
+void Wind::transformJoint(Plant *plant, Stem *stem, Vec3 prevLocation,
+	Animation &animation)
 {
 	Path path = stem->getPath();
 	vector<Joint> joints = stem->getJoints();
@@ -123,23 +143,24 @@ void Wind::transformJoint(
 		size_t index = joint.getPathIndex();
 		Vec3 location = stem->getLocation() + path.get(index);
 
-		if (i > 0)
-			animateJoint(
-				joint.getID(),
-				path.getDistance(index-1, index),
-				plant->getRadius(stem, i),
-				path.getDirection(index),
+		if (i > 0) {
+			float distance = path.getDistance(index-1, index);
+			float radius = plant->getRadius(stem, i);
+			Vec3 direction = path.getDirection(index);
+			setRotation(joint.getID(), distance, radius, direction,
 				animation);
+		} else
+			setNoRotation(joint.getID(), animation);
 
 		if (i > 0 || stem->getParent())
-			setInverseTransform(
-				joint.getID(), location, prevLocation,
+			setTranslation(joint.getID(), location, prevLocation,
 				animation);
+		else
+			setRootTranslation(stem, animation);
 
 		Stem *child = stem->getChild();
 		while (child) {
-			transformChildJoint(
-				child, joint.getID(), plant,
+			transformChildJoint(child, joint.getID(), plant,
 				location, animation);
 			child = child->getSibling();
 		}

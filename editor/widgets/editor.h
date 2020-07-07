@@ -28,7 +28,8 @@
 #include "editor/geometry/path.h"
 #include "editor/geometry/rotation_axes.h"
 #include "editor/geometry/translation_axes.h"
-#include "editor/graphics/buffer.h"
+#include "editor/graphics/storage_buffer.h"
+#include "editor/graphics/vertex_buffer.h"
 #include "editor/graphics/shared_resources.h"
 
 #include "plant_generator/plant.h"
@@ -43,6 +44,7 @@
 #include <QToolButton>
 #include <QWidgetAction>
 #include <QComboBox>
+#include <QTimer>
 
 class Editor : public QOpenGLWidget, protected QOpenGLFunctions_4_3_Core {
 	Q_OBJECT
@@ -56,10 +58,12 @@ public slots:
 	void change();
 	void change(QAction *action);
 	void updateMaterial(unsigned index);
+	void animate();
 
 public:
 	Editor(SharedResources *shared, KeyMap *keymap, QWidget *parent = 0);
 	void load(const char *filename);
+	void changeAll();
 	void reset();
 	pg::Plant *getPlant();
 	pg::Scene *getScene();
@@ -87,6 +91,7 @@ private:
 	QComboBox *projectionBox;
 	QComboBox *shaderBox;
 	QToolBar *toolbar;
+	QTimer *timer;
 
 	struct Segments {
 		Geometry::Segment axesArrows;
@@ -96,13 +101,14 @@ private:
 		Geometry::Segment selection;
 	} segments;
 
-	Command *currentCommand;
+	Command *command;
 	KeyMap *keymap;
 	SharedResources *shared;
 
-	Buffer pathBuffer;
-	Buffer plantBuffer;
-	Buffer staticBuffer;
+	VertexBuffer pathBuffer;
+	VertexBuffer plantBuffer;
+	VertexBuffer staticBuffer;
+	StorageBuffer jointBuffer;
 	GLuint outlineColorMap;
 	GLuint outlineFrameBuffer;
 	SharedResources::Shader shader;
@@ -121,6 +127,7 @@ private:
 
 	bool perspective;
 	bool rotating = false;
+	int ticks;
 
 	void createDefaultPlant();
 	void addSelectionToHistory(SaveSelection *);
@@ -130,8 +137,9 @@ private:
 	void initializeGL();
 	void initializeBuffers();
 	void paintGL();
+	void paintOutline(const pg::Mat4 &, const pg::Vec3 &);
 	void paintWire(const pg::Mat4 &);
-	void paintModel(const pg::Mat4 &, const pg::Vec3 &);
+	void paintSolid(const pg::Mat4 &, const pg::Vec3 &);
 	void paintMaterial(const pg::Mat4 &);
 	void paintAxes();
 	void resizeGL(int, int);
@@ -140,6 +148,9 @@ private:
 	void selectAxis(int, int);
 	void setClickOffset(int, int, pg::Vec3);
 	void updateCamera(int, int);
+	void updateJoints();
+	void startAnimation();
+	void endAnimation();
 };
 
 #endif /* EDITOR_H */

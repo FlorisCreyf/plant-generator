@@ -25,37 +25,39 @@
 
 namespace pg {
 	struct KeyFrame {
-		float time;
 		Quat rotation;
-		Vec3 translation;
-		Quat inverseRotation;
-		Vec3 inverseTranslation;
+		Vec4 translation;
+		Vec4 finalTranslation;
 
 		#ifdef PG_SERIALIZE
 		template<class Archive>
-		void serialize(Archive &ar, const unsigned int version)
+		void serialize(Archive &ar, const unsigned int)
 		{
-			(void)version;
-			ar & time;
 			ar & rotation;
 			ar & translation;
-			ar & inverseRotation;
-			ar & inverseTranslation;
+			ar & finalTranslation;
 		}
 		#endif /* PG_SERIALIZE */
 	};
 
 	struct Animation {
+		int timeStep;
 		std::vector<std::vector<KeyFrame>> frames;
+
+		std::vector<KeyFrame> getFrame(int ticks, Stem *stem);
 
 		#ifdef PG_SERIALIZE
 		template<class Archive>
-		void serialize(Archive &ar, const unsigned int version)
+		void serialize(Archive &ar, const unsigned int)
 		{
-			(void)version;
 			ar & frames;
 		}
 		#endif /* PG_SERIALIZE */
+
+	private:
+		std::vector<KeyFrame> mixedFrames;
+
+		void createFrame(float, size_t, size_t, Stem *);
 	};
 }
 

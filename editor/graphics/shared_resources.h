@@ -30,13 +30,17 @@ class SharedResources : public QObject, protected QOpenGLFunctions_4_3_Core {
 
 public:
 	enum Shader {
-		Solid = 0,
-		Wireframe = 1,
-		Material = 2,
-		Point = 3,
-		Line = 4,
-		Flat = 5,
-		Outline = 6
+		Solid,
+		Wireframe,
+		Material,
+		Outline,
+		DynamicSolid,
+		DynamicWireframe,
+		DynamicMaterial,
+		DynamicOutline,
+		Point,
+		Line,
+		Flat
 	};
 	enum Texture {
 		DotTexture,
@@ -64,7 +68,7 @@ signals:
 	void materialRemoved(unsigned index);
 
 private:
-	GLuint programs[7];
+	GLuint programs[11];
 	GLuint textures[2];
 	bool initialized;
 	ShaderParams defaultMaterial;

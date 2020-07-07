@@ -19,7 +19,7 @@
 #define MESH_VIEWER_H
 
 #include "editor/camera.h"
-#include "editor/graphics/buffer.h"
+#include "editor/graphics/vertex_buffer.h"
 #include "editor/graphics/shared_resources.h"
 #include "plant_generator/geometry.h"
 #include <vector>
@@ -32,7 +32,7 @@ class MeshViewer : public QOpenGLWidget, protected QOpenGLFunctions_4_3_Core {
 
 	SharedResources *shared;
 	Camera camera;
-	Buffer buffer;
+	VertexBuffer buffer;
 	GLsizei count;
 	pg::Geometry mesh;
 

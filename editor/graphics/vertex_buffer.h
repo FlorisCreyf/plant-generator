@@ -1,5 +1,5 @@
 /* Plant Generator
- * Copyright (C) 2018  Floris Creyf
+ * Copyright (C) 2020  Floris Creyf
  *
  * Plant Generator is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,14 +15,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef BUFFER_H
-#define BUFFER_H
+#ifndef VERTEX_BUFFER_H
+#define VERTEX_BUFFER_H
 
 #include "editor/geometry/geometry.h"
 #include "plant_generator/vertex.h"
 #include <QOpenGLFunctions_4_3_Core>
 
-class Buffer : protected QOpenGLFunctions_4_3_Core {
+class VertexBuffer : protected QOpenGLFunctions_4_3_Core {
 public:
 	enum {Points = 0, Indices = 1};
 
@@ -63,4 +63,4 @@ private:
 	void setVertexFormat();
 };
 
-#endif /* BUFFER_H */
+#endif /* VERTEX_BUFFER_H */

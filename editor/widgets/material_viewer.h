@@ -20,7 +20,7 @@
 
 #include "editor/camera.h"
 #include "editor/geometry/geometry.h"
-#include "editor/graphics/buffer.h"
+#include "editor/graphics/vertex_buffer.h"
 #include "editor/graphics/shared_resources.h"
 #include "plant_generator/material.h"
 #include <QOpenGLFunctions_4_3_Core>
@@ -33,7 +33,7 @@ class MaterialViewer :
 
 	SharedResources *shared;
 	Camera camera;
-	Buffer buffer;
+	VertexBuffer buffer;
 	Geometry::Segment planeSegment;
 	unsigned materialIndex;
 

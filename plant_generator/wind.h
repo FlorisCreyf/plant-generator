@@ -28,6 +28,9 @@ namespace pg {
 	class Wind {
 	public:
 		Wind();
+		void setFrameCount(int count);
+		void setTimeStep(int step);
+		int getDuration() const;
 		void setSpeed(float speed);
 		void setDirection(Vec3 direction);
 		Animation generate(Plant *plant);
@@ -35,28 +38,31 @@ namespace pg {
 	private:
 		Vec3 direction;
 		float speed;
+		int timeStep;
 		int frameCount;
 		std::mt19937 randomGenerator;
 
-		void animateJoint(int, float, float, Vec3, Animation &);
-		void setInverseTransform(int, Vec3, Vec3, Animation &);
+		void setRotation(int, float, float, Vec3, Animation &);
+		void setNoRotation(int, Animation &);
+		void setTranslation(int, Vec3, Vec3, Animation &);
+		void setRootTranslation(Stem *, Animation &);
 		void transformJoint(Plant *, Stem *, Vec3, Animation &);
 		void transformChildJoint(
 			Stem *, unsigned, Plant *, Vec3, Animation &);
 		int generateJoint(Stem *, int, int, size_t &);
-		void initFrames(Stem *, size_t, Animation &);
 
 		#ifdef PG_SERIALIZE
 		friend class boost::serialization::access;
 		template<class Archive>
-		void serialize(Archive &ar, const unsigned int version)
+		void serialize(Archive &ar, const unsigned int)
 		{
-			(void)version;
 			ar & direction;
 			ar & speed;
+			ar & timeStep;
+			ar & frameCount;
 		}
 		#endif /* PG_SERIALIZE */
 	};
 }
 
-#endif
+#endif /* PG_WIND_GENERATOR_H */

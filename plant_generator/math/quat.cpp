@@ -41,7 +41,7 @@ float pg::norm(Quat quat)
 {
 	return sqrt(
 		quat.x*quat.x +
-		quat.y+quat.y +
+		quat.y*quat.y +
 		quat.z*quat.z +
 		quat.w*quat.w);
 }
@@ -69,9 +69,18 @@ Quat pg::fromAxisAngle(Vec3 vec, float theta)
 	return Quat(vec.x*b, vec.y*b, vec.z*b, std::cos(a));
 }
 
+Quat pg::nlerp(Quat a, Quat b, float t)
+{
+	return normalize((1.0f - t) * a + t * b);
+}
+
 Quat pg::slerp(Quat a, Quat b, float t)
 {
-	float i = std::acos(a.x*b.x + a.y*b.y + a.z*b.z + a.w*b.w);
+	float theta = a.x*b.x + a.y*b.y + a.z*b.z + a.w*b.w;
+	if (theta >= 1.0f)
+		return a;
+
+	float i = std::acos(theta);
 	float j = std::sin(i);
 	float x = std::sin(i*(1.0f - t))/j;
 	float y = std::sin(i*t)/j;

@@ -267,8 +267,11 @@ void setJointAnimation(XMLWriter &xml, const Animation &animation, size_t joint)
 		"name='plant-animation-" + id + "'>");
 
 	value.clear();
-	for (KeyFrame frame : frames)
-		value += toString(frame.time) + " ";
+	float timestamp = 0.0f;
+	for (size_t i = 0; i < frames.size(); i++) {
+		value += toString(timestamp) + " ";
+		timestamp += animation.timeStep / 60.0f;
+	}
 	value.pop_back();
 	xml >> ("<source id='plant-input-" + id + "'>");
 	xml += ("<float_array id='plant-input-array-" + id + "' "
@@ -285,7 +288,7 @@ void setJointAnimation(XMLWriter &xml, const Animation &animation, size_t joint)
 	value.clear();
 	for (KeyFrame frame : frames) {
 		Mat4 transform = toMat4(frame.rotation);
-		Vec3 translation = frame.inverseTranslation;
+		Vec3 translation = toVec3(frame.translation);
 		transform = translate(translation) * transform;
 		value += toString(transform);
 	}

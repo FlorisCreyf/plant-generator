@@ -40,9 +40,8 @@
 
 #include <boost/archive/text_iarchive.hpp>
 
-using pg::Vec3;
 using pg::Mat4;
-using pg::Ray;
+using pg::Vec3;
 
 Editor::Editor(SharedResources *shared, KeyMap *keymap, QWidget *parent) :
 	QOpenGLWidget(parent),
@@ -52,10 +51,10 @@ Editor::Editor(SharedResources *shared, KeyMap *keymap, QWidget *parent) :
 {
 	this->shared = shared;
 	this->keymap = keymap;
-
-	currentCommand = nullptr;
-	perspective = true;
-	shader = SharedResources::Solid;
+	this->command = nullptr;
+	this->perspective = true;
+	this->shader = SharedResources::Solid;
+	this->ticks = -1;
 
 	Vec3 color1(0.102f, 0.212f, 0.6f);
 	Vec3 color2(0.102f, 0.212f, 0.6f);
@@ -65,6 +64,10 @@ Editor::Editor(SharedResources *shared, KeyMap *keymap, QWidget *parent) :
 	setFocus();
 
 	createToolBar();
+
+	this->timer = new QTimer(this);
+	this->timer->setInterval(33);
+	connect(this->timer, SIGNAL(timeout()), this, SLOT(animate()));
 }
 
 void Editor::createToolBar()
@@ -73,20 +76,19 @@ void Editor::createToolBar()
 	layout->setMargin(0);
 	layout->setAlignment(Qt::AlignBottom | Qt::AlignRight);
 	QToolBar *toolbar = new QToolBar(this);
-	perspectiveAction = toolbar->addAction(tr("Perspective"));
-	orthographicAction = toolbar->addAction(tr("Orthographic"));
-	wireframeAction = toolbar->addAction(tr("Wireframe"));
-	solidAction = toolbar->addAction(tr("Solid"));
-	materialAction = toolbar->addAction(tr("Material"));
-	perspectiveAction->setCheckable(true);
-	orthographicAction->setCheckable(true);
-	wireframeAction->setCheckable(true);
-	solidAction->setCheckable(true);
-	materialAction->setCheckable(true);
-	perspectiveAction->toggle();
-	solidAction->toggle();
+	this->perspectiveAction = toolbar->addAction(tr("Perspective"));
+	this->orthographicAction = toolbar->addAction(tr("Orthographic"));
+	this->wireframeAction = toolbar->addAction(tr("Wireframe"));
+	this->solidAction = toolbar->addAction(tr("Solid"));
+	this->materialAction = toolbar->addAction(tr("Material"));
+	this->perspectiveAction->setCheckable(true);
+	this->orthographicAction->setCheckable(true);
+	this->wireframeAction->setCheckable(true);
+	this->solidAction->setCheckable(true);
+	this->materialAction->setCheckable(true);
+	this->perspectiveAction->toggle();
+	this->solidAction->toggle();
 	layout->addWidget(toolbar);
-
 	connect(toolbar, SIGNAL(actionTriggered(QAction *)),
 		this, SLOT(change(QAction *)));
 }
@@ -94,7 +96,6 @@ void Editor::createToolBar()
 void Editor::initializeGL()
 {
 	initializeOpenGLFunctions();
-
 	glEnable(GL_MULTISAMPLE);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_STENCIL_TEST);
@@ -107,22 +108,19 @@ void Editor::initializeGL()
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_PRIMITIVE_RESTART);
 	glPrimitiveRestartIndex(Geometry::primitiveReset);
-
 	createFrameBuffers();
-	shared->initialize();
+	this->shared->initialize();
 	initializeBuffers();
-
 	change();
 }
 
 void Editor::createFrameBuffers()
 {
-	glGenFramebuffers(1, &outlineFrameBuffer);
-	glBindFramebuffer(GL_FRAMEBUFFER, outlineFrameBuffer);
-	glGenTextures(1, &outlineColorMap);
-	glBindTexture(GL_TEXTURE_2D, outlineColorMap);
-	glTexImage2D(
-		GL_TEXTURE_2D, 0, GL_RGB, width(), height(), 0, GL_RGB,
+	glGenFramebuffers(1, &this->outlineFrameBuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, this->outlineFrameBuffer);
+	glGenTextures(1, &this->outlineColorMap);
+	glBindTexture(GL_TEXTURE_2D, this->outlineColorMap);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width(), height(), 0, GL_RGB,
 		GL_UNSIGNED_BYTE, NULL);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -130,139 +128,167 @@ void Editor::createFrameBuffers()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COPY);
-	glFramebufferTexture2D(
-		GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-		GL_TEXTURE_2D, outlineColorMap, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+		GL_TEXTURE_2D, this->outlineColorMap, 0);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void Editor::initializeBuffers()
 {
 	Geometry geometry;
-	Geometry axesLines = translationAxes.getLines();
-	Geometry axesArrows = translationAxes.getArrows();
-	Geometry rotationLines = rotationAxes.getLines();
+	Geometry axesLines = this->translationAxes.getLines();
+	Geometry axesArrows = this->translationAxes.getArrows();
+	Geometry rotationLines = this->rotationAxes.getLines();
 
 	Vec3 colors[2];
 	colors[0] = Vec3(0.4f, 0.4f, 0.4f);
 	colors[1] = Vec3(0.4f, 0.4f, 0.4f);
 	geometry.addGrid(5, colors, Vec3(0.3, 0.3, 0.3));
-	segments.grid = geometry.getSegment();
-	segments.axesLines = geometry.append(axesLines);
-	segments.axesArrows = geometry.append(axesArrows);
-	segments.rotation = geometry.append(rotationLines);
+	this->segments.grid = geometry.getSegment();
+	this->segments.axesLines = geometry.append(axesLines);
+	this->segments.axesArrows = geometry.append(axesArrows);
+	this->segments.rotation = geometry.append(rotationLines);
 
-	staticBuffer.initialize(GL_STATIC_DRAW);
-	staticBuffer.load(geometry);
-
-	plantBuffer.initialize(GL_DYNAMIC_DRAW);
-	plantBuffer.allocatePointMemory(1000);
-	plantBuffer.allocateIndexMemory(1000);
-
-	pathBuffer.initialize(GL_DYNAMIC_DRAW);
-	pathBuffer.allocatePointMemory(100);
-	pathBuffer.allocateIndexMemory(100);
+	this->staticBuffer.initialize(GL_STATIC_DRAW);
+	this->staticBuffer.load(geometry);
+	this->plantBuffer.initialize(GL_DYNAMIC_DRAW);
+	this->plantBuffer.allocatePointMemory(1000);
+	this->plantBuffer.allocateIndexMemory(1000);
+	this->pathBuffer.initialize(GL_DYNAMIC_DRAW);
+	this->pathBuffer.allocatePointMemory(100);
+	this->pathBuffer.allocateIndexMemory(100);
+	this->jointBuffer.initialize(GL_DYNAMIC_DRAW, 3);
 }
 
 void Editor::keyPressEvent(QKeyEvent *event)
 {
-	if (currentCommand) {
-		exitCommand(currentCommand->onKeyPress(event));
+	if (this->command) {
 		QWidget::keyPressEvent(event);
+		exitCommand(this->command->onKeyPress(event));
 		return;
 	}
 
 	QPoint pos = mapFromGlobal(QCursor::pos());
 	float x = pos.x();
 	float y = pos.y();
+	QString commandName = this->keymap->getBinding(
+		event->key(),
+		event->modifiers() & Qt::ControlModifier,
+		event->modifiers() & Qt::ShiftModifier,
+		event->modifiers() & Qt::AltModifier);
 
-	unsigned key = event->key();
-	bool ctrl = event->modifiers() & Qt::ControlModifier;
-	bool shift = event->modifiers() & Qt::ShiftModifier;
-	bool alt = event->modifiers() & Qt::AltModifier;
-	QString command = keymap->getBinding(key, ctrl, shift, alt);
-
-	pg::Stem *root = scene.plant.getRoot();
-	bool hasPoints = selection.hasPoints();
-	bool hasFirstPoint = selection.hasPoint(0);
-	bool hasStems = selection.hasStems();
-	bool hasOneStem = selection.getStemInstances().size() == 1;
-	bool hasLeaves = selection.hasLeaves();
-	bool containsRoot = selection.contains(root);
-
-	if (command == tr("Add Leaf") && hasOneStem) {
-		currentCommand = new AddLeaf(&selection, &camera, x, y);
-		currentCommand->execute();
-		change();
-		emit selectionChanged();
-	} else if (command == tr("Add Stem") && (hasOneStem || !root)) {
-		currentCommand = new AddStem(
-			&selection, &translationAxes, &camera, x, y);
-		currentCommand->execute();
-		change();
-		emit selectionChanged();
-	} else if (command == tr("Extrude") && hasPoints) {
-		ExtrudeStem *extrude = new ExtrudeStem(
-			&selection, &translationAxes, &camera);
-		extrude->setClickOffset(x, y);
-		extrude->execute();
-		currentCommand = extrude;
-		emit selectionChanged();
-	} else if (command == tr("Move Point") && hasPoints && !hasFirstPoint) {
-		MovePath *movePath = new MovePath(
-			&selection, &translationAxes, &camera);
-		Vec3 axesPosition = translationAxes.getPosition();
-		Vec3 crd = camera.toScreenSpace(axesPosition);
-		movePath->setClickOffset(crd.x - x, crd.y - y);
-		currentCommand = movePath;
-	} else if (command == tr("Move Stem") &&
-			(hasStems || hasLeaves) && !containsRoot) {
-		currentCommand = new MoveStem(&selection, &camera, x, y);
-	} else if (command == tr("Reduce To Ancestors") && hasStems) {
-		SaveSelection *copy = new SaveSelection(&selection);
-		selection.reduceToAncestors();
+	if (commandName == tr("Add Leaf")) {
+		bool stemCount = this->selection.getStemInstances().size();
+		if (stemCount == 1) {
+			this->command = new AddLeaf(
+				&this->selection, &this->camera, x, y);
+			this->command->execute();
+			change();
+			emit selectionChanged();
+		}
+	} else if (commandName == tr("Add Stem")) {
+		bool stemCount = this->selection.getStemInstances().size();
+		pg::Stem *root = this->scene.plant.getRoot();
+		if (stemCount == 1 || !root) {
+			this->command = new AddStem(
+				&this->selection, &this->translationAxes,
+				&this->camera, x, y);
+			this->command->execute();
+			change();
+			emit selectionChanged();
+		}
+	} else if (commandName == tr("Extrude")) {
+		if (this->selection.hasPoints()) {
+			ExtrudeStem *extrude = new ExtrudeStem(
+				&this->selection, &this->translationAxes,
+				&this->camera);
+			extrude->setClickOffset(x, y);
+			extrude->execute();
+			this->command = extrude;
+			emit selectionChanged();
+		}
+	} else if (commandName == tr("Move Point")) {
+		bool hasFirstPoint = this->selection.hasPoint(0);
+		if (this->selection.hasPoints() && !hasFirstPoint) {
+			MovePath *movePath = new MovePath(
+				&this->selection, &this->translationAxes,
+				&this->camera);
+			Vec3 axesPosition = this->translationAxes.getPosition();
+			Vec3 crd = this->camera.toScreenSpace(axesPosition);
+			movePath->setClickOffset(crd.x - x, crd.y - y);
+			this->command = movePath;
+		}
+	} else if (commandName == tr("Move Stem")) {
+		pg::Stem *root = this->scene.plant.getRoot();
+		bool hasStems = this->selection.hasStems();
+		bool hasLeaves = this->selection.hasLeaves();
+		bool containsRoot = this->selection.contains(root);
+		if ((hasStems || hasLeaves) && !containsRoot)
+			this->command = new MoveStem(
+				&this->selection, &this->camera, x, y);
+	} else if (commandName == tr("Reduce To Ancestors")) {
+		if (this->selection.hasStems()) {
+			SaveSelection *copy;
+			copy = new SaveSelection(&this->selection);
+			this->selection.reduceToAncestors();
+			addSelectionToHistory(copy);
+		}
+	} else if (commandName == tr("Remove")) {
+		bool hasStems = this->selection.hasStems();
+		bool hasLeaves = this->selection.hasLeaves();
+		if (hasStems || hasLeaves) {
+			RemoveStem *removeStem;
+			removeStem = new RemoveStem(&this->selection);
+			removeStem->execute();
+			this->history.add(removeStem);
+			emit selectionChanged();
+			updateSelection();
+			change();
+		}
+	} else if (commandName == tr("Rotate")) {
+		bool hasStems = this->selection.hasStems();
+		bool hasLeaves = this->selection.hasLeaves();
+		if (hasStems || hasLeaves) {
+			RotateStem *rotate = new RotateStem(
+				&this->selection, &this->rotationAxes,
+				&this->camera, x, y);
+			this->command = rotate;
+			this->rotating = true;
+		}
+	} else if (commandName == tr("Select Points")) {
+		SaveSelection *copy = new SaveSelection(&this->selection);
+		this->selection.selectAllPoints();
 		addSelectionToHistory(copy);
-	} else if (command == tr("Remove") && (hasStems || hasLeaves)) {
-		RemoveStem *removeStem = new RemoveStem(&selection);
-		removeStem->execute();
-		history.add(removeStem);
-		emit selectionChanged();
-		updateSelection();
-		change();
-	} else if (command == tr("Rotate") && (hasStems || hasLeaves)) {
-		RotateStem *rotate = new RotateStem(
-			&selection, &rotationAxes, &camera, x, y);
-		currentCommand = rotate;
-		rotating = true;
-	} else if (command == tr("Select Points")) {
-		SaveSelection *copy = new SaveSelection(&selection);
-		selection.selectAllPoints();
-		addSelectionToHistory(copy);
-	} else if (command == tr("Select Children")) {
-		SaveSelection *copy = new SaveSelection(&selection);
+	} else if (commandName == tr("Select Children")) {
+		SaveSelection *copy = new SaveSelection(&this->selection);
 		selection.selectChildren();
 		addSelectionToHistory(copy);
-	} else if (command == tr("Select Leaves")) {
-		SaveSelection *copy = new SaveSelection(&selection);
+	} else if (commandName == tr("Select Leaves")) {
+		SaveSelection *copy = new SaveSelection(&this->selection);
 		selection.selectLeaves();
 		selection.removeStems();
 		addSelectionToHistory(copy);
-	} else if (command == tr("Select Previous Points")) {
-		SaveSelection *copy = new SaveSelection(&selection);
-		selection.selectPreviousPoints();
+	} else if (commandName == tr("Select Previous Points")) {
+		SaveSelection *copy = new SaveSelection(&this->selection);
+		this->selection.selectPreviousPoints();
 		addSelectionToHistory(copy);
-	} else if (command == tr("Select Next Points")) {
-		SaveSelection *copy = new SaveSelection(&selection);
-		selection.selectNextPoints();
+	} else if (commandName == tr("Select Next Points")) {
+		SaveSelection *copy = new SaveSelection(&this->selection);
+		this->selection.selectNextPoints();
 		addSelectionToHistory(copy);
-	} else if (command == tr("Select Siblings")) {
-		SaveSelection *copy = new SaveSelection(&selection);
-		selection.selectSiblings();
+	} else if (commandName == tr("Select Siblings")) {
+		SaveSelection *copy = new SaveSelection(&this->selection);
+		this->selection.selectSiblings();
 		addSelectionToHistory(copy);
-	} else if (command == tr("Select Stems")) {
-		SaveSelection *copy = new SaveSelection(&selection);
-		selection.selectStems();
+	} else if (commandName == tr("Select Stems")) {
+		SaveSelection *copy = new SaveSelection(&this->selection);
+		this->selection.selectStems();
 		addSelectionToHistory(copy);
+	} if (commandName == tr("Animate")) {
+		if (this->timer->isActive())
+			endAnimation();
+		else
+			startAnimation();
 	}
 
 	update();
@@ -273,11 +299,10 @@ void Editor::exitCommand(bool changed)
 {
 	if (changed)
 		change();
-
-	if (currentCommand->isDone()) {
-		history.add(currentCommand);
-		currentCommand = nullptr;
-		rotating = false;
+	if (this->command->isDone()) {
+		this->history.add(this->command);
+		this->command = nullptr;
+		this->rotating = false;
 	}
 }
 
@@ -285,7 +310,7 @@ void Editor::addSelectionToHistory(SaveSelection *selection)
 {
 	if (selection->hasChanged()) {
 		selection->setAfter();
-		history.add(selection);
+		this->history.add(selection);
 		emit selectionChanged();
 		updateSelection();
 		update();
@@ -298,7 +323,7 @@ void Editor::wheelEvent(QWheelEvent *event)
 	if (!a.isNull()) {
 		float y = a.y() / 8.0f;
 		if (y != 0.0f) {
-			camera.zoom(y);
+			this->camera.zoom(y);
 			update();
 		}
 	}
@@ -318,39 +343,41 @@ bool Editor::event(QEvent *e)
 void Editor::mousePressEvent(QMouseEvent *event)
 {
 	QPoint pos = event->pos();
-	if (currentCommand) {
-		exitCommand(currentCommand->onMousePress(event));
-	} else if (event->button() == Qt::RightButton) {
-		SaveSelection *selectionCopy = new SaveSelection(&selection);
+	if (this->command) {
+		exitCommand(this->command->onMousePress(event));
+	} else if (event->button() == Qt::RightButton && this->ticks < 0) {
+		SaveSelection *selectionCopy;
+		selectionCopy = new SaveSelection(&this->selection);
 		Selector selector(&this->camera);
 		selector.select(event, &this->mesh, &this->selection);
 		if (selectionCopy->hasChanged()) {
 			selectionCopy->setAfter();
-			history.add(selectionCopy);
+			this->history.add(selectionCopy);
 			emit selectionChanged();
 			updateSelection();
 			update();
 		}
 	} else if (event->button() == Qt::MidButton) {
-		camera.setStartCoordinates(pos.x(), pos.y());
+		this->camera.setStartCoordinates(pos.x(), pos.y());
 		if (event->modifiers() & Qt::ControlModifier)
-			camera.setAction(Camera::Zoom);
+			this->camera.setAction(Camera::Zoom);
 		else if (event->modifiers() & Qt::ShiftModifier)
-			camera.setAction(Camera::Pan);
+			this->camera.setAction(Camera::Pan);
 		else
-			camera.setAction(Camera::Rotate);
-	} else if (event->button() == Qt::LeftButton) {
+			this->camera.setAction(Camera::Rotate);
+	} else if (event->button() == Qt::LeftButton && this->ticks < 0) {
 		selectAxis(pos.x(), pos.y());
-		bool axis = translationAxes.getSelection();
-		bool hasPoints = selection.hasPoints();
-		bool hasFirstPoint = selection.hasPoint(0);
+		bool axis = this->translationAxes.getSelection();
+		bool hasPoints = this->selection.hasPoints();
+		bool hasFirstPoint = this->selection.hasPoint(0);
 		if (hasPoints && !hasFirstPoint && axis != Axes::None) {
 			MovePath *movePath = new MovePath(
-				&selection, &translationAxes, &camera);
-			Vec3 axesPosition = translationAxes.getPosition();
-			Vec3 s = camera.toScreenSpace(axesPosition);
+				&this->selection, &this->translationAxes,
+				&this->camera);
+			Vec3 axesPosition = this->translationAxes.getPosition();
+			Vec3 s = this->camera.toScreenSpace(axesPosition);
 			movePath->setClickOffset(s.x - pos.x(), s.y - pos.y());
-			currentCommand = movePath;
+			this->command = movePath;
 		}
 	}
 	setFocus();
@@ -358,69 +385,70 @@ void Editor::mousePressEvent(QMouseEvent *event)
 
 void Editor::mouseReleaseEvent(QMouseEvent *event)
 {
-	if (currentCommand)
-		exitCommand(currentCommand->onMouseRelease(event));
+	if (this->command)
+		exitCommand(this->command->onMouseRelease(event));
 	else if (event->button() == Qt::MidButton)
-		camera.setAction(Camera::None);
+		this->camera.setAction(Camera::None);
 }
 
 void Editor::mouseMoveEvent(QMouseEvent *event)
 {
-	if (currentCommand)
-		exitCommand(currentCommand->onMouseMove(event));
+	if (this->command)
+		exitCommand(this->command->onMouseMove(event));
 	else {
 		QPoint point = event->pos();
-		camera.executeAction(point.x(), point.y());
+		this->camera.executeAction(point.x(), point.y());
 		update();
 	}
 }
 
 void Editor::selectAxis(int x, int y)
 {
-	if (selection.hasPoint(0))
+	if (this->selection.hasPoint(0))
 		return;
 
-	pg::Ray ray = camera.getRay(x, y);
+	pg::Ray ray = this->camera.getRay(x, y);
 	float distance;
-	if (camera.isPerspective()) {
-		Vec3 cameraPosition = camera.getPosition();
-		Vec3 axesPosition = translationAxes.getPosition();
+	if (this->camera.isPerspective()) {
+		Vec3 cameraPosition = this->camera.getPosition();
+		Vec3 axesPosition = this->translationAxes.getPosition();
 		distance = pg::magnitude(cameraPosition - axesPosition);
 	} else {
-		distance = pg::magnitude(camera.getFar() - camera.getNear());
+		Vec3 far = this->camera.getFar();
+		Vec3 near = this->camera.getNear();
+		distance = pg::magnitude(far - near);
 		distance /= 80.0f;
 	}
-	translationAxes.selectAxis(ray, distance);
+	this->translationAxes.selectAxis(ray, distance);
 }
 
 void Editor::resizeGL(int width, int height)
 {
 	updateCamera(width, height);
-	translationAxes.setScale(600.0f / height);
-	glBindTexture(GL_TEXTURE_2D, outlineColorMap);
-	glTexImage2D(
-		GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
+	this->translationAxes.setScale(600.0f / height);
+	glBindTexture(GL_TEXTURE_2D, this->outlineColorMap);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
 		GL_UNSIGNED_BYTE, NULL);
 }
 
 void Editor::updateCamera(int width, int height)
 {
 	float ratio = static_cast<float>(width) / static_cast<float>(height);
-	camera.setWindowSize(width, height);
-	if (perspective)
-		camera.setPerspective(45.0f, 0.001f, 200.0f, ratio);
+	this->camera.setWindowSize(width, height);
+	if (this->perspective)
+		this->camera.setPerspective(45.0f, 0.001f, 200.0f, ratio);
 	else {
 		ratio /= 2.0f;
 		Vec3 a(-ratio, -0.5f, 0.0f);
 		Vec3 b(ratio, 0.5f, 100.0f);
-		camera.setOrthographic(a, b);
+		this->camera.setOrthographic(a, b);
 	}
 }
 
 void Editor::paintGL()
 {
-	Mat4 projection = camera.updateVP();
-	Vec3 position = camera.getPosition();
+	Mat4 projection = this->camera.updateVP();
+	Vec3 position = this->camera.getPosition();
 
 	/* Render the scene normally. */
 	glClearDepth(1.0f);
@@ -429,185 +457,220 @@ void Editor::paintGL()
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
 
 	/* Paint the grid. */
-	staticBuffer.use();
-	glUseProgram(shared->getShader(SharedResources::Flat));
+	this->staticBuffer.use();
+	glUseProgram(this->shared->getShader(SharedResources::Flat));
 	glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
-	glDrawArrays(GL_LINES, segments.grid.pstart, segments.grid.pcount);
+	glDrawArrays(GL_LINES, this->segments.grid.pstart,
+		this->segments.grid.pcount);
 
 	/* Paint the plant. */
-	plantBuffer.use();
-	if (shader == SharedResources::Solid)
-		paintModel(projection, position);
-	else if (shader == SharedResources::Wireframe)
+	this->plantBuffer.use();
+	if (this->shader == SharedResources::Solid)
+		paintSolid(projection, position);
+	else if (this->shader == SharedResources::Wireframe)
 		paintWire(projection);
-	else if (shader == SharedResources::Material)
+	else if (this->shader == SharedResources::Material)
 		paintMaterial(projection);
 
+	paintOutline(projection, position);
+
+	/* Paint path lines. */
+	if (this->selection.hasStems() && this->ticks < 0) {
+		Geometry::Segment segment;
+
+		glDepthFunc(GL_ALWAYS);
+		glPointSize(6);
+
+		this->pathBuffer.use();
+		glUseProgram(this->shared->getShader(SharedResources::Line));
+		glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
+		glUniform2f(1, QWidget::width(), QWidget::height());
+
+		segment = this->path.getLineSegment();
+		GLvoid *offset = (GLvoid *)(segment.istart * sizeof(unsigned));
+		glDrawElements(GL_LINE_STRIP, segment.icount, GL_UNSIGNED_INT,
+			offset);
+
+		auto texture = this->shared->getTexture(shared->DotTexture);
+		glBindTexture(GL_TEXTURE_2D, texture);
+		glUseProgram(this->shared->getShader(SharedResources::Point));
+		glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
+
+		segment = this->path.getPointSegment();
+		glDrawArrays(GL_POINTS, segment.pstart, segment.pcount);
+
+		if (this->selection.hasPoints())
+			paintAxes();
+	} else if (this->selection.hasLeaves())
+		paintAxes();
+
+	glFlush();
+}
+
+void Editor::paintOutline(const Mat4 &projection, const Vec3 &position)
+{
 	/* Create a texture for selection objects. */
-	glBindFramebuffer(GL_FRAMEBUFFER, outlineFrameBuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, this->outlineFrameBuffer);
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 	glViewport(0, 0, width(), height());
 
-	glUseProgram(shared->getShader(SharedResources::Outline));
+	if (this->ticks >= 0) {
+		auto type = SharedResources::DynamicOutline;
+		glUseProgram(this->shared->getShader(type));
+	} else {
+		auto type = SharedResources::Outline;
+		glUseProgram(this->shared->getShader(type));
+	}
+
 	glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
 	glUniform4f(1, position.x, position.y, position.z, 0.0f);
 	glUniform1i(2, 0);
 	glUniform2f(3, (GLfloat)width(), (GLfloat)height());
-	for (unsigned i = 0; i < meshes.size(); i++) {
-		unsigned index = meshes[i].indexStart;
+	for (unsigned i = 0; i < this->meshes.size(); i++) {
+		unsigned index = this->meshes[i].indexStart;
 		GLvoid *offset = (GLvoid *)(index * sizeof(unsigned));
-		GLsizei size = meshes[i].indexCount;
+		GLsizei size = this->meshes[i].indexCount;
 		glDrawElements(GL_TRIANGLES, size, GL_UNSIGNED_INT, offset);
 	}
 
 	/* Draw objects to screen with outline. */
 	GLuint defaultFramebuffer = this->context()->defaultFramebufferObject();
 	glBindFramebuffer(GL_FRAMEBUFFER, defaultFramebuffer);
-	glBindTexture(GL_TEXTURE_2D, outlineColorMap);
+	glBindTexture(GL_TEXTURE_2D, this->outlineColorMap);
 	glUniform1i(2, 1);
-	for (unsigned i = 0; i < meshes.size(); i++) {
-		unsigned index = meshes[i].indexStart;
+	for (unsigned i = 0; i < this->meshes.size(); i++) {
+		unsigned index = this->meshes[i].indexStart;
 		GLvoid *offset = (GLvoid *)(index * sizeof(unsigned));
-		GLsizei size = meshes[i].indexCount;
+		GLsizei size = this->meshes[i].indexCount;
 		glDrawElements(GL_TRIANGLES, size, GL_UNSIGNED_INT, offset);
 	}
-
-	/* Paint path lines. */
-	if (selection.hasStems()) {
-		Geometry::Segment segment;
-
-		glDepthFunc(GL_ALWAYS);
-		glPointSize(6);
-
-		pathBuffer.use();
-		glUseProgram(shared->getShader(SharedResources::Line));
-		glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
-		glUniform2f(1, QWidget::width(), QWidget::height());
-
-		segment = path.getLineSegment();
-		GLvoid *offset = (GLvoid *)(segment.istart * sizeof(unsigned));
-		glDrawElements(
-			GL_LINE_STRIP, segment.icount,
-			GL_UNSIGNED_INT, offset);
-
-		auto texture = shared->getTexture(shared->DotTexture);
-		glBindTexture(GL_TEXTURE_2D, texture);
-		glUseProgram(shared->getShader(SharedResources::Point));
-		glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
-
-		segment = path.getPointSegment();
-		glDrawArrays(GL_POINTS, segment.pstart, segment.pcount);
-
-		if (selection.hasPoints())
-			paintAxes();
-	} else if (selection.hasLeaves())
-		paintAxes();
-
-	glFlush();
 }
 
 void Editor::paintWire(const Mat4 &projection)
 {
-	glUseProgram(shared->getShader(SharedResources::Wireframe));
+	if (this->ticks >= 0) {
+		auto type = SharedResources::DynamicWireframe;
+		glUseProgram(this->shared->getShader(type));
+		updateJoints();
+	} else {
+		auto type = SharedResources::Wireframe;
+		glUseProgram(this->shared->getShader(type));
+	}
+
 	glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
 	glUniform4f(1, 0.13f, 0.13f, 0.13f, 1.0f);
 
 	glPointSize(4);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
-	for (size_t i = 0; i < mesh.getMeshCount(); i++) {
-		GLsizei size = mesh.getVertices(i)->size();
-		glDrawArrays(GL_POINTS, 0, size);
+	size_t start = 0;
+	for (size_t i = 0; i < this->mesh.getMeshCount(); i++) {
+		GLsizei size = this->mesh.getVertices(i)->size();
+		glDrawArrays(GL_POINTS, start, size);
+		start += size * sizeof(Vec3);
 	}
 
-	size_t start = 0;
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	for (size_t i = 0; i < mesh.getMeshCount(); i++) {
-		GLsizei size = mesh.getIndices(i)->size();
-		glDrawElements(
-			GL_TRIANGLES, size,
-			GL_UNSIGNED_INT, (GLvoid *)start);
-		start += mesh.getIndices(i)->size() * sizeof(unsigned);
+	start = 0;
+	for (size_t i = 0; i < this->mesh.getMeshCount(); i++) {
+		GLsizei size = this->mesh.getIndices(i)->size();
+		GLvoid *ptr = (GLvoid *)start;
+		glDrawElements(GL_TRIANGLES, size, GL_UNSIGNED_INT, ptr);
+		start += this->mesh.getIndices(i)->size() * sizeof(unsigned);
 	}
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
-void Editor::paintModel(const Mat4 &projection, const Vec3 &position)
+void Editor::paintSolid(const Mat4 &projection, const Vec3 &position)
 {
-	size_t start = 0;
-	glUseProgram(shared->getShader(SharedResources::Solid));
+	if (this->ticks >= 0) {
+		auto type = SharedResources::DynamicSolid;
+		glUseProgram(this->shared->getShader(type));
+		updateJoints();
+	} else
+		glUseProgram(this->shared->getShader(SharedResources::Solid));
+
 	glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
 	glUniform4f(1, position.x, position.y, position.z, 0.0f);
-	for (size_t i = 0; i < mesh.getMeshCount(); i++) {
-		GLsizei size = mesh.getIndices(i)->size();
-		glDrawElements(
-			GL_TRIANGLES, size,
-			GL_UNSIGNED_INT, (GLvoid *)start);
-		start += mesh.getIndices(i)->size() * sizeof(unsigned);
+
+	size_t start = 0;
+	for (size_t i = 0; i < this->mesh.getMeshCount(); i++) {
+		GLsizei size = this->mesh.getIndices(i)->size();
+		GLvoid *ptr = (GLvoid *)start;
+		glDrawElements(GL_TRIANGLES, size, GL_UNSIGNED_INT, ptr);
+		start += this->mesh.getIndices(i)->size() * sizeof(unsigned);
 	}
 }
 
 void Editor::paintMaterial(const Mat4 &projection)
 {
-	size_t start = 0;
-	glUseProgram(shared->getShader(SharedResources::Material));
+	if (this->ticks >= 0) {
+		auto type = SharedResources::DynamicMaterial;
+		glUseProgram(this->shared->getShader(type));
+		updateJoints();
+	} else
+		glUseProgram(this->shared->getShader(
+			SharedResources::Material));
+
 	glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
-	for (size_t i = 0; i < mesh.getMeshCount(); i++) {
-		unsigned index = mesh.getMaterialIndex(i);
-		ShaderParams params = shared->getMaterial(index);
+
+	size_t start = 0;
+	for (size_t i = 0; i < this->mesh.getMeshCount(); i++) {
+		unsigned index = this->mesh.getMaterialIndex(i);
+		ShaderParams params = this->shared->getMaterial(index);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, params.getTexture(0));
-		GLsizei size = mesh.getIndices(i)->size();
-		glDrawElements(
-			GL_TRIANGLES, size,
-			GL_UNSIGNED_INT, (GLvoid *)start);
-		start += mesh.getIndices(i)->size() * sizeof(unsigned);
+		GLsizei size = this->mesh.getIndices(i)->size();
+		GLvoid *ptr = (GLvoid *)start;
+		glDrawElements(GL_TRIANGLES, size, GL_UNSIGNED_INT, ptr);
+		start += this->mesh.getIndices(i)->size() * sizeof(unsigned);
 	}
 }
 
 void Editor::paintAxes()
 {
-	Mat4 projection = camera.getVP();
-	Vec3 position = camera.getPosition();
+	Mat4 projection = this->camera.getVP();
+	Vec3 position = this->camera.getPosition();
 
 	glClear(GL_DEPTH_BUFFER_BIT);
 	glDepthFunc(GL_LEQUAL);
 
-	glUseProgram(shared->getShader(SharedResources::Flat));
-	staticBuffer.use();
+	glUseProgram(this->shared->getShader(SharedResources::Flat));
+	this->staticBuffer.use();
 
-	translationAxes.setPosition(selection.getAveragePosition());
+	this->translationAxes.setPosition(this->selection.getAveragePosition());
 
 	float distance;
-	if (camera.isPerspective()) {
-		Vec3 diff = position - translationAxes.getPosition();
+	if (this->camera.isPerspective()) {
+		Vec3 diff = position - this->translationAxes.getPosition();
 		distance = pg::magnitude(diff);
 	} else {
-		distance = pg::magnitude(camera.getFar() - camera.getNear());
+		Vec3 far = this->camera.getFar();
+		Vec3 near = this->camera.getNear();
+		distance = pg::magnitude(far - near);
 		distance /= 80.0f;
 	}
 
-	if (rotating) {
-		Vec3 direction = selection.getAverageDirectionFP();
-		Mat4 transformation =
-			projection *
-			rotationAxes.getTransformation(distance, direction);
-		glUniformMatrix4fv(0, 1, GL_FALSE, &transformation[0][0]);
-		unsigned index = segments.rotation.istart;
+	if (this->rotating) {
+		Vec3 direction = this->selection.getAverageDirectionFP();
+		Mat4 transform = this->rotationAxes.getTransformation(
+			distance, direction);
+		transform = projection * transform;
+		glUniformMatrix4fv(0, 1, GL_FALSE, &transform[0][0]);
+		unsigned index = this->segments.rotation.istart;
 		GLvoid *offset = (GLvoid *)(index * sizeof(unsigned));
-		GLsizei size = segments.rotation.icount;
+		GLsizei size = this->segments.rotation.icount;
 		glDrawElements(GL_LINE_STRIP, size, GL_UNSIGNED_INT, offset);
 	} else {
-		Mat4 transformation = projection;
-		transformation *= translationAxes.getTransformation(distance);
-		glUniformMatrix4fv(0, 1, GL_FALSE, &transformation[0][0]);
-		glDrawArrays(
-			GL_LINES, segments.axesLines.pstart,
-			segments.axesLines.pcount);
-		unsigned index = segments.axesArrows.istart;
+		Mat4 mat = this->translationAxes.getTransformation(distance);
+		mat = projection * mat;
+		glUniformMatrix4fv(0, 1, GL_FALSE, &mat[0][0]);
+		glDrawArrays(GL_LINES, this->segments.axesLines.pstart,
+			this->segments.axesLines.pcount);
+		unsigned index = this->segments.axesArrows.istart;
 		GLvoid *offset = (GLvoid *)(index * sizeof(unsigned));
-		GLsizei size = segments.axesArrows.icount;
+		GLsizei size = this->segments.axesArrows.icount;
 		glDrawElements(GL_TRIANGLES, size, GL_UNSIGNED_INT, offset);
 	}
 }
@@ -615,15 +678,15 @@ void Editor::paintAxes()
 /** Determine what regions in the buffer are the selection. */
 void Editor::updateSelection()
 {
-	meshes.clear();
-	auto stemInstances = selection.getStemInstances();
+	this->meshes.clear();
+	auto stemInstances = this->selection.getStemInstances();
 	for (auto &instance : stemInstances)
-		meshes.push_back(mesh.findStem(instance.first));
-	auto leafInstances = selection.getLeafInstances();
+		this->meshes.push_back(mesh.findStem(instance.first));
+	auto leafInstances = this->selection.getLeafInstances();
 	for (auto &instance : leafInstances) {
 		for (auto &leaf : instance.second) {
 			pg::Mesh::LeafID id(instance.first, leaf);
-			meshes.push_back(mesh.findLeaf(id));
+			this->meshes.push_back(mesh.findLeaf(id));
 		}
 	}
 
@@ -641,58 +704,103 @@ void Editor::updateSelection()
 			segment.location = location;
 			segments.push_back(segment);
 		}
-		path.set(segments);
+		this->path.set(segments);
 
 		int i = 0;
-		auto instances = selection.getStemInstances();
+		auto instances = this->selection.getStemInstances();
 		for (auto &instance : instances)
-			path.setSelectedPoints(instance.second, i++);
+			this->path.setSelectedPoints(instance.second, i++);
 
-		const Geometry *geometry = path.getGeometry();
+		const Geometry *geometry = this->path.getGeometry();
 		makeCurrent();
-		pathBuffer.update(*geometry);
+		this->pathBuffer.update(*geometry);
 		doneCurrent();
 	}
 }
 
-/** Update the graphics buffer. */
 void Editor::change()
 {
 	if (!isValid())
 		return;
+	if (this->timer->isActive())
+		endAnimation();
 
-	scene.animation = scene.wind.generate(&scene.plant);
-	mesh.generate();
+	this->mesh.generate();
 
 	makeCurrent();
-	plantBuffer.use();
-	if (mesh.getVertexCount() > plantBuffer.getCapacity(Buffer::Points))
-		plantBuffer.allocatePointMemory(mesh.getVertexCount() * 2);
-	if (mesh.getIndexCount() > plantBuffer.getCapacity(Buffer::Indices))
-		plantBuffer.allocateIndexMemory(mesh.getIndexCount() * 2);
+	this->plantBuffer.use();
+
+	size_t capacity;
+	capacity = this->plantBuffer.getCapacity(VertexBuffer::Points);
+	if (this->mesh.getVertexCount() > capacity) {
+		size_t count = this->mesh.getVertexCount() * 2;
+		this->plantBuffer.allocatePointMemory(count);
+	}
+	capacity = this->plantBuffer.getCapacity(VertexBuffer::Indices);
+	if (this->mesh.getIndexCount() > capacity) {
+		size_t count = this->mesh.getIndexCount() * 2;
+		this->plantBuffer.allocateIndexMemory(count);
+	}
 
 	int pointOffset = 0;
 	int indexOffset = 0;
-	for (size_t m = 0; m < mesh.getMeshCount(); m++) {
-		const std::vector<pg::Vertex> *v = mesh.getVertices(m);
-		const std::vector<unsigned> *i = mesh.getIndices(m);
-		if (!plantBuffer.update(v->data(), pointOffset, v->size()))
-			throw "failed to update vertices\n";
-		if (!plantBuffer.update(i->data(), indexOffset, i->size()))
-			throw "failed to update indices\n";
+	for (size_t m = 0; m < this->mesh.getMeshCount(); m++) {
+		const std::vector<pg::Vertex> *v = this->mesh.getVertices(m);
+		const std::vector<unsigned> *i = this->mesh.getIndices(m);
+		this->plantBuffer.update(v->data(), pointOffset, v->size());
+		this->plantBuffer.update(i->data(), indexOffset, i->size());
 		pointOffset += v->size();
 		indexOffset += i->size();
 	}
-	doneCurrent();
 
+	doneCurrent();
 	updateSelection();
 	update();
 	emit changed();
 }
 
+void Editor::changeAll()
+{
+	this->scene.animation = this->scene.wind.generate(&this->scene.plant);
+	change();
+}
+
+void Editor::animate()
+{
+	this->ticks++;
+	if (this->ticks >= this->scene.wind.getDuration())
+		this->ticks = 0;
+	update();
+}
+
+void Editor::updateJoints()
+{
+	std::vector<pg::KeyFrame> frames;
+	pg::Stem *root = this->scene.plant.getRoot();
+	frames = this->scene.animation.getFrame(this->ticks, root);
+	size_t size = frames.size() * sizeof(pg::KeyFrame);
+	if (size <= jointBuffer.getSize())
+		this->jointBuffer.update(&frames[0], size);
+	else
+		this->jointBuffer.load(&frames[0], size);
+}
+
+void Editor::startAnimation()
+{
+	changeAll();
+	this->ticks = 0;
+	this->timer->start();
+}
+
+void Editor::endAnimation()
+{
+	this->ticks = -1;
+	this->timer->stop();
+}
+
 void Editor::createDefaultPlant()
 {
-	pg::Derivation derivation = generator.getDerivation();
+	pg::Derivation derivation = this->generator.getDerivation();
 	std::random_device rd;
 	derivation.seed = rd();
 	derivation.depth = 1;
@@ -703,29 +811,29 @@ void Editor::createDefaultPlant()
 	derivation.leafDensityCurve.setDefault(1);
 	derivation.leafStart = 1.0f;
 	derivation.lengthFactor = 50.0f;
-	generator.setDerivation(derivation);
-	generator.grow();
-	scene.wind.setSpeed(0.5f);
-	scene.wind.setDirection(Vec3(0.0f, 0.0f, 1.0f));
+	this->generator.setDerivation(derivation);
+	this->generator.grow();
+	this->scene.wind.setSpeed(0.5f);
+	this->scene.wind.setDirection(Vec3(0.0f, 0.0f, 1.0f));
 }
 
 void Editor::load(const char *filename)
 {
-	scene.plant.removeRoot();
+	this->scene.plant.removeRoot();
 	if (filename == nullptr)
 		createDefaultPlant();
 	else {
 		std::ifstream stream(filename);
 		boost::archive::text_iarchive ia(stream);
-		ia >> scene;
+		ia >> this->scene;
 		stream.close();
 	}
 }
 
 void Editor::reset()
 {
-	selection.clear();
-	history.clear();
+	this->selection.clear();
+	this->history.clear();
 	if (isValid())
 		change();
 	emit selectionChanged();
@@ -735,30 +843,30 @@ void Editor::change(QAction *action)
 {
 	QString text = action->text();
 	if (text == "Perspective") {
-		perspective = true;
-		orthographicAction->setChecked(false);
-		perspectiveAction->setChecked(true);
+		this->perspective = true;
+		this->orthographicAction->setChecked(false);
+		this->perspectiveAction->setChecked(true);
 		updateCamera(width(), height());
 	} else if (text == "Orthographic") {
-		perspective = false;
-		orthographicAction->setChecked(true);
-		perspectiveAction->setChecked(false);
+		this->perspective = false;
+		this->orthographicAction->setChecked(true);
+		this->perspectiveAction->setChecked(false);
 		updateCamera(width(), height());
 	} else if (text == "Wireframe") {
-		shader = SharedResources::Wireframe;
-		wireframeAction->setChecked(true);
-		solidAction->setChecked(false);
-		materialAction->setChecked(false);
+		this->shader = SharedResources::Wireframe;
+		this->wireframeAction->setChecked(true);
+		this->solidAction->setChecked(false);
+		this->materialAction->setChecked(false);
 	} else if (text == "Solid") {
-		shader = SharedResources::Solid;
-		wireframeAction->setChecked(false);
-		solidAction->setChecked(true);
-		materialAction->setChecked(false);
+		this->shader = SharedResources::Solid;
+		this->wireframeAction->setChecked(false);
+		this->solidAction->setChecked(true);
+		this->materialAction->setChecked(false);
 	} else if (text == "Material") {
-		shader = SharedResources::Material;
-		wireframeAction->setChecked(false);
-		solidAction->setChecked(false);
-		materialAction->setChecked(true);
+		this->shader = SharedResources::Material;
+		this->wireframeAction->setChecked(false);
+		this->solidAction->setChecked(false);
+		this->materialAction->setChecked(true);
 	}
 	update();
 }
@@ -766,38 +874,38 @@ void Editor::change(QAction *action)
 void Editor::updateMaterial(unsigned index)
 {
 	ShaderParams params = this->shared->getMaterial(index);
-	scene.plant.updateMaterial(params.getMaterial(), index);
+	this->scene.plant.updateMaterial(params.getMaterial(), index);
 }
 
 pg::Plant *Editor::getPlant()
 {
-	return &scene.plant;
+	return &this->scene.plant;
 }
 
 pg::Scene *Editor::getScene()
 {
-	return &scene;
+	return &this->scene;
 }
 
 Selection *Editor::getSelection()
 {
-	return &selection;
+	return &this->selection;
 }
 
 const pg::Mesh *Editor::getMesh()
 {
-	return &mesh;
+	return &this->mesh;
 }
 
 void Editor::add(Command *cmd)
 {
-	history.add(cmd);
+	this->history.add(cmd);
 }
 
 void Editor::undo()
 {
-	if (!currentCommand) {
-		history.undo();
+	if (!this->command) {
+		this->history.undo();
 		change();
 		emit selectionChanged();
 	}
@@ -805,8 +913,8 @@ void Editor::undo()
 
 void Editor::redo()
 {
-	if (!currentCommand) {
-		history.redo();
+	if (!this->command) {
+		this->history.redo();
 		change();
 		emit selectionChanged();
 	}

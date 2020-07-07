@@ -47,6 +47,24 @@ namespace pg {
 			this->w = w;
 		}
 
+		Vec4 &operator+=(const Vec4 &b)
+		{
+			this->x += b.x;
+			this->y += b.y;
+			this->z += b.z;
+			this->w += b.w;
+			return *this;
+		}
+
+		Vec4 &operator-=(const Vec4 &b)
+		{
+			this->x -= b.x;
+			this->y -= b.y;
+			this->z -= b.z;
+			this->w -= b.w;
+			return *this;
+		}
+
 		float &operator[](unsigned column)
 		{
 			switch (column) {
@@ -107,6 +125,20 @@ namespace pg {
 		stream << "(" << v.x << ", " << v.y << ", " << v.z << ", ";
 		stream << v.w << ")";
 		return stream;
+	}
+
+	inline Vec4 operator+(const Vec4 &a, const Vec4 &b)
+	{
+		Vec4 vec = a;
+		vec += b;
+		return vec;
+	}
+
+	inline Vec4 operator-(const Vec4 &a, const Vec4 &b)
+	{
+		Vec4 vec = a;
+		vec -= b;
+		return vec;
 	}
 
 	float magnitude(Vec4 vec);

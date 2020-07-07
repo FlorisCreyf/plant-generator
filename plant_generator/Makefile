@@ -12,6 +12,7 @@ math/quat.o \
 math/vec2.o \
 math/vec3.o \
 math/vec4.o \
+animation.o \
 curve.o \
 generator.o \
 geometry.o \

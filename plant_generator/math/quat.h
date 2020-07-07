@@ -18,6 +18,7 @@
 
 #include "mat4.h"
 #include "vec3.h"
+#include "vec4.h"
 
 #ifdef PG_SERIALIZE
 #include <boost/archive/text_oarchive.hpp>
@@ -46,10 +47,19 @@ namespace pg {
 			this->w = w;
 		}
 
+		Quat &operator+=(const Quat &b)
+		{
+			this->x += b.x;
+			this->y += b.y;
+			this->z += b.z;
+			this->w += b.w;
+			return *this;
+		}
+
 		Quat &operator*=(const Quat &b)
 		{
-			Vec3 m = {this->x, this->y, this->z};
-			Vec3 n = {b.x, b.y, b.z};
+			Vec3 m(this->x, this->y, this->z);
+			Vec3 n(b.x, b.y, b.z);
 			float s = this->w * b.w - dot(m, n);
 			Vec3 f = (cross(m, n) + b.w * m) + this->w * n;
 			this->x = f.x;
@@ -72,16 +82,24 @@ namespace pg {
 		#endif
 	};
 
+	inline Quat toQuat(const Vec4 &vec)
+	{
+		return Quat(vec.x, vec.y, vec.z, vec.w);
+	}
+
+	inline Vec4 toVec4(const Quat &quat)
+	{
+		return Vec4(quat.x, quat.y, quat.z, quat.w);
+	}
+
 	inline Quat toQuat(const Vec3 &vec, const float w)
 	{
-		Quat q = {vec.x, vec.y, vec.z, w};
-		return q;
+		return Quat(vec.x, vec.y, vec.z, w);
 	}
 
 	inline Vec3 toVec3(const Quat &quat)
 	{
-		Vec3 q = {quat.x, quat.y, quat.z};
-		return q;
+		return Vec3(quat.x, quat.y, quat.z);
 	}
 
 	inline Quat operator*(Quat q, float s)
@@ -102,6 +120,13 @@ namespace pg {
 	{
 		Quat q = a;
 		q *= b;
+		return q;
+	}
+
+	inline Quat operator+(const Quat &a, const Quat &b)
+	{
+		Quat q = a;
+		q += b;
 		return q;
 	}
 
@@ -142,6 +167,7 @@ namespace pg {
 	Quat normalize(Quat quat);
 	Mat4 toMat4(Quat quat);
 	Quat rotateIntoVecQ(Vec3 normal, Vec3 direction);
+	Quat nlerp(Quat a, Quat b, float t);
 	Quat slerp(Quat a, Quat b, float t);
 }
 

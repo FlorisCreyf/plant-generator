@@ -35,6 +35,7 @@ plant_generator/math/quat.cpp \
 plant_generator/math/vec2.cpp \
 plant_generator/math/vec3.cpp \
 plant_generator/math/vec4.cpp \
+plant_generator/animation.cpp \
 plant_generator/curve.cpp \
 plant_generator/geometry.cpp \
 plant_generator/joint.cpp \
@@ -68,7 +69,8 @@ editor/geometry/geometry.cpp \
 editor/geometry/path.cpp \
 editor/geometry/translation_axes.cpp \
 editor/geometry/rotation_axes.cpp \
-editor/graphics/buffer.cpp \
+editor/graphics/storage_buffer.cpp \
+editor/graphics/vertex_buffer.cpp \
 editor/graphics/shader_params.cpp \
 editor/graphics/shared_resources.cpp \
 editor/widgets/curve_editor.cpp \
@@ -143,7 +145,8 @@ editor/geometry/geometry.h \
 editor/geometry/path.h \
 editor/geometry/translation_axes.h \
 editor/geometry/rotation_axes.h \
-editor/graphics/buffer.h \
+editor/graphics/storage_buffer.h \
+editor/graphics/vertex_buffer.h \
 editor/graphics/shader_params.h \
 editor/graphics/shared_resources.h \
 editor/widgets/curve_editor.h \

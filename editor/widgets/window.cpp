@@ -281,6 +281,7 @@ void Window::exportWavefrontDialogBox()
 
 void Window::exportColladaDialogBox()
 {
+	this->editor->changeAll();
 	const pg::Mesh *mesh = this->editor->getMesh();
 	const pg::Scene *scene = this->editor->getScene();
 

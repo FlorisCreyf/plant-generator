@@ -75,5 +75,5 @@ Vec3 pg::clamp(Vec3 a, Vec3 b, float max)
 
 Vec3 pg::lerp(Vec3 a, Vec3 b, float t)
 {
-	return (1 - t) * a + t * b;
+	return (1.0f - t) * a + t * b;
 }

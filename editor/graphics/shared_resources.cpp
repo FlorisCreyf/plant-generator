@@ -24,87 +24,99 @@
 
 SharedResources::SharedResources()
 {
-	initialized = false;
-	textures[0] = textures[1] = 0;
+	this->initialized = false;
+	this->textures[0] = this->textures[1] = 0;
 }
 
 void SharedResources::initialize()
 {
-	if (!initialized) {
+	if (!this->initialized) {
 		initializeOpenGLFunctions();
 		createPrograms();
 
 		QImage image1("resources/dot.png");
-		textures[DotTexture] = addTexture(image1);
+		this->textures[DotTexture] = addTexture(image1);
 		QImage image2("resources/default.png");
-		textures[DefaultTexture] = addTexture(image2);
+		this->textures[DefaultTexture] = addTexture(image2);
 
-		for (ShaderParams &param : materials)
+		for (ShaderParams &param : this->materials)
 			if (!param.isValid()) {
-				GLuint tex = textures[DefaultTexture];
+				GLuint tex = this->textures[DefaultTexture];
 				param.setDefaultTexture(0, tex);
 				param.initialize();
 			}
 
-		surface.create();
-		initialized = true;
+		this->surface.create();
+		this->initialized = true;
 	}
 }
 
 void SharedResources::createPrograms()
 {
-	GLuint vertSolid = buildShader(GL_VERTEX_SHADER,
-		"shaders/model.vert", "#define SOLID\n");
-	GLuint fragSolid = buildShader(GL_FRAGMENT_SHADER,
-		"shaders/model.frag", "#define SOLID\n");
-	GLuint vertWireframe = buildShader(GL_VERTEX_SHADER,
-		"shaders/model.vert", "#define WIREFRAME\n");
-	GLuint fragWireframe = buildShader(GL_FRAGMENT_SHADER,
-		"shaders/model.frag", "#define WIREFRAME\n");
-	GLuint vertMaterial = buildShader(GL_VERTEX_SHADER,
-		"shaders/model.vert", "#define MATERIAL\n");
-	GLuint fragMaterial = buildShader(GL_FRAGMENT_SHADER,
-		"shaders/model.frag", "#define MATERIAL\n");
-	GLuint vertFlat = buildShader(GL_VERTEX_SHADER,
-		"shaders/flat.vert", nullptr);
-	GLuint fragFlat = buildShader(GL_FRAGMENT_SHADER,
-		"shaders/flat.frag", nullptr);
-	GLuint fragPoint = buildShader(GL_FRAGMENT_SHADER,
-		"shaders/point.frag", nullptr);
-	GLuint vertLine = buildShader(GL_VERTEX_SHADER,
-		"shaders/line.vert", nullptr);
-	GLuint geomLine = buildShader(GL_GEOMETRY_SHADER,
-		"shaders/line.geom", nullptr);
-	GLuint fragLine = buildShader(GL_FRAGMENT_SHADER,
-		"shaders/line.frag", nullptr);
-	GLuint vertOutline = buildShader(GL_VERTEX_SHADER,
-		"shaders/outline.vert", nullptr);
-	GLuint fragOutline = buildShader(GL_FRAGMENT_SHADER,
-		"shaders/outline.frag", nullptr);
-
 	GLuint shaders[3];
-	shaders[0] = vertSolid;
-	shaders[1] = fragSolid;
-	programs[Shader::Solid] = buildProgram(shaders, 2);
-	shaders[0] = vertWireframe;
-	shaders[1] = fragWireframe;
-	programs[Shader::Wireframe] = buildProgram(shaders, 2);
-	shaders[0] = vertMaterial;
-	shaders[1] = fragMaterial;
-	programs[Shader::Material] = buildProgram(shaders, 2);
-	shaders[0] = vertFlat;
-	shaders[1] = fragFlat;
-	programs[Shader::Flat] = buildProgram(shaders, 2);
-	shaders[0] = vertFlat;
-	shaders[1] = fragPoint;
-	programs[Shader::Point] = buildProgram(shaders, 2);
-	shaders[0] = vertLine;
-	shaders[1] = geomLine;
-	shaders[2] = fragLine;
-	programs[Shader::Line] = buildProgram(shaders, 3);
-	shaders[0] = vertOutline;
-	shaders[1] = fragOutline;
-	programs[Shader::Outline] = buildProgram(shaders, 2);
+
+	GLuint solidFS = buildShader(GL_FRAGMENT_SHADER,
+		"shaders/model.frag", "#define SOLID\n");
+	GLuint wireframeFS = buildShader(GL_FRAGMENT_SHADER,
+		"shaders/model.frag", "#define WIREFRAME\n");
+	GLuint materialFS = buildShader(GL_FRAGMENT_SHADER,
+		"shaders/model.frag", "#define MATERIAL\n");
+	GLuint outlineFS = buildShader(GL_FRAGMENT_SHADER,
+		"shaders/model.frag", "#define OUTLINE\n");
+
+	shaders[0] = buildShader(GL_VERTEX_SHADER,
+		"shaders/model.vert", "#define SOLID\n");
+	shaders[1] = solidFS;
+	this->programs[Shader::Solid] = buildProgram(shaders, 2);
+	shaders[0] = buildShader(GL_VERTEX_SHADER,
+		"shaders/model.vert", "#define WIREFRAME\n");
+	shaders[1] = wireframeFS;
+	this->programs[Shader::Wireframe] = buildProgram(shaders, 2);
+	shaders[0] = buildShader(GL_VERTEX_SHADER,
+		"shaders/model.vert", "#define MATERIAL\n");
+	shaders[1] = materialFS;
+	this->programs[Shader::Material] = buildProgram(shaders, 2);
+	shaders[0] = buildShader(GL_VERTEX_SHADER,
+		"shaders/model.vert", "#define OUTLINE\n");
+	shaders[1] = outlineFS;
+	this->programs[Shader::Outline] = buildProgram(shaders, 2);
+
+	shaders[0] = buildShader(GL_VERTEX_SHADER,
+		"shaders/model.vert", "#define SOLID\n#define DYNAMIC\n");
+	shaders[1] = solidFS;
+	this->programs[Shader::DynamicSolid] = buildProgram(shaders, 2);
+	shaders[0] = buildShader(GL_VERTEX_SHADER,
+		"shaders/model.vert", "#define WIREFRAME\n#define DYNAMIC\n");
+	shaders[1] = wireframeFS;
+	this->programs[Shader::DynamicWireframe] = buildProgram(shaders, 2);
+	shaders[0] = buildShader(GL_VERTEX_SHADER,
+		"shaders/model.vert", "#define MATERIAL\n#define DYNAMIC\n");
+	shaders[1] = materialFS;
+	this->programs[Shader::DynamicMaterial] = buildProgram(shaders, 2);
+	shaders[0] = buildShader(GL_VERTEX_SHADER,
+		"shaders/model.vert", "#define OUTLINE\n#define DYNAMIC\n");
+	shaders[1] = outlineFS;
+	this->programs[Shader::DynamicOutline] = buildProgram(shaders, 2);
+
+	shaders[0] = buildShader(GL_VERTEX_SHADER,
+		"shaders/line.vert", nullptr);
+	shaders[1] = buildShader(GL_GEOMETRY_SHADER,
+		"shaders/line.geom", nullptr);
+	shaders[2] = buildShader(GL_FRAGMENT_SHADER,
+		"shaders/line.frag", nullptr);
+	this->programs[Shader::Line] = buildProgram(shaders, 3);
+
+	GLuint flatVS = buildShader(GL_VERTEX_SHADER,
+		"shaders/flat.vert", nullptr);
+
+	shaders[0] = flatVS;
+	shaders[1] = buildShader(GL_FRAGMENT_SHADER,
+		"shaders/flat.frag", nullptr);
+	this->programs[Shader::Flat] = buildProgram(shaders, 2);
+	shaders[0] = flatVS;
+	shaders[1] = buildShader(GL_FRAGMENT_SHADER,
+		"shaders/point.frag", nullptr);
+	this->programs[Shader::Point] = buildProgram(shaders, 2);
 }
 
 GLuint SharedResources::addTexture(const QImage &image)
@@ -132,12 +144,12 @@ GLuint SharedResources::addTexture(const QImage &image)
 
 GLuint SharedResources::getShader(Shader shader)
 {
-	return programs[shader];
+	return this->programs[shader];
 }
 
 GLuint SharedResources::getTexture(Texture texture)
 {
-	return textures[texture];
+	return this->textures[texture];
 }
 
 bool SharedResources::isCompiled(GLuint name, const char *filename)
@@ -211,15 +223,15 @@ GLuint SharedResources::buildProgram(GLuint *shaders, int size)
 
 unsigned SharedResources::addMaterial(ShaderParams params)
 {
-	params.setDefaultTexture(0, textures[DefaultTexture]);
-	materials.push_back(params);
+	params.setDefaultTexture(0, this->textures[DefaultTexture]);
+	this->materials.push_back(params);
 	emit materialAdded(params);
-	return materials.size()-1;
+	return this->materials.size()-1;
 }
 
 void SharedResources::updateMaterial(ShaderParams params, unsigned index)
 {
-	materials[index] = params;
+	this->materials[index] = params;
 	emit materialModified(index);
 }
 
@@ -227,8 +239,8 @@ void SharedResources::removeMaterial(unsigned index)
 {
 	auto context = QOpenGLContext::globalShareContext();
 	context->makeCurrent(&this->surface);
-	materials[index].clearTextures();
-	materials.erase(materials.begin()+index);
+	this->materials[index].clearTextures();
+	this->materials.erase(this->materials.begin()+index);
 	emit materialRemoved(index);
 	context->doneCurrent();
 }
@@ -237,22 +249,22 @@ void SharedResources::clearMaterials()
 {
 	auto context = QOpenGLContext::globalShareContext();
 	context->makeCurrent(&this->surface);
-	for (size_t i = 0; i < materials.size(); i++) {
-		materials[i].clearTextures();
+	for (size_t i = 0; i < this->materials.size(); i++) {
+		this->materials[i].clearTextures();
 		emit materialRemoved(i);
 	}
 	context->doneCurrent();
-	materials.clear();
+	this->materials.clear();
 }
 
 ShaderParams SharedResources::getMaterial(unsigned index) const
 {
-	return materials[index];
+	return this->materials[index];
 }
 
 unsigned SharedResources::getMaterialCount() const
 {
-	return materials.size();
+	return this->materials.size();
 }
 
 QOffscreenSurface *SharedResources::getSurface()
