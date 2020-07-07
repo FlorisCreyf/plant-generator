@@ -45,6 +45,7 @@ namespace pg {
 		std::vector<std::vector<KeyFrame>> frames;
 
 		std::vector<KeyFrame> getFrame(int ticks, Stem *stem);
+		size_t getFrameCount() const;
 
 		#ifdef PG_SERIALIZE
 		template<class Archive>

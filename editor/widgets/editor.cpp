@@ -345,7 +345,7 @@ void Editor::mousePressEvent(QMouseEvent *event)
 	QPoint pos = event->pos();
 	if (this->command) {
 		exitCommand(this->command->onMousePress(event));
-	} else if (event->button() == Qt::RightButton && this->ticks < 0) {
+	} else if (event->button() == Qt::RightButton && !isAnimating()) {
 		SaveSelection *selectionCopy;
 		selectionCopy = new SaveSelection(&this->selection);
 		Selector selector(&this->camera);
@@ -365,7 +365,7 @@ void Editor::mousePressEvent(QMouseEvent *event)
 			this->camera.setAction(Camera::Pan);
 		else
 			this->camera.setAction(Camera::Rotate);
-	} else if (event->button() == Qt::LeftButton && this->ticks < 0) {
+	} else if (event->button() == Qt::LeftButton && !isAnimating()) {
 		selectAxis(pos.x(), pos.y());
 		bool axis = this->translationAxes.getSelection();
 		bool hasPoints = this->selection.hasPoints();
@@ -475,7 +475,7 @@ void Editor::paintGL()
 	paintOutline(projection, position);
 
 	/* Paint path lines. */
-	if (this->selection.hasStems() && this->ticks < 0) {
+	if (this->selection.hasStems() && !isAnimating()) {
 		Geometry::Segment segment;
 
 		glDepthFunc(GL_ALWAYS);
@@ -515,7 +515,7 @@ void Editor::paintOutline(const Mat4 &projection, const Vec3 &position)
 	glClear(GL_COLOR_BUFFER_BIT);
 	glViewport(0, 0, width(), height());
 
-	if (this->ticks >= 0) {
+	if (isAnimating()) {
 		auto type = SharedResources::DynamicOutline;
 		glUseProgram(this->shared->getShader(type));
 	} else {
@@ -549,7 +549,7 @@ void Editor::paintOutline(const Mat4 &projection, const Vec3 &position)
 
 void Editor::paintWire(const Mat4 &projection)
 {
-	if (this->ticks >= 0) {
+	if (isAnimating()) {
 		auto type = SharedResources::DynamicWireframe;
 		glUseProgram(this->shared->getShader(type));
 		updateJoints();
@@ -584,7 +584,7 @@ void Editor::paintWire(const Mat4 &projection)
 
 void Editor::paintSolid(const Mat4 &projection, const Vec3 &position)
 {
-	if (this->ticks >= 0) {
+	if (isAnimating()) {
 		auto type = SharedResources::DynamicSolid;
 		glUseProgram(this->shared->getShader(type));
 		updateJoints();
@@ -605,7 +605,7 @@ void Editor::paintSolid(const Mat4 &projection, const Vec3 &position)
 
 void Editor::paintMaterial(const Mat4 &projection)
 {
-	if (this->ticks >= 0) {
+	if (isAnimating()) {
 		auto type = SharedResources::DynamicMaterial;
 		glUseProgram(this->shared->getShader(type));
 		updateJoints();
@@ -720,10 +720,18 @@ void Editor::updateSelection()
 
 void Editor::change()
 {
+	if (isAnimating())
+		endAnimation();
+	updateBuffers();
+	updateSelection();
+	update();
+	emit changed();
+}
+
+void Editor::updateBuffers()
+{
 	if (!isValid())
 		return;
-	if (this->timer->isActive())
-		endAnimation();
 
 	this->mesh.generate();
 
@@ -754,23 +762,32 @@ void Editor::change()
 	}
 
 	doneCurrent();
-	updateSelection();
-	update();
-	emit changed();
 }
 
-void Editor::changeAll()
+void Editor::changeWind()
 {
 	this->scene.animation = this->scene.wind.generate(&this->scene.plant);
-	change();
+	updateBuffers();
+	update();
 }
 
 void Editor::animate()
 {
 	this->ticks++;
-	if (this->ticks >= this->scene.wind.getDuration())
+	int frameCount = this->scene.animation.getFrameCount()-1;
+	int timeStep = this->scene.wind.getTimeStep();
+	if (this->ticks >= frameCount * timeStep)
 		this->ticks = 0;
 	update();
+}
+
+bool Editor::isAnimating()
+{
+	bool animating = this->timer->isActive();
+	bool hasFrames = this->scene.animation.getFrameCount() > 0;
+	if (!hasFrames)
+		endAnimation();
+	return animating && hasFrames;
 }
 
 void Editor::updateJoints()
@@ -787,7 +804,7 @@ void Editor::updateJoints()
 
 void Editor::startAnimation()
 {
-	changeAll();
+	changeWind();
 	this->ticks = 0;
 	this->timer->start();
 }

@@ -141,6 +141,10 @@ void Mesh::addSection(State &state, Quat rotation)
 	Vec2 weights;
 	if (stem->getJoints().size() > 0)
 		updateJointState(state, indices, weights);
+	else {
+		indices = Vec2(state.jointID, 0.0f);
+		weights = Vec2(1.0f, 0.0f);
+	}
 
 	for (int i = 0; i <= stem->getResolution(); i++) {
 		vertex.position = {std::cos(angle), 0.0f, std::sin(angle)};

@@ -85,9 +85,11 @@ editor/widgets/material_editor.cpp \
 editor/widgets/material_viewer.cpp \
 editor/widgets/mesh_editor.cpp \
 editor/widgets/mesh_viewer.cpp \
+editor/widgets/procedural_editor.cpp \
 editor/widgets/property_curve_editor.cpp \
 editor/widgets/property_editor.cpp \
 editor/widgets/stem_editor.cpp \
+editor/widgets/wind_editor.cpp \
 editor/widgets/window.cpp \
 editor/camera.cpp \
 editor/history.cpp \
@@ -162,10 +164,12 @@ editor/widgets/leaf_editor.h \
 editor/widgets/material_editor.h \
 editor/widgets/mesh_editor.h \
 editor/widgets/mesh_viewer.h \
+editor/widgets/procedural_editor.h \
 editor/widgets/property_curve_editor.h \
 editor/widgets/material_viewer.h \
 editor/widgets/property_editor.h \
 editor/widgets/stem_editor.h \
+editor/widgets/wind_editor.h \
 editor/widgets/window.h \
 editor/camera.h \
 editor/history.h \

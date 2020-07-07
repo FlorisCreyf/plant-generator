@@ -63,7 +63,7 @@ public slots:
 public:
 	Editor(SharedResources *shared, KeyMap *keymap, QWidget *parent = 0);
 	void load(const char *filename);
-	void changeAll();
+	void changeWind();
 	void reset();
 	pg::Plant *getPlant();
 	pg::Scene *getScene();
@@ -148,9 +148,11 @@ private:
 	void selectAxis(int, int);
 	void setClickOffset(int, int, pg::Vec3);
 	void updateCamera(int, int);
+	void updateBuffers();
 	void updateJoints();
 	void startAnimation();
 	void endAnimation();
+	bool isAnimating();
 };
 
 #endif /* EDITOR_H */

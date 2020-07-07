@@ -18,7 +18,7 @@
   <property name="styleSheet">
    <string notr="true">
 QWidget {
-	font-size:12px;
+	font-size:11px;
 	color:#ddd;
 } QMenu {
 	background-color:#505050;
@@ -91,7 +91,7 @@ QWidget {
 	titlebar-normal-icon:url(&quot;resources/popup.png&quot;);
 	titlebar-close-icon:url(&quot;resources/close.png&quot;);
 } QDockWidget::title {
-	font-size:11px;
+	font-size:12px;
 	background:#3d3d3d;
 	padding:8px 0px 0 5px;
 } QDockWidget::close-button, QDockWidget::float-button {
@@ -137,17 +137,18 @@ QWidget {
 } QDockWidget QSpinBox, QDockWidget QDoubleSpinBox {
 	font-size:11px;
 	padding-right:0px;
+	padding-left:2px;
 	background:#555;
 	height:20px;
 } QDockWidget QSpinBox::up-button,
   QDockWidget QDoubleSpinBox::up-button {
 	subcontrol-position:top right;
-	background-color:#555;
+	background-color:#505050;
 	width:20px;
 } QDockWidget QSpinBox::down-button,
   QDockWidget QDoubleSpinBox::down-button {
 	subcontrol-position:bottom right;
-	background-color:#555;
+	background-color:#505050;
 	width:20px;
 } QDockWidget QSpinBox::up-arrow,
   QDockWidget QDoubleSpinBox::up-arrow {
@@ -296,6 +297,7 @@ QWidget {
 	color:#ccc;
 	padding:4px;
 	border:0;
+	font-size:12px;
 } QToolButton:hover {
 	font-weight:bold;
 } QToolButton:checked {

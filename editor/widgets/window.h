@@ -26,7 +26,7 @@
 #include "editor.h"
 #include "generator_curve_editor.h"
 #include "property_curve_editor.h"
-#include "generator_editor.h"
+#include "procedural_editor.h"
 #include "material_editor.h"
 #include "mesh_editor.h"
 #include "key_editor.h"
@@ -59,7 +59,7 @@ private:
 	PropertyEditor *propertyEditor;
 	GeneratorCurveEditor *gCurveEditor;
 	PropertyCurveEditor *pCurveEditor;
-	GeneratorEditor *genEditor;
+	ProceduralEditor *procEditor;
 	MaterialEditor *materialEditor;
 	MeshEditor *meshEditor;
 	KeyEditor *keyEditor;

@@ -28,8 +28,11 @@ namespace pg {
 	class Wind {
 	public:
 		Wind();
+		void setSeed(int seed);
 		void setFrameCount(int count);
+		int getFrameCount() const;
 		void setTimeStep(int step);
+		int getTimeStep() const;
 		int getDuration() const;
 		void setSpeed(float speed);
 		void setDirection(Vec3 direction);
@@ -39,6 +42,7 @@ namespace pg {
 		Vec3 direction;
 		float speed;
 		int timeStep;
+		int seed;
 		int frameCount;
 		std::mt19937 randomGenerator;
 
@@ -60,6 +64,7 @@ namespace pg {
 			ar & speed;
 			ar & timeStep;
 			ar & frameCount;
+			ar & seed;
 		}
 		#endif /* PG_SERIALIZE */
 	};

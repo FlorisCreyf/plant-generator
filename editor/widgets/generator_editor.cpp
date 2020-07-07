@@ -38,7 +38,16 @@ QSize GeneratorEditor::sizeHint() const
 
 void GeneratorEditor::createInterface()
 {
-	QFormLayout *form = new QFormLayout(this);
+	this->group = new QGroupBox(tr("Stem Generator"), this);
+	this->group->setSizePolicy(
+		QSizePolicy::Expanding, QSizePolicy::Minimum);
+
+	QBoxLayout *layout = new QBoxLayout(QBoxLayout::TopToBottom, this);
+	layout->setMargin(0);
+	layout->setSpacing(0);
+	layout->addWidget(this->group);
+
+	QFormLayout *form = new QFormLayout(this->group);
 	form->setSizeConstraint(QLayout::SetMinimumSize);
 	form->setSpacing(0);
 	form->setMargin(0);

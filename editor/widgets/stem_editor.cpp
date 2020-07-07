@@ -101,13 +101,13 @@ void StemEditor::createInterface()
 	this->capMaterialValue = new QComboBox;
 	form->addRow(this->capMaterialLabel, this->capMaterialValue);
 
-	this->collarXLabel = new QLabel(tr("Collar (X)"));
+	this->collarXLabel = new QLabel(tr("Collar.X"));
 	this->collarXValue = new QDoubleSpinBox;
 	this->collarXValue->setSingleStep(0.1);
 	this->collarXValue->setDecimals(3);
 	form->addRow(this->collarXLabel, this->collarXValue);
 
-	this->collarYLabel = new QLabel(tr("Collar (Y)"));
+	this->collarYLabel = new QLabel(tr("Collar.Y"));
 	this->collarYValue = new QDoubleSpinBox;
 	this->collarYValue->setSingleStep(0.1);
 	this->collarYValue->setDecimals(3);

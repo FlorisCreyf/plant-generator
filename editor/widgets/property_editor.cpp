@@ -16,6 +16,7 @@
  */
 
 #include "property_editor.h"
+#include "definitions.h"
 
 PropertyEditor::PropertyEditor(
 	SharedResources *shared, Editor *editor, QWidget *parent) :
@@ -93,5 +94,5 @@ void PropertyEditor::removeMesh(unsigned index)
 
 QSize PropertyEditor::sizeHint() const
 {
-	return QSize(350, 200);
+	return QSize(UI_WIDGET_WIDTH, UI_WIDGET_HEIGHT);
 }

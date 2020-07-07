@@ -88,7 +88,7 @@ void Window::createEditors()
 		this->propertyEditor, SLOT(removeMaterial(unsigned)));
 
 	this->keyEditor = new KeyEditor(&keymap, this);
-	dw[1] = createDockWidget("Keys", this->keyEditor, true);
+	dw[1] = createDockWidget("Key Map", this->keyEditor, true);
 	addDockWidget(static_cast<Qt::DockWidgetArea>(1), dw[1]);
 
 	this->pCurveEditor = new PropertyCurveEditor(
@@ -112,8 +112,8 @@ void Window::createEditors()
 	dw[4] = createDockWidget("Meshes", this->meshEditor, true);
 	addDockWidget(static_cast<Qt::DockWidgetArea>(1), dw[4]);
 
-	this->genEditor = new GeneratorEditor(this->editor, this);
-	dw[5] = createDockWidget("Generator", this->genEditor, true);
+	this->procEditor = new ProceduralEditor(this->editor, this);
+	dw[5] = createDockWidget("Generator", this->procEditor, true);
 	addDockWidget(static_cast<Qt::DockWidgetArea>(1), dw[5]);
 
 	connect(this->meshEditor, SIGNAL(meshAdded(pg::Geometry)),
@@ -281,7 +281,7 @@ void Window::exportWavefrontDialogBox()
 
 void Window::exportColladaDialogBox()
 {
-	this->editor->changeAll();
+	this->editor->changeWind();
 	const pg::Mesh *mesh = this->editor->getMesh();
 	const pg::Scene *scene = this->editor->getScene();
 

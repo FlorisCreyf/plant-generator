@@ -27,6 +27,7 @@ class GeneratorEditor : public Form {
 
 	Editor *editor;
 
+	QGroupBox *group;
 	QLabel *seedLabel;
 	QSpinBox *seedValue;
 	QLabel *depthLabel;

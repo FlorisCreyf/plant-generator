@@ -62,3 +62,8 @@ void Animation::createFrame(float t, size_t index1, size_t index2, Stem *stem)
 		child = child->getSibling();
 	}
 }
+
+size_t Animation::getFrameCount() const
+{
+	return this->frames.empty() ? 0 : this->frames[0].size();
+}

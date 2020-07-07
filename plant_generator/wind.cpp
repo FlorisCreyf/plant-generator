@@ -22,9 +22,14 @@ using std::vector;
 
 Wind::Wind()
 {
+	this->seed = 0;
 	this->timeStep = 30;
 	this->frameCount = 21;
-	this->randomGenerator.seed(0);
+}
+
+void Wind::setSeed(int seed)
+{
+	this->seed = seed;
 }
 
 void Wind::setFrameCount(int count)
@@ -32,9 +37,19 @@ void Wind::setFrameCount(int count)
 	this->frameCount = count;
 }
 
+int Wind::getFrameCount() const
+{
+	return this->frameCount;
+}
+
 void Wind::setTimeStep(int step)
 {
 	this->timeStep = step;
+}
+
+int Wind::getTimeStep() const
+{
+	return this->timeStep;
 }
 
 int Wind::getDuration() const
@@ -56,9 +71,10 @@ Animation Wind::generate(Plant *plant)
 {
 	Animation animation;
 	Stem *root = plant->getRoot();
-	if (!root)
+	if (!root || this->speed <= 0.0f)
 		return animation;
 
+	this->randomGenerator.seed(this->seed);
 	animation.timeStep = this->timeStep;
 	root->clearJoints();
 	size_t count = 0;

@@ -60,19 +60,19 @@ void LeafEditor::createInterface()
 	form->setSpacing(UI_FORM_SPACING);
 	form->setMargin(UI_FORM_MARGIN);
 
-	this->scaleXLabel = new QLabel(tr("Scale (X)"));
+	this->scaleXLabel = new QLabel(tr("Scale.X"));
 	this->scaleXValue = new QDoubleSpinBox;
 	this->scaleXValue->setMinimum(0.01);
 	this->scaleXValue->setSingleStep(0.1);
 	form->addRow(this->scaleXLabel, this->scaleXValue);
 
-	this->scaleYLabel = new QLabel(tr("Scale (Y)"));
+	this->scaleYLabel = new QLabel(tr("Scale.Y"));
 	this->scaleYValue = new QDoubleSpinBox;
 	this->scaleYValue->setMinimum(0.01);
 	this->scaleYValue->setSingleStep(0.1);
 	form->addRow(this->scaleYLabel, this->scaleYValue);
 
-	this->scaleZLabel = new QLabel(tr("Scale (Z)"));
+	this->scaleZLabel = new QLabel(tr("Scale.Z"));
 	this->scaleZValue = new QDoubleSpinBox;
 	this->scaleZValue->setMinimum(0.01);
 	this->scaleZValue->setSingleStep(0.1);
