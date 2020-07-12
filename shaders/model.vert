@@ -50,9 +50,7 @@ vec4 getAnimatedPoint()
 	v2 = multQuat(v2, conjugateQuat(joint.rotation));
 	v2 += joint.translation2;
 
-	v1 = weights.x*v1 + weights.y*v2;
-	v1.w = 1.0f;
-	return v1;
+	return weights.x*v1 + weights.y*v2;
 }
 
 #endif /* DYNAMIC */

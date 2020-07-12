@@ -37,7 +37,6 @@ void StorageBuffer::load(const void *data, size_t size)
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, this->ssbo);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, size, data, this->usage);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, this->index, this->ssbo);
-
 }
 
 bool StorageBuffer::update(const void *data, size_t size)
@@ -49,11 +48,6 @@ bool StorageBuffer::update(const void *data, size_t size)
 		glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, size, data);
 		return true;
 	}
-}
-
-void StorageBuffer::bind()
-{
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, this->index, this->ssbo);
 }
 
 size_t StorageBuffer::getSize() const

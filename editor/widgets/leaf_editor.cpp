@@ -184,12 +184,12 @@ void LeafEditor::blockSignals(bool block)
 void LeafEditor::enable(bool enable)
 {
 	if (!enable) {
-		indicateSimilarities(this->scaleXValue);
-		indicateSimilarities(this->scaleYValue);
-		indicateSimilarities(this->scaleZValue);
-		indicateSimilarities(this->materialValue);
-		indicateSimilarities(this->meshValue);
-		indicateSimilarities(this->customValue);
+		indicateSimilarities(this->scaleXLabel);
+		indicateSimilarities(this->scaleYLabel);
+		indicateSimilarities(this->scaleZLabel);
+		indicateSimilarities(this->materialLabel);
+		indicateSimilarities(this->meshLabel);
+		indicateSimilarities(this->customLabel);
 	}
 	this->scaleXValue->setEnabled(enable);
 	this->scaleYValue->setEnabled(enable);
@@ -298,7 +298,7 @@ void LeafEditor::changeYScale(double yscale)
 
 void LeafEditor::changeZScale(double zscale)
 {
-	beginChanging(this->scaleYLabel);
+	beginChanging(this->scaleZLabel);
 	auto instances = this->editor->getSelection()->getLeafInstances();
 	for (auto &instance : instances) {
 		Stem *stem = instance.first;

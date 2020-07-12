@@ -31,7 +31,6 @@ public:
 	void initialize(GLenum usage, GLuint index);
 	void load(const void *data, size_t size);
 	bool update(const void *data, size_t size);
-	void bind();
 	size_t getSize() const;
 };
 

@@ -501,7 +501,7 @@ void Editor::paintGL()
 
 		if (this->selection.hasPoints())
 			paintAxes();
-	} else if (this->selection.hasLeaves())
+	} else if (this->selection.hasLeaves() && !isAnimating())
 		paintAxes();
 
 	glFlush();
@@ -785,9 +785,10 @@ bool Editor::isAnimating()
 {
 	bool animating = this->timer->isActive();
 	bool hasFrames = this->scene.animation.getFrameCount() > 0;
+	bool hasDuration = this->scene.wind.getDuration() > 0;
 	if (!hasFrames)
 		endAnimation();
-	return animating && hasFrames;
+	return animating && hasFrames && hasDuration;
 }
 
 void Editor::updateJoints()
