@@ -97,12 +97,6 @@ void MeshEditor::createFields(QVBoxLayout *layout)
 	this->emptyButton = new QPushButton("Empty", this);
 	this->emptyButton->setFixedHeight(UI_FIELD_HEIGHT);
 
-	QString style = tr("text-align:left;padding:0 5px;");
-	this->customButton->setStyleSheet(style);
-	this->planeButton->setStyleSheet(style);
-	this->perpPlaneButton->setStyleSheet(style);
-	this->emptyButton->setStyleSheet(style);
-
 	layout->addWidget(this->customButton);
 	layout->addWidget(this->planeButton);
 	layout->addWidget(this->perpPlaneButton);

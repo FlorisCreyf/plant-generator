@@ -36,7 +36,7 @@ CurveViewer::CurveViewer(SharedResources *shared, QWidget *parent) :
 
 	this->camera.setTarget(Vec3(0.5f, 0.0f, 0.5f));
 	this->camera.setOrientation(180.0f, -180.0f);
-	this->camera.setDistance(1.0f);
+	this->camera.setDistance(0.7f);
 	this->camera.setPanSpeed(0.004f);
 	this->camera.setZoom(0.01f, 0.3f, 2.0f);
 

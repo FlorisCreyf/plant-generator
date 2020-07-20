@@ -128,6 +128,10 @@ void Window::createEditors()
 	dw[6] = createDockWidget("Generator Curves", this->gCurveEditor, false);
 	addDockWidget(static_cast<Qt::DockWidgetArea>(1), dw[6]);
 
+	connect(this->procEditor->getGeneratorEditor(),
+		SIGNAL(derivationModified()),
+		this->gCurveEditor, SLOT(setFields()));
+
 	tabifyDockWidget(dw[1], dw[5]);
 	tabifyDockWidget(dw[1], dw[0]);
 	tabifyDockWidget(dw[4], dw[3]);

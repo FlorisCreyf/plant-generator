@@ -818,10 +818,11 @@ void Editor::endAnimation()
 
 void Editor::createDefaultPlant()
 {
-	pg::Derivation derivation = this->generator.getDerivation();
+	pg::DerivationTree dvnTree = this->generator.getDerivation();
+	pg::DerivationNode *dvnRoot = dvnTree.createRoot();
+	pg::Derivation derivation;
 	std::random_device rd;
-	derivation.seed = rd();
-	derivation.depth = 1;
+	dvnTree.setSeed(rd());
 	derivation.stemDensity = 1.0f;
 	derivation.stemDensityCurve.setDefault(1);
 	derivation.stemStart = 2.0f;
@@ -829,7 +830,8 @@ void Editor::createDefaultPlant()
 	derivation.leafDensityCurve.setDefault(1);
 	derivation.leafStart = 1.0f;
 	derivation.lengthFactor = 50.0f;
-	this->generator.setDerivation(derivation);
+	dvnRoot->setData(derivation);
+	this->generator.setDerivation(dvnTree);
 	this->generator.grow();
 	this->scene.wind.setSpeed(0.5f);
 	this->scene.wind.setDirection(Vec3(0.0f, 0.0f, 1.0f));

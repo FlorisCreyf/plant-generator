@@ -29,7 +29,7 @@ GeneratorCurveEditor::GeneratorCurveEditor(
 	this->degree->installEventFilter(this);
 	this->degree->view()->installEventFilter(this);
 	connect(this->editor, SIGNAL(selectionChanged()),
-		this, SLOT(select()));
+		this, SLOT(setFields()));
 }
 
 void GeneratorCurveEditor::createSelectionBar()
@@ -42,9 +42,15 @@ void GeneratorCurveEditor::createSelectionBar()
 	this->layout->addWidget(this->selectionBox);
 	connect(this->selectionBox, SIGNAL(currentIndexChanged(int)),
 		this, SLOT(select()));
+
+	this->nodeSelectionBox = new QComboBox(this);
+	this->nodeSelectionBox->installEventFilter(this);
+	this->layout->addWidget(this->nodeSelectionBox);
+	connect(this->nodeSelectionBox, SIGNAL(currentIndexChanged(int)),
+		this, SLOT(select()));
 }
 
-void GeneratorCurveEditor::select()
+void GeneratorCurveEditor::setFields()
 {
 	auto instances = this->editor->getSelection()->getStemInstances();
 	if (instances.empty()) {
@@ -53,16 +59,42 @@ void GeneratorCurveEditor::select()
 		return;
 	}
 
-	pg::Stem *stem = instances.rbegin()->first;
-	pg::Derivation dvn = stem->getDerivation();
+	pg::Stem *stem = instances.begin()->first;
+	pg::DerivationTree dvnTree = stem->getDerivation();
+	std::vector<std::string> names = dvnTree.getNames();
+	this->nodeSelectionBox->clear();
+	if (names.empty())
+		this->nodeSelectionBox->addItem("1");
+	else
+		for (std::string name : names) {
+			QString item = QString::fromStdString(name);
+			this->nodeSelectionBox->addItem(item);
+		}
 
-	switch (this->selectionBox->currentIndex()) {
-	case 0:
-		setSpline(dvn.stemDensityCurve);
-		break;
-	case 1:
-		setSpline(dvn.leafDensityCurve);
-		break;
+	select();
+}
+
+void GeneratorCurveEditor::select()
+{
+	clear();
+	auto instances = this->editor->getSelection()->getStemInstances();
+	if (instances.empty())
+		return;
+
+	int index = this->selectionBox->currentIndex();
+	pg::Stem *stem = instances.begin()->first;
+	pg::DerivationTree dvnTree = stem->getDerivation();
+	std::string name = this->nodeSelectionBox->currentText().toStdString();
+	pg::DerivationNode *root = dvnTree.get(name);
+	if (root) {
+		if (index == 0)
+			setSpline(root->getData().stemDensityCurve);
+		else
+			setSpline(root->getData().leafDensityCurve);
+	} else {
+		Spline spline;
+		spline.setDefault(1);
+		setSpline(spline);
 	}
 
 	this->degree->blockSignals(true);
@@ -75,6 +107,7 @@ void GeneratorCurveEditor::select()
 void GeneratorCurveEditor::enable(bool enable)
 {
 	this->degree->setEnabled(enable);
+	this->nodeSelectionBox->setEnabled(enable);
 }
 
 void GeneratorCurveEditor::clear()
@@ -100,19 +133,22 @@ void GeneratorCurveEditor::change(bool curveChanged)
 
 void GeneratorCurveEditor::updateDerivation()
 {
+	std::string name = this->nodeSelectionBox->currentText().toStdString();
 	auto instances = this->editor->getSelection()->getStemInstances();
 	for (auto instance : instances) {
+		int index = this->selectionBox->currentIndex();
 		pg::Stem *stem = instance.first;
-		pg::Derivation dvn = stem->getDerivation();
-		switch (this->selectionBox->currentIndex()) {
-		case 0:
+		pg::DerivationTree dvnTree = stem->getDerivation();
+		pg::DerivationNode *dvnNode = dvnTree.get(name);
+		if (!dvnNode)
+			dvnNode = dvnTree.createRoot();
+		pg::Derivation dvn = dvnNode->getData();
+		if (index == 0)
 			dvn.stemDensityCurve = this->spline;
-			break;
-		case 1:
+		else
 			dvn.leafDensityCurve = this->spline;
-			break;
-		}
-		stem->setDerivation(dvn);
+		dvnNode->setData(dvn);
+		stem->setDerivation(dvnTree);
 	}
 }
 
@@ -134,5 +170,6 @@ bool GeneratorCurveEditor::isDescendant(QWidget *widget)
 {
 	return isAncestorOf(widget) ||
 		widget == this->degree->view() ||
-		widget == this->selectionBox->view();
+		widget == this->selectionBox->view() ||
+		widget == this->nodeSelectionBox->view();
 }

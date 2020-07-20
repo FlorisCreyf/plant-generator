@@ -30,8 +30,10 @@ void Form::setValueWidths(QFormLayout *layout)
 	layout->setLabelAlignment(Qt::AlignRight);
 	for(int i = 0; i < layout->rowCount(); i++) {
 		QLayoutItem *item = layout->itemAt(i, QFormLayout::FieldRole);
-		if (item && item->widget())
+		if (item && item->widget()) {
 			item->widget()->setFixedWidth(UI_FIELD_WIDTH);
+			item->widget()->setFixedHeight(UI_FIELD_HEIGHT);
+		}
 	}
 }
 

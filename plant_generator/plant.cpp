@@ -14,6 +14,7 @@
  */
 
 #include "plant.h"
+#include <assert.h>
 
 using namespace pg;
 using std::vector;
@@ -82,17 +83,17 @@ Stem *Plant::createRoot()
 
 void Plant::decouple(Stem *stem)
 {
-	if (stem == this->root)
-		this->root = nullptr;
+	if (stem == this->root) {
+		assert(stem->prevSibling == nullptr);
+		this->root = stem->nextSibling;
+	}
 	if (stem->prevSibling)
 		stem->prevSibling->nextSibling = stem->nextSibling;
 	if (stem->nextSibling)
 		stem->nextSibling->prevSibling = stem->prevSibling;
 	if (stem->parent && stem->parent->child == stem) {
-		if (stem->prevSibling)
-			stem->parent->child = stem->prevSibling;
-		else
-			stem->parent->child = stem->nextSibling;
+		assert(stem->prevSibling == nullptr);
+		stem->parent->child = stem->nextSibling;
 	}
 }
 

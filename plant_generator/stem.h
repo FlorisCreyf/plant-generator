@@ -26,7 +26,6 @@
 #include <memory>
 
 #ifdef PG_SERIALIZE
-#include <boost/serialization/unique_ptr.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #endif
 
@@ -61,7 +60,7 @@ namespace pg {
 		float maxRadius;
 
 		bool custom;
-		std::unique_ptr<Derivation> derivation;
+		DerivationTree derivation;
 
 		void updatePositions(Stem *stem);
 		void copy(const Stem &stem);
@@ -107,8 +106,8 @@ namespace pg {
 
 		void setCustom(bool custom);
 		bool isCustom() const;
-		void setDerivation(Derivation derivation);
-		Derivation getDerivation() const;
+		void setDerivation(DerivationTree derivation);
+		DerivationTree getDerivation() const;
 
 		size_t addLeaf(const Leaf &leaf);
 		void insertLeaf(const Leaf &leaf, size_t index);

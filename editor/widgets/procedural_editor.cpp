@@ -36,3 +36,13 @@ QSize ProceduralEditor::sizeHint() const
 {
 	return QSize(UI_WIDGET_WIDTH, UI_WIDGET_HEIGHT);
 }
+
+const GeneratorEditor *ProceduralEditor::getGeneratorEditor() const
+{
+	return this->genEditor;
+}
+
+const WindEditor *ProceduralEditor::getWindEditor() const
+{
+	return this->windEditor;
+}

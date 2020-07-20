@@ -24,15 +24,15 @@ namespace pg {
 	class PseudoGenerator {
 		Plant *plant;
 		std::mt19937 randomGenerator;
-		Derivation dvn;
+		DerivationTree dvn;
 
 		Vec3 getStemDirection(Stem *);
 		float getRadius(Stem *, float, float);
 		float getMinRadius(float);
-		void setPath(Stem *, Vec3);
-		void addLateralStems(Stem *);
-		void addLateralStem(Stem *, float);
-		void addLeaves(Stem *);
+		void setPath(Stem *, Vec3, const Derivation &);
+		void addLateralStems(Stem *, const DerivationNode *);
+		void addLateralStem(Stem *, float, const DerivationNode *);
+		void addLeaves(Stem *, const Derivation &);
 		void addLeaf(Stem *, float, Quat);
 		Quat alternate(Quat);
 
@@ -41,8 +41,8 @@ namespace pg {
 		void grow();
 		void grow(Stem *stem);
 		void reset();
-		void setDerivation(Derivation dv);
-		Derivation getDerivation() const;
+		void setDerivation(DerivationTree dv);
+		DerivationTree getDerivation() const;
 	};
 }
 

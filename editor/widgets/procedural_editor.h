@@ -31,6 +31,8 @@ class ProceduralEditor : public QWidget {
 
 public:
 	ProceduralEditor(Editor *editor, QWidget *parent);
+	const GeneratorEditor *getGeneratorEditor() const;
+	const WindEditor *getWindEditor() const;
 	QSize sizeHint() const;
 };
 

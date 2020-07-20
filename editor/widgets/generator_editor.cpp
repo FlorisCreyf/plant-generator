@@ -19,8 +19,11 @@
 #include "definitions.h"
 #include <limits>
 
+using pg::DerivationTree;
+using pg::DerivationNode;
 using pg::Derivation;
 using pg::Stem;
+using std::string;
 
 GeneratorEditor::GeneratorEditor(Editor *editor, QWidget *parent) :
 	Form(parent), editor(editor), generate(nullptr)
@@ -62,6 +65,9 @@ void GeneratorEditor::createInterface()
 	this->seedValue->setSingleStep(1);
 	form->addRow(this->seedLabel, this->seedValue);
 
+	this->nodeValue = new QComboBox(this);
+	form->addRow(tr("Node"), this->nodeValue);
+
 	this->stemDensityLabel = new QLabel(tr("Stem Density"));
 	this->stemDensityValue = new QDoubleSpinBox(this);
 	this->stemDensityValue->setSingleStep(0.1);
@@ -101,45 +107,51 @@ void GeneratorEditor::createInterface()
 	this->lengthFactorValue->setRange(0, std::numeric_limits<float>::max());
 	form->addRow(this->lengthFactorLabel, this->lengthFactorValue);
 
-	this->depthLabel = new QLabel(tr("Depth"));
-	this->depthValue = new QSpinBox(this);
-	this->depthValue->setRange(1, 10);
-	form->addRow(this->depthLabel, this->depthValue);
+	this->childButton = new QPushButton(tr("Add Child Node"), this);
+	form->addRow("", this->childButton);
+	this->siblingButton = new QPushButton(tr("Add Sibling Node"), this);
+	form->addRow("", this->siblingButton);
+	this->removeButton = new QPushButton(tr("Remove Node"), this);
+	form->addRow("", this->removeButton);
 
 	setValueWidths(form);
 
+	connect(this->nodeValue, SIGNAL(currentIndexChanged(int)),
+		this, SLOT(select()));
+	connect(this->childButton, SIGNAL(clicked()),
+		this, SLOT(addChildNode()));
+	connect(this->siblingButton, SIGNAL(clicked()),
+		this, SLOT(addSiblingNode()));
+	connect(this->removeButton, SIGNAL(clicked()),
+		this, SLOT(removeNode()));
 	connect(this->seedValue, SIGNAL(valueChanged(int)),
-		this, SLOT(changeSeed(int)));
+		this, SLOT(change()));
 	connect(this->seedValue, SIGNAL(editingFinished()),
 		this, SLOT(finishChanging()));
 	connect(this->arrangementValue, SIGNAL(currentIndexChanged(int)),
-		this, SLOT(changeArrangement(int)));
-	connect(this->depthValue, SIGNAL(valueChanged(int)),
-		this, SLOT(changeDepth(int)));
-	connect(this->depthValue, SIGNAL(editingFinished()),
-		this, SLOT(finishChanging()));
+		this, SLOT(changeOnce()));
 	connect(this->stemDensityValue, SIGNAL(valueChanged(double)),
-		this, SLOT(changeStemDensity(double)));
+		this, SLOT(change()));
 	connect(this->stemDensityValue, SIGNAL(editingFinished()),
 		this, SLOT(finishChanging()));
 	connect(this->stemStartValue, SIGNAL(valueChanged(double)),
-		this, SLOT(changeStemStart(double)));
+		this, SLOT(change()));
 	connect(this->stemStartValue, SIGNAL(editingFinished()),
 		this, SLOT(finishChanging()));
 	connect(this->leafDensityValue, SIGNAL(valueChanged(double)),
-		this, SLOT(changeLeafDensity(double)));
+		this, SLOT(change()));
 	connect(this->leafDensityValue, SIGNAL(editingFinished()),
 		this, SLOT(finishChanging()));
 	connect(this->leafStartValue, SIGNAL(valueChanged(double)),
-		this, SLOT(changeLeafStart(double)));
+		this, SLOT(change()));
 	connect(this->leafStartValue, SIGNAL(editingFinished()),
 		this, SLOT(finishChanging()));
 	connect(this->radiusThresholdValue, SIGNAL(valueChanged(double)),
-		this, SLOT(changeRadiusThreshold(double)));
+		this, SLOT(change()));
 	connect(this->radiusThresholdValue, SIGNAL(editingFinished()),
 		this, SLOT(finishChanging()));
 	connect(this->lengthFactorValue, SIGNAL(valueChanged(double)),
-		this, SLOT(changeLengthFactor(double)));
+		this, SLOT(change()));
 	connect(this->lengthFactorValue, SIGNAL(editingFinished()),
 		this, SLOT(finishChanging()));
 }
@@ -150,68 +162,53 @@ void GeneratorEditor::setFields()
 	auto instances = this->editor->getSelection()->getStemInstances();
 	if (instances.empty())
 		return;
+	DerivationTree dvnTree = instances.begin()->first->getDerivation();
+	setFields(dvnTree, "");
+	enable(true);
+}
 
+void GeneratorEditor::setFields(const DerivationTree &dvnTree, string name)
+{
 	blockSignals(true);
-	auto it = instances.begin();
-	Derivation derivation = it->first->getDerivation();
-	Derivation dvn1 = it->first->getDerivation();
-	while (++it != instances.end()) {
-		Derivation dvn2 = it->first->getDerivation();
-		if (dvn1.seed != dvn2.seed)
-			indicateDifferences(this->seedLabel);
-		if (dvn1.stemDensity != dvn2.stemDensity)
-			indicateDifferences(this->stemDensityLabel);
-		if (dvn1.stemStart != dvn2.stemStart)
-			indicateDifferences(this->stemStartLabel);
-		if (dvn1.leafDensity != dvn2.leafDensity)
-			indicateDifferences(this->leafDensityLabel);
-		if (dvn1.leafStart != dvn2.leafStart)
-			indicateDifferences(this->leafStartLabel);
-		if (dvn1.radiusThreshold != dvn2.radiusThreshold)
-			indicateDifferences(this->radiusThresholdLabel);
-		if (dvn1.depth != dvn2.depth)
-			indicateDifferences(this->depthLabel);
-		if (dvn1.lengthFactor != dvn2.lengthFactor)
-			indicateDifferences(this->lengthFactorLabel);
-		if (dvn1.arrangement != dvn2.arrangement)
-			indicateDifferences(this->arrangementLabel);
-		dvn1 = dvn2;
-	}
-	this->seedValue->setValue(derivation.seed);
+	DerivationNode *dvnNode = dvnTree.get(name);
+	Derivation derivation;
+	this->nodeValue->clear();
+	if (dvnNode) {
+		std::vector<string> names = dvnTree.getNames();
+		for (string name : names)
+			this->nodeValue->addItem(QString::fromStdString(name));
+		derivation = dvnNode->getData();
+	} else
+		this->nodeValue->addItem("1");
+
+	if (!name.empty())
+		this->nodeValue->setCurrentText(QString::fromStdString(name));
+
+	this->seedValue->setValue(dvnTree.getSeed());
 	this->stemDensityValue->setValue(derivation.stemDensity);
 	this->stemStartValue->setValue(derivation.stemStart);
 	this->leafDensityValue->setValue(derivation.leafDensity);
 	this->leafStartValue->setValue(derivation.leafStart);
 	this->radiusThresholdValue->setValue(derivation.radiusThreshold);
-	this->depthValue->setValue(derivation.depth);
 	this->lengthFactorValue->setValue(derivation.lengthFactor);
 	this->arrangementValue->setCurrentIndex(derivation.arrangement);
-	enable(true);
 	blockSignals(false);
 }
 
 void GeneratorEditor::enable(bool enable)
 {
-	if (!enable) {
-		indicateSimilarities(this->seedLabel);
-		indicateSimilarities(this->stemDensityLabel);
-		indicateSimilarities(this->stemStartLabel);
-		indicateSimilarities(this->leafDensityLabel);
-		indicateSimilarities(this->leafStartLabel);
-		indicateSimilarities(this->radiusThresholdLabel);
-		indicateSimilarities(this->depthLabel);
-		indicateSimilarities(this->lengthFactorLabel);
-		indicateSimilarities(this->arrangementLabel);
-	}
 	this->seedValue->setEnabled(enable);
 	this->stemDensityValue->setEnabled(enable);
 	this->stemStartValue->setEnabled(enable);
 	this->leafDensityValue->setEnabled(enable);
 	this->leafStartValue->setEnabled(enable);
 	this->radiusThresholdValue->setEnabled(enable);
-	this->depthValue->setEnabled(enable);
 	this->lengthFactorValue->setEnabled(enable);
 	this->arrangementValue->setEnabled(enable);
+	this->childButton->setEnabled(enable);
+	this->siblingButton->setEnabled(enable);
+	this->removeButton->setEnabled(enable);
+	this->nodeValue->setEnabled(enable);
 }
 
 void GeneratorEditor::blockSignals(bool block)
@@ -222,131 +219,55 @@ void GeneratorEditor::blockSignals(bool block)
 	this->leafDensityValue->blockSignals(block);
 	this->leafStartValue->blockSignals(block);
 	this->radiusThresholdValue->blockSignals(block);
-	this->depthValue->blockSignals(block);
 	this->lengthFactorValue->blockSignals(block);
 	this->arrangementValue->blockSignals(block);
-}
-
-void GeneratorEditor::changeSeed(int seed)
-{
-	beginChanging(this->seedLabel);
-	auto instances = this->editor->getSelection()->getStemInstances();
-	for (auto &instance : instances) {
-		Derivation dvn = instance.first->getDerivation();
-		dvn.seed = seed;
-		instance.first->setDerivation(dvn);
-	}
-	change();
-}
-
-void GeneratorEditor::changeStemDensity(double density)
-{
-	beginChanging(this->stemDensityLabel);
-	auto instances = this->editor->getSelection()->getStemInstances();
-	for (auto &instance : instances) {
-		Derivation dvn = instance.first->getDerivation();
-		dvn.stemDensity = density;
-		instance.first->setDerivation(dvn);
-	}
-	change();
-}
-
-void GeneratorEditor::changeLeafDensity(double density)
-{
-	beginChanging(this->leafDensityLabel);
-	auto instances = this->editor->getSelection()->getStemInstances();
-	for (auto &instance : instances) {
-		Derivation dvn = instance.first->getDerivation();
-		dvn.leafDensity = density;
-		instance.first->setDerivation(dvn);
-	}
-	change();
-}
-
-void GeneratorEditor::changeStemStart(double start)
-{
-	beginChanging(this->stemStartLabel);
-	auto instances = this->editor->getSelection()->getStemInstances();
-	for (auto &instance : instances) {
-		Derivation dvn = instance.first->getDerivation();
-		dvn.stemStart = start;
-		instance.first->setDerivation(dvn);
-	}
-	change();
-}
-
-void GeneratorEditor::changeLeafStart(double start)
-{
-	beginChanging(this->leafStartLabel);
-	auto instances = this->editor->getSelection()->getStemInstances();
-	for (auto &instance : instances) {
-		Derivation dvn = instance.first->getDerivation();
-		dvn.leafStart = start;
-		instance.first->setDerivation(dvn);
-	}
-	change();
-}
-
-void GeneratorEditor::changeRadiusThreshold(double threshold)
-{
-	beginChanging(this->radiusThresholdLabel);
-	auto instances = this->editor->getSelection()->getStemInstances();
-	for (auto &instance : instances) {
-		Derivation dvn = instance.first->getDerivation();
-		dvn.radiusThreshold = threshold;
-		instance.first->setDerivation(dvn);
-	}
-	change();
-}
-
-void GeneratorEditor::changeLengthFactor(double factor)
-{
-	beginChanging(this->lengthFactorLabel);
-	auto instances = this->editor->getSelection()->getStemInstances();
-	for (auto &instance : instances) {
-		Derivation dvn = instance.first->getDerivation();
-		dvn.lengthFactor = factor;
-		instance.first->setDerivation(dvn);
-	}
-	change();
-}
-
-void GeneratorEditor::changeArrangement(int index)
-{
-	beginChanging(this->arrangementLabel);
-	auto instances = this->editor->getSelection()->getStemInstances();
-	Derivation::Arrangement arrangement;
-	arrangement = static_cast<pg::Derivation::Arrangement>(index);
-	for (auto &instance : instances) {
-		Derivation dvn = instance.first->getDerivation();
-		dvn.arrangement = arrangement;
-		instance.first->setDerivation(dvn);
-	}
-	change();
-	finishChanging();
-}
-
-void GeneratorEditor::changeDepth(int depth)
-{
-	beginChanging(this->depthLabel);
-	auto instances = this->editor->getSelection()->getStemInstances();
-	for (auto &instance : instances) {
-		Derivation dvn = instance.first->getDerivation();
-		dvn.depth = depth;
-		instance.first->setDerivation(dvn);
-	}
-	change();
+	this->nodeValue->blockSignals(block);
 }
 
 void GeneratorEditor::change()
 {
+	auto instances = this->editor->getSelection()->getStemInstances();
+	if (instances.empty())
+		return;
+
+	beginChanging();
+	Stem *stem = instances.begin()->first;
+	DerivationTree dvnTree = stem->getDerivation();
+	dvnTree.setSeed(this->seedValue->value());
+
+	DerivationNode *dvnNode;
+	if (dvnTree.getRoot()) {
+		std::string name = this->nodeValue->currentText().toStdString();
+		dvnNode = dvnTree.get(name);
+	} else
+		dvnNode = dvnTree.createRoot();
+	Derivation dvn = dvnNode->getData();
+
+	dvn.stemDensity = this->stemDensityValue->value();
+	dvn.leafDensity = this->leafDensityValue->value();
+	dvn.stemStart = this->stemStartValue->value();
+	dvn.leafStart = this->leafStartValue->value();
+	dvn.lengthFactor = this->lengthFactorValue->value();
+	dvn.radiusThreshold = this->radiusThresholdValue->value();
+	int arrangement = this->arrangementValue->currentIndex();
+	dvn.arrangement = static_cast<Derivation::Arrangement>(arrangement);
+	dvnNode->setData(dvn);
+
+	for (auto instance : instances)
+		instance.first->setDerivation(dvnTree);
+
 	this->generate->execute();
 	this->editor->change();
 }
 
-void GeneratorEditor::beginChanging(QLabel *label)
+void GeneratorEditor::changeOnce()
 {
-	indicateSimilarities(label);
+	change();
+	finishChanging();
+}
+
+void GeneratorEditor::beginChanging()
+{
 	if (!this->generate)
 		this->generate = new Generate(this->editor->getSelection());
 }
@@ -358,4 +279,86 @@ void GeneratorEditor::finishChanging()
 		/* The history will delete the command. */
 		this->generate = nullptr;
 	}
+}
+
+void GeneratorEditor::select()
+{
+	auto instances = this->editor->getSelection()->getStemInstances();
+	if (instances.empty())
+		return;
+
+	Stem *stem = instances.begin()->first;
+	DerivationTree dvnTree = stem->getDerivation();
+	setFields(dvnTree, this->nodeValue->currentText().toStdString());
+}
+
+void GeneratorEditor::addChildNode()
+{
+	auto instances = this->editor->getSelection()->getStemInstances();
+	if (instances.empty())
+		return;
+
+	beginChanging();
+	Stem *stem = instances.begin()->first;
+	DerivationTree dvnTree = stem->getDerivation();
+	string name = this->nodeValue->currentText().toStdString();
+	dvnTree.addChild(name);
+	setFields(dvnTree, name + ".1");
+	for (auto it = instances.begin(); it != instances.end(); it++)
+		it->first->setDerivation(dvnTree);
+
+	changeOnce();
+	emit derivationModified();
+}
+
+void GeneratorEditor::addSiblingNode()
+{
+	auto instances = this->editor->getSelection()->getStemInstances();
+	if (instances.empty())
+		return;
+
+	beginChanging();
+	Stem *stem = instances.begin()->first;
+	DerivationTree dvnTree = stem->getDerivation();
+	string name = this->nodeValue->currentText().toStdString();
+	dvnTree.addSibling(name);
+
+	int size;
+	size_t index = name.rfind('.');
+	if (index != string::npos) {
+		size = stoi(name.substr(index+1, name.size()-index-1));
+		name.erase(index+1, name.size()-index-1);
+	} else {
+		size = stoi(name);
+		name.clear();
+	}
+
+	setFields(dvnTree, name + std::to_string(size+1));
+	for (auto it = instances.begin(); it != instances.end(); it++)
+		it->first->setDerivation(dvnTree);
+
+	changeOnce();
+	emit derivationModified();
+}
+
+void GeneratorEditor::removeNode()
+{
+	auto instances = this->editor->getSelection()->getStemInstances();
+	if (instances.empty())
+		return;
+
+	beginChanging();
+	Stem *stem = instances.begin()->first;
+	DerivationTree dvnTree = stem->getDerivation();
+	string name = this->nodeValue->currentText().toStdString();
+	if (name == "1")
+		return;
+
+	dvnTree.remove(name);
+	setFields(dvnTree, "");
+	for (auto it = instances.begin(); it != instances.end(); it++)
+		it->first->setDerivation(dvnTree);
+
+	changeOnce();
+	emit derivationModified();
 }

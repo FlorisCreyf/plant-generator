@@ -37,6 +37,7 @@ plant_generator/math/vec3.cpp \
 plant_generator/math/vec4.cpp \
 plant_generator/animation.cpp \
 plant_generator/curve.cpp \
+plant_generator/derivation.cpp \
 plant_generator/geometry.cpp \
 plant_generator/joint.cpp \
 plant_generator/leaf.cpp \

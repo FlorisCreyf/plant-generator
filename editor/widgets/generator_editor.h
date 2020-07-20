@@ -21,17 +21,21 @@
 #include "form.h"
 #include "editor.h"
 #include "../commands/generate.h"
+#include <string>
 
 class GeneratorEditor : public Form {
 	Q_OBJECT
 
 	Editor *editor;
+	Generate *generate;
 
 	QGroupBox *group;
+	QComboBox *nodeValue;
+	QPushButton *childButton;
+	QPushButton *siblingButton;
+	QPushButton *removeButton;
 	QLabel *seedLabel;
 	QSpinBox *seedValue;
-	QLabel *depthLabel;
-	QSpinBox *depthValue;
 	QLabel *stemDensityLabel;
 	QDoubleSpinBox *stemDensityValue;
 	QLabel *stemStartLabel;
@@ -46,13 +50,13 @@ class GeneratorEditor : public Form {
 	QDoubleSpinBox *lengthFactorValue;
 	QLabel *arrangementLabel;
 	QComboBox *arrangementValue;
-	Generate *generate;
 
 	void createInterface();
 	void removeCurrent();
 	void blockSignals(bool);
 	void enable(bool);
-	void beginChanging(QLabel *label);
+	void beginChanging();
+	void setFields(const pg::DerivationTree &, std::string);
 
 public:
 	GeneratorEditor(Editor *editor, QWidget *parent);
@@ -60,17 +64,16 @@ public:
 
 public slots:
 	void change();
+	void changeOnce();
 	void setFields();
 	void finishChanging();
-	void changeSeed(int seed);
-	void changeStemDensity(double density);
-	void changeLeafDensity(double density);
-	void changeStemStart(double start);
-	void changeLeafStart(double start);
-	void changeRadiusThreshold(double threshold);
-	void changeLengthFactor(double factor);
-	void changeDepth(int depth);
-	void changeArrangement(int arrangement);
+	void select();
+	void addChildNode();
+	void addSiblingNode();
+	void removeNode();
+
+signals:
+	void derivationModified();
 };
 
 #endif

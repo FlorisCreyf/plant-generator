@@ -19,12 +19,12 @@
    <string notr="true">
 QWidget {
 	font-size:11px;
-	color:#ddd;
+	color:#eee;
 } QMenu {
 	background-color:#505050;
 	border:0px solid #555;
 	font-size:11px;
-	color:#ddd;
+	color:#eee;
 } QMenu::item {
 	margin:0;
 	font-size:11px;
@@ -62,7 +62,7 @@ QWidget {
 	margin-left:10px;
 	image: url(&quot;resources/check.png&quot;);
 } QMenuBar::item {
-	color:#ddd;
+	color:#eee;
 	spacing:0;
 	background-color:transparent;
 	padding:6px 10px 6px 10px;
@@ -77,7 +77,7 @@ QWidget {
 	font-size:11px;
 	margin-left:5px;
 } QDockWidget QWidget {
-	color:#ddd;
+	color:#eee;
 	font-size:11px;
 	border-image:none;
 	border:0px transparent black;
@@ -86,7 +86,7 @@ QWidget {
 	border:0;
 } QDockWidget {
 	font-size:11px;
-	color:#ddd;
+	color:#eee;
 	background:#666;
 	titlebar-normal-icon:url(&quot;resources/popup.png&quot;);
 	titlebar-close-icon:url(&quot;resources/close.png&quot;);
@@ -190,7 +190,7 @@ QWidget {
 	border-top:23px solid #4a4a4a;
 } QDockWidget QGroupBox::title {
 	font-size:11px;
-	color:#ddd;
+	color:#eee;
 	background:transparent;
 	padding:4px 0 0 8px;
 	margin:0;
@@ -206,6 +206,7 @@ QWidget {
 	padding:6px 10px;
 	margin:0;
 } QTabBar::tab:selected {
+	color:#eee;
 	background:#303030;
 } QWidget#CurveButtonWidget {
 	border:solid 1px #fff;
@@ -250,7 +251,8 @@ QWidget {
 	image:url(&quot;resources/radiobutton_checked.png&quot;);
 } QDockWidget QPushButton {
 	background-color:#444;
-	color:#ddd;
+	color:#eee;
+	font-size:11px;
 } QDockWidget QPushButton:hover {
 	background-color:#404040;
 } QDockWidget QPushButton:pressed {
@@ -262,14 +264,11 @@ QWidget {
 	spacing:0;
 	width:0;
 	height:0;
-} KeyEditor QPushButton {
-	text-align:left;
-	padding-left:4px;
 } QDockWidget QLineEdit {
 	background-color:#555;
 	padding-left:4px;
 	padding-right:4px;
-	color:#ddd;
+	color:#eee;
 } QDockWidget QToolButton {
 	background-color:#444;
 	padding-right:8px;
@@ -340,7 +339,7 @@ QWidget {
 } QComboBox QListView {
 	background-color:#505050;
 	border:0;
-	selection-color:#ddd;
+	selection-color:#eee;
 	selection-background-color:#404040;
 } QComboBox::item {
 	padding-left:4px;
