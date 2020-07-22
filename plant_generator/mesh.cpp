@@ -75,10 +75,8 @@ Segment Mesh::addStem(Stem *stem, const State &parentState)
 void Mesh::addSections(State &state)
 {
 	Stem *stem = state.segment.stem;
-	Quat rotation;
+	setInitialRotation(state);
 	state.texOffset = 0.0f;
-	state.prevDirection = Vec3(0.0f, 1.0f, 0.0f);
-	state.prevRotation = Quat(0.0f, 0.0f, 0.0f, 1.0f);
 	state.prevIndex = this->vertices[state.mesh].size();
 	state.section = createBranchCollar(state);
 	size_t sections = stem->getPath().getSize();
@@ -90,7 +88,7 @@ void Mesh::addSections(State &state)
 	}
 
 	for (; state.section < sections; state.section++) {
-		rotation = rotateSection(state);
+		Quat rotation = rotateSection(state);
 		state.prevIndex = this->vertices[state.mesh].size();
 		addSection(state, rotation);
 
@@ -103,6 +101,35 @@ void Mesh::addSections(State &state)
 
 	if (stem->getMinRadius() > 0)
 		capStem(stem, state.mesh, state.prevIndex);
+}
+
+/** The cross section is rotated so that the first point is always the topmost
+point relative to the parent stem direction. */
+void Mesh::setInitialRotation(State &state)
+{
+	Stem *stem = state.segment.stem;
+	Stem *parent = stem->getParent();
+	if (parent) {
+		float position = stem->getPosition();
+		Path parentPath = parent->getPath();
+		Vec3 parentDirection;
+		parentDirection = parentPath.getIntermediateDirection(position);
+		Vec3 stemDirection = stem->getPath().getDirection(0);
+		Vec3 up(0.0f, 1.0f, 0.0f);
+		state.prevRotation = pg::rotateIntoVecQ(up, stemDirection);
+		state.prevDirection = stemDirection;
+
+		Vec3 sideways(1.0f, 0.0f, 0.0f);
+		sideways = pg::rotate(state.prevRotation, sideways, 0.0f);
+		sideways = pg::normalize(sideways);
+		up = pg::projectOntoPlane(parentDirection, stemDirection);
+		up = pg::normalize(up);
+		Quat rotation = pg::rotateIntoVecQ(sideways, up);
+		state.prevRotation = rotation * state.prevRotation;
+	} else {
+		state.prevRotation = Quat(0.0f, 0.0f, 0.0f, 1.0f);
+		state.prevDirection = Vec3(0.0f, 1.0f, 0.0f);
+	}
 }
 
 /** A rotation for a cross section is relative to the rotation of the previous
@@ -147,7 +174,7 @@ void Mesh::addSection(State &state, Quat rotation)
 	}
 
 	for (int i = 0; i <= stem->getResolution(); i++) {
-		vertex.position = {std::cos(angle), 0.0f, std::sin(angle)};
+		vertex.position = Vec3(std::cos(angle), 0.0f, std::sin(angle));
 		vertex.normal = normalize(vertex.position);
 		vertex.position = radius * vertex.position;
 		vertex.position = rotate(rotation, vertex.position, 1.0f);

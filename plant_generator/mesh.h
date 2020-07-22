@@ -83,6 +83,7 @@ namespace pg {
 		void addSections(State &state);
 		void addSection(State &, Quat);
 		float getTextureLength(Stem *, size_t);
+		void setInitialRotation(State &state);
 		Quat rotateSection(State &);
 		void addTriangleRing(size_t, size_t, int, int);
 		void capStem(Stem *, int, size_t);

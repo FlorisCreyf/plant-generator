@@ -95,7 +95,8 @@ Quat pg::slerp(Quat a, Quat b, float t)
 
 Quat pg::rotateIntoVecQ(Vec3 normal, Vec3 direction)
 {
-	float e = sqrt(2.0f * (1.0f + dot(normal, direction)));
+	float d = dot(normal, direction);
+	float e = sqrt(2.0f * (1.0f + d));
 	Vec3 vec = (1.0f / e) * cross(normal, direction);
 	return Quat(vec.x, vec.y, vec.z, e / 2.0f);
 }
