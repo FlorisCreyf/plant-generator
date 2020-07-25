@@ -17,7 +17,7 @@
 
 #include "vertex_buffer.h"
 
-using pg::Vertex;
+using pg::DVertex;
 using std::vector;
 
 void VertexBuffer::initialize(GLenum mode)
@@ -32,7 +32,7 @@ void VertexBuffer::initialize(GLenum mode)
 void VertexBuffer::allocatePointMemory(size_t size)
 {
 	capacity[Points] = size;
-	size *= sizeof(Vertex);
+	size *= sizeof(DVertex);
 	glBindBuffer(GL_ARRAY_BUFFER, buffers[Points]);
 	glBufferData(GL_ARRAY_BUFFER, size, NULL, mode);
 	setVertexFormat();
@@ -48,17 +48,17 @@ void VertexBuffer::allocateIndexMemory(size_t size)
 
 void VertexBuffer::load(const Geometry &geometry)
 {
-	const vector<Vertex> *p = geometry.getPoints();
+	const vector<DVertex> *p = geometry.getPoints();
 	const vector<unsigned> *i = geometry.getIndices();
 	load(p->data(), p->size(), i->data(), i->size());
 }
 
 void VertexBuffer::load(
-	const Vertex *points, size_t psize,
+	const DVertex *points, size_t psize,
 	const unsigned *indices, size_t isize)
 {
 	size[Points] = capacity[Points] = psize;
-	psize *= sizeof(Vertex);
+	psize *= sizeof(DVertex);
 	glBindBuffer(GL_ARRAY_BUFFER, buffers[Points]);
 	glBufferData(GL_ARRAY_BUFFER, psize, points, mode);
 	setVertexFormat();
@@ -73,13 +73,13 @@ void VertexBuffer::load(
 
 void VertexBuffer::update(const Geometry &geometry)
 {
-	const vector<Vertex> *p = geometry.getPoints();
+	const vector<DVertex> *p = geometry.getPoints();
 	const vector<unsigned> *i = geometry.getIndices();
 	update(p->data(), p->size(), i->data(), i->size());
 }
 
 void VertexBuffer::update(
-	const Vertex *points, size_t psize,
+	const DVertex *points, size_t psize,
 	const unsigned *indices, size_t isize)
 {
 	use();
@@ -91,7 +91,7 @@ void VertexBuffer::update(
 	else
 		glBindBuffer(GL_ARRAY_BUFFER, buffers[Points]);
 
-	psize *= sizeof(Vertex);
+	psize *= sizeof(DVertex);
 	isize *= sizeof(unsigned);
 
 	glBufferSubData(GL_ARRAY_BUFFER, 0, psize, points);
@@ -106,7 +106,7 @@ void VertexBuffer::update(
 	}
 }
 
-bool VertexBuffer::update(const Vertex *points, size_t start, size_t size)
+bool VertexBuffer::update(const DVertex *points, size_t start, size_t size)
 {
 	size_t newSize = start + size;
 	if (newSize <= capacity[Points])
@@ -114,8 +114,8 @@ bool VertexBuffer::update(const Vertex *points, size_t start, size_t size)
 	else
 		return false;
 
-	size *= sizeof(Vertex);
-	start *= sizeof(Vertex);
+	size *= sizeof(DVertex);
+	start *= sizeof(DVertex);
 	glBindBuffer(GL_ARRAY_BUFFER, buffers[Points]);
 	glBufferSubData(GL_ARRAY_BUFFER, start, size, points);
 	return true;
@@ -138,20 +138,20 @@ bool VertexBuffer::update(const unsigned *indices, size_t start, size_t size)
 
 void VertexBuffer::setVertexFormat()
 {
-	GLsizei stride = sizeof(Vertex);
-	GLvoid *ptr = (GLvoid *)(offsetof(Vertex, position));
+	GLsizei stride = sizeof(DVertex);
+	GLvoid *ptr = (GLvoid *)(offsetof(DVertex, position));
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, ptr);
 	glEnableVertexAttribArray(0);
-	ptr = (GLvoid *)(offsetof(Vertex, normal));
+	ptr = (GLvoid *)(offsetof(DVertex, normal));
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, ptr);
 	glEnableVertexAttribArray(1);
-	ptr = (GLvoid *)(offsetof(Vertex, uv));
+	ptr = (GLvoid *)(offsetof(DVertex, uv));
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, ptr);
 	glEnableVertexAttribArray(2);
-	ptr = (GLvoid *)(offsetof(Vertex, indices));
+	ptr = (GLvoid *)(offsetof(DVertex, indices));
 	glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, stride, ptr);
 	glEnableVertexAttribArray(3);
-	ptr = (GLvoid *)(offsetof(Vertex, weights));
+	ptr = (GLvoid *)(offsetof(DVertex, weights));
 	glVertexAttribPointer(4, 2, GL_FLOAT, GL_FALSE, stride, ptr);
 	glEnableVertexAttribArray(4);
 }

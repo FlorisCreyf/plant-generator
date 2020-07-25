@@ -75,7 +75,11 @@ Segment Mesh::addStem(Stem *stem, const State &parentState)
 void Mesh::addSections(State &state)
 {
 	Stem *stem = state.segment.stem;
+
 	setInitialRotation(state);
+	if (stem->getResolution() != this->crossSection.getResolution())
+		this->crossSection.generate(stem->getResolution());
+
 	state.texOffset = 0.0f;
 	state.prevIndex = this->vertices[state.mesh].size();
 	state.section = createBranchCollar(state);
@@ -151,13 +155,8 @@ at a latter stage to connect the sections. */
 void Mesh::addSection(State &state, Quat rotation)
 {
 	Stem *stem = state.segment.stem;
-	const float deltaAngle = 2.0f * PI / stem->getResolution();
-	const float uOffset = 1.0f / stem->getResolution();
-	float radius = this->plant->getRadius(stem, state.section);
-	float angle = 0.0f;
 
-	Vertex vertex;
-	vertex.uv.x = 1.0f;
+	DVertex vertex;
 	vertex.uv.y = getTextureLength(stem, state.section) + state.texOffset;
 	state.texOffset = vertex.uv.y;
 
@@ -173,9 +172,13 @@ void Mesh::addSection(State &state, Quat rotation)
 		weights = Vec2(1.0f, 0.0f);
 	}
 
-	for (int i = 0; i <= stem->getResolution(); i++) {
-		vertex.position = Vec3(std::cos(angle), 0.0f, std::sin(angle));
-		vertex.normal = normalize(vertex.position);
+	float radius = this->plant->getRadius(stem, state.section);
+	const std::vector<SVertex> section = this->crossSection.getVertices();
+	for (size_t i = 0; i < section.size(); i++) {
+		vertex.position = section[i].position;
+		vertex.normal = section[i].normal;
+		vertex.uv.x = section[i].uv.x;
+
 		vertex.position = radius * vertex.position;
 		vertex.position = rotate(rotation, vertex.position, 1.0f);
 		vertex.position += location;
@@ -185,8 +188,6 @@ void Mesh::addSection(State &state, Quat rotation)
 		vertex.indices = indices;
 
 		this->vertices[state.mesh].push_back(vertex);
-		vertex.uv.x -= uOffset;
-		angle += deltaAngle;
 	}
 }
 
@@ -295,7 +296,7 @@ Mat4 Mesh::getBranchCollarScale(Stem *child, Stem *parent)
 }
 
 /** Project a point from a cross section on its parent's surface. */
-Vertex Mesh::moveToSurface(Vertex vertex, Ray ray, Segment parent, int mesh)
+DVertex Mesh::moveToSurface(DVertex vertex, Ray ray, Segment parent, int mesh)
 {
 	float length = magnitude(ray.direction);
 	ray.direction = normalize(ray.direction);
@@ -346,8 +347,8 @@ bool Mesh::connectCollar(Segment child, Segment parent, size_t vertexStart)
 
 		Ray ray;
 		Vec3 location = child.stem->getLocation();
-		Vertex initPoint = this->vertices[mesh1][index];
-		Vertex scaledPoint;
+		DVertex initPoint = this->vertices[mesh1][index];
+		DVertex scaledPoint;
 
 		scaledPoint.position = initPoint.position - location;
 		scaledPoint.position = scale.apply(scaledPoint.position, 1.0f);
@@ -382,7 +383,7 @@ bool Mesh::connectCollar(Segment child, Segment parent, size_t vertexStart)
 		float delta = 1.0f/(divisions+1);
 		float t = delta;
 		for (int j = 0; j < divisions; j++, t += delta) {
-			Vertex vertex;
+			DVertex vertex;
 			vertex.position = spline.getPoint(0, t);
 			vertex.indices = scaledPoint.indices;
 			vertex.weights = scaledPoint.weights;
@@ -463,7 +464,7 @@ void Mesh::capStem(Stem *stem, int stemMesh, size_t section)
 	section = this->vertices[mesh].size();
 
 	for (int i = 0; i <= divisions; i++, index++, angle += rotation) {
-		Vertex vertex = this->vertices[stemMesh][index];
+		DVertex vertex = this->vertices[stemMesh][index];
 		vertex.uv.x = std::cos(angle) * 0.5f + 0.5f;
 		vertex.uv.y = std::sin(angle) * 0.5f + 0.5f;
 		this->vertices[mesh].push_back(vertex);
@@ -523,7 +524,7 @@ void Mesh::addLeaf(Stem *stem, unsigned leafIndex, const State &state)
 
 	Geometry geom = transformLeaf(leaf, stem);
 	size_t vsize = this->vertices[mesh].size();
-	for (Vertex vertex : geom.getPoints()) {
+	for (DVertex vertex : geom.getPoints()) {
 		vertex.indices = indices;
 		vertex.weights = weights;
 		this->vertices[mesh].push_back(vertex);
@@ -715,7 +716,7 @@ int Mesh::selectBuffer(long material)
 	int mesh = it != this->meshes.end() ? it->first : 0;
 	if (material != 0) {
 		if (it == this->meshes.end()) {
-			this->vertices.push_back(vector<Vertex>());
+			this->vertices.push_back(vector<DVertex>());
 			this->indices.push_back(vector<unsigned>());
 			this->stemSegments.push_back(map<Stem *, Segment>());
 			this->leafSegments.push_back(map<LeafID, Segment>());
@@ -737,7 +738,7 @@ void Mesh::initBuffer()
 	this->leafSegments.clear();
 
 	this->materials.push_back(0);
-	this->vertices.push_back(vector<Vertex>());
+	this->vertices.push_back(vector<DVertex>());
 	this->indices.push_back(vector<unsigned>());
 	this->stemSegments.push_back(map<Stem *, Segment>());
 	this->leafSegments.push_back(map<LeafID, Segment>());
@@ -797,9 +798,9 @@ unsigned Mesh::getMaterialIndex(int mesh) const
 	return this->materials.at(mesh);
 }
 
-vector<Vertex> Mesh::getVertices() const
+vector<DVertex> Mesh::getVertices() const
 {
-	vector<Vertex> object;
+	vector<DVertex> object;
 	for (auto it = this->vertices.begin(); it != this->vertices.end(); it++)
 		object.insert(object.end(), it->begin(), it->end());
 	return object;
@@ -813,7 +814,7 @@ vector<unsigned> Mesh::getIndices() const
 	return object;
 }
 
-const vector<Vertex> *Mesh::getVertices(int mesh) const
+const vector<DVertex> *Mesh::getVertices(int mesh) const
 {
 	return &this->vertices.at(mesh);
 }

@@ -1,4 +1,4 @@
-/* Copyright 2019 Floris Creyf
+/* Copyright 2020 Floris Creyf
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,43 +13,29 @@
  * limitations under the License.
  */
 
-#ifndef PG_VERTEX_H
-#define PG_VERTEX_H
+#ifndef PG_CROSS_SECTION_H
+#define PG_CROSS_SECTION_H
 
-#include "math/vec3.h"
-#include "math/vec2.h"
-
-#ifdef PG_SERIALIZE
-#include <boost/archive/text_oarchive.hpp>
-#endif
+#include "vertex.h"
+#include "spline.h"
+#include <vector>
 
 namespace pg {
-	struct SVertex {
-		Vec3 position;
-		Vec3 normal;
-		Vec2 uv;
-	};
+	class CrossSection {
+		int resolution;
+		Spline spline;
+		std::vector<SVertex> vertices;
 
-	struct DVertex {
-		Vec3 position;
-		Vec3 normal;
-		Vec2 uv;
-		Vec2 indices;
-		Vec2 weights;
+		void generateCircle();
+		void generateSpline();
 
-		#ifdef PG_SERIALIZE
-		friend class boost::serialization::access;
-		template<class Archive>
-		void serialize(Archive &ar, const unsigned)
-		{
-			ar & position;
-			ar & normal;
-			ar & uv;
-			ar & weights;
-			ar & indices;
-		}
-		#endif
+	public:
+		int getResolution() const;
+		void setSpline(Spline spline);
+		void generate(int resolution);
+		void setVertices(std::vector<SVertex> vertices);
+		std::vector<SVertex> getVertices() const;
 	};
 }
 
-#endif
+#endif /* PG_CROSS_SECTION_H */

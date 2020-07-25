@@ -13,6 +13,7 @@ math/vec2.o \
 math/vec3.o \
 math/vec4.o \
 animation.o \
+cross_section.o \
 curve.o \
 derivation.o \
 generator.o \

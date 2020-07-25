@@ -27,7 +27,7 @@
 
 namespace pg {
 	class Geometry {
-		std::vector<Vertex> points;
+		std::vector<DVertex> points;
 		std::vector<unsigned> indices;
 		std::string name;
 
@@ -48,9 +48,9 @@ namespace pg {
 		void setName(std::string name);
 		void setPlane();
 		void setPerpendicularPlanes();
-		void setPoints(std::vector<Vertex> points);
+		void setPoints(std::vector<DVertex> points);
 		void setIndices(std::vector<unsigned> indices);
-		const std::vector<Vertex> &getPoints() const;
+		const std::vector<DVertex> &getPoints() const;
 		const std::vector<unsigned> &getIndices() const;
 		void transform(Quat rotation, Vec3 scale, Vec3 translation);
 		void toCenter();

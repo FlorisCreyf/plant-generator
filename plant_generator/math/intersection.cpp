@@ -25,7 +25,7 @@ using pg::Mat4;
 using pg::Obb;
 using pg::Plane;
 
-Aabb pg::createAABB(const pg::Vertex *buffer, size_t size)
+Aabb pg::createAABB(const pg::DVertex *buffer, size_t size)
 {
 	Aabb aabb;
 	aabb.a = buffer[0].position;

@@ -753,7 +753,7 @@ void Editor::updateBuffers()
 	int pointOffset = 0;
 	int indexOffset = 0;
 	for (size_t m = 0; m < this->mesh.getMeshCount(); m++) {
-		const std::vector<pg::Vertex> *v = this->mesh.getVertices(m);
+		const std::vector<pg::DVertex> *v = this->mesh.getVertices(m);
 		const std::vector<unsigned> *i = this->mesh.getIndices(m);
 		this->plantBuffer.update(v->data(), pointOffset, v->size());
 		this->plantBuffer.update(i->data(), indexOffset, i->size());

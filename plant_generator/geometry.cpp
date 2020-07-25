@@ -17,7 +17,7 @@
 
 using pg::Vec3;
 using pg::Quat;
-using pg::Vertex;
+using pg::DVertex;
 
 void pg::Geometry::clear()
 {
@@ -37,7 +37,7 @@ void pg::Geometry::setName(std::string name)
 
 void pg::Geometry::setPlane()
 {
-	Vertex p;
+	DVertex p;
 	p.normal = Vec3(0.0f, 1.0f, 0.0f);
 	points.clear();
 	indices.clear();
@@ -66,7 +66,7 @@ void pg::Geometry::setPlane()
 
 void pg::Geometry::setPerpendicularPlanes()
 {
-	Vertex p;
+	DVertex p;
 	p.normal = {0.0f, 1.0f, 0.0f};
 
 	setPlane();
@@ -93,7 +93,7 @@ void pg::Geometry::setPerpendicularPlanes()
 	indices.push_back(7);
 }
 
-void pg::Geometry::setPoints(std::vector<Vertex> points)
+void pg::Geometry::setPoints(std::vector<DVertex> points)
 {
 	this->points = points;
 }
@@ -103,7 +103,7 @@ void pg::Geometry::setIndices(std::vector<unsigned> indices)
 	this->indices = indices;
 }
 
-const std::vector<Vertex> &pg::Geometry::getPoints() const
+const std::vector<DVertex> &pg::Geometry::getPoints() const
 {
 	return points;
 }

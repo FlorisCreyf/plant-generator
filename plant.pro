@@ -36,6 +36,7 @@ plant_generator/math/vec2.cpp \
 plant_generator/math/vec3.cpp \
 plant_generator/math/vec4.cpp \
 plant_generator/animation.cpp \
+plant_generator/cross_section.cpp \
 plant_generator/curve.cpp \
 plant_generator/derivation.cpp \
 plant_generator/geometry.cpp \
@@ -113,6 +114,7 @@ plant_generator/math/vec2.h \
 plant_generator/math/vec3.h \
 plant_generator/math/vec4.h \
 plant_generator/animation.h \
+plant_generator/cross_section.h \
 plant_generator/curve.h \
 plant_generator/derivation.h \
 plant_generator/geometry.h \

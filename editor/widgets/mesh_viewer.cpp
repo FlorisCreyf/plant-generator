@@ -19,7 +19,7 @@
 
 using pg::Mat4;
 using pg::Vec3;
-using pg::Vertex;
+using pg::DVertex;
 
 MeshViewer::MeshViewer(SharedResources *shared, QWidget *parent) :
 	QOpenGLWidget(parent)
@@ -134,8 +134,8 @@ void MeshViewer::updateMesh(pg::Geometry mesh)
 
 void MeshViewer::updateBuffer()
 {
-	std::vector<Vertex> points;
-	for (Vertex vertex : mesh.getPoints())
+	std::vector<DVertex> points;
+	for (DVertex vertex : mesh.getPoints())
 		points.push_back(vertex);
 	unsigned indexCount = mesh.getIndices().size();
 	buffer.update(

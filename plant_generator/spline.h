@@ -27,10 +27,11 @@
 
 namespace pg {
 	class Spline {
-		void adjustCubic();
-		void adjustLinear();
 		std::vector<Vec3> controls;
 		int degree = 3;
+
+		void adjustCubic();
+		void adjustLinear();
 		int insertCubic(int index, pg::Vec3 point);
 		void moveCubic(unsigned, Vec3, bool);
 		void removeCubic(unsigned);

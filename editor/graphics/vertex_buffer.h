@@ -35,16 +35,16 @@ public:
 	buffer can't be changed until the VAO is bound. */
 	void load(const Geometry &geometry);
 	void load(
-		const pg::Vertex *points, size_t psize,
+		const pg::DVertex *points, size_t psize,
 		const unsigned *indices, size_t isize);
 	/** Reduces reallocations and should be used for dynamic meshes. */
 	void update(const Geometry &geometry);
 	void update(
-		const pg::Vertex *points, size_t psize,
+		const pg::DVertex *points, size_t psize,
 		const unsigned *indices, size_t isize);
 	/** The buffer should be bound prior to calling update. The method
 	returns false if the buffer is too small. */
-	bool update(const pg::Vertex *points, size_t start, size_t size);
+	bool update(const pg::DVertex *points, size_t start, size_t size);
 	/** The buffer should be bound prior to calling update. The method
 	returns false if the buffer is too small. */
 	bool update(const unsigned *indices, size_t start, size_t size);

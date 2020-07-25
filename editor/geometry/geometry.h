@@ -24,7 +24,7 @@
 #include <vector>
 
 class Geometry {
- 	std::vector<pg::Vertex> points;
+ 	std::vector<pg::DVertex> points;
 	std::vector<unsigned> indices;
 
 public:
@@ -54,7 +54,7 @@ public:
 	Segment getSegment() const;
 	Segment append(const Geometry &geometry);
 
-	const std::vector<pg::Vertex> *getPoints() const;
+	const std::vector<pg::DVertex> *getPoints() const;
 	const std::vector<unsigned> *getIndices() const;
 };
 

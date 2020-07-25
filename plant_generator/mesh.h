@@ -16,6 +16,7 @@
 #ifndef PG_MESH_H
 #define PG_MESH_H
 
+#include "cross_section.h"
 #include "stem.h"
 #include "plant.h"
 #include "math/intersection.h"
@@ -40,9 +41,9 @@ namespace pg {
 
 		Mesh(Plant *plant);
 		void generate();
-		std::vector<Vertex> getVertices() const;
+		std::vector<DVertex> getVertices() const;
 		std::vector<unsigned> getIndices() const;
-		const std::vector<Vertex> *getVertices(int mesh) const;
+		const std::vector<DVertex> *getVertices(int mesh) const;
 		const std::vector<unsigned> *getIndices(int mesh) const;
 		/** Find the location of a stem in the buffer. */
 		Segment findStem(Stem *stem) const;
@@ -71,10 +72,11 @@ namespace pg {
 
 		Plant *plant;
 		Geometry defaultLeaf;
+		CrossSection crossSection;
 
 		std::map<long, int> meshes;
 		std::vector<long> materials;
-		std::vector<std::vector<Vertex>> vertices;
+		std::vector<std::vector<DVertex>> vertices;
 		std::vector<std::vector<unsigned>> indices;
 		std::vector<std::map<Stem *, Segment>> stemSegments;
 		std::vector<std::map<LeafID, Segment>> leafSegments;
@@ -94,7 +96,7 @@ namespace pg {
 		void reserveBranchCollarSpace(Stem *, int);
 		size_t getBranchCollarSize(Stem *);
 		Mat4 getBranchCollarScale(Stem *, Stem *);
-		Vertex moveToSurface(Vertex, Ray, Segment, int);
+		DVertex moveToSurface(DVertex, Ray, Segment, int);
 		void setBranchCollarNormals(size_t, size_t, int, int, int);
 		void setBranchCollarUVs(size_t, Stem *, int, int, int);
 

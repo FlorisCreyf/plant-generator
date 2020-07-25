@@ -49,7 +49,7 @@ namespace pg {
 		Vec3 normal;
 	};
 
-	Aabb createAABB(const pg::Vertex *buffer, size_t size);
+	Aabb createAABB(const pg::DVertex *buffer, size_t size);
 	float intersectsOBB(Ray &ray, Obb &obb);
 	float intersectsAABB(Ray &ray, Aabb &aabb);
 	float intersectsTriangle(Ray &ray, Vec3 p1, Vec3 p2, Vec3 p3);

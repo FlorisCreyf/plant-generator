@@ -20,7 +20,7 @@
 
 #define PI 3.14159265359f
 
-using pg::Vertex;
+using pg::DVertex;
 using pg::Vec2;
 using pg::Vec3;
 using pg::Mat4;
@@ -41,17 +41,17 @@ void Geometry::addIndex(unsigned index)
 
 void Geometry::addPoint(Vec3 point, Vec3 color, Vec2 uv)
 {
-	Vertex vertex;
+	DVertex vertex;
 	vertex.position = point;
-	vertex.color = color;
+	vertex.normal = color;
 	vertex.uv = uv;
 	this->points.push_back(vertex);
 }
 
 void Geometry::addLine(Vec3 line[2], Vec3 color)
 {
-	Vertex vertex;
-	vertex.color = color;
+	DVertex vertex;
+	vertex.normal = color;
 	vertex.position = line[0];
 	this->points.push_back(vertex);
 	vertex.position = line[1];
@@ -153,7 +153,7 @@ void Geometry::transform(size_t start, size_t count, const Mat4 &transform)
 
 void Geometry::changeColor(size_t index, Vec3 color)
 {
-	points[index].color = color;
+	points[index].normal = color;
 }
 
 Geometry::Segment Geometry::getSegment() const
@@ -183,7 +183,7 @@ Geometry::Segment Geometry::append(const Geometry &geometry)
 	return segment;
 }
 
-const vector<Vertex> *Geometry::getPoints() const
+const vector<DVertex> *Geometry::getPoints() const
 {
 	return &points;
 }

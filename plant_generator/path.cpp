@@ -41,9 +41,9 @@ void Path::generate(bool linearStart)
 	 	return;
 
 	this->linearStart = linearStart;
+	this->path.clear();
 	int curves = this->spline.getCurveCount();
 	int curve = 0;
-	this->path.clear();
 
 	if (linearStart)
 		this->path.push_back(this->spline.getPoint(curve++, 0.0f));

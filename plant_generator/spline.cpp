@@ -85,16 +85,14 @@ int Spline::getDegree() const
 
 Vec3 Spline::getPoint(float t) const
 {
-	Vec3 point;
 	for (size_t i = 0; i < controls.size()-degree; i += degree) {
 		if (controls[i].x <= t && controls[i+degree].x >= t) {
 			t -= controls[i].x;
 			t /= (controls[i+degree].x - controls[i].x);
-			point = getBezier(t, &controls[i], (degree + 1));
-			break;
+			return getBezier(t, &controls[i], (degree + 1));
 		}
 	}
-	return point;
+	return controls.back();
 }
 
 Vec3 Spline::getPoint(int curve, float t) const

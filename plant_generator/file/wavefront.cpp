@@ -57,7 +57,7 @@ void Wavefront::exportFile(
 	unsigned indexStart = 1;
 	int numMeshes = mesh.getMeshCount();
 	for (int m = 0; m < numMeshes; m++) {
-		const vector<Vertex> *vertices = mesh.getVertices(m);
+		const vector<DVertex> *vertices = mesh.getVertices(m);
 		const vector<unsigned> *indices = mesh.getIndices(m);
 
 		unsigned materialIndex = mesh.getMaterialIndex(m);
@@ -123,7 +123,7 @@ void insertVertexInfo(ifstream &file,
 void Wavefront::importFile(const char *filename, Geometry *geom)
 {
 	ifstream file(filename);
-	vector<Vertex> points;
+	vector<DVertex> points;
 	vector<unsigned> indices;
 	vector<Vec3> vs;
 	vector<Vec3> vns;
@@ -146,7 +146,7 @@ void Wavefront::importFile(const char *filename, Geometry *geom)
 		while (iss >> descriptor) {
 			auto it = descriptors.find(descriptor);
 			if (it == descriptors.end()) {
-				Vertex point;
+				DVertex point;
 				shape.push_back(index);
 				descriptors.emplace(descriptor, index++);
 

@@ -62,10 +62,10 @@ string getMaterialName(unsigned materialIndex, const Plant &plant)
 void setSources(XMLWriter &xml, const Mesh &mesh)
 {
 	string value;
-	std::vector<Vertex> vertices = mesh.getVertices();
+	std::vector<DVertex> vertices = mesh.getVertices();
 
 	value.clear();
-	for (Vertex vertex : vertices) {
+	for (DVertex vertex : vertices) {
 		value += toString(vertex.position.x) + " ";
 		value += toString(vertex.position.y) + " ";
 		value += toString(vertex.position.z) + " ";
@@ -86,7 +86,7 @@ void setSources(XMLWriter &xml, const Mesh &mesh)
 	xml << "</source>";
 
 	value.clear();
-	for (Vertex vertex : vertices) {
+	for (DVertex vertex : vertices) {
 		value += toString(vertex.normal.x) + " ";
 		value += toString(vertex.normal.y) + " ";
 		value += toString(vertex.normal.z) + " ";
@@ -107,7 +107,7 @@ void setSources(XMLWriter &xml, const Mesh &mesh)
 	xml << "</source>";
 
 	value.clear();
-	for (Vertex vertex : vertices) {
+	for (DVertex vertex : vertices) {
 		value += toString(vertex.uv.x) + " ";
 		value += toString(vertex.uv.y) + " ";
 	}
@@ -412,9 +412,9 @@ void setControllerSources(
 	xml << "</source>";
 
 	value.clear();
-	vector<Vertex> vertices = mesh.getVertices();
+	vector<DVertex> vertices = mesh.getVertices();
 	size_t weightCount = 0;
-	for (Vertex vertex : vertices) {
+	for (DVertex vertex : vertices) {
 		value += toString(vertex.weights.x) + " ";
 		weightCount++;
 		if (vertex.indices.x != vertex.indices.y) {
@@ -445,7 +445,7 @@ void setControllers(XMLWriter &xml, const Mesh &mesh, const Plant &plant)
 	xml >> "<skin source='#plant-mesh'>";
 
 	setControllerSources(xml, mesh, plant);
-	vector<Vertex> vertices = mesh.getVertices();
+	vector<DVertex> vertices = mesh.getVertices();
 
 	xml >> "<joints>";
 	xml += "<input semantic='JOINT' source='#plant-armature-names'/>";
