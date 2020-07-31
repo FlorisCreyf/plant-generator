@@ -114,8 +114,8 @@ void PseudoGenerator::addLateralStems(Stem *parent, const DerivationNode *node)
 void PseudoGenerator::addLateralStem(
 	Stem *parent, float position, const DerivationNode *node)
 {
-	Vec2 swelling(1.5f, 3.0f);
-	float radius = getRadius(parent, swelling.x, position);
+	Vec2 swelling(1.2f, 3.0f);
+	float radius = getRadius(parent, 1.5f, position);
 	if (radius < node->getData().radiusThreshold)
 		return;
 
@@ -132,10 +132,10 @@ void PseudoGenerator::addLateralStem(
 		addLateralStems(stem, node->getChild());
 }
 
-float PseudoGenerator::getRadius(Stem *parent, float swelling, float position)
+float PseudoGenerator::getRadius(Stem *parent, float margin, float position)
 {
 	float r = this->plant->getIntermediateRadius(parent, position);
-	return r / (swelling + 0.1f);
+	return r / margin;
 }
 
 float PseudoGenerator::getMinRadius(float radius)
@@ -150,14 +150,12 @@ float PseudoGenerator::getMinRadius(float radius)
 
 void PseudoGenerator::setPath(Stem *stem, Vec3 direction, const Derivation &dvn)
 {
-	int divisions = 1;
 	float radius = stem->getMaxRadius();
 	float length = radius * dvn.lengthFactor;
 	int points = static_cast<int>(length / 2.0f) + 1;
 	float increment = length / points;
 
 	Path path;
-	path.setDivisions(divisions);
 	std::vector<Vec3> controls;
 	std::uniform_real_distribution<float> dis(-0.05f, 0.05f);
 

@@ -88,6 +88,14 @@ void CrossSection::generateSpline()
 	}
 }
 
+void CrossSection::scale(float x, float y)
+{
+	for (size_t i = 0, size = this->vertices.size(); i < size; i++) {
+		this->vertices[i].position.x *= x;
+		this->vertices[i].position.z *= y;
+	}
+}
+
 void CrossSection::setVertices(std::vector<SVertex> vertices)
 {
 	this->vertices = vertices;

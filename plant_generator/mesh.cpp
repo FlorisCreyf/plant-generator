@@ -94,7 +94,7 @@ void Mesh::addSections(State &state)
 	for (; state.section < sections; state.section++) {
 		Quat rotation = rotateSection(state);
 		state.prevIndex = this->vertices[state.mesh].size();
-		addSection(state, rotation);
+		addSection(state, rotation, this->crossSection);
 
 		if (state.section+1 < sections) {
 			size_t i = this->vertices[state.mesh].size();
@@ -152,7 +152,7 @@ Quat Mesh::rotateSection(State &state)
 
 /** Generate a cross section for a point in the stem's path. Indices are added
 at a latter stage to connect the sections. */
-void Mesh::addSection(State &state, Quat rotation)
+void Mesh::addSection(State &state, Quat rotation, const CrossSection &section)
 {
 	Stem *stem = state.segment.stem;
 
@@ -173,11 +173,11 @@ void Mesh::addSection(State &state, Quat rotation)
 	}
 
 	float radius = this->plant->getRadius(stem, state.section);
-	const std::vector<SVertex> section = this->crossSection.getVertices();
-	for (size_t i = 0; i < section.size(); i++) {
-		vertex.position = section[i].position;
-		vertex.normal = section[i].normal;
-		vertex.uv.x = section[i].uv.x;
+	const std::vector<SVertex> sectionVertices = section.getVertices();
+	for (size_t i = 0; i < sectionVertices.size(); i++) {
+		vertex.position = sectionVertices[i].position;
+		vertex.normal = sectionVertices[i].normal;
+		vertex.uv.x = sectionVertices[i].uv.x;
 
 		vertex.position = radius * vertex.position;
 		vertex.position = rotate(rotation, vertex.position, 1.0f);
@@ -233,26 +233,23 @@ size_t Mesh::createBranchCollar(State &state)
 	Stem *stem = state.segment.stem;
 
 	Vec2 swelling = stem->getSwelling();
-	if (!(stem->getParent() && swelling.x > 1.0f && swelling.y > 1.0f))
+	if (!stem->getParent() || swelling.x < 1.0f || swelling.y < 1.0f)
 		return 0;
 
 	state.section = 0;
 	state.prevIndex = this->vertices[state.mesh].size();
-	addSection(state, rotateSection(state));
+	addSection(state, rotateSection(state), this->crossSection);
 
 	size_t collarStart = this->vertices[state.mesh].size();
 	reserveBranchCollarSpace(stem, state.mesh);
 	state.prevIndex = this->vertices[state.mesh].size();
 	state.texOffset = 0.0f;
-	state.section = 1;
+	state.section = stem->getPath().getDivisions() + 1;
 	state.prevIndex = this->vertices[state.mesh].size();
-	addSection(state, rotateSection(state));
+	addSection(state, rotateSection(state), this->crossSection);
 
 	Segment parentSegment = findStem(stem->getParent());
-	if (connectCollar(state.segment, parentSegment, collarStart))
-		return 2;
-	else
-		return 0;
+	return connectCollar(state.segment, parentSegment, collarStart);
 }
 
 /** Cross sections are usually created one at a time and then connected with
@@ -269,8 +266,7 @@ void Mesh::reserveBranchCollarSpace(Stem *stem, int mesh)
 /** Return the amount of memory needed for the branch collar. */
 size_t Mesh::getBranchCollarSize(Stem *stem)
 {
-	const int divisions = stem->getPath().getDivisions();
-	return (stem->getSectionDivisions()+1) * divisions;
+	return (stem->getSectionDivisions()+1) * stem->getCollarDivisions();
 }
 
 /** The first step in generating the branch collar is scaling the first cross
@@ -332,18 +328,28 @@ DVertex Mesh::moveToSurface(DVertex vertex, Ray ray, Segment parent, int mesh)
 	return vertex;
 }
 
-bool Mesh::connectCollar(Segment child, Segment parent, size_t vertexStart)
+size_t Mesh::connectCollar(Segment child, Segment parent, size_t vertexStart)
 {
 	const int mesh1 = selectBuffer(child.stem->getMaterial(Stem::Outer));
 	const int mesh2 = selectBuffer(parent.stem->getMaterial(Stem::Outer));
-	const int resolution = child.stem->getSectionDivisions();
-	const int divisions = child.stem->getPath().getDivisions();
+	const int sectionDivisions = child.stem->getSectionDivisions();
+	const int collarDivisions = child.stem->getCollarDivisions();
+	const int pathDivisions = child.stem->getPath().getDivisions();
 	size_t collarSize = getBranchCollarSize(child.stem);
 	Mat4 scale = getBranchCollarScale(child.stem, parent.stem);
 
-	for (int i = 0; i <= resolution; i++) {
+	int degree;
+	Vec3 direction;
+	Spline spline = child.stem->getPath().getSpline();
+	degree = spline.getDegree();
+	if (degree == 3) {
+		auto controls = spline.getControls();
+		direction = controls[3] - controls[2];
+	}
+
+	for (int i = 0; i <= sectionDivisions; i++) {
 		size_t index = child.vertexStart + i;
-		size_t nextIndex = index + collarSize + resolution + 1;
+		size_t nextIndex = index + collarSize + sectionDivisions + 1;
 
 		Ray ray;
 		Vec3 location = child.stem->getLocation();
@@ -359,7 +365,7 @@ bool Mesh::connectCollar(Segment child, Segment parent, size_t vertexStart)
 		if (std::isinf(scaledPoint.position.x)) {
 			this->vertices[mesh1].resize(child.vertexStart);
 			this->indices[mesh1].resize(child.indexStart);
-			return false;
+			return 0;
 		}
 		scaledPoint.weights = this->vertices[mesh1][index].weights;
 		scaledPoint.indices = this->vertices[mesh1][index].indices;
@@ -370,41 +376,48 @@ bool Mesh::connectCollar(Segment child, Segment parent, size_t vertexStart)
 		if (std::isinf(initPoint.position.x)) {
 			this->vertices[mesh1].resize(child.vertexStart);
 			this->indices[mesh1].resize(child.indexStart);
-			return false;
+			return 0;
 		}
 
-		Spline spline;
+		spline.clear();
 		spline.setDegree(3);
 		spline.addControl(scaledPoint.position);
 		spline.addControl(initPoint.position);
-		spline.addControl(initPoint.position);
-		spline.addControl(this->vertices[mesh1][nextIndex].position);
+		Vec3 point = this->vertices[mesh1][nextIndex].position;
+		if (degree == 3)
+			spline.addControl(point - direction);
+		else
+			spline.addControl(point);
+		spline.addControl(point);
 
-		float delta = 1.0f/(divisions+1);
+		float delta = 1.0f/(collarDivisions+1);
 		float t = delta;
-		for (int j = 0; j < divisions; j++, t += delta) {
+		index = vertexStart + i;
+		for (int j = 0; j < collarDivisions; j++, t += delta) {
 			DVertex vertex;
 			vertex.position = spline.getPoint(0, t);
 			vertex.indices = scaledPoint.indices;
 			vertex.weights = scaledPoint.weights;
-			size_t index = vertexStart + i + (resolution + 1) * j;
-			this->vertices[mesh1][index] = vertex;
+			size_t offset = index + (sectionDivisions + 1) * j;
+			this->vertices[mesh1][offset] = vertex;
 		}
 	}
 
 	size_t index1 = child.vertexStart;
-	size_t index2 = child.vertexStart + resolution + 1;
-	for (int i = 0; i <= divisions; i++) {
-		addTriangleRing(index1, index2, resolution, mesh1);
+	size_t index2 = child.vertexStart + sectionDivisions + 1;
+	for (int i = 0; i <= collarDivisions; i++) {
+		addTriangleRing(index1, index2, sectionDivisions, mesh1);
 		index1 = index2;
-		index2 += resolution + 1;
+		index2 += sectionDivisions + 1;
 	}
 
 	index1 = child.vertexStart;
 	index2 = vertexStart + collarSize;
-	setBranchCollarNormals(index1, index2, mesh1, resolution, divisions);
-	setBranchCollarUVs(index2, child.stem, mesh1, resolution, divisions);
-	return true;
+	setBranchCollarNormals(
+		index1, index2, mesh1, sectionDivisions, collarDivisions);
+	setBranchCollarUVs(
+		index2, child.stem, mesh1, sectionDivisions, collarDivisions);
+	return pathDivisions + 2;
 }
 
 /** Interpolate normals from the first cross section of the stem with normals

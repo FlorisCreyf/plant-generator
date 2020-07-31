@@ -83,7 +83,7 @@ namespace pg {
 
 		bool hasValidLocation(Stem *stem);
 		void addSections(State &state);
-		void addSection(State &, Quat);
+		void addSection(State &, Quat, const CrossSection &);
 		float getTextureLength(Stem *, size_t);
 		void setInitialRotation(State &state);
 		Quat rotateSection(State &);
@@ -92,7 +92,7 @@ namespace pg {
 		Segment addStem(Stem *, const State &);
 
 		size_t createBranchCollar(State &);
-		bool connectCollar(Segment, Segment, size_t);
+		size_t connectCollar(Segment, Segment, size_t);
 		void reserveBranchCollarSpace(Stem *, int);
 		size_t getBranchCollarSize(Stem *);
 		Mat4 getBranchCollarScale(Stem *, Stem *);

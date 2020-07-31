@@ -25,9 +25,8 @@ namespace pg {
 	protected:
 		std::vector<Vec3> path;
 		Spline spline;
-		int divisions = 2;
+		int divisions = 0;
 		int subdivisions = 0;
-		bool linearStart;
 
 		#ifdef PG_SERIALIZE
 		friend class boost::serialization::access;
@@ -52,9 +51,8 @@ namespace pg {
 		int getDivisions() const;
 		void subdivide(int level);
 		int getSubdivisions() const;
-		/** Evaluate points along the spline. The first curve is
-		always linear if linearStart is true. */
-		void generate(bool linearStart=false);
+		/** Evaluate points along the spline. */
+		void generate();
 
 		std::vector<Vec3> get() const;
 		/** Return a point on the path. */

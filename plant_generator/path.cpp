@@ -34,24 +34,20 @@ bool Path::operator!=(const Path &path) const
 	return !(*this == path);
 }
 
-void Path::generate(bool linearStart)
+void Path::generate()
 {
 	size_t numControls = this->spline.getControls().size();
 	if (numControls <= 1)
 	 	return;
 
-	this->linearStart = linearStart;
 	this->path.clear();
 	int curves = this->spline.getCurveCount();
 	int curve = 0;
 
-	if (linearStart)
-		this->path.push_back(this->spline.getPoint(curve++, 0.0f));
-
 	while (curve < curves) {
-		float r = 1.0f / this->divisions;
+		float r = 1.0f / (this->divisions+1);
 		float t = 0.0f;
-		for (int i = 0; i < this->divisions; i++) {
+		for (int i = 0; i <= this->divisions; i++) {
 			t = r * i;
 			Vec3 point = this->spline.getPoint(curve, t);
 			this->path.push_back(point);
@@ -220,14 +216,7 @@ float Path::getSegmentLength(size_t index) const
 
 size_t Path::toPathIndex(size_t control) const
 {
-	control /= this->spline.getDegree();
-	if (control == 0)
-		return 0;
-
-	if (this->linearStart)
-		return (control-1) * this->divisions + 1;
-	else
-		return control * this->divisions;
+	return control / this->spline.getDegree() * (this->divisions + 1);
 }
 
 float Path::getPercentage(size_t index) const

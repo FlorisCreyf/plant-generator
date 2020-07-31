@@ -27,8 +27,8 @@
 class Path {
 public:
 	struct Segment {
+		int divisions;
 		pg::Spline spline;
-		int resolution;
 		pg::Vec3 location;
 	};
 
@@ -50,7 +50,7 @@ private:
 	pg::Vec3 selectionColor;
 	std::vector<pg::Vec3> points;
 	std::vector<unsigned> indices;
-	std::vector<int> resolution;
+	std::vector<int> divisions;
 	std::vector<int> degree;
 	std::vector<int> controlStart;
 	std::vector<int> pointStart;

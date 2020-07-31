@@ -40,8 +40,9 @@ public slots:
 	void finishChanging();
 	void changeCustom(int custom);
 	void changePathDegree(int degree);
-	void changeResolution(int resolution);
-	void changeDivisions(int divisions);
+	void changeSectionDivisions(int divisions);
+	void changeCollarDivisions(int divisions);
+	void changePathDivisions(int divisions);
 	void changeRadius(double radius);
 	void changeMinRadius(double minRadius);
 	void changeRadiusCurve(int curve);
@@ -53,7 +54,6 @@ public slots:
 private:
 	SharedResources *shared;
 	Editor *editor;
-
 	SaveStem *saveStem;
 
 	QGroupBox *stemGroup;
@@ -65,6 +65,8 @@ private:
 	QComboBox *radiusCurveValue;
 	QLabel *sDivisionLabel;
 	QSpinBox *sDivisionValue;
+	QLabel *cDivisionLabel;
+	QSpinBox *cDivisionValue;
 	QLabel *pDivisionLabel;
 	QSpinBox *pDivisionValue;
 	QLabel *degreeLabel;

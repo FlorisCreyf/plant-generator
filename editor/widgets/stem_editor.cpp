@@ -79,13 +79,18 @@ void StemEditor::createInterface()
 
 	this->pDivisionLabel = new QLabel(tr("Path Divisions"));
 	this->pDivisionValue = new QSpinBox;
-	this->pDivisionValue->setMinimum(1);
+	this->pDivisionValue->setMinimum(0);
 	form->addRow(this->pDivisionLabel, this->pDivisionValue);
 
 	this->sDivisionLabel = new QLabel(tr("Section Divisions"));
 	this->sDivisionValue = new QSpinBox;
 	this->sDivisionValue->setMinimum(3);
 	form->addRow(this->sDivisionLabel, this->sDivisionValue);
+
+	this->cDivisionLabel = new QLabel(tr("Collar Divisions"));
+	this->cDivisionValue = new QSpinBox;
+	this->cDivisionValue->setMinimum(0);
+	form->addRow(this->cDivisionLabel, this->cDivisionValue);
 
 	this->degreeLabel = new QLabel(tr("Degree"));
 	this->degreeValue = new QComboBox;
@@ -126,11 +131,15 @@ void StemEditor::createInterface()
 	connect(this->sDivisionValue, SIGNAL(editingFinished()),
 		this, SLOT(finishChanging()));
 	connect(this->sDivisionValue, SIGNAL(valueChanged(int)),
-		this, SLOT(changeResolution(int)));
+		this, SLOT(changeSectionDivisions(int)));
 	connect(this->pDivisionValue, SIGNAL(editingFinished()),
 		this, SLOT(finishChanging()));
 	connect(this->pDivisionValue, SIGNAL(valueChanged(int)),
-		this, SLOT(changeDivisions(int)));
+		this, SLOT(changePathDivisions(int)));
+	connect(this->cDivisionValue, SIGNAL(editingFinished()),
+		this, SLOT(finishChanging()));
+	connect(this->cDivisionValue, SIGNAL(valueChanged(int)),
+		this, SLOT(changeCollarDivisions(int)));
 	connect(this->radiusValue, SIGNAL(editingFinished()),
 		this, SLOT(finishChanging()));
 	connect(this->radiusValue, SIGNAL(valueChanged(double)),
@@ -173,6 +182,8 @@ void StemEditor::setFields(map<Stem *, PointSelection> instances)
 			indicateDifferences(this->customLabel);
 		if (s1->getSectionDivisions() != s2->getSectionDivisions())
 			indicateDifferences(this->sDivisionLabel);
+		if (s1->getCollarDivisions() != s2->getCollarDivisions())
+			indicateDifferences(this->cDivisionLabel);
 		if (s1->getMaxRadius() != s2->getMaxRadius())
 			indicateDifferences(this->radiusLabel);
 		if (s1->getMinRadius() != s2->getMinRadius())
@@ -208,6 +219,7 @@ void StemEditor::setFields(map<Stem *, PointSelection> instances)
 	this->customValue->setCheckState(
 		stem->isCustom() ? Qt::Checked : Qt::Unchecked);
 	this->sDivisionValue->setValue(stem->getSectionDivisions());
+	this->cDivisionValue->setValue(stem->getCollarDivisions());
 	this->pDivisionValue->setValue(stem->getPath().getDivisions());
 	this->radiusValue->setValue(stem->getMaxRadius());
 	this->minRadiusValue->setValue(stem->getMinRadius());
@@ -237,6 +249,7 @@ void StemEditor::blockSignals(bool block)
 {
 	this->stemGroup->blockSignals(block);
 	this->sDivisionValue->blockSignals(block);
+	this->cDivisionValue->blockSignals(block);
 	this->pDivisionValue->blockSignals(block);
 	this->radiusValue->blockSignals(block);
 	this->minRadiusValue->blockSignals(block);
@@ -256,6 +269,7 @@ void StemEditor::enable(bool enable)
 		indicateSimilarities(this->minRadiusLabel);
 		indicateSimilarities(this->radiusCurveLabel);
 		indicateSimilarities(this->sDivisionLabel);
+		indicateSimilarities(this->cDivisionLabel);
 		indicateSimilarities(this->pDivisionLabel);
 		indicateSimilarities(this->degreeLabel);
 		indicateSimilarities(this->stemMaterialLabel);
@@ -268,6 +282,7 @@ void StemEditor::enable(bool enable)
 	this->minRadiusValue->setEnabled(enable);
 	this->radiusCurveValue->setEnabled(enable);
 	this->sDivisionValue->setEnabled(enable);
+	this->cDivisionValue->setEnabled(enable);
 	this->pDivisionValue->setEnabled(enable);
 	this->degreeValue->setEnabled(enable);
 	this->stemMaterialValue->setEnabled(enable);
@@ -374,16 +389,25 @@ void StemEditor::changePathDegree(int index)
 	finishChanging();
 }
 
-void StemEditor::changeResolution(int resolution)
+void StemEditor::changeSectionDivisions(int divisions)
 {
 	beginChanging(this->sDivisionLabel);
 	auto instances = this->editor->getSelection()->getStemInstances();
 	for (auto &instance : instances)
-		instance.first->setSectionDivisions(resolution);
+		instance.first->setSectionDivisions(divisions);
 	this->editor->change();
 }
 
-void StemEditor::changeDivisions(int divisions)
+void StemEditor::changeCollarDivisions(int divisions)
+{
+	beginChanging(this->cDivisionLabel);
+	auto instances = this->editor->getSelection()->getStemInstances();
+	for (auto &instance : instances)
+		instance.first->setCollarDivisions(divisions);
+	this->editor->change();
+}
+
+void StemEditor::changePathDivisions(int divisions)
 {
 	beginChanging(this->pDivisionLabel);
 	auto instances = this->editor->getSelection()->getStemInstances();

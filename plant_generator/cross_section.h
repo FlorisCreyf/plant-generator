@@ -33,6 +33,7 @@ namespace pg {
 		int getResolution() const;
 		void setSpline(Spline spline);
 		void generate(int resolution);
+		void scale(float x, float y);
 		void setVertices(std::vector<SVertex> vertices);
 		std::vector<SVertex> getVertices() const;
 	};

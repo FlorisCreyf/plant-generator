@@ -45,11 +45,11 @@ void Stem::init(Stem *parent)
 	this->maxRadius = 0.0f;
 	this->minRadius = 0.0f;
 	this->radiusCurve = 0;
-	this->swelling = Vec2(1.5, 3.0);
+	this->swelling = Vec2(1.2f, 3.0f);
 	this->material[0] = 0;
 	this->material[1] = 0;
 	this->sectionDivisions = 8;
-	this->collarDivisions = 2;
+	this->collarDivisions = 1;
 	this->custom = false;
 	this->derivation.reset();
 	this->nextSibling = nullptr;
@@ -191,10 +191,7 @@ int Stem::getCollarDivisions() const
 void Stem::setPath(Path &path)
 {
 	this->path = path;
-	if (this->parent)
-		this->path.generate(true);
-	else
-		this->path.generate(false);
+	this->path.generate();
 	updatePositions(this);
 }
 

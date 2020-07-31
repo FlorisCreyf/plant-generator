@@ -29,12 +29,12 @@ void Path::setColor(Vec3 curve, Vec3 control, Vec3 selection)
 	this->selectionColor = selection;
 }
 
-void Path::set(const pg::Spline &spline, int resolution, Vec3 location)
+void Path::set(const pg::Spline &spline, int divisions, Vec3 location)
 {
 	if (!spline.getControls().empty()) {
 		Segment segment;
 		segment.spline = spline;
-		segment.resolution = resolution;
+		segment.divisions = divisions;
 		segment.location = location;
 		vector<Segment> segments;
 		segments.push_back(segment);
@@ -46,7 +46,7 @@ void Path::set(vector<Segment> segments)
 {
 	clearPoints();
 	for (auto &segment : segments) {
-		this->resolution.push_back(segment.resolution);
+		this->divisions.push_back(segment.divisions);
 		this->degree.push_back(segment.spline.getDegree());
 	}
 	int index = setPoints(segments, 0);
@@ -59,7 +59,7 @@ void Path::clearPoints()
 	this->controlStart.clear();
 	this->pointStart.clear();
 	this->lineStart.clear();
-	this->resolution.clear();
+	this->divisions.clear();
 	this->degree.clear();
 	this->points.clear();
 	this->indices.clear();
@@ -73,11 +73,11 @@ int Path::setPoints(const vector<Path::Segment> &segments, int index)
 		vector<Vec3> points;
 		this->lineStart.push_back(index);
 
-		float step = 1.0f / segment.resolution;
+		float step = 1.0f / (segment.divisions+1);
 		int curves = segment.spline.getCurveCount();
 		for (int curve = 0; curve < curves; curve++) {
 			float t = 0.0f;
-			for (int i = 0; i < segment.resolution; i++) {
+			for (int i = 0; i <= segment.divisions; i++) {
 				Vec3 point = segment.spline.getPoint(curve, t);
 				points.push_back(segment.location + point);
 				t += step;
@@ -206,8 +206,8 @@ void Path::colorBezier(const std::set<int> &points, int index)
 
 void Path::colorLine(int point, int index)
 {
-	int offset = this->lineStart[index] + this->resolution[index] * point;
-	for (int i = 1; i <= this->resolution[index]; i++)
+	int offset = this->lineStart[index] + this->divisions[index] * point;
+	for (int i = 1; i <= this->divisions[index]; i++)
 		this->path.changeColor(offset + i, this->selectionColor);
 }
 
