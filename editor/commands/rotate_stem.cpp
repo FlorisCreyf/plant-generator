@@ -122,7 +122,7 @@ Quat RotateStem::getTransformation(Quat q)
 void RotateStem::rotateChild(pg::Stem *stem, Quat t, float distance)
 {
 	while (stem) {
-		if (stem->getPosition() >= distance) {
+		if (stem->getDistance() >= distance) {
 			pg::Path path = stem->getPath();
 			pg::Spline spline = path.getSpline();
 			std::vector<Vec3> controls = spline.getControls();

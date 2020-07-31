@@ -38,7 +38,7 @@ BOOST_AUTO_TEST_CASE(test_index_bounds)
 		stem->setPath(path);
 		stem->setMaxRadius(0.1f);
 		stem->setMinRadius(0.0f);
-		stem->setPosition(5.0f);
+		stem->setDistance(5.0f);
 		stem->setSwelling(Vec2(1.1f, 1.1f));
 	}
 

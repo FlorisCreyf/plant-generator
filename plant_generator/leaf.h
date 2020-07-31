@@ -16,7 +16,8 @@
 #ifndef PG_LEAF_H
 #define PG_LEAF_H
 
-#include "math/math.h"
+#include "math/vec3.h"
+#include "math/quat.h"
 
 #ifdef PG_SERIALIZE
 #include <boost/archive/text_oarchive.hpp>
@@ -34,9 +35,8 @@ namespace pg {
 		#ifdef PG_SERIALIZE
 		friend class boost::serialization::access;
 		template<class Archive>
-		void serialize(Archive &ar, const unsigned int version)
+		void serialize(Archive &ar, const unsigned)
 		{
-			(void)version;
 			ar & position;
 			ar & scale;
 			ar & material;

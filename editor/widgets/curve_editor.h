@@ -25,7 +25,6 @@
 #include "editor/commands/move_spline.h"
 #include "editor/geometry/translation_axes.h"
 #include "plant_generator/curve.h"
-#include "plant_generator/math/math.h"
 #include <vector>
 #include <QtWidgets>
 

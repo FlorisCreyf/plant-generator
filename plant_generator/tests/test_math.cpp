@@ -1,7 +1,8 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "../math/math.h"
+#include "../math/vec3.h"
+#include "../math/quat.h"
 #include "../math/intersection.h"
 #include "../geometry.h"
 

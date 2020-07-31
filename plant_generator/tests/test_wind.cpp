@@ -11,7 +11,7 @@ BOOST_AUTO_TEST_SUITE(wind)
 Path createPath()
 {
 	Path path;
-	path.setResolution(2);
+	path.setDivisions(2);
 	Spline spline;
 	spline.setDegree(3);
 	spline.addControl(Vec3(0.0f, 0.0f, 0.0f));
@@ -28,7 +28,7 @@ void addStem(Plant &plant, Stem *root, Path &path, float position)
 {
 	Stem *stem = plant.addStem(root);
 	stem->setPath(path);
-	stem->setPosition(position);
+	stem->setDistance(position);
 }
 
 void validateJoints(Stem *stem)

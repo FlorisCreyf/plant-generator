@@ -18,7 +18,7 @@
 #ifndef GEOMETRY_H
 #define GEOMETRY_H
 
-#include "plant_generator/math/math.h"
+#include "plant_generator/math/mat4.h"
 #include "plant_generator/spline.h"
 #include "plant_generator/vertex.h"
 #include <vector>

@@ -31,7 +31,7 @@ namespace pg {
 
 		#ifdef PG_SERIALIZE
 		template<class Archive>
-		void serialize(Archive &ar, const unsigned int)
+		void serialize(Archive &ar, const unsigned)
 		{
 			ar & rotation;
 			ar & translation;
@@ -49,7 +49,7 @@ namespace pg {
 
 		#ifdef PG_SERIALIZE
 		template<class Archive>
-		void serialize(Archive &ar, const unsigned int)
+		void serialize(Archive &ar, const unsigned)
 		{
 			ar & frames;
 		}

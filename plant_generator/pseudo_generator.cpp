@@ -15,7 +15,6 @@
 
 #include "plant.h"
 #include "pseudo_generator.h"
-#include "math.h"
 #include <cstdlib>
 #include <cmath>
 
@@ -48,7 +47,7 @@ void PseudoGenerator::grow()
 {
 	Stem *root = this->plant->createRoot();
 	root->setDerivation(this->dvn);
-	root->setPosition(0.0f);
+	root->setDistance(0.0f);
 	root->setMaxRadius(0.2f);
 	root->setMinRadius(0.01f);
 
@@ -81,8 +80,8 @@ void PseudoGenerator::grow(Stem *stem)
 Vec3 PseudoGenerator::getStemDirection(Stem *stem)
 {
 	Path path = stem->getParent()->getPath();
-	float ratio = stem->getPosition() / path.getLength();
-	Vec3 direction = path.getIntermediateDirection(stem->getPosition());
+	float ratio = stem->getDistance() / path.getLength();
+	Vec3 direction = path.getIntermediateDirection(stem->getDistance());
 	std::uniform_real_distribution<float> dis(0.0f, 2.0*PI);
 	float angleX = PI*(0.1f + 0.4f*(1.0f-ratio));
 	float angleY = dis(this->randomGenerator);
@@ -124,8 +123,8 @@ void PseudoGenerator::addLateralStem(
 	stem->setMaxRadius(radius);
 	stem->setMinRadius(getMinRadius(radius));
 	stem->setSwelling(swelling);
-	stem->setPosition(position);
-	stem->setResolution(5);
+	stem->setDistance(position);
+	stem->setSectionDivisions(5);
 	setPath(stem, getStemDirection(stem), node->getData());
 	addLeaves(stem, node->getData());
 
@@ -158,7 +157,7 @@ void PseudoGenerator::setPath(Stem *stem, Vec3 direction, const Derivation &dvn)
 	float increment = length / points;
 
 	Path path;
-	path.setResolution(divisions);
+	path.setDivisions(divisions);
 	std::vector<Vec3> controls;
 	std::uniform_real_distribution<float> dis(-0.05f, 0.05f);
 

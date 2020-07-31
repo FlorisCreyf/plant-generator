@@ -19,7 +19,6 @@
 #define PATH_H
 
 #include "editor/point_selection.h"
-#include "plant_generator/math/math.h"
 #include "plant_generator/spline.h"
 #include "geometry.h"
 #include <vector>

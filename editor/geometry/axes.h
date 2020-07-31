@@ -19,7 +19,7 @@
 #define AXES_H
 
 #include "geometry.h"
-#include "plant_generator/math/math.h"
+#include "plant_generator/math/vec3.h"
 #include "plant_generator/math/intersection.h"
 
 class Axes {

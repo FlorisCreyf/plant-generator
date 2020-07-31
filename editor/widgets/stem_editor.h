@@ -63,10 +63,10 @@ private:
 	QDoubleSpinBox *minRadiusValue;
 	QLabel *radiusCurveLabel;
 	QComboBox *radiusCurveValue;
-	QLabel *resolutionLabel;
-	QSpinBox *resolutionValue;
-	QLabel *divisionLabel;
-	QSpinBox *divisionValue;
+	QLabel *sDivisionLabel;
+	QSpinBox *sDivisionValue;
+	QLabel *pDivisionLabel;
+	QSpinBox *pDivisionValue;
 	QLabel *degreeLabel;
 	QComboBox *degreeValue;
 	QLabel *stemMaterialLabel;

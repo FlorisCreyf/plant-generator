@@ -108,7 +108,6 @@ plant_generator/file/xml_writer.h \
 plant_generator/math/curve.h \
 plant_generator/math/intersection.h \
 plant_generator/math/mat4.h \
-plant_generator/math/math.h \
 plant_generator/math/quat.h \
 plant_generator/math/vec2.h \
 plant_generator/math/vec3.h \

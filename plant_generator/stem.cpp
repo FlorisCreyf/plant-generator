@@ -48,7 +48,8 @@ void Stem::init(Stem *parent)
 	this->swelling = Vec2(1.5, 3.0);
 	this->material[0] = 0;
 	this->material[1] = 0;
-	this->resolution = 10;
+	this->sectionDivisions = 8;
+	this->collarDivisions = 2;
 	this->custom = false;
 	this->derivation.reset();
 	this->nextSibling = nullptr;
@@ -57,7 +58,7 @@ void Stem::init(Stem *parent)
 	this->parent = parent;
 	if (parent == nullptr) {
 		this->depth = 0;
-		this->position = 0.0f;
+		this->distance = 0.0f;
 		this->location = Vec3(0.0f, 0.0f, 0.0f);
 	} else
 		this->depth = parent->depth + 1;
@@ -76,8 +77,8 @@ void Stem::copy(const Stem &stem)
 	this->minRadius = stem.minRadius;
 	this->radiusCurve = stem.radiusCurve;
 	this->path = stem.path;
-	this->resolution = stem.resolution;
-	this->position = stem.position;
+	this->sectionDivisions = stem.sectionDivisions;
+	this->distance = stem.distance;
 	this->location = stem.location;
 	this->material[0] = stem.material[0];
 	this->material[1] = stem.material[1];
@@ -95,8 +96,8 @@ bool Stem::operator==(const Stem &stem) const
 		this->minRadius == stem.minRadius &&
 		this->maxRadius == stem.maxRadius &&
 		this->path == stem.path &&
-		this->resolution == stem.resolution &&
-		this->position == stem.position &&
+		this->sectionDivisions == stem.sectionDivisions &&
+		this->distance == stem.distance &&
 		this->location == stem.location &&
 		this->material[0] == stem.material[0] &&
 		this->material[1] == stem.material[1] &&
@@ -167,14 +168,24 @@ void Stem::removeLeaf(size_t index)
 	this->leaves.erase(this->leaves.begin() + index);
 }
 
-void Stem::setResolution(int resolution)
+void Stem::setSectionDivisions(int resolution)
 {
-	this->resolution = resolution;
+	this->sectionDivisions = resolution;
 }
 
-int Stem::getResolution() const
+int Stem::getSectionDivisions() const
 {
-	return this->resolution;
+	return this->sectionDivisions;
+}
+
+void Stem::setCollarDivisions(int divisions)
+{
+	this->collarDivisions = divisions;
+}
+
+int Stem::getCollarDivisions() const
+{
+	return this->collarDivisions;
 }
 
 void Stem::setPath(Path &path)
@@ -196,13 +207,13 @@ void Stem::updatePositions(Stem *stem)
 {
 	Stem *child = stem->child;
 	while (child != nullptr) {
-		child->setPosition(child->position);
+		child->setDistance(child->distance);
 		updatePositions(child);
 		child = child->nextSibling;
 	}
 }
 
-void Stem::setPosition(float position)
+void Stem::setDistance(float position)
 {
 	if (this->parent != nullptr) {
 		Path parentPath = this->parent->getPath();
@@ -211,14 +222,14 @@ void Stem::setPosition(float position)
 			this->location = point;
 		else
 			this->location = parent->getLocation() + point;
-		this->position = position;
+		this->distance = position;
 		updatePositions(this);
 	}
 }
 
-float Stem::getPosition() const
+float Stem::getDistance() const
 {
-	return this->position;
+	return this->distance;
 }
 
 Vec3 Stem::getLocation() const

@@ -77,15 +77,15 @@ void StemEditor::createInterface()
 	this->radiusCurveValue = new QComboBox;
 	form->addRow(this->radiusCurveLabel, this->radiusCurveValue);
 
-	this->divisionLabel = new QLabel(tr("Divisions"));
-	this->divisionValue = new QSpinBox;
-	this->divisionValue->setMinimum(1);
-	form->addRow(this->divisionLabel, this->divisionValue);
+	this->pDivisionLabel = new QLabel(tr("Path Divisions"));
+	this->pDivisionValue = new QSpinBox;
+	this->pDivisionValue->setMinimum(1);
+	form->addRow(this->pDivisionLabel, this->pDivisionValue);
 
-	this->resolutionLabel = new QLabel(tr("Resolution"));
-	this->resolutionValue = new QSpinBox;
-	this->resolutionValue->setMinimum(3);
-	form->addRow(this->resolutionLabel, this->resolutionValue);
+	this->sDivisionLabel = new QLabel(tr("Section Divisions"));
+	this->sDivisionValue = new QSpinBox;
+	this->sDivisionValue->setMinimum(3);
+	form->addRow(this->sDivisionLabel, this->sDivisionValue);
 
 	this->degreeLabel = new QLabel(tr("Degree"));
 	this->degreeValue = new QComboBox;
@@ -123,13 +123,13 @@ void StemEditor::createInterface()
 		this, SLOT(changeCustom(int)));
 	connect(this->degreeValue, SIGNAL(currentIndexChanged(int)),
 		this, SLOT(changePathDegree(int)));
-	connect(this->resolutionValue, SIGNAL(editingFinished()),
+	connect(this->sDivisionValue, SIGNAL(editingFinished()),
 		this, SLOT(finishChanging()));
-	connect(this->resolutionValue, SIGNAL(valueChanged(int)),
+	connect(this->sDivisionValue, SIGNAL(valueChanged(int)),
 		this, SLOT(changeResolution(int)));
-	connect(this->divisionValue, SIGNAL(editingFinished()),
+	connect(this->pDivisionValue, SIGNAL(editingFinished()),
 		this, SLOT(finishChanging()));
-	connect(this->divisionValue, SIGNAL(valueChanged(int)),
+	connect(this->pDivisionValue, SIGNAL(valueChanged(int)),
 		this, SLOT(changeDivisions(int)));
 	connect(this->radiusValue, SIGNAL(editingFinished()),
 		this, SLOT(finishChanging()));
@@ -166,51 +166,49 @@ void StemEditor::setFields(map<Stem *, PointSelection> instances)
 	blockSignals(true);
 
 	for (auto it = nextIt; it != instances.end(); ++it) {
-		Stem *stem1 = prev(it)->first;
-		Stem *stem2 = it->first;
+		Stem *s1 = prev(it)->first;
+		Stem *s2 = it->first;
 
-		if (stem1->isCustom() != stem2->isCustom())
+		if (s1->isCustom() != s2->isCustom())
 			indicateDifferences(this->customLabel);
-		if (stem1->getResolution() != stem2->getResolution())
-			indicateDifferences(this->resolutionLabel);
-		if (stem1->getMaxRadius() != stem2->getMaxRadius())
+		if (s1->getSectionDivisions() != s2->getSectionDivisions())
+			indicateDifferences(this->sDivisionLabel);
+		if (s1->getMaxRadius() != s2->getMaxRadius())
 			indicateDifferences(this->radiusLabel);
-		if (stem1->getMinRadius() != stem2->getMinRadius())
+		if (s1->getMinRadius() != s2->getMinRadius())
 			indicateDifferences(this->minRadiusLabel);
-		if (stem1->getRadiusCurve() != stem2->getRadiusCurve())
+		if (s1->getRadiusCurve() != s2->getRadiusCurve())
 			indicateDifferences(this->radiusCurveLabel);
 
-		pg::Path path1 = prev(it)->first->getPath();
-		pg::Path path2 = it->first->getPath();
-		if (path1.getResolution() != path2.getResolution())
-			indicateDifferences(this->divisionLabel);
+		pg::Path path1 = s1->getPath();
+		pg::Path path2 = s2->getPath();
+		if (path1.getDivisions() != path2.getDivisions())
+			indicateDifferences(this->pDivisionLabel);
 
 		Spline spline1 = path1.getSpline();
 		Spline spline2 = path2.getSpline();
 		if (spline1.getDegree() != spline2.getDegree())
 			indicateDifferences(this->degreeLabel);
 
-		unsigned material1 = stem1->getMaterial(Stem::Outer);
-		unsigned material2 = stem2->getMaterial(Stem::Outer);
+		unsigned material1 = s1->getMaterial(Stem::Outer);
+		unsigned material2 = s2->getMaterial(Stem::Outer);
 		if (material1 != material2)
 			indicateDifferences(this->stemMaterialLabel);
-		material1 = stem1->getMaterial(Stem::Inner);
-		material2 = stem2->getMaterial(Stem::Inner);
+		material1 = s1->getMaterial(Stem::Inner);
+		material2 = s2->getMaterial(Stem::Inner);
 		if (material1 != material2)
 			indicateDifferences(this->capMaterialLabel);
 
-		Vec2 collar1 = stem1->getSwelling();
-		Vec2 collar2 = stem2->getSwelling();
-		if (collar1.x != collar2.x)
+		if (s1->getSwelling().x != s2->getSwelling().x)
 			indicateDifferences(this->collarXLabel);
-		if (collar1.y != collar2.y)
+		if (s1->getSwelling().y != s2->getSwelling().y)
 			indicateDifferences(this->collarYLabel);
 	}
 
 	this->customValue->setCheckState(
 		stem->isCustom() ? Qt::Checked : Qt::Unchecked);
-	this->resolutionValue->setValue(stem->getResolution());
-	this->divisionValue->setValue(stem->getPath().getResolution());
+	this->sDivisionValue->setValue(stem->getSectionDivisions());
+	this->pDivisionValue->setValue(stem->getPath().getDivisions());
 	this->radiusValue->setValue(stem->getMaxRadius());
 	this->minRadiusValue->setValue(stem->getMinRadius());
 	this->radiusCurveValue->setCurrentIndex(stem->getRadiusCurve());
@@ -238,8 +236,8 @@ void StemEditor::setFields(map<Stem *, PointSelection> instances)
 void StemEditor::blockSignals(bool block)
 {
 	this->stemGroup->blockSignals(block);
-	this->resolutionValue->blockSignals(block);
-	this->divisionValue->blockSignals(block);
+	this->sDivisionValue->blockSignals(block);
+	this->pDivisionValue->blockSignals(block);
 	this->radiusValue->blockSignals(block);
 	this->minRadiusValue->blockSignals(block);
 	this->radiusCurveValue->blockSignals(block);
@@ -257,8 +255,8 @@ void StemEditor::enable(bool enable)
 		indicateSimilarities(this->radiusLabel);
 		indicateSimilarities(this->minRadiusLabel);
 		indicateSimilarities(this->radiusCurveLabel);
-		indicateSimilarities(this->resolutionLabel);
-		indicateSimilarities(this->divisionLabel);
+		indicateSimilarities(this->sDivisionLabel);
+		indicateSimilarities(this->pDivisionLabel);
 		indicateSimilarities(this->degreeLabel);
 		indicateSimilarities(this->stemMaterialLabel);
 		indicateSimilarities(this->capMaterialLabel);
@@ -269,8 +267,8 @@ void StemEditor::enable(bool enable)
 	this->radiusValue->setEnabled(enable);
 	this->minRadiusValue->setEnabled(enable);
 	this->radiusCurveValue->setEnabled(enable);
-	this->resolutionValue->setEnabled(enable);
-	this->divisionValue->setEnabled(enable);
+	this->sDivisionValue->setEnabled(enable);
+	this->pDivisionValue->setEnabled(enable);
 	this->degreeValue->setEnabled(enable);
 	this->stemMaterialValue->setEnabled(enable);
 	this->capMaterialValue->setEnabled(enable);
@@ -378,20 +376,20 @@ void StemEditor::changePathDegree(int index)
 
 void StemEditor::changeResolution(int resolution)
 {
-	beginChanging(this->resolutionLabel);
+	beginChanging(this->sDivisionLabel);
 	auto instances = this->editor->getSelection()->getStemInstances();
 	for (auto &instance : instances)
-		instance.first->setResolution(resolution);
+		instance.first->setSectionDivisions(resolution);
 	this->editor->change();
 }
 
 void StemEditor::changeDivisions(int divisions)
 {
-	beginChanging(this->divisionLabel);
+	beginChanging(this->pDivisionLabel);
 	auto instances = this->editor->getSelection()->getStemInstances();
 	for (auto &instance : instances) {
 		pg::Path path = instance.first->getPath();
-		path.setResolution(divisions);
+		path.setDivisions(divisions);
 		instance.first->setPath(path);
 	}
 	this->editor->change();

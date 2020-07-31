@@ -77,8 +77,8 @@ void Mesh::addSections(State &state)
 	Stem *stem = state.segment.stem;
 
 	setInitialRotation(state);
-	if (stem->getResolution() != this->crossSection.getResolution())
-		this->crossSection.generate(stem->getResolution());
+	if (stem->getSectionDivisions() != this->crossSection.getResolution())
+		this->crossSection.generate(stem->getSectionDivisions());
 
 	state.texOffset = 0.0f;
 	state.prevIndex = this->vertices[state.mesh].size();
@@ -87,7 +87,7 @@ void Mesh::addSections(State &state)
 
 	if (state.section > 0 && state.section < sections) {
 		size_t i = this->vertices[state.mesh].size();
-		int r = stem->getResolution();
+		int r = stem->getSectionDivisions();
 		addTriangleRing(state.prevIndex, i, r, state.mesh);
 	}
 
@@ -98,7 +98,7 @@ void Mesh::addSections(State &state)
 
 		if (state.section+1 < sections) {
 			size_t i = this->vertices[state.mesh].size();
-			int r = stem->getResolution();
+			int r = stem->getSectionDivisions();
 			addTriangleRing(state.prevIndex, i, r, state.mesh);
 		}
 	}
@@ -114,7 +114,7 @@ void Mesh::setInitialRotation(State &state)
 	Stem *stem = state.segment.stem;
 	Stem *parent = stem->getParent();
 	if (parent) {
-		float position = stem->getPosition();
+		float position = stem->getDistance();
 		Path parentPath = parent->getPath();
 		Vec3 parentDirection;
 		parentDirection = parentPath.getIntermediateDirection(position);
@@ -269,15 +269,15 @@ void Mesh::reserveBranchCollarSpace(Stem *stem, int mesh)
 /** Return the amount of memory needed for the branch collar. */
 size_t Mesh::getBranchCollarSize(Stem *stem)
 {
-	const int divisions = stem->getPath().getResolution();
-	return (stem->getResolution()+1) * divisions;
+	const int divisions = stem->getPath().getDivisions();
+	return (stem->getSectionDivisions()+1) * divisions;
 }
 
 /** The first step in generating the branch collar is scaling the first cross
 section of the stem. This method returns the quantity to scale by. */
 Mat4 Mesh::getBranchCollarScale(Stem *child, Stem *parent)
 {
-	float position = child->getPosition();
+	float position = child->getDistance();
 	Vec3 yaxis = parent->getPath().getIntermediateDirection(position);
 	Vec3 xaxis = child->getPath().getDirection(0);
 	xaxis = normalize(cross(cross(yaxis, xaxis), yaxis));
@@ -336,8 +336,8 @@ bool Mesh::connectCollar(Segment child, Segment parent, size_t vertexStart)
 {
 	const int mesh1 = selectBuffer(child.stem->getMaterial(Stem::Outer));
 	const int mesh2 = selectBuffer(parent.stem->getMaterial(Stem::Outer));
-	const int resolution = child.stem->getResolution();
-	const int divisions = child.stem->getPath().getResolution();
+	const int resolution = child.stem->getSectionDivisions();
+	const int divisions = child.stem->getPath().getDivisions();
 	size_t collarSize = getBranchCollarSize(child.stem);
 	Mat4 scale = getBranchCollarScale(child.stem, parent.stem);
 
@@ -458,7 +458,7 @@ void Mesh::capStem(Stem *stem, int stemMesh, size_t section)
 {
 	int mesh = selectBuffer(stem->getMaterial(Stem::Inner));
 	int index = section;
-	int divisions = stem->getResolution();
+	int divisions = stem->getSectionDivisions();
 	float rotation = 2.0f * PI / divisions;
 	float angle = 0.0f;
 	section = this->vertices[mesh].size();
@@ -576,7 +576,7 @@ void Mesh::setInitialJointState(State &state, const State &parentState)
 	if (joints.empty() && (!parent || !parent->hasJoints())) {
 		state.jointID = parentState.jointID;
 	} else if (joints.empty()) {
-		float position = stem->getPosition();
+		float position = stem->getDistance();
 		auto pair = getJoint(position, stem->getParent());
 		state.jointID = pair.second.getID();
 		state.jointIndex = pair.first;

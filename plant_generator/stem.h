@@ -18,7 +18,6 @@
 
 #include "derivation.h"
 #include "leaf.h"
-#include "math/math.h"
 #include "math/curve.h"
 #include "path.h"
 #include "joint.h"
@@ -49,15 +48,16 @@ namespace pg {
 		std::vector<Joint> joints;
 
 		int depth;
-		float position;
-		Vec3 location;
-		Path path;
-		int resolution;
-		unsigned material[2];
-		Vec2 swelling;
+		int sectionDivisions;
+		int collarDivisions;
 		unsigned radiusCurve;
+		unsigned material[2];
+		float distance;
 		float minRadius;
 		float maxRadius;
+		Vec2 swelling;
+		Vec3 location;
+		Path path;
 
 		bool custom;
 		DerivationTree derivation;
@@ -69,9 +69,8 @@ namespace pg {
 		#ifdef PG_SERIALIZE
 		friend class boost::serialization::access;
 		template<class Archive>
-		void serialize(Archive &ar, const unsigned int version)
+		void serialize(Archive &ar, const unsigned)
 		{
-			(void)version;
 			ar & nextSibling;
 			ar & prevSibling;
 			ar & child;
@@ -79,8 +78,9 @@ namespace pg {
 			ar & depth;
 			ar & leaves;
 			ar & path;
-			ar & resolution;
-			ar & position;
+			ar & sectionDivisions;
+			ar & collarDivisions;
+			ar & distance;
 			ar & location;
 			ar & material;
 			ar & swelling;
@@ -123,14 +123,16 @@ namespace pg {
 		float getMinRadius() const;
 		void setRadiusCurve(unsigned index);
 		unsigned getRadiusCurve() const;
-		void setResolution(int resolution);
-		int getResolution() const;
+		void setSectionDivisions(int divisions);
+		int getSectionDivisions() const;
+		void setCollarDivisions(int divisions);
+		int getCollarDivisions() const;
 		void setPath(Path &path);
 		Path getPath() const;
 		void setSwelling(Vec2 scale);
 		Vec2 getSwelling() const;
-		void setPosition(float position);
-		float getPosition() const;
+		void setDistance(float distance);
+		float getDistance() const;
 		Vec3 getLocation() const;
 		void setMaterial(Type feature, unsigned material);
 		unsigned getMaterial(Type feature) const;

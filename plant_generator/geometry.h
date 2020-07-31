@@ -16,7 +16,8 @@
 #ifndef PG_GEOMETRY_H
 #define PG_GEOMETRY_H
 
-#include "math/math.h"
+#include "math/vec3.h"
+#include "math/quat.h"
 #include "vertex.h"
 #include <vector>
 #include <string>
@@ -34,9 +35,8 @@ namespace pg {
 		#ifdef PG_SERIALIZE
 		friend class boost::serialization::access;
 		template<class Archive>
-		void serialize(Archive &ar, const unsigned int version)
+		void serialize(Archive &ar, const unsigned)
 		{
-			(void)version;
 			ar & name;
 			ar & points;
 			ar & indices;

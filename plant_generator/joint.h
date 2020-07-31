@@ -16,7 +16,7 @@
 #ifndef PG_JOINT_H
 #define PG_JOINT_H
 
-#include "math/math.h"
+#include "math/vec3.h"
 
 #ifdef PG_SERIALIZE
 #include <boost/archive/text_oarchive.hpp>
@@ -32,9 +32,8 @@ namespace pg {
 		#ifdef PG_SERIALIZE
 		friend class boost::serialization::access;
 		template<class Archive>
-		void serialize(Archive &ar, const unsigned int version)
+		void serialize(Archive &ar, const unsigned)
 		{
-			(void)version;
 			ar & id;
 			ar & parentID;
 			ar & pathIndex;

@@ -16,7 +16,8 @@
  */
 
 #include "material_viewer.h"
-#include "plant_generator/math/math.h"
+#include "plant_generator/math/vec3.h"
+#include "plant_generator/math/mat4.h"
 
 using pg::Vec3;
 using pg::Mat4;

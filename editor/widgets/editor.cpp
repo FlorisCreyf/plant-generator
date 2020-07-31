@@ -700,7 +700,7 @@ void Editor::updateSelection()
 
 			Path::Segment segment;
 			segment.spline = spline;
-			segment.resolution = path.getResolution();
+			segment.resolution = path.getDivisions();
 			segment.location = location;
 			segments.push_back(segment);
 		}

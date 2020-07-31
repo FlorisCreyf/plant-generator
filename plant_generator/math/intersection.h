@@ -16,7 +16,7 @@
 #ifndef PG_INTERSECTION_H
 #define PG_INTERSECTION_H
 
-#include "math.h"
+#include "vec3.h"
 #include "../vertex.h"
 #include <cstddef>
 

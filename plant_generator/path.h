@@ -16,7 +16,7 @@
 #ifndef PG_PATH_H
 #define PG_PATH_H
 
-#include "math/math.h"
+#include "math/vec3.h"
 #include "spline.h"
 #include <vector>
 
@@ -25,19 +25,18 @@ namespace pg {
 	protected:
 		std::vector<Vec3> path;
 		Spline spline;
-		int resolution = 2;
+		int divisions = 2;
 		int subdivisions = 0;
 		bool linearStart;
 
 		#ifdef PG_SERIALIZE
 		friend class boost::serialization::access;
 		template<class Archive>
-		void serialize(Archive &ar, const unsigned int version)
+		void serialize(Archive &ar, const unsigned)
 		{
-			(void)version;
 			ar & path;
 			ar & spline;
-			ar & resolution;
+			ar & divisions;
 			ar & subdivisions;
 		}
 		#endif
@@ -49,8 +48,8 @@ namespace pg {
 		void setSpline(const Spline &spline);
 		Spline getSpline();
 		/** Set the divisions for each curve in the path. */
-		void setResolution(int resolution);
-		int getResolution() const;
+		void setDivisions(int divisions);
+		int getDivisions() const;
 		void subdivide(int level);
 		int getSubdivisions() const;
 		/** Evaluate points along the spline. The first curve is

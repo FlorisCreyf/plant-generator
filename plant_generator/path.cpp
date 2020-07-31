@@ -25,7 +25,7 @@ bool Path::operator==(const Path &path) const
 	return (
 		this->path == path.path &&
 		this->spline == path.spline &&
-		this->resolution == path.resolution &&
+		this->divisions == path.divisions &&
 		this->subdivisions == path.subdivisions);
 }
 
@@ -49,9 +49,9 @@ void Path::generate(bool linearStart)
 		this->path.push_back(this->spline.getPoint(curve++, 0.0f));
 
 	while (curve < curves) {
-		float r = 1.0f / this->resolution;
+		float r = 1.0f / this->divisions;
 		float t = 0.0f;
-		for (int i = 0; i < this->resolution; i++) {
+		for (int i = 0; i < this->divisions; i++) {
 			t = r * i;
 			Vec3 point = this->spline.getPoint(curve, t);
 			this->path.push_back(point);
@@ -73,14 +73,14 @@ Spline Path::getSpline()
 }
 
 /** Sets the divisions for each curve in the path. */
-void Path::setResolution(int resolution)
+void Path::setDivisions(int resolution)
 {
-	this->resolution = resolution;
+	this->divisions = resolution;
 }
 
-int Path::getResolution() const
+int Path::getDivisions() const
 {
-	return this->resolution;
+	return this->divisions;
 }
 
 void Path::subdivide(int level)
@@ -225,9 +225,9 @@ size_t Path::toPathIndex(size_t control) const
 		return 0;
 
 	if (this->linearStart)
-		return (control-1) * this->resolution + 1;
+		return (control-1) * this->divisions + 1;
 	else
-		return control * this->resolution;
+		return control * this->divisions;
 }
 
 float Path::getPercentage(size_t index) const

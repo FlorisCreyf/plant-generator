@@ -18,7 +18,9 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
-#include "plant_generator/math/math.h"
+#include "plant_generator/math/vec2.h"
+#include "plant_generator/math/vec3.h"
+#include "plant_generator/math/mat4.h"
 #include "plant_generator/math/intersection.h"
 
 class Camera {

@@ -151,7 +151,7 @@ void MoveStem::moveAlongPath(pg::Stem *stem)
 	float t = 0.0f;
  	size_t line = 0;
 	getPosition(stem->getParent(), line, t, point);
-	stem->setPosition(getLength(path, line, t));
+	stem->setDistance(getLength(path, line, t));
 }
 
 void MoveStem::moveLeavesAlongPath()

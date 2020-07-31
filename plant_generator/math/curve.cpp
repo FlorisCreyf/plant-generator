@@ -14,6 +14,7 @@
  */
 
 #include "curve.h"
+#include "mat4.h"
 #include <cmath>
 
 using pg::Vec3;

@@ -16,7 +16,7 @@
 #ifndef PG_SPLINE_H
 #define PG_SPLINE_H
 
-#include "math/math.h"
+#include "math/vec3.h"
 #include <vector>
 #include <set>
 
@@ -32,16 +32,15 @@ namespace pg {
 
 		void adjustCubic();
 		void adjustLinear();
-		int insertCubic(int index, pg::Vec3 point);
+		int insertCubic(int index, Vec3 point);
 		void moveCubic(unsigned, Vec3, bool);
 		void removeCubic(unsigned);
 
 		#ifdef PG_SERIALIZE
 		friend class boost::serialization::access;
 		template<class Archive>
-		void serialize(Archive &ar, const unsigned int version)
+		void serialize(Archive &ar, const unsigned)
 		{
-			(void)version;
 			ar & controls;
 			ar & degree;
 		}

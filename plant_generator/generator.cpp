@@ -46,7 +46,7 @@ Generator::Generator()
 	spline.setDegree(1);
 	path.setSpline(spline);
 	root->setPath(path);
-	root->setResolution(6);
+	root->setSectionDivisions(6);
 	root->setMinRadius(this->minRadius);
 	root->setMaxRadius(this->minRadius);
 	root->setSwelling(Vec2(1.0f, 1.0f));
@@ -260,7 +260,7 @@ void Generator::addStems(Stem *stem)
 		direction = leaf.getDirection(direction);
 		Vec3 point = this->primaryGrowthRate * direction;
 		Stem *child = plant.addStem(stem);
-		child->setPosition(leaf.getPosition());
+		child->setDistance(leaf.getPosition());
 		child->setSwelling(Vec2(1.0f, 1.0f));
 		path = child->getPath();
 		Spline spline = path.getSpline();

@@ -58,7 +58,7 @@ namespace pg {
 		#ifdef PG_SERIALIZE
 		friend class boost::serialization::access;
 		template<class Archive>
-		void serialize(Archive &ar, const unsigned int)
+		void serialize(Archive &ar, const unsigned)
 		{
 			ar & direction;
 			ar & speed;

@@ -40,13 +40,14 @@ void AddStem::create()
 		extraction.parent = (*instances.begin()).first;
 		stem = plant->addStem(extraction.parent);
 		extraction.address = stem;
-		stem->setResolution(extraction.parent->getResolution());
+		stem->setSectionDivisions(
+			extraction.parent->getSectionDivisions());
 		stem->setMaterial(Stem::Outer,
 			extraction.parent->getMaterial(Stem::Outer));
 		stem->setMaterial(Stem::Inner,
 			extraction.parent->getMaterial(Stem::Inner));
 		pg::Path parentPath = extraction.parent->getPath();
-		pathDivisions = parentPath.getResolution();
+		pathDivisions = parentPath.getDivisions();
 	} else if (instances.empty()) {
 		stem = plant->createRoot();
 		extraction.address = stem;
@@ -62,9 +63,9 @@ void AddStem::create()
 	spline.setControls(controls);
 	spline.setDegree(1);
 	path.setSpline(spline);
-	path.setResolution(pathDivisions);
+	path.setDivisions(pathDivisions);
 	stem->setPath(path);
-	stem->setPosition(0.0f);
+	stem->setDistance(0.0f);
 
 	this->selection->clear();
 	this->selection->addStem(stem);
@@ -77,7 +78,7 @@ void AddStem::setRadius()
 	if (extraction.parent) {
 		Plant *plant = this->selection->getPlant();
 		Stem *parent = extraction.parent;
-		float t = stem->getPosition();
+		float t = stem->getDistance();
 		float radius = plant->getIntermediateRadius(parent, t);
 		radius /= stem->getSwelling().x + 0.1;
 		stem->setMaxRadius(radius);

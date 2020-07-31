@@ -16,7 +16,7 @@
 #ifndef PG_MATH_CURVE_H
 #define PG_MATH_CURVE_H
 
-#include "math.h"
+#include "vec3.h"
 #include <vector>
 #include <cstddef>
 

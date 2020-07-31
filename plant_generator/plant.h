@@ -102,18 +102,16 @@ namespace pg {
 		#ifdef PG_SERIALIZE
 		friend class boost::serialization::access;
 		template<class Archive>
-		void save(Archive &ar, const unsigned int version) const
+		void save(Archive &ar, const unsigned) const
 		{
-			(void)version;
 			ar & root;
 			ar & materials;
 			ar & leafMeshes;
 			ar & curves;
 		}
 		template<class Archive>
-		void load(Archive &ar, const unsigned int version)
+		void load(Archive &ar, const unsigned)
 		{
-			(void)version;
 			ar & root;
 			root = move(root);
 			ar & materials;
