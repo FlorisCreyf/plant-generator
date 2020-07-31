@@ -74,8 +74,6 @@ namespace pg {
 		Geometry defaultLeaf;
 		CrossSection crossSection;
 
-		std::map<long, int> meshes;
-		std::vector<long> materials;
 		std::vector<std::vector<DVertex>> vertices;
 		std::vector<std::vector<unsigned>> indices;
 		std::vector<std::map<Stem *, Segment>> stemSegments;

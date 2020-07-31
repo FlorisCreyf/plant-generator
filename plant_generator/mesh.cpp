@@ -50,13 +50,13 @@ Segment Mesh::addStem(Stem *stem, const State &parentState)
 	State state;
 	state.mesh = selectBuffer(stem->getMaterial(Stem::Outer));
 	state.segment.stem = stem;
-	state.segment.vertexStart = vertices[state.mesh].size();
-	state.segment.indexStart = indices[state.mesh].size();
+	state.segment.vertexStart = this->vertices[state.mesh].size();
+	state.segment.indexStart = this->indices[state.mesh].size();
 	setInitialJointState(state, parentState);
 	addSections(state);
-	state.segment.vertexCount = vertices[state.mesh].size();
+	state.segment.vertexCount = this->vertices[state.mesh].size();
 	state.segment.vertexCount -= state.segment.vertexStart;
-	state.segment.indexCount = indices[state.mesh].size();
+	state.segment.indexCount = this->indices[state.mesh].size();
 	state.segment.indexCount -= state.segment.indexStart;
 	this->stemSegments[state.mesh].emplace(stem, state.segment);
 
@@ -725,36 +725,22 @@ void Mesh::addTriangle(int mesh, int a, int b, int c)
 geometry with identical materials together and simplify draw calls. */
 int Mesh::selectBuffer(long material)
 {
-	auto it = this->meshes.find(material);
-	int mesh = it != this->meshes.end() ? it->first : 0;
-	if (material != 0) {
-		if (it == this->meshes.end()) {
-			this->vertices.push_back(vector<DVertex>());
-			this->indices.push_back(vector<unsigned>());
-			this->stemSegments.push_back(map<Stem *, Segment>());
-			this->leafSegments.push_back(map<LeafID, Segment>());
-			this->meshes[material] = this->indices.size() - 1;
-			this->materials.push_back(material);
-		}
-		mesh = this->meshes[material];
-	}
-	return mesh;
+	return material;
 }
 
 void Mesh::initBuffer()
 {
-	this->materials.clear();
-	this->vertices.clear();
-	this->indices.clear();
-	this->meshes.clear();
-	this->stemSegments.clear();
-	this->leafSegments.clear();
-
-	this->materials.push_back(0);
-	this->vertices.push_back(vector<DVertex>());
-	this->indices.push_back(vector<unsigned>());
-	this->stemSegments.push_back(map<Stem *, Segment>());
-	this->leafSegments.push_back(map<LeafID, Segment>());
+	size_t size = this->plant->getMaterials().size();
+	this->vertices.resize(size);
+	this->indices.resize(size);
+	this->stemSegments.resize(size);
+	this->leafSegments.resize(size);
+	for (size_t i = 0; i < size; i++) {
+		this->vertices[i].clear();
+		this->indices[i].clear();
+		this->stemSegments[i].clear();
+		this->leafSegments[i].clear();
+	}
 }
 
 /** Geometry is divided into different groups depending on material.
@@ -787,7 +773,7 @@ void Mesh::updateSegments()
 
 size_t Mesh::getMeshCount() const
 {
-	return indices.size();
+	return this->indices.size();
 }
 
 size_t Mesh::getVertexCount() const
@@ -808,7 +794,7 @@ size_t Mesh::getIndexCount() const
 
 unsigned Mesh::getMaterialIndex(int mesh) const
 {
-	return this->materials.at(mesh);
+	return mesh;
 }
 
 vector<DVertex> Mesh::getVertices() const
