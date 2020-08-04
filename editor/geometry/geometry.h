@@ -30,10 +30,10 @@ class Geometry {
 public:
 	static const unsigned primitiveReset = 65534;
 	struct Segment {
-		int pstart;
-		int pcount;
-		int istart;
-		int icount;
+		size_t pstart;
+		size_t pcount;
+		size_t istart;
+		size_t icount;
 	};
 
 	void clear();

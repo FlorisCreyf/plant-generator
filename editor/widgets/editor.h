@@ -97,6 +97,7 @@ private:
 		Geometry::Segment axesArrows;
 		Geometry::Segment axesLines;
 		Geometry::Segment grid;
+		Geometry::Segment plane;
 		Geometry::Segment rotation;
 		Geometry::Segment selection;
 	} segments;
@@ -109,11 +110,13 @@ private:
 	VertexBuffer plantBuffer;
 	VertexBuffer staticBuffer;
 	StorageBuffer jointBuffer;
-	GLuint outlineColorMap;
-	GLuint outlineFrameBuffer;
 	SharedResources::Shader shader;
+	GLuint msSilhouetteFramebuffer;
+	GLuint msSilhouetteMap;
+	GLuint silhouetteFramebuffer;
+	GLuint silhouetteMap;
 
-	std::vector<pg::Segment> meshes;
+	std::vector<pg::Segment> selections;
 	pg::PseudoGenerator generator;
 	pg::Scene scene;
 	pg::Mesh mesh;
@@ -132,7 +135,8 @@ private:
 	void createDefaultPlant();
 	void addSelectionToHistory(SaveSelection *);
 	void createToolBar();
-	void createFrameBuffers();
+	void createFramebuffers();
+	void deleteFramebuffers();
 	void exitCommand(bool);
 	void initializeGL();
 	void initializeBuffers();

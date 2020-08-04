@@ -170,7 +170,7 @@ Geometry::Segment Geometry::append(const Geometry &geometry)
 {
 	auto ps = geometry.points;
 	auto is = geometry.indices;
-	Segment segment = geometry.getSegment();
+	Segment segment;
 	segment.pstart = points.size();
 	segment.pcount = ps.size();
 	segment.istart = indices.size();

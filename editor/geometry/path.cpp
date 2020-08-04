@@ -46,7 +46,7 @@ void Path::set(vector<Segment> segments)
 {
 	clearPoints();
 	for (auto &segment : segments) {
-		this->divisions.push_back(segment.divisions);
+		this->divisions.push_back(segment.divisions+1);
 		this->degree.push_back(segment.spline.getDegree());
 	}
 	int index = setPoints(segments, 0);

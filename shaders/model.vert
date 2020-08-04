@@ -14,7 +14,7 @@ struct Joint {
 	vec4 translation1;
 	vec4 translation2;
 };
-layout(std430, binding = 3) buffer Joints {
+layout(std430, binding = 5) buffer Joints {
 	Joint joints[];
 };
 
@@ -56,7 +56,7 @@ vec4 getAnimatedPoint()
 #endif /* DYNAMIC */
 #ifdef SOLID
 
-out vec3 intPosition;
+out vec3 vertexPosition;
 
 void main()
 {
@@ -65,7 +65,7 @@ void main()
 	vertex = getAnimatedPoint();
 	#endif /* DYNAMIC */
 	gl_Position = vp * vertex;
-	intPosition = vec3(vertex) / point.w;
+	vertexPosition = vec3(vertex) / point.w;
 }
 
 #endif /* SOLID */
@@ -102,11 +102,14 @@ void main()
 #endif /* MATERIAL */
 #ifdef OUTLINE
 
+layout(location = 2) uniform int thickness;
+
 void main()
 {
 	vec4 vertex = point;
 	#ifdef DYNAMIC
-	vertex = getAnimatedPoint();
+	if (thickness == 0)
+		vertex = getAnimatedPoint();
 	#endif /* DYNAMIC */
 	gl_Position = vp * vertex;
 }

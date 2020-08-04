@@ -4,7 +4,7 @@ out vec4 fragmentColor;
 
 #ifdef SOLID
 
-in vec3 intPosition;
+in vec3 vertexPosition;
 layout(location = 1) uniform vec4 cameraPosition;
 
 void main()
@@ -13,8 +13,9 @@ void main()
 	vec3 diffuseColor = vec3(0.5, 0.5, 0.5);
 	vec3 specColor = vec3(0.5, 0.5, 0.5);
 
-	vec3 normal = normalize(cross(dFdx(intPosition), dFdy(intPosition)));
-	vec3 lightDir = normalize(cameraPosition.xyz - intPosition);
+	vec3 normal = cross(dFdx(vertexPosition), dFdy(vertexPosition));
+	normal = normalize(normal);
+	vec3 lightDir = normalize(cameraPosition.xyz - vertexPosition);
 	float lambertian = max(dot(lightDir, normal), 0.1);
 	float specular = 0.0;
 
@@ -59,36 +60,50 @@ void main()
 
 layout(location = 2) uniform int thickness;
 layout(location = 3) uniform vec2 viewport;
-uniform sampler2D tex;
+layout(binding = 1) uniform sampler2D silhouette;
+
+void drawSilhouette()
+{
+	fragmentColor = vec4(1.0, 0.0, 0.0, 1.0);
+}
+
+void drawOutline()
+{
+	float dx = 1.0 / viewport.x;
+	float dy = 1.0 / viewport.y;
+	float x = gl_FragCoord.x  / viewport.x;
+	float y = gl_FragCoord.y  / viewport.y;
+	float adjacentY = y - dy * thickness;
+	float adjacentX = 0.0;
+	float result = 0.0;
+	vec4 color = texture(silhouette, vec2(x, y));
+
+	for (int w = 0; w <= 2 * thickness; w++) {
+		adjacentX = x - dx * thickness;
+		for (int h = 0; h <= 2 * thickness; h++) {
+			vec2 texCoord = vec2(adjacentX, adjacentY);
+			vec4 silhouette = texture(silhouette, texCoord);
+			if (result < silhouette.r)
+				result = silhouette.r;
+			adjacentX += dx;
+		}
+		adjacentY += dy;
+	}
+
+	if (color.r == 0.0)
+		fragmentColor = vec4(0.102f, 0.212f, 0.6f, result);
+	else if (color.r > 0.0)
+		fragmentColor = vec4(0.102f, 0.212f, 0.6f, 1.0 - color.r);
+	else
+		fragmentColor = vec4(0.0, 0.0, 0.0, 0.0);
+}
 
 void main()
 {
-	fragmentColor = vec4(0.0f, 0.0f, 0.0f, 0.0f);
-	if (thickness > 0) {
-		float dx = 1.0 / viewport.x;
-		float dy = 1.0 / viewport.y;
-		float x = gl_FragCoord.x * dx;
-		float y = gl_FragCoord.y * dy;
-		float yy = y - dy * thickness;
-		float v = 0;
-
-		for (int w = 0; w <= 2 * thickness; w++) {
-			float xx = x - dx * thickness;
-			for (int h = 0; h <= 2 * thickness; h++) {
-				float a = 1 - texture(tex, vec2(xx, yy)).r;
-				if (a > v)
-					v = a;
-				xx += dx;
-			}
-			yy += dy;
-		}
-
-		if (v != 0)
-			fragmentColor = vec4(0.1, 0.1, 0.1, 1.0);
-		else
-			discard;
-	} else
-		fragmentColor = vec4(1.0, 1.0, 1.0, 1.0);
+	if (thickness > 0)
+		drawOutline();
+	else
+		drawSilhouette();
 }
 
 #endif /* OUTLINE */
