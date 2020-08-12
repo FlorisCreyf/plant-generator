@@ -65,7 +65,7 @@ GLuint ShaderParams::getTexture(unsigned index)
 bool ShaderParams::loadTexture(unsigned index, QString filename)
 {
 	this->textureFiles[index] = filename;
-	if (QOpenGLContext::globalShareContext())
+	if (QOpenGLContext::currentContext())
 		this->valid = true;
 	else {
 		this->valid = false;
