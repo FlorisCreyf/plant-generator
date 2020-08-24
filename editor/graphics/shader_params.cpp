@@ -44,7 +44,7 @@ bool ShaderParams::isValid() const
 
 void ShaderParams::initialize()
 {
-	if (!this->valid && QOpenGLContext::globalShareContext()) {
+	if (!this->valid && QOpenGLContext::currentContext()) {
 		this->valid = true;
 		for (int i = 0; i < 4; i++)
 			if (!this->textureFiles[i].isEmpty())

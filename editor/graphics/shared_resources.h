@@ -58,7 +58,7 @@ public:
 	void updateMaterial(ShaderParams params, unsigned index);
 	void removeMaterial(unsigned index);
 	void clearMaterials();
-	ShaderParams getMaterial(unsigned index) const;
+	ShaderParams getMaterial(unsigned index);
 	unsigned getMaterialCount() const;
 	QOffscreenSurface *getSurface();
 

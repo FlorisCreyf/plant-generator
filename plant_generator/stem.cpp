@@ -78,6 +78,7 @@ void Stem::copy(const Stem &stem)
 	this->radiusCurve = stem.radiusCurve;
 	this->path = stem.path;
 	this->sectionDivisions = stem.sectionDivisions;
+	this->collarDivisions = stem.collarDivisions;
 	this->distance = stem.distance;
 	this->location = stem.location;
 	this->material[0] = stem.material[0];
@@ -97,6 +98,7 @@ bool Stem::operator==(const Stem &stem) const
 		this->maxRadius == stem.maxRadius &&
 		this->path == stem.path &&
 		this->sectionDivisions == stem.sectionDivisions &&
+		this->collarDivisions == stem.collarDivisions &&
 		this->distance == stem.distance &&
 		this->location == stem.location &&
 		this->material[0] == stem.material[0] &&

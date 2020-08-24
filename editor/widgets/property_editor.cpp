@@ -44,6 +44,12 @@ void PropertyEditor::setFields()
 	this->leafEditor->setFields(leafInstances);
 }
 
+void PropertyEditor::clearOptions()
+{
+	this->stemEditor->clearOptions();
+	this->leafEditor->clearOptions();
+}
+
 void PropertyEditor::addCurve(pg::Curve curve)
 {
 	this->stemEditor->addCurve(curve);

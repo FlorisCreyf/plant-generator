@@ -32,6 +32,7 @@ public:
 	void addMesh(pg::Geometry geom);
 	void updateMesh(pg::Geometry geom, unsigned index);
 	void removeMesh(unsigned);
+	void clearOptions();
 	QSize sizeHint() const;
 
 public slots:

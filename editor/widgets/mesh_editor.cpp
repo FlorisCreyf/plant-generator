@@ -129,14 +129,15 @@ const MeshViewer *MeshEditor::getViewer() const
 	return this->meshViewer;
 }
 
-void MeshEditor::init(std::vector<pg::Geometry> geometry)
+void MeshEditor::reset()
 {
-	clear();
 	this->selectionBox->blockSignals(true);
-	for (pg::Geometry geom : geometry) {
-		QString name = QString::fromStdString(geom.getName());
+	this->selectionBox->clear();
+	auto meshes = this->editor->getPlant()->getLeafMeshes();
+	for (pg::Geometry mesh : meshes) {
+		QString name = QString::fromStdString(mesh.getName());
 		this->selectionBox->addItem(name);
-		emit meshAdded(geom);
+		emit meshAdded(mesh);
 	}
 	this->selectionBox->blockSignals(false);
 	select();

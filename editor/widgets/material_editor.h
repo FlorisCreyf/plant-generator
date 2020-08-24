@@ -42,10 +42,10 @@ class MaterialEditor : public QWidget {
 	void update(ShaderParams params, unsigned index);
 
 public:
-	MaterialEditor(
-		SharedResources *shared, Editor *editor, QWidget *parent=0);
+	MaterialEditor(SharedResources *shared, Editor *editor,
+		QWidget *parent);
 	void add(pg::Material material);
-	void init(const std::vector<pg::Material> &materials);
+	void reset();
 	void clear();
 	const MaterialViewer *getViewer() const;
 	QSize sizeHint() const;

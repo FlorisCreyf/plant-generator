@@ -144,13 +144,11 @@ void Window::initEditor()
 	if (this->filename.isEmpty())
 		newFile();
 	else {
+		this->propertyEditor->clearOptions();
 		this->editor->load(this->filename.toLatin1());
-		auto curves = this->editor->getPlant()->getCurves();
-		this->pCurveEditor->init(curves);
-		auto meshes = this->editor->getPlant()->getLeafMeshes();
-		this->meshEditor->init(meshes);
-		auto materials = this->editor->getPlant()->getMaterials();
-		this->materialEditor->init(materials);
+		this->pCurveEditor->reset();
+		this->meshEditor->reset();
+		this->materialEditor->reset();
 		this->editor->reset();
 	}
 }
@@ -226,13 +224,12 @@ void Window::openDialogBox()
 		this, tr("Open File"), "", tr("Plant (*.plant)"));
 
 	if (!filename.isNull() || !filename.isEmpty()) {
+		this->propertyEditor->clearOptions();
 		this->editor->load(filename.toLatin1());
-		auto curves = this->editor->getPlant()->getCurves();
-		this->pCurveEditor->init(curves);
-		auto meshes = this->editor->getPlant()->getLeafMeshes();
-		this->meshEditor->init(meshes);
-		auto materials = this->editor->getPlant()->getMaterials();
-		this->materialEditor->init(materials);
+		this->pCurveEditor->reset();
+		this->meshEditor->reset();
+		this->materialEditor->reset();
+		this->editor->reset();
 		setFilename(filename);
 	}
 }

@@ -42,6 +42,7 @@ public slots:
 	void addMesh(pg::Geometry geom);
 	void updateMesh(pg::Geometry geom, unsigned index);
 	void removeMesh(unsigned index);
+	void clearOptions();
 
 signals:
 	void isEnabled(bool enabled);

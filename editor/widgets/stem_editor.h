@@ -34,6 +34,7 @@ public:
 	bool addMaterial(ShaderParams params);
 	void updateMaterials();
 	void removeMaterial(unsigned index);
+	void clearOptions();
 	QSize sizeHint() const;
 
 public slots:

@@ -32,12 +32,12 @@ class PropertyCurveEditor : public CurveEditor {
 public:
 	PropertyCurveEditor(SharedResources *shared, KeyMap *keymap,
 		Editor *editor, QWidget *parent);
+	void reset();
 	void clear();
 
 public slots:
 	void add();
 	void add(pg::Curve curve);
-	void init(const std::vector<pg::Curve> &curves);
 	void select();
 	void rename();
 	void remove();

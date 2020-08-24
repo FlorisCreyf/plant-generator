@@ -19,8 +19,6 @@
 #include "definitions.h"
 #include "item_delegate.h"
 
-using pg::Spline;
-
 PropertyCurveEditor::PropertyCurveEditor(
 	SharedResources *shared, KeyMap *keymap, Editor *editor,
 	QWidget *parent) : CurveEditor(keymap, parent), editor(editor)
@@ -63,16 +61,21 @@ void PropertyCurveEditor::createSelectionBar()
 	connect(removeButton, SIGNAL(clicked()), this, SLOT(remove()));
 }
 
-void PropertyCurveEditor::init(const std::vector<pg::Curve> &curves)
+void PropertyCurveEditor::reset()
 {
-	clear();
+	this->selectionBox->clear();
+	this->selection.clear();
+	this->history.clear();
+
 	this->selectionBox->blockSignals(true);
+	auto curves = this->editor->getPlant()->getCurves();
 	for (pg::Curve curve : curves) {
 		QString name = QString::fromStdString(curve.getName());
 		this->selectionBox->addItem(name);
 		emit curveAdded(curve);
 	}
 	this->selectionBox->blockSignals(false);
+
 	select();
 }
 
@@ -90,7 +93,7 @@ void PropertyCurveEditor::add()
 	}
 
 	curve.setName(name);
-	Spline spline;
+	pg::Spline spline;
 	spline.setDefault(0);
 	curve.setSpline(spline);
 	add(curve);

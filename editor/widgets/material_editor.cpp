@@ -126,20 +126,25 @@ const MaterialViewer *MaterialEditor::getViewer() const
 	return this->materialViewer;
 }
 
-void MaterialEditor::init(const std::vector<pg::Material> &materials)
+void MaterialEditor::reset()
 {
-	clear();
+	this->shared->clearMaterials();
+	this->selectionBox->clear();
+	this->diffuseBox->clear();
+
+	auto materials = this->editor->getPlant()->getMaterials();
 	for (pg::Material material : materials) {
 		ShaderParams params(material);
 		QString name = QString::fromStdString(params.getName());
+		if (!material.getTexture().empty()) {
+			QString file;
+			file = QString::fromStdString(material.getTexture());
+			params.loadTexture(0, file);
+		}
 		this->shared->addMaterial(params);
 		this->selectionBox->addItem(name);
-		if (!material.getTexture().empty()) {
-			QString filename =
-				QString::fromStdString(material.getTexture());
-			params.loadTexture(0, filename);
-		}
 	}
+
 	select();
 }
 
@@ -148,7 +153,6 @@ void MaterialEditor::add(pg::Material material)
 {
 	ShaderParams params(material);
 	QString name = QString::fromStdString(params.getName());
-	unsigned index = this->shared->addMaterial(params);
 	this->selectionBox->addItem(name);
 	this->selectionBox->setCurrentIndex(this->selectionBox->count() - 1);
 
@@ -159,6 +163,7 @@ void MaterialEditor::add(pg::Material material)
 		params.loadTexture(0, filename);
 	}
 
+	unsigned index = this->shared->addMaterial(params);
 	this->editor->getPlant()->addMaterial(params.getMaterial());
 	this->materialViewer->updateMaterial(index);
 }

@@ -199,6 +199,14 @@ void LeafEditor::enable(bool enable)
 	this->customValue->setEnabled(enable);
 }
 
+void LeafEditor::clearOptions()
+{
+	blockSignals(true);
+	this->materialValue->clear();
+	this->meshValue->clear();
+	blockSignals(false);
+}
+
 bool LeafEditor::addMaterial(ShaderParams params)
 {
 	QString name = QString::fromStdString(params.getName());

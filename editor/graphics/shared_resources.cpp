@@ -257,8 +257,9 @@ void SharedResources::clearMaterials()
 	this->materials.clear();
 }
 
-ShaderParams SharedResources::getMaterial(unsigned index) const
+ShaderParams SharedResources::getMaterial(unsigned index)
 {
+	this->materials[index].initialize();
 	return this->materials[index];
 }
 

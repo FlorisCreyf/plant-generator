@@ -292,6 +292,15 @@ void StemEditor::enable(bool enable)
 	this->customValue->setEnabled(enable);
 }
 
+void StemEditor::clearOptions()
+{
+	blockSignals(true);
+	this->stemMaterialValue->clear();
+	this->capMaterialValue->clear();
+	this->radiusCurveValue->clear();
+	blockSignals(false);
+}
+
 bool StemEditor::addCurve(pg::Curve curve)
 {
 	QString name = QString::fromStdString(curve.getName());
