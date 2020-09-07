@@ -28,11 +28,11 @@
 namespace pg {
 	struct Segment {
 		Stem *stem;
-		unsigned leafIndex;
-	 	unsigned vertexStart;
-	 	unsigned indexStart;
-	 	unsigned vertexCount;
-	 	unsigned indexCount;
+		size_t leafIndex;
+	 	size_t vertexStart;
+	 	size_t indexStart;
+	 	size_t vertexCount;
+	 	size_t indexCount;
 	};
 
 	class Mesh {
@@ -79,7 +79,6 @@ namespace pg {
 		std::vector<std::map<Stem *, Segment>> stemSegments;
 		std::vector<std::map<LeafID, Segment>> leafSegments;
 
-		bool hasValidLocation(Stem *stem);
 		void addSections(State &state);
 		void addSection(State &, Quat, const CrossSection &);
 		float getTextureLength(Stem *, size_t);
@@ -109,7 +108,6 @@ namespace pg {
 		void setJointInfo(const Stem *, float, size_t, Vec2 &, Vec2 &);
 
 		void addTriangle(int, int, int, int);
-		int selectBuffer(long);
 		void initBuffer();
 		void updateSegments();
 	};

@@ -40,15 +40,10 @@ void Mesh::generate()
 	}
 }
 
-bool Mesh::hasValidLocation(Stem *stem)
-{
-	return !std::isnan(stem->getLocation().x);
-}
-
 Segment Mesh::addStem(Stem *stem, const State &parentState)
 {
 	State state;
-	state.mesh = selectBuffer(stem->getMaterial(Stem::Outer));
+	state.mesh = stem->getMaterial(Stem::Outer);
 	state.segment.stem = stem;
 	state.segment.vertexStart = this->vertices[state.mesh].size();
 	state.segment.indexStart = this->indices[state.mesh].size();
@@ -64,8 +59,7 @@ Segment Mesh::addStem(Stem *stem, const State &parentState)
 
 	Stem *child = stem->getChild();
 	while (child != nullptr) {
-		if (hasValidLocation(child))
-			addStem(child, state);
+		addStem(child, state);
 		child = child->getSibling();
 	}
 
@@ -330,8 +324,8 @@ DVertex Mesh::moveToSurface(DVertex vertex, Ray ray, Segment parent, int mesh)
 
 size_t Mesh::connectCollar(Segment child, Segment parent, size_t vertexStart)
 {
-	const int mesh1 = selectBuffer(child.stem->getMaterial(Stem::Outer));
-	const int mesh2 = selectBuffer(parent.stem->getMaterial(Stem::Outer));
+	const unsigned mesh1 = child.stem->getMaterial(Stem::Outer);
+	const unsigned mesh2 = parent.stem->getMaterial(Stem::Outer);
 	const int sectionDivisions = child.stem->getSectionDivisions();
 	const int collarDivisions = child.stem->getCollarDivisions();
 	const int pathDivisions = child.stem->getPath().getDivisions();
@@ -469,14 +463,14 @@ void Mesh::setBranchCollarUVs(
 
 void Mesh::capStem(Stem *stem, int stemMesh, size_t section)
 {
-	int mesh = selectBuffer(stem->getMaterial(Stem::Inner));
-	int index = section;
-	int divisions = stem->getSectionDivisions();
+	long mesh = stem->getMaterial(Stem::Inner);
+	size_t index = section;
+	size_t divisions = stem->getSectionDivisions();
 	float rotation = 2.0f * PI / divisions;
 	float angle = 0.0f;
 	section = this->vertices[mesh].size();
 
-	for (int i = 0; i <= divisions; i++, index++, angle += rotation) {
+	for (size_t i = 0; i <= divisions; i++, index++, angle += rotation) {
 		DVertex vertex = this->vertices[stemMesh][index];
 		vertex.uv.x = std::cos(angle) * 0.5f + 0.5f;
 		vertex.uv.y = std::sin(angle) * 0.5f + 0.5f;
@@ -511,7 +505,7 @@ void Mesh::addLeaves(Stem *stem, const State &state)
 void Mesh::addLeaf(Stem *stem, unsigned leafIndex, const State &state)
 {
 	Leaf *leaf = stem->getLeaf(leafIndex);
-	int mesh = selectBuffer(leaf->getMaterial());
+	long mesh = leaf->getMaterial();
 	Segment leafSegment;
 	leafSegment.leafIndex = leafIndex;
 	leafSegment.stem = stem;
@@ -719,13 +713,6 @@ void Mesh::addTriangle(int mesh, int a, int b, int c)
 	this->indices[mesh].push_back(a);
 	this->indices[mesh].push_back(b);
 	this->indices[mesh].push_back(c);
-}
-
-/** Different buffers are used for different materials. This is done to keep
-geometry with identical materials together and simplify draw calls. */
-int Mesh::selectBuffer(long material)
-{
-	return material;
 }
 
 void Mesh::initBuffer()

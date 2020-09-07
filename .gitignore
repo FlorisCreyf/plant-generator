@@ -13,6 +13,8 @@
 *.out
 *.svg
 *.swp
+*.bbl
+*.blg
 plant
 resources/
 build/
