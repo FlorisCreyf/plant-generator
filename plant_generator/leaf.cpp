@@ -102,7 +102,7 @@ Vec3 Leaf::getDirection(Vec3 stemDirection) const
 {
 	Vec3 normal(0.0f, 0.0f, 1.0f);
 	Quat rotation = this->rotation * getDefaultOrientation(stemDirection);
-	return rotate(rotation, normal, 0.0f);
+	return rotate(rotation, normal);
 }
 
 void Leaf::setScale(Vec3 scale)

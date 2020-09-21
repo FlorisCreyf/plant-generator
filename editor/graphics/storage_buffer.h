@@ -16,7 +16,7 @@
  */
 
 #ifndef STORAGE_BUFFER_H
-#define SOTRAGE_BUFFER_H
+#define STORAGE_BUFFER_H
 
 #include <QOpenGLFunctions_4_3_Core>
 

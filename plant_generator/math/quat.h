@@ -155,9 +155,9 @@ namespace pg {
 		return quat;
 	}
 
-	inline Vec3 rotate(Quat rotation, Vec3 point, float w)
+	inline Vec3 rotate(Quat rotation, Vec3 point)
 	{
-		Quat q = toQuat(point, w);
+		Quat q = toQuat(point, 0.0f);
 		return toVec3(rotation * q * conjugate(rotation));
 	}
 

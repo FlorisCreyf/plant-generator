@@ -177,7 +177,8 @@ void Stem::setSectionDivisions(int resolution)
 
 int Stem::getSectionDivisions() const
 {
-	return this->sectionDivisions;
+	return 4;
+	//return this->sectionDivisions;
 }
 
 void Stem::setCollarDivisions(int divisions)
@@ -274,6 +275,24 @@ Stem *Stem::getChild()
 const Stem *Stem::getChild() const
 {
 	return this->child;
+}
+
+std::pair<Stem *, Stem *> Stem::getFork() const
+{
+	std::pair<Stem *, Stem *> fork(nullptr, nullptr);
+	float length = this->path.getLength();
+	Stem *child = this->child;
+	while (child) {
+		bool isFork = child->getDistance() >= length;
+		if (isFork && !fork.first)
+			fork.first = child;
+		else if (isFork) {
+			fork.second = child;
+			break;
+		}
+		child = child->getSibling();
+	}
+	return fork;
 }
 
 bool Stem::isDescendantOf(Stem *stem) const

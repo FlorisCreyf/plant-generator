@@ -34,100 +34,146 @@ void Mesh::generate()
 	Stem *stem = this->plant->getRoot();
 	initBuffer();
 	if (stem) {
-		State state = {};
-		addStem(stem, state);
+		State parentState = {};
+		State state;
+		state.prevRotation = Quat(0.0f, 0.0f, 0.0f, 1.0f);
+		state.prevDirection = Vec3(0.0f, 1.0f, 0.0f);
+		addStem(stem, state, parentState, false);
 		updateSegments();
 	}
 }
 
-Segment Mesh::addStem(Stem *stem, const State &parentState)
+Segment Mesh::addStem(Stem *stem, State state, State parentState, bool isFork)
 {
-	State state;
 	state.mesh = stem->getMaterial(Stem::Outer);
 	state.segment.stem = stem;
 	state.segment.vertexStart = this->vertices[state.mesh].size();
 	state.segment.indexStart = this->indices[state.mesh].size();
 	setInitialJointState(state, parentState);
-	addSections(state);
+	addSections(state, parentState.segment, isFork);
 	state.segment.vertexCount = this->vertices[state.mesh].size();
 	state.segment.vertexCount -= state.segment.vertexStart;
 	state.segment.indexCount = this->indices[state.mesh].size();
 	state.segment.indexCount -= state.segment.indexStart;
 	this->stemSegments[state.mesh].emplace(stem, state.segment);
-
 	addLeaves(stem, state);
 
+	std::pair<Stem *, Stem *> fork = stem->getFork();
 	Stem *child = stem->getChild();
 	while (child != nullptr) {
-		addStem(child, state);
+		if (fork.first != child && fork.second != child) {
+			State childState;
+			setInitialRotation(child, childState);
+			addStem(child, childState, state, false);
+		}
 		child = child->getSibling();
 	}
+
+	if (fork.first && fork.second)
+		addForks(fork.first, fork.second, state);
 
 	return state.segment;
 }
 
-void Mesh::addSections(State &state)
+void Mesh::addForks(Stem *fork1, Stem *fork2, State state)
+{
+	Vec3 prevDirection = state.prevDirection;
+	Quat prevRotation = state.prevRotation;
+	Vec3 direction1 = getForkDirection(fork1, prevRotation);
+
+	State forkState;
+	forkState.prevRotation = pg::rotateIntoVecQ(prevDirection, direction1);
+	forkState.prevRotation *= prevRotation;
+	forkState.prevDirection = direction1;
+	addStem(fork1, forkState, state, true);
+
+	Vec3 plane = pg::cross(direction1, prevDirection);
+	Vec3 direction2 = fork2->getPath().getDirection(0);
+	direction2 = pg::normalize(pg::projectOntoPlane(direction2, plane));
+	forkState.prevRotation = pg::rotateIntoVecQ(prevDirection, direction2);
+	forkState.prevRotation *= prevRotation;
+	forkState.prevDirection = direction2;
+	addStem(fork2, forkState, state, true);
+}
+
+void Mesh::addSections(State &state, Segment parentSegment, bool isFork)
 {
 	Stem *stem = state.segment.stem;
-
-	setInitialRotation(state);
 	if (stem->getSectionDivisions() != this->crossSection.getResolution())
 		this->crossSection.generate(stem->getSectionDivisions());
-
 	state.texOffset = 0.0f;
+	state.section = 0;
 	state.prevIndex = this->vertices[state.mesh].size();
-	state.section = createBranchCollar(state);
+	if (isFork)
+		createFork(stem, state);
+	else
+		createBranchCollar(state, parentSegment);
+
 	size_t sections = stem->getPath().getSize();
-
-	if (state.section > 0 && state.section < sections) {
-		size_t i = this->vertices[state.mesh].size();
-		int r = stem->getSectionDivisions();
-		addTriangleRing(state.prevIndex, i, r, state.mesh);
-	}
-
 	for (; state.section < sections; state.section++) {
 		Quat rotation = rotateSection(state);
 		state.prevIndex = this->vertices[state.mesh].size();
 		addSection(state, rotation, this->crossSection);
-
-		if (state.section+1 < sections) {
-			size_t i = this->vertices[state.mesh].size();
-			int r = stem->getSectionDivisions();
-			addTriangleRing(state.prevIndex, i, r, state.mesh);
-		}
+		if (state.section+1 < sections)
+			addTriangleRing(
+				state.prevIndex,
+				this->vertices[state.mesh].size(),
+				stem->getSectionDivisions(),
+				state.mesh);
 	}
 
 	if (stem->getMinRadius() > 0)
 		capStem(stem, state.mesh, state.prevIndex);
 }
 
+void Mesh::createFork(Stem *stem, State &state)
+{
+	Quat rotation = state.prevRotation;
+	addSection(state, rotation, this->crossSection);
+	state.section = 1;
+	addTriangleRing(
+		state.prevIndex,
+		this->vertices[state.mesh].size(),
+		stem->getSectionDivisions(),
+		state.mesh);
+}
+
+Vec3 Mesh::getForkDirection(Stem *stem, Quat parentRotation)
+{
+	Vec3 direction = stem->getPath().getDirection(0);
+	direction = pg::rotate(conjugate(parentRotation), direction);
+	float m = std::sqrt(direction.x*direction.x + direction.z*direction.z);
+	float delta = 2.0f * PI / stem->getSectionDivisions();
+	Vec3 n = pg::projectOntoPlane(direction, Vec3(0.0f, 1.0f, 0.0f));
+	n = pg::normalize(n);
+	float theta = std::round(std::acos(n.x) / delta) * delta;
+	if (n.z < 0.0f)
+		theta = -theta;
+	direction.x = std::cos(theta) * m;
+	direction.z = std::sin(theta) * m;
+	return pg::normalize(direction);
+}
+
 /** The cross section is rotated so that the first point is always the topmost
 point relative to the parent stem direction. */
-void Mesh::setInitialRotation(State &state)
+void Mesh::setInitialRotation(Stem *stem, State &state)
 {
-	Stem *stem = state.segment.stem;
-	Stem *parent = stem->getParent();
-	if (parent) {
-		float position = stem->getDistance();
-		Path parentPath = parent->getPath();
-		Vec3 parentDirection;
-		parentDirection = parentPath.getIntermediateDirection(position);
-		Vec3 stemDirection = stem->getPath().getDirection(0);
-		Vec3 up(0.0f, 1.0f, 0.0f);
-		state.prevRotation = pg::rotateIntoVecQ(up, stemDirection);
-		state.prevDirection = stemDirection;
+	float position = stem->getDistance();
+	Path parentPath = stem->getParent()->getPath();
+	Vec3 parentDirection;
+	parentDirection = parentPath.getIntermediateDirection(position);
+	Vec3 stemDirection = stem->getPath().getDirection(0);
+	Vec3 up(0.0f, 1.0f, 0.0f);
+	state.prevRotation = pg::rotateIntoVecQ(up, stemDirection);
+	state.prevDirection = stemDirection;
 
-		Vec3 sideways(1.0f, 0.0f, 0.0f);
-		sideways = pg::rotate(state.prevRotation, sideways, 0.0f);
-		sideways = pg::normalize(sideways);
-		up = pg::projectOntoPlane(parentDirection, stemDirection);
-		up = pg::normalize(up);
-		Quat rotation = pg::rotateIntoVecQ(sideways, up);
-		state.prevRotation = rotation * state.prevRotation;
-	} else {
-		state.prevRotation = Quat(0.0f, 0.0f, 0.0f, 1.0f);
-		state.prevDirection = Vec3(0.0f, 1.0f, 0.0f);
-	}
+	Vec3 sideways(1.0f, 0.0f, 0.0f);
+	sideways = pg::rotate(state.prevRotation, sideways);
+	sideways = pg::normalize(sideways);
+	up = pg::projectOntoPlane(parentDirection, stemDirection);
+	up = pg::normalize(up);
+	Quat rotation = pg::rotateIntoVecQ(sideways, up);
+	state.prevRotation = rotation * state.prevRotation;
 }
 
 /** A rotation for a cross section is relative to the rotation of the previous
@@ -149,11 +195,9 @@ at a latter stage to connect the sections. */
 void Mesh::addSection(State &state, Quat rotation, const CrossSection &section)
 {
 	Stem *stem = state.segment.stem;
-
 	DVertex vertex;
 	vertex.uv.y = getTextureLength(stem, state.section) + state.texOffset;
 	state.texOffset = vertex.uv.y;
-
 	Vec3 location = stem->getLocation();
 	location += stem->getPath().get(state.section);
 
@@ -170,17 +214,15 @@ void Mesh::addSection(State &state, Quat rotation, const CrossSection &section)
 	const std::vector<SVertex> sectionVertices = section.getVertices();
 	for (size_t i = 0; i < sectionVertices.size(); i++) {
 		vertex.position = sectionVertices[i].position;
-		vertex.normal = sectionVertices[i].normal;
-		vertex.uv.x = sectionVertices[i].uv.x;
-
 		vertex.position = radius * vertex.position;
-		vertex.position = rotate(rotation, vertex.position, 1.0f);
+		vertex.position = rotate(rotation, vertex.position);
 		vertex.position += location;
-		vertex.normal = rotate(rotation, vertex.normal, 0.0f);
+		vertex.normal = sectionVertices[i].normal;
+		vertex.normal = rotate(rotation, vertex.normal);
 		vertex.normal = normalize(vertex.normal);
+		vertex.uv.x = sectionVertices[i].uv.x;
 		vertex.weights = weights;
 		vertex.indices = indices;
-
 		this->vertices[state.mesh].push_back(vertex);
 	}
 }
@@ -208,9 +250,8 @@ float Mesh::getTextureLength(Stem *stem, size_t section)
 		return 0.0f;
 }
 
-/** Compute indices between the cross section just generated (starting at the
-previous index) and the cross-section that still needs to be generated
-(starting at the current index). */
+/** Compute indices between the cross section just generated and the cross
+section that still needs to be generated. */
 void Mesh::addTriangleRing(
 	size_t prevIndex, size_t index, int divisions, int mesh)
 {
@@ -222,19 +263,16 @@ void Mesh::addTriangleRing(
 	}
 }
 
-size_t Mesh::createBranchCollar(State &state)
+/** Create two cross sections and connect them with Bezier curves. */
+void Mesh::createBranchCollar(State &state, Segment parentSegment)
 {
 	Stem *stem = state.segment.stem;
-
 	Vec2 swelling = stem->getSwelling();
 	if (!stem->getParent() || swelling.x < 1.0f || swelling.y < 1.0f)
-		return 0;
+		return;
 
-	state.section = 0;
-	state.prevIndex = this->vertices[state.mesh].size();
 	addSection(state, rotateSection(state), this->crossSection);
-
-	size_t collarStart = this->vertices[state.mesh].size();
+	size_t start = this->vertices[state.mesh].size();
 	reserveBranchCollarSpace(stem, state.mesh);
 	state.prevIndex = this->vertices[state.mesh].size();
 	state.texOffset = 0.0f;
@@ -242,8 +280,14 @@ size_t Mesh::createBranchCollar(State &state)
 	state.prevIndex = this->vertices[state.mesh].size();
 	addSection(state, rotateSection(state), this->crossSection);
 
-	Segment parentSegment = findStem(stem->getParent());
-	return connectCollar(state.segment, parentSegment, collarStart);
+	size_t section = connectCollar(state.segment, parentSegment, start);
+	size_t sections = stem->getPath().getSize();
+	if (section > 0 && section < sections)
+		addTriangleRing(
+			state.prevIndex,
+			this->vertices[state.mesh].size(),
+			stem->getSectionDivisions(),
+			state.mesh);
 }
 
 /** Cross sections are usually created one at a time and then connected with

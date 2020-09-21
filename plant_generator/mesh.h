@@ -79,16 +79,20 @@ namespace pg {
 		std::vector<std::map<Stem *, Segment>> stemSegments;
 		std::vector<std::map<LeafID, Segment>> leafSegments;
 
-		void addSections(State &state);
+		void addSections(State &state, Segment, bool);
 		void addSection(State &, Quat, const CrossSection &);
 		float getTextureLength(Stem *, size_t);
-		void setInitialRotation(State &state);
+		void setInitialRotation(Stem *, State &);
 		Quat rotateSection(State &);
 		void addTriangleRing(size_t, size_t, int, int);
 		void capStem(Stem *, int, size_t);
-		Segment addStem(Stem *, const State &);
+		Segment addStem(Stem *, State, State, bool);
 
-		size_t createBranchCollar(State &);
+		void addForks(Stem *, Stem *, State);
+		void createFork(Stem *, State &);
+		Vec3 getForkDirection(Stem *, Quat);
+
+		void createBranchCollar(State &, Segment);
 		size_t connectCollar(Segment, Segment, size_t);
 		void reserveBranchCollarSpace(Stem *, int);
 		size_t getBranchCollarSize(Stem *);

@@ -26,33 +26,34 @@
 Window::Window(int argc, char **argv)
 {
 	this->keymap.loadFromXMLFile("keymap.xml");
-
 	if (argc > 1)
 		this->filename = QString(argv[1]);
-
 	this->objectLabel = new QLabel(this);
 	this->fileLabel = new QLabel(this);
-	this->commandLabel = new QLabel(this);
 	statusBar()->addWidget(this->fileLabel, 1);
-	statusBar()->addWidget(this->commandLabel, 1);
 	statusBar()->addWidget(this->objectLabel, 0);
 	setFilename(this->filename);
 
 	this->editor = new Editor(&this->shared, &this->keymap, this);
 	setCentralWidget(this->editor);
+	#ifndef VIEWPORT_ONLY
 	createEditors();
+	#endif
 	initEditor();
-
 	this->widget.setupUi(this);
 
+	#ifndef VIEWPORT_ONLY
 	QMenu *menu = createPopupMenu();
 	menu->setTitle("Window");
 	menuBar()->insertMenu(this->widget.menuHelp->menuAction(), menu);
+	#endif
 
 	connect(this->editor, SIGNAL(changed()), this, SLOT(updateStatus()));
 	connect(this->widget.actionReportIssue, SIGNAL(triggered()),
 		this, SLOT(reportIssue()));
 }
+
+#ifndef VIEWPORT_ONLY
 
 QDockWidget *Window::createDockWidget(
 	const char *name, QWidget *widget, bool scrollbar)
@@ -139,17 +140,24 @@ void Window::createEditors()
 	tabifyDockWidget(dw[4], dw[2]);
 }
 
+#endif /* VIEWPORT_ONLY */
+
 void Window::initEditor()
 {
 	if (this->filename.isEmpty())
 		newFile();
 	else {
+		#ifdef VIEWPORT_ONLY
+		this->editor->load(this->filename.toLatin1());
+		this->editor->reset();
+		#else
 		this->propertyEditor->clearOptions();
 		this->editor->load(this->filename.toLatin1());
 		this->pCurveEditor->reset();
 		this->meshEditor->reset();
 		this->materialEditor->reset();
 		this->editor->reset();
+		#endif
 	}
 }
 
@@ -207,12 +215,14 @@ void Window::setFilename(QString filename)
 
 void Window::newFile()
 {
+	#ifndef VIEWPORT_ONLY
 	this->pCurveEditor->clear();
 	this->pCurveEditor->add();
 	this->materialEditor->clear();
 	this->materialEditor->add();
 	this->meshEditor->clear();
 	this->meshEditor->add();
+	#endif
 	this->editor->load(nullptr);
 	this->editor->reset();
 	setFilename("");
@@ -224,12 +234,17 @@ void Window::openDialogBox()
 		this, tr("Open File"), "", tr("Plant (*.plant)"));
 
 	if (!filename.isNull() || !filename.isEmpty()) {
+		#ifdef VIEWPORT_ONLY
+		this->editor->load(filename.toLatin1());
+		this->editor->reset();
+		#else
 		this->propertyEditor->clearOptions();
 		this->editor->load(filename.toLatin1());
 		this->pCurveEditor->reset();
 		this->meshEditor->reset();
 		this->materialEditor->reset();
 		this->editor->reset();
+		#endif
 		setFilename(filename);
 	}
 }
