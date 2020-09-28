@@ -91,6 +91,7 @@ namespace pg {
 		void addForks(Stem *, Stem *, State);
 		void createFork(Stem *, State &);
 		Vec3 getForkDirection(Stem *, Quat);
+		void getForkStart(Stem *, Stem *, size_t [2]);
 
 		void createBranchCollar(State &, Segment);
 		size_t connectCollar(Segment, Segment, size_t);

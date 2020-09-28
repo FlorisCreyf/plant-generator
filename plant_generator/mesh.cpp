@@ -80,16 +80,21 @@ void Mesh::addForks(Stem *fork1, Stem *fork2, State state)
 	Vec3 prevDirection = state.prevDirection;
 	Quat prevRotation = state.prevRotation;
 	Vec3 direction1 = getForkDirection(fork1, prevRotation);
+	Vec3 plane = pg::cross(direction1, prevDirection);
+	Vec3 direction2 = fork2->getPath().getDirection(0);
+	direction2 = pg::normalize(pg::projectOntoPlane(direction2, plane));
+
+	size_t sections[2];
+	getForkStart(fork1, fork2, sections);
 
 	State forkState;
+	forkState.section = sections[0];
 	forkState.prevRotation = pg::rotateIntoVecQ(prevDirection, direction1);
 	forkState.prevRotation *= prevRotation;
 	forkState.prevDirection = direction1;
 	addStem(fork1, forkState, state, true);
 
-	Vec3 plane = pg::cross(direction1, prevDirection);
-	Vec3 direction2 = fork2->getPath().getDirection(0);
-	direction2 = pg::normalize(pg::projectOntoPlane(direction2, plane));
+	forkState.section = sections[1];
 	forkState.prevRotation = pg::rotateIntoVecQ(prevDirection, direction2);
 	forkState.prevRotation *= prevRotation;
 	forkState.prevDirection = direction2;
@@ -102,12 +107,13 @@ void Mesh::addSections(State &state, Segment parentSegment, bool isFork)
 	if (stem->getSectionDivisions() != this->crossSection.getResolution())
 		this->crossSection.generate(stem->getSectionDivisions());
 	state.texOffset = 0.0f;
-	state.section = 0;
 	state.prevIndex = this->vertices[state.mesh].size();
 	if (isFork)
 		createFork(stem, state);
-	else
+	else if (stem->getParent())
 		createBranchCollar(state, parentSegment);
+	else
+		state.section = 0;
 
 	size_t sections = stem->getPath().getSize();
 	for (; state.section < sections; state.section++) {
@@ -129,8 +135,10 @@ void Mesh::addSections(State &state, Segment parentSegment, bool isFork)
 void Mesh::createFork(Stem *stem, State &state)
 {
 	Quat rotation = state.prevRotation;
+	size_t section = state.section;
+	state.section = 0;
 	addSection(state, rotation, this->crossSection);
-	state.section = 1;
+	state.section = section;
 	addTriangleRing(
 		state.prevIndex,
 		this->vertices[state.mesh].size(),
@@ -152,6 +160,61 @@ Vec3 Mesh::getForkDirection(Stem *stem, Quat parentRotation)
 	direction.x = std::cos(theta) * m;
 	direction.z = std::sin(theta) * m;
 	return pg::normalize(direction);
+}
+
+/** Return the first path indices for cross sections that do not intersect. */
+void Mesh::getForkStart(Stem *fork1, Stem *fork2, size_t sections[2])
+{
+	float radius = fork1->getMaxRadius();
+	Path paths[2] = {fork1->getPath(), fork2->getPath()};
+	sections[0] = 1;
+	sections[1] = 1;
+	size_t prevSections[2] = {1, 1};
+	size_t index1 = 0;
+	size_t index2 = 1;
+	bool finished = false;
+
+	while (sections[index1] < paths[index1].getSize()) {
+		Vec3 p1 = paths[index1].get(sections[index1]);
+		bool withinSegment = false;
+		bool withinDiameter = false;
+		float t = 0.0f;
+
+		while (prevSections[index2] <= sections[index2]) {
+			Vec3 p2a = paths[index2].get(prevSections[index2]-1);
+			Vec3 p2b = paths[index2].get(prevSections[index2]);
+			float len = pg::magnitude(p2b-p2a);
+			t = pg::project(p1-p2a, pg::normalize(p2b-p2a));
+			Vec3 p3 = t * pg::normalize(p2b-p2a) + p2a;
+			withinSegment = t < len+radius && t > -radius;
+			withinDiameter = pg::magnitude(p3-p1) < 2.0f*radius;
+			if (withinSegment && withinDiameter)
+				break;
+			else
+				prevSections[index2]++;
+		}
+
+		if (withinSegment) {
+			if (withinDiameter) {
+				sections[index1]++;
+				finished = false;
+			} else if (finished) {
+				break;
+			} else {
+				finished = true;
+				size_t t = index1;
+				index1 = index2;
+				index2 = t;
+			}
+		} else if (finished) {
+			break;
+		} else {
+			finished = true;
+			size_t t = index1;
+			index1 = index2;
+			index2 = t;
+		}
+	}
 }
 
 /** The cross section is rotated so that the first point is always the topmost
@@ -271,6 +334,7 @@ void Mesh::createBranchCollar(State &state, Segment parentSegment)
 	if (!stem->getParent() || swelling.x < 1.0f || swelling.y < 1.0f)
 		return;
 
+	state.section = 0;
 	addSection(state, rotateSection(state), this->crossSection);
 	size_t start = this->vertices[state.mesh].size();
 	reserveBranchCollarSpace(stem, state.mesh);
