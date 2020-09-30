@@ -45,12 +45,15 @@ void Mesh::generate()
 
 Segment Mesh::addStem(Stem *stem, State state, State parentState, bool isFork)
 {
+	std::pair<Stem *, Stem *> fork = stem->getFork();
+	bool hasFork = fork.first && fork.second;
+
 	state.mesh = stem->getMaterial(Stem::Outer);
 	state.segment.stem = stem;
 	state.segment.vertexStart = this->vertices[state.mesh].size();
 	state.segment.indexStart = this->indices[state.mesh].size();
 	setInitialJointState(state, parentState);
-	addSections(state, parentState.segment, isFork);
+	addSections(state, parentState.segment, isFork, hasFork);
 	state.segment.vertexCount = this->vertices[state.mesh].size();
 	state.segment.vertexCount -= state.segment.vertexStart;
 	state.segment.indexCount = this->indices[state.mesh].size();
@@ -58,7 +61,9 @@ Segment Mesh::addStem(Stem *stem, State state, State parentState, bool isFork)
 	this->stemSegments[state.mesh].emplace(stem, state.segment);
 	addLeaves(stem, state);
 
-	std::pair<Stem *, Stem *> fork = stem->getFork();
+	if (hasFork)
+		addForks(fork.first, fork.second, state);
+
 	Stem *child = stem->getChild();
 	while (child != nullptr) {
 		if (fork.first != child && fork.second != child) {
@@ -68,9 +73,6 @@ Segment Mesh::addStem(Stem *stem, State state, State parentState, bool isFork)
 		}
 		child = child->getSibling();
 	}
-
-	if (fork.first && fork.second)
-		addForks(fork.first, fork.second, state);
 
 	return state.segment;
 }
@@ -101,7 +103,25 @@ void Mesh::addForks(Stem *fork1, Stem *fork2, State state)
 	addStem(fork2, forkState, state, true);
 }
 
-void Mesh::addSections(State &state, Segment parentSegment, bool isFork)
+size_t getSectionCount(Stem *stem, bool hasFork)
+{
+	size_t sections = stem->getPath().getSize();
+	if (hasFork) {
+		Path path = stem->getPath();
+		float radius = stem->getMinRadius();
+		float t = 0.0f;
+		for (sections--; sections > 0 && t < radius; sections--) {
+			Vec3 p1 = path.get(sections);
+			Vec3 p2 = path.get(sections-1);
+			t += pg::magnitude(p1-p2);
+		}
+		sections++;
+	}
+	return sections;
+}
+
+void Mesh::addSections(State &state, Segment parentSegment,
+	bool isFork, bool hasFork)
 {
 	Stem *stem = state.segment.stem;
 	if (stem->getSectionDivisions() != this->crossSection.getResolution())
@@ -115,7 +135,7 @@ void Mesh::addSections(State &state, Segment parentSegment, bool isFork)
 	else
 		state.section = 0;
 
-	size_t sections = stem->getPath().getSize();
+	size_t sections = getSectionCount(stem, hasFork);
 	for (; state.section < sections; state.section++) {
 		Quat rotation = rotateSection(state);
 		state.prevIndex = this->vertices[state.mesh].size();
@@ -128,7 +148,7 @@ void Mesh::addSections(State &state, Segment parentSegment, bool isFork)
 				state.mesh);
 	}
 
-	if (stem->getMinRadius() > 0)
+	if (!hasFork && stem->getMinRadius() > 0)
 		capStem(stem, state.mesh, state.prevIndex);
 }
 

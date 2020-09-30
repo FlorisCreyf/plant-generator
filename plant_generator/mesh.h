@@ -79,7 +79,7 @@ namespace pg {
 		std::vector<std::map<Stem *, Segment>> stemSegments;
 		std::vector<std::map<LeafID, Segment>> leafSegments;
 
-		void addSections(State &state, Segment, bool);
+		void addSections(State &state, Segment, bool, bool);
 		void addSection(State &, Quat, const CrossSection &);
 		float getTextureLength(Stem *, size_t);
 		void setInitialRotation(Stem *, State &);
