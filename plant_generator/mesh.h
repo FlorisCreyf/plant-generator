@@ -82,16 +82,17 @@ namespace pg {
 		void addSections(State &state, Segment, bool, bool);
 		void addSection(State &, Quat, const CrossSection &);
 		float getTextureLength(Stem *, size_t);
+		float getTextureLength(Stem *, size_t, size_t);
 		void setInitialRotation(Stem *, State &);
 		Quat rotateSection(State &);
 		void addTriangleRing(size_t, size_t, int, int);
 		void capStem(Stem *, int, size_t);
 		Segment addStem(Stem *, State, State, bool);
 
-		void addForks(Stem *, Stem *, State);
+		bool addForks(Stem * [2], State);
 		void createFork(Stem *, State &);
-		Vec3 getForkDirection(Stem *, Quat);
-		void getForkStart(Stem *, Stem *, size_t [2]);
+		Vec3 getForkDirection(int, Quat, Vec3, Vec3, Vec3, int *);
+		void getForkStart(Stem * [2], size_t [2]);
 
 		void createBranchCollar(State &, Segment);
 		size_t connectCollar(Segment, Segment, size_t);

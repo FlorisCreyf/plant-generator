@@ -3,7 +3,7 @@ TEMPLATE = app
 # Object File Name: $(IntDir)%(RelativeDir)
 CONFIG += qt object_parallel_to_source c++11 strict_c++ no_batch warn_on precompile_header
 # win32::CONFIG += console
-DEFINES += GL_GLEXT_PROTOTYPES VIEWPORT_ONLY
+DEFINES += GL_GLEXT_PROTOTYPES
 unix::QMAKE_LFLAGS += -no-pie
 TARGET = plant
 QT = core gui opengl xml openglextensions

@@ -148,7 +148,7 @@ namespace pg {
 		const Stem *getSibling() const;
 		Stem *getChild();
 		const Stem *getChild() const;
-		std::pair<Stem *, Stem *> getFork() const;
+		void getFork(Stem *fork[2]) const;
 
 		bool isDescendantOf(Stem *stem) const;
 		int getDepth() const;

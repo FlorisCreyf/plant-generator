@@ -21,6 +21,7 @@
 
 using namespace pg;
 using std::map;
+using std::pair;
 using std::vector;
 
 Mesh::Mesh(Plant *plant)
@@ -45,8 +46,9 @@ void Mesh::generate()
 
 Segment Mesh::addStem(Stem *stem, State state, State parentState, bool isFork)
 {
-	std::pair<Stem *, Stem *> fork = stem->getFork();
-	bool hasFork = fork.first && fork.second;
+	Stem *fork[2];
+	stem->getFork(fork);
+	bool hasFork = fork[0] && fork[1];
 
 	state.mesh = stem->getMaterial(Stem::Outer);
 	state.segment.stem = stem;
@@ -62,11 +64,12 @@ Segment Mesh::addStem(Stem *stem, State state, State parentState, bool isFork)
 	addLeaves(stem, state);
 
 	if (hasFork)
-		addForks(fork.first, fork.second, state);
+		if (!addForks(fork, state))
+			fork[0] = fork[1] = nullptr;
 
 	Stem *child = stem->getChild();
 	while (child != nullptr) {
-		if (fork.first != child && fork.second != child) {
+		if (fork[0] != child && fork[1] != child) {
 			State childState;
 			setInitialRotation(child, childState);
 			addStem(child, childState, state, false);
@@ -77,32 +80,138 @@ Segment Mesh::addStem(Stem *stem, State state, State parentState, bool isFork)
 	return state.segment;
 }
 
-void Mesh::addForks(Stem *fork1, Stem *fork2, State state)
+bool Mesh::addForks(Stem *fork[2], State state)
 {
-	Vec3 prevDirection = state.prevDirection;
-	Quat prevRotation = state.prevRotation;
-	Vec3 direction1 = getForkDirection(fork1, prevRotation);
-	Vec3 plane = pg::cross(direction1, prevDirection);
-	Vec3 direction2 = fork2->getPath().getDirection(0);
-	direction2 = pg::normalize(pg::projectOntoPlane(direction2, plane));
-
 	size_t sections[2];
-	getForkStart(fork1, fork2, sections);
+	getForkStart(fork, sections);
+	Vec3 direction1 = pg::normalize(fork[0]->getPath().get(sections[0]));
+	Vec3 direction2 = pg::normalize(fork[1]->getPath().get(sections[1]));
 
-	State forkState;
-	forkState.section = sections[0];
-	forkState.prevRotation = pg::rotateIntoVecQ(prevDirection, direction1);
-	forkState.prevRotation *= prevRotation;
-	forkState.prevDirection = direction1;
-	addStem(fork1, forkState, state, true);
+	if (dot(direction1, state.prevDirection) <= 0)
+		return false;
+	if (dot(direction2, state.prevDirection) <= 0)
+		return false;
 
-	forkState.section = sections[1];
-	forkState.prevRotation = pg::rotateIntoVecQ(prevDirection, direction2);
-	forkState.prevRotation *= prevRotation;
-	forkState.prevDirection = direction2;
-	addStem(fork2, forkState, state, true);
+	int midpoint;
+	direction1 = getForkDirection(
+		fork[0]->getSectionDivisions(),
+		state.prevRotation, state.prevDirection,
+		direction1, direction2, &midpoint);
+	{
+		Vec3 plane = pg::cross(direction1, state.prevDirection);
+		direction2 = pg::projectOntoPlane(direction2, plane);
+		direction2 = pg::normalize(direction2);
+	}
+
+	Segment segments[2];
+	State fs;
+	fs.section = sections[0];
+	fs.texOffset = state.texOffset;
+	fs.prevRotation = pg::rotateIntoVecQ(state.prevDirection, direction1);
+	fs.prevRotation *= state.prevRotation;
+	fs.prevDirection = direction1;
+	segments[0] = addStem(fork[0], fs, state, true);
+	fs.section = sections[1];
+	fs.texOffset = state.texOffset;
+	fs.prevRotation = pg::rotateIntoVecQ(state.prevDirection, direction2);
+	fs.prevRotation *= state.prevRotation;
+	fs.prevDirection = direction2;
+	segments[1] = addStem(fork[1], fs, state, true);
+
+	direction1 = pg::normalize(fork[0]->getPath().get(sections[0]));
+	direction2 = pg::normalize(fork[1]->getPath().get(sections[1]));
+	int divisions = fork[0]->getSectionDivisions();
+	int length = divisions / 2 + 1;
+	int edge1 = midpoint - divisions / 4;
+	int edge2 = edge1 + divisions /  2;
+	edge1 += (edge1 < 0) * divisions;
+	edge2 -= (edge2 >= divisions) * divisions;
+	Plane plane1;
+	plane1.point = fork[0]->getLocation();
+	plane1.normal = pg::normalize(0.5f*(state.prevDirection+direction1));
+	Plane plane2;
+	plane2.point = fork[1]->getLocation();
+	plane2.normal = pg::normalize(0.5f*(state.prevDirection+direction2));
+	Plane plane3;
+	plane3.point = plane1.point;
+	{
+		Vec3 n1 = pg::normalize(pg::cross(direction2, direction1));
+		Vec3 n2 = pg::cross(n1, direction2);
+		Vec3 n3 = pg::cross(n1, direction1);
+		plane3.normal = pg::normalize(n2 + n3);
+	}
+	DVertex *v0;
+	DVertex *v1;
+	DVertex *v2;
+	{
+		size_t start = state.segment.vertexStart;
+		start += state.segment.vertexCount - divisions - 1;
+		size_t mesh1 = fork[0]->getMaterial(Stem::Outer);
+		size_t mesh2 = fork[1]->getMaterial(Stem::Outer);
+		v0 = &this->vertices[state.mesh][start];
+		v1 = &this->vertices[mesh1][segments[0].vertexStart];
+		v2 = &this->vertices[mesh2][segments[1].vertexStart];
+	}
+
+	Ray ray;
+	for (int i = 0; i < length; i++) {
+		int k = edge1 + i;
+		k -= (k >= divisions) * divisions;
+		ray.origin = v0[k].position;
+		ray.direction = state.prevDirection;
+		float t = pg::intersectsPlane(ray, plane1);
+		v0[k].position = ray.origin + t*ray.direction;
+		v1[k].position = v0[k].position;
+		v0[k].normal = 0.5f * (v0[k].normal + v1[k].normal);
+		v1[k].normal = v0[k].normal;
+		v0[k].uv.y += t;
+		v1[k].uv.y = v0[k].uv.y;
+	}
+	for (int i = 1; i < length - 1; i++) {
+		int k = edge2 + i;
+		k -= (k >= divisions) * divisions;
+		ray.origin = v0[k].position;
+		ray.direction = state.prevDirection;
+		float t = pg::intersectsPlane(ray, plane2);
+		v0[k].position = ray.origin + t*ray.direction;
+		v2[k].position = v0[k].position;
+		v0[k].normal = 0.5f * (v0[k].normal + v2[k].normal);
+		v2[k].normal = v0[k].normal;
+		v0[k].uv.y += t;
+		v2[k].uv.y = v0[k].uv.y;
+	}
+	v2[edge2].position = v1[edge2].position;
+	v2[edge1].position = v1[edge1].position;
+	v2[edge2].normal = v1[edge2].normal;
+	v2[edge1].normal = v1[edge1].normal;
+	for (int i = 1; i < length - 1; i++) {
+		int k1 = edge1 + divisions / 2 + i;
+		int k2 = edge1 + divisions / 2 - i;
+		k1 -= (k1 >= divisions) * divisions;
+		k2 += (k2 < 0) * divisions;
+		k2 -= (k2 >= divisions) * divisions;
+		ray.origin = v1[k1].position;
+		ray.direction = direction1;
+		float t = pg::intersectsPlane(ray, plane3);
+		v1[k1].position = ray.origin + t*ray.direction;
+		v2[k2].position = v1[k1].position;
+		v1[k1].normal = 0.5f * (v1[k1].normal + v2[k2].normal);
+		v2[k2].normal = v1[k1].normal;
+		v1[k1].uv.y += t;
+		v2[k2].uv.y = v1[k1].uv.y;
+	}
+	v0[divisions].position = v0[0].position;
+	v1[divisions].position = v1[0].position;
+	v2[divisions].position = v2[0].position;
+	v0[divisions].normal = v0[0].normal;
+	v1[divisions].normal = v1[0].normal;
+	v2[divisions].normal = v2[0].normal;
+
+	return true;
 }
 
+/** Remove cross sections from the end of a path until the distance is greater
+than the radius. */
 size_t getSectionCount(Stem *stem, bool hasFork)
 {
 	size_t sections = stem->getPath().getSize();
@@ -120,20 +229,21 @@ size_t getSectionCount(Stem *stem, bool hasFork)
 	return sections;
 }
 
-void Mesh::addSections(State &state, Segment parentSegment,
-	bool isFork, bool hasFork)
+void Mesh::addSections(
+	State &state, Segment parentSegment, bool isFork, bool hasFork)
 {
 	Stem *stem = state.segment.stem;
+	state.prevIndex = this->vertices[state.mesh].size();
 	if (stem->getSectionDivisions() != this->crossSection.getResolution())
 		this->crossSection.generate(stem->getSectionDivisions());
-	state.texOffset = 0.0f;
-	state.prevIndex = this->vertices[state.mesh].size();
 	if (isFork)
 		createFork(stem, state);
 	else if (stem->getParent())
 		createBranchCollar(state, parentSegment);
-	else
+	else {
+		state.texOffset = 0.0f;
 		state.section = 0;
+	}
 
 	size_t sections = getSectionCount(stem, hasFork);
 	for (; state.section < sections; state.section++) {
@@ -148,7 +258,20 @@ void Mesh::addSections(State &state, Segment parentSegment,
 				state.mesh);
 	}
 
-	if (!hasFork && stem->getMinRadius() > 0)
+	if (hasFork) {
+		addTriangleRing(
+			state.prevIndex,
+			this->vertices[state.mesh].size(),
+			stem->getSectionDivisions(),
+			state.mesh);
+		Quat rotation = rotateSection(state);
+		state.prevIndex = this->vertices[state.mesh].size();
+		size_t section1 = state.section;
+		size_t section2 = stem->getPath().getSize() - 1;
+		state.texOffset += getTextureLength(stem, section1, section2);
+		state.section = section2 + 0;
+		addSection(state, rotation, this->crossSection);
+	} else if (stem->getMinRadius() > 0)
 		capStem(stem, state.mesh, state.prevIndex);
 }
 
@@ -159,6 +282,7 @@ void Mesh::createFork(Stem *stem, State &state)
 	state.section = 0;
 	addSection(state, rotation, this->crossSection);
 	state.section = section;
+	state.texOffset += getTextureLength(stem, 0, section - 1);
 	addTriangleRing(
 		state.prevIndex,
 		this->vertices[state.mesh].size(),
@@ -166,27 +290,39 @@ void Mesh::createFork(Stem *stem, State &state)
 		state.mesh);
 }
 
-Vec3 Mesh::getForkDirection(Stem *stem, Quat parentRotation)
+/** Return the modified fork direction and the cross section point index the
+direction was snapped to. */
+Vec3 Mesh::getForkDirection(int divisions, Quat rotation, Vec3 direction,
+	Vec3 direction1, Vec3 direction2, int *midpoint)
 {
-	Vec3 direction = stem->getPath().getDirection(0);
-	direction = pg::rotate(conjugate(parentRotation), direction);
-	float m = std::sqrt(direction.x*direction.x + direction.z*direction.z);
-	float delta = 2.0f * PI / stem->getSectionDivisions();
-	Vec3 n = pg::projectOntoPlane(direction, Vec3(0.0f, 1.0f, 0.0f));
+	Vec3 normal = pg::normalize(0.5f * (direction1 + direction2));
+	rotation = rotateIntoVecQ(direction, normal) * rotation;
+
+	direction1 = pg::rotate(pg::conjugate(rotation), direction1);
+	Vec3 n = pg::projectOntoPlane(direction1, Vec3(0.0f, 1.0f, 0.0f));
 	n = pg::normalize(n);
-	float theta = std::round(std::acos(n.x) / delta) * delta;
+	float delta = 2.0f * PI / divisions;
+	float theta = std::round((std::acos(n.x)) / delta) * delta;
 	if (n.z < 0.0f)
 		theta = -theta;
-	direction.x = std::cos(theta) * m;
-	direction.z = std::sin(theta) * m;
-	return pg::normalize(direction);
+
+	*midpoint = theta / delta;
+	if (*midpoint < 0)
+		*midpoint += divisions;
+
+	float t = direction1.x*direction1.x + direction1.z*direction1.z;
+	t = std::sqrt(t);
+	direction1.x = std::cos(theta) * t;
+	direction1.z = std::sin(theta) * t;
+	direction1 = pg::rotate(rotation, pg::normalize(direction1));
+	return direction1;
 }
 
 /** Return the first path indices for cross sections that do not intersect. */
-void Mesh::getForkStart(Stem *fork1, Stem *fork2, size_t sections[2])
+void Mesh::getForkStart(Stem *fork[2], size_t sections[2])
 {
-	float radius = fork1->getMaxRadius();
-	Path paths[2] = {fork1->getPath(), fork2->getPath()};
+	float radius = fork[0]->getMaxRadius();
+	Path paths[2] = {fork[0]->getPath(), fork[1]->getPath()};
 	sections[0] = 1;
 	sections[1] = 1;
 	size_t prevSections[2] = {1, 1};
@@ -326,11 +462,21 @@ float Mesh::getTextureLength(Stem *stem, size_t section)
 {
 	if (section > 0) {
 		float length = stem->getPath().getSegmentLength(section);
-		float radius = this->plant->getRadius(stem, section-1);
+		float radius = this->plant->getRadius(stem, section - 1);
 		float aspect = getAspect(this->plant, stem);
 		return (length * aspect) / (radius * 2.0f * PI);
 	} else
 		return 0.0f;
+}
+
+float Mesh::getTextureLength(Stem *stem, size_t section1, size_t section2)
+{
+	Vec3 p1 = stem->getPath().get(section1);
+	Vec3 p2 = stem->getPath().get(section2);
+	float length = pg::magnitude(p2 - p1);
+	float radius = this->plant->getRadius(stem, section1);
+	float aspect = getAspect(this->plant, stem);
+	return (length * aspect) / (radius * 2.0f * PI);
 }
 
 /** Compute indices between the cross section just generated and the cross
@@ -351,10 +497,12 @@ void Mesh::createBranchCollar(State &state, Segment parentSegment)
 {
 	Stem *stem = state.segment.stem;
 	Vec2 swelling = stem->getSwelling();
+	state.section = 0;
+	state.texOffset = 0.0f;
+	State originalState = state;
 	if (!stem->getParent() || swelling.x < 1.0f || swelling.y < 1.0f)
 		return;
 
-	state.section = 0;
 	addSection(state, rotateSection(state), this->crossSection);
 	size_t start = this->vertices[state.mesh].size();
 	reserveBranchCollarSpace(stem, state.mesh);
@@ -372,6 +520,8 @@ void Mesh::createBranchCollar(State &state, Segment parentSegment)
 			this->vertices[state.mesh].size(),
 			stem->getSectionDivisions(),
 			state.mesh);
+	else if (section == 0)
+		state = originalState;
 }
 
 /** Cross sections are usually created one at a time and then connected with
@@ -721,7 +871,7 @@ void Mesh::setInitialJointState(State &state, const State &parentState)
 	}
 }
 
-std::pair<size_t, Joint> Mesh::getJoint(float position, const Stem *stem)
+pair<size_t, Joint> Mesh::getJoint(float position, const Stem *stem)
 {
 	size_t index = stem->getPath().getIndex(position);
 	const vector<Joint> joints = stem->getJoints();
@@ -733,11 +883,11 @@ std::pair<size_t, Joint> Mesh::getJoint(float position, const Stem *stem)
 				jointIndex--;
 				it--;
 			}
-			return std::pair<size_t, Joint>(jointIndex, *it);
+			return pair<size_t, Joint>(jointIndex, *it);
 		}
 		jointIndex++;
 	}
-	return std::pair<size_t, Joint>(jointIndex-1, joints.back());
+	return pair<size_t, Joint>(jointIndex-1, joints.back());
 }
 
 void Mesh::incrementJoint(State &state, const vector<Joint> &joints)
