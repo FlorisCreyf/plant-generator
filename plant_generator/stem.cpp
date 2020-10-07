@@ -294,14 +294,6 @@ void Stem::getFork(Stem *fork[2]) const
 	}
 	if (!fork[1])
 		fork[0] = nullptr;
-	else {
-		int d1 = fork[0]->sectionDivisions;
-		int d2 = fork[1]->sectionDivisions;
-		if (d1 != d2 || d1 % 2 != 0) {
-			fork[0] = nullptr;
-			fork[1] = nullptr;
-		}
-	}
 }
 
 bool Stem::isDescendantOf(Stem *stem) const

@@ -44,11 +44,25 @@ void Mesh::generate()
 	}
 }
 
+bool isValidFork(Stem *stem, Stem *fork[2])
+{
+	if (fork[0]) {
+		int d0 = stem->getSectionDivisions();
+		int d1 = fork[0]->getSectionDivisions();
+		int d2 = fork[1]->getSectionDivisions();
+		if (d1 != d2 || d1 != d0 || d1 % 2 != 0) {
+			fork[0] = nullptr;
+			fork[1] = nullptr;
+		}
+	}
+	return fork[0] && fork[1];
+}
+
 Segment Mesh::addStem(Stem *stem, State state, State parentState, bool isFork)
 {
 	Stem *fork[2];
 	stem->getFork(fork);
-	bool hasFork = fork[0] && fork[1];
+	bool hasFork = isValidFork(stem, fork);
 
 	state.mesh = stem->getMaterial(Stem::Outer);
 	state.segment.stem = stem;
@@ -93,15 +107,10 @@ bool Mesh::addForks(Stem *fork[2], State state)
 		return false;
 
 	int midpoint;
-	direction1 = getForkDirection(
+	getForkDirection(
 		fork[0]->getSectionDivisions(),
 		state.prevRotation, state.prevDirection,
-		direction1, direction2, &midpoint);
-	{
-		Vec3 plane = pg::cross(direction1, state.prevDirection);
-		direction2 = pg::projectOntoPlane(direction2, plane);
-		direction2 = pg::normalize(direction2);
-	}
+		&direction1, &direction2, &midpoint);
 
 	Segment segments[2];
 	State fs;
@@ -219,7 +228,7 @@ size_t getSectionCount(Stem *stem, bool hasFork)
 		Path path = stem->getPath();
 		float radius = stem->getMinRadius();
 		float t = 0.0f;
-		for (sections--; sections > 0 && t < radius; sections--) {
+		for (sections--; sections > 0 && t <= radius; sections--) {
 			Vec3 p1 = path.get(sections);
 			Vec3 p2 = path.get(sections-1);
 			t += pg::magnitude(p1-p2);
@@ -292,30 +301,39 @@ void Mesh::createFork(Stem *stem, State &state)
 
 /** Return the modified fork direction and the cross section point index the
 direction was snapped to. */
-Vec3 Mesh::getForkDirection(int divisions, Quat rotation, Vec3 direction,
-	Vec3 direction1, Vec3 direction2, int *midpoint)
+void Mesh::getForkDirection(int divisions, Quat rotation, Vec3 direction,
+	Vec3 *direction1, Vec3 *direction2, int *midpoint)
 {
-	Vec3 normal = pg::normalize(0.5f * (direction1 + direction2));
+	Vec3 normal = pg::normalize(0.5f * (*direction1 + *direction2));
 	rotation = rotateIntoVecQ(direction, normal) * rotation;
 
-	direction1 = pg::rotate(pg::conjugate(rotation), direction1);
-	Vec3 n = pg::projectOntoPlane(direction1, Vec3(0.0f, 1.0f, 0.0f));
+	*direction1 = pg::rotate(pg::conjugate(rotation), *direction1);
+	Vec3 n = pg::projectOntoPlane(*direction1, Vec3(0.0f, 1.0f, 0.0f));
 	n = pg::normalize(n);
 	float delta = 2.0f * PI / divisions;
-	float theta = std::round((std::acos(n.x)) / delta) * delta;
+	float theta = std::acos(n.x);
 	if (n.z < 0.0f)
-		theta = -theta;
+		theta = 2.0f*PI-theta;
+	if (divisions % 4 == 0)
+		*midpoint = std::round(theta / delta);
+	else
+		*midpoint = std::floor(theta / delta);
+	if (*midpoint >= divisions)
+		*midpoint -= divisions;
+	theta = *midpoint * delta;
 
-	*midpoint = theta / delta;
-	if (*midpoint < 0)
-		*midpoint += divisions;
-
-	float t = direction1.x*direction1.x + direction1.z*direction1.z;
+	float t = direction1->x*direction1->x + direction1->z*direction1->z;
 	t = std::sqrt(t);
-	direction1.x = std::cos(theta) * t;
-	direction1.z = std::sin(theta) * t;
-	direction1 = pg::rotate(rotation, pg::normalize(direction1));
-	return direction1;
+	direction1->x = std::cos(theta) * t;
+	direction1->z = std::sin(theta) * t;
+	*direction1 = pg::rotate(rotation, pg::normalize(*direction1));
+
+	theta += PI;
+	t = direction2->x*direction2->x + direction2->z*direction2->z;
+	t = std::sqrt(t);
+	direction2->x = std::cos(theta) * t;
+	direction2->z = std::sin(theta) * t;
+	*direction2 = pg::rotate(rotation, pg::normalize(*direction2));
 }
 
 /** Return the first path indices for cross sections that do not intersect. */
