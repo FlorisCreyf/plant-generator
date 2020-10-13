@@ -91,7 +91,7 @@ namespace pg {
 
 		bool addForks(Stem * [2], State);
 		void createFork(Stem *, State &);
-		void getForkDirection(int, Quat, Vec3, Vec3 *, Vec3 *, int *);
+		int getForkMidpoint(int, Quat, Vec3, Vec3, Vec3);
 		void getForkStart(Stem * [2], size_t [2]);
 
 		void createBranchCollar(State &, Segment);

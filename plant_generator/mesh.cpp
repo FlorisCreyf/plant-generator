@@ -105,34 +105,35 @@ bool Mesh::addForks(Stem *fork[2], State state)
 		return false;
 	if (dot(direction2, state.prevDirection) <= 0)
 		return false;
+	if (fork[0]->getPath().getSize() <= sections[0])
+		return false;
+	if (fork[1]->getPath().getSize() <= sections[1])
+		return false;
 
-	int midpoint;
-	getForkDirection(
+	int midpoint = getForkMidpoint(
 		fork[0]->getSectionDivisions(),
 		state.prevRotation, state.prevDirection,
-		&direction1, &direction2, &midpoint);
+		direction1, direction2);
 
 	Segment segments[2];
 	State fs;
 	fs.section = sections[0];
 	fs.texOffset = state.texOffset;
 	fs.prevRotation = pg::rotateIntoVecQ(state.prevDirection, direction1);
-	fs.prevRotation *= state.prevRotation;
+	fs.prevRotation = state.prevRotation * fs.prevRotation;
 	fs.prevDirection = direction1;
 	segments[0] = addStem(fork[0], fs, state, true);
 	fs.section = sections[1];
 	fs.texOffset = state.texOffset;
 	fs.prevRotation = pg::rotateIntoVecQ(state.prevDirection, direction2);
-	fs.prevRotation *= state.prevRotation;
+	fs.prevRotation = state.prevRotation * fs.prevRotation;
 	fs.prevDirection = direction2;
 	segments[1] = addStem(fork[1], fs, state, true);
 
-	direction1 = pg::normalize(fork[0]->getPath().get(sections[0]));
-	direction2 = pg::normalize(fork[1]->getPath().get(sections[1]));
 	int divisions = fork[0]->getSectionDivisions();
-	int length = divisions / 2 + 1;
-	int edge1 = midpoint - divisions / 4;
-	int edge2 = edge1 + divisions /  2;
+	int length = divisions / 2;
+	int edge1 = midpoint - length / 2;
+	int edge2 = edge1 + length;
 	edge1 += (edge1 < 0) * divisions;
 	edge2 -= (edge2 >= divisions) * divisions;
 	Plane plane1;
@@ -163,7 +164,7 @@ bool Mesh::addForks(Stem *fork[2], State state)
 	}
 
 	Ray ray;
-	for (int i = 0; i < length; i++) {
+	for (int i = 0; i <= length; i++) {
 		int k = edge1 + i;
 		k -= (k >= divisions) * divisions;
 		ray.origin = v0[k].position;
@@ -176,7 +177,7 @@ bool Mesh::addForks(Stem *fork[2], State state)
 		v0[k].uv.y += t;
 		v1[k].uv.y = v0[k].uv.y;
 	}
-	for (int i = 1; i < length - 1; i++) {
+	for (int i = 1; i <= length - 1; i++) {
 		int k = edge2 + i;
 		k -= (k >= divisions) * divisions;
 		ray.origin = v0[k].position;
@@ -193,7 +194,7 @@ bool Mesh::addForks(Stem *fork[2], State state)
 	v2[edge1].position = v1[edge1].position;
 	v2[edge2].normal = v1[edge2].normal;
 	v2[edge1].normal = v1[edge1].normal;
-	for (int i = 1; i < length - 1; i++) {
+	for (int i = 1; i <= length - 1; i++) {
 		int k1 = edge1 + divisions / 2 + i;
 		int k2 = edge1 + divisions / 2 - i;
 		k1 -= (k1 >= divisions) * divisions;
@@ -299,41 +300,27 @@ void Mesh::createFork(Stem *stem, State &state)
 		state.mesh);
 }
 
-/** Return the modified fork direction and the cross section point index the
-direction was snapped to. */
-void Mesh::getForkDirection(int divisions, Quat rotation, Vec3 direction,
-	Vec3 *direction1, Vec3 *direction2, int *midpoint)
+/** Return the point index that is between the dividing line of the section. */
+int Mesh::getForkMidpoint(int divisions, Quat rotation, Vec3 direction,
+	Vec3 direction1, Vec3 direction2)
 {
-	Vec3 normal = pg::normalize(0.5f * (*direction1 + *direction2));
+	int midpoint = 0;
+	Vec3 normal = pg::normalize(0.5f * (direction1 + direction2));
 	rotation = rotateIntoVecQ(direction, normal) * rotation;
-
-	*direction1 = pg::rotate(pg::conjugate(rotation), *direction1);
-	Vec3 n = pg::projectOntoPlane(*direction1, Vec3(0.0f, 1.0f, 0.0f));
+	direction1 = pg::rotate(pg::conjugate(rotation), direction1);
+	Vec3 n = pg::projectOntoPlane(direction1, Vec3(0.0f, 1.0f, 0.0f));
 	n = pg::normalize(n);
 	float delta = 2.0f * PI / divisions;
 	float theta = std::acos(n.x);
 	if (n.z < 0.0f)
 		theta = 2.0f*PI-theta;
 	if (divisions % 4 == 0)
-		*midpoint = std::round(theta / delta);
+		midpoint = std::round(theta / delta);
 	else
-		*midpoint = std::floor(theta / delta);
-	if (*midpoint >= divisions)
-		*midpoint -= divisions;
-	theta = *midpoint * delta;
-
-	float t = direction1->x*direction1->x + direction1->z*direction1->z;
-	t = std::sqrt(t);
-	direction1->x = std::cos(theta) * t;
-	direction1->z = std::sin(theta) * t;
-	*direction1 = pg::rotate(rotation, pg::normalize(*direction1));
-
-	theta += PI;
-	t = direction2->x*direction2->x + direction2->z*direction2->z;
-	t = std::sqrt(t);
-	direction2->x = std::cos(theta) * t;
-	direction2->z = std::sin(theta) * t;
-	*direction2 = pg::rotate(rotation, pg::normalize(*direction2));
+		midpoint = std::floor(theta / delta);
+	if (midpoint >= divisions)
+		midpoint -= divisions;
+	return midpoint;
 }
 
 /** Return the first path indices for cross sections that do not intersect. */
@@ -530,15 +517,15 @@ void Mesh::createBranchCollar(State &state, Segment parentSegment)
 	state.prevIndex = this->vertices[state.mesh].size();
 	addSection(state, rotateSection(state), this->crossSection);
 
-	size_t section = connectCollar(state.segment, parentSegment, start);
+	state.section = connectCollar(state.segment, parentSegment, start);
 	size_t sections = stem->getPath().getSize();
-	if (section > 0 && section < sections)
+	if (state.section > 0 && state.section < sections)
 		addTriangleRing(
 			state.prevIndex,
 			this->vertices[state.mesh].size(),
 			stem->getSectionDivisions(),
 			state.mesh);
-	else if (section == 0)
+	else if (state.section == 0)
 		state = originalState;
 }
 

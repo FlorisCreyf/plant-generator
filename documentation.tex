@@ -150,15 +150,24 @@ A more flexible approach is to project points along one path onto the other path
  \end{minipage}
 \end{figure}
 
-\item Rotate the child cross sections so that they have the same planar orientation as the last parent cross section. Rotate the average fork direction into the global up axis ($ \hat{k} $), and project the child direction on the plane $ \hat{k} $. Refer to Figure \ref{fig:forkdiv} why the average fork direction is used instead of the parent cross section normal. Find the nearest vector that has an angle that is a multiple of $ \theta_{\delta} = 2 \pi \div s $, where $ s $ is the number of points for each cross section. Refer to Figure \ref{fig:forktopangle}.
+\item Rotate the child cross sections so that they have the same planar orientation as the last parent cross section. Rotate the average fork direction into the global up axis ($ \hat{k} $), and project the child direction on the plane $ \hat{k} $. Refer to Figure \ref{fig:forkdiv}. Find the nearest vector that has an angle that is a multiple of $ \theta_{\delta} = 2 \pi \div s $, where $ s $ is the number of points for each cross section. Refer to Figure \ref{fig:forktopangle}.
 \[ \vec{b}_{\theta} = \left \lfloor \frac{\arccos(\vec{a}_x)}{\theta_{\delta}} \right\rceil \cdot \theta_{\delta} \]
 Rotate the average fork direction back into its original direction and project the second child stem direction onto the plane $ \vec{c_1} \times \vec{f} $, where $ \vec{c_1} $ is the modified direction of the first child stem and $ \vec{f} $ is the average fork direction.
 
 \begin{figure}[H]
- \centering
- \includesvg{resources/diagrams/fork_section.svg}
- \caption{Rotating the cross section into the average direction of the two forks helps determine where the cross section needs to be divided in half.} \label{fig:forkdiv}
+ \begin{minipage}[b]{0.49\textwidth}
+  \centering
+  \includesvg{resources/diagrams/fork_section.svg}
+  \caption{Rotating the cross section into the average direction of the two forks is necessary to determine where the cross section needs to be divided in half.} \label{fig:forkdiv}
+ \end{minipage}
+ \hfill
+ \begin{minipage}[b]{0.46\textwidth}
+  \centering
+  \includesvg{resources/diagrams/fork_resolution.svg}
+  \caption{Rounding to the nearest integer is required when $ n \bmod 4 = 0 $ and otherwise \texttt{floor} or \texttt{ceil} is required.}
+ \end{minipage}
 \end{figure}
+
 \begin{figure}[H]
  \begin{minipage}[b]{0.46\textwidth}
   \centering
