@@ -48,9 +48,11 @@ bool isValidFork(Stem *stem, Stem *fork[2])
 {
 	if (fork[0]) {
 		int d0 = stem->getSectionDivisions();
+		int m1 = fork[0]->getMaterial(Stem::Outer);
+		int m2 = fork[1]->getMaterial(Stem::Outer);
 		int d1 = fork[0]->getSectionDivisions();
 		int d2 = fork[1]->getSectionDivisions();
-		if (d1 != d2 || d1 != d0 || d1 % 2 != 0) {
+		if (d1 != d2 || d1 != d0 || d1 % 2 != 0 || m1 != m2) {
 			fork[0] = nullptr;
 			fork[1] = nullptr;
 		}
@@ -92,132 +94,6 @@ Segment Mesh::addStem(Stem *stem, State state, State parentState, bool isFork)
 	}
 
 	return state.segment;
-}
-
-bool Mesh::addForks(Stem *fork[2], State state)
-{
-	size_t sections[2];
-	getForkStart(fork, sections);
-	Vec3 direction1 = pg::normalize(fork[0]->getPath().get(sections[0]));
-	Vec3 direction2 = pg::normalize(fork[1]->getPath().get(sections[1]));
-
-	if (dot(direction1, state.prevDirection) <= 0)
-		return false;
-	if (dot(direction2, state.prevDirection) <= 0)
-		return false;
-	if (fork[0]->getPath().getSize() <= sections[0])
-		return false;
-	if (fork[1]->getPath().getSize() <= sections[1])
-		return false;
-
-	int midpoint = getForkMidpoint(
-		fork[0]->getSectionDivisions(),
-		state.prevRotation, state.prevDirection,
-		direction1, direction2);
-
-	Segment segments[2];
-	State fs;
-	fs.section = sections[0];
-	fs.texOffset = state.texOffset;
-	fs.prevRotation = pg::rotateIntoVecQ(state.prevDirection, direction1);
-	fs.prevRotation = state.prevRotation * fs.prevRotation;
-	fs.prevDirection = direction1;
-	segments[0] = addStem(fork[0], fs, state, true);
-	fs.section = sections[1];
-	fs.texOffset = state.texOffset;
-	fs.prevRotation = pg::rotateIntoVecQ(state.prevDirection, direction2);
-	fs.prevRotation = state.prevRotation * fs.prevRotation;
-	fs.prevDirection = direction2;
-	segments[1] = addStem(fork[1], fs, state, true);
-
-	int divisions = fork[0]->getSectionDivisions();
-	int length = divisions / 2;
-	int edge1 = midpoint - length / 2;
-	int edge2 = edge1 + length;
-	edge1 += (edge1 < 0) * divisions;
-	edge2 -= (edge2 >= divisions) * divisions;
-	Plane plane1;
-	plane1.point = fork[0]->getLocation();
-	plane1.normal = pg::normalize(0.5f*(state.prevDirection+direction1));
-	Plane plane2;
-	plane2.point = fork[1]->getLocation();
-	plane2.normal = pg::normalize(0.5f*(state.prevDirection+direction2));
-	Plane plane3;
-	plane3.point = plane1.point;
-	{
-		Vec3 n1 = pg::normalize(pg::cross(direction2, direction1));
-		Vec3 n2 = pg::cross(n1, direction2);
-		Vec3 n3 = pg::cross(n1, direction1);
-		plane3.normal = pg::normalize(n2 + n3);
-	}
-	DVertex *v0;
-	DVertex *v1;
-	DVertex *v2;
-	{
-		size_t start = state.segment.vertexStart;
-		start += state.segment.vertexCount - divisions - 1;
-		size_t mesh1 = fork[0]->getMaterial(Stem::Outer);
-		size_t mesh2 = fork[1]->getMaterial(Stem::Outer);
-		v0 = &this->vertices[state.mesh][start];
-		v1 = &this->vertices[mesh1][segments[0].vertexStart];
-		v2 = &this->vertices[mesh2][segments[1].vertexStart];
-	}
-
-	Ray ray;
-	for (int i = 0; i <= length; i++) {
-		int k = edge1 + i;
-		k -= (k >= divisions) * divisions;
-		ray.origin = v0[k].position;
-		ray.direction = state.prevDirection;
-		float t = pg::intersectsPlane(ray, plane1);
-		v0[k].position = ray.origin + t*ray.direction;
-		v1[k].position = v0[k].position;
-		v0[k].normal = 0.5f * (v0[k].normal + v1[k].normal);
-		v1[k].normal = v0[k].normal;
-		v0[k].uv.y += t;
-		v1[k].uv.y = v0[k].uv.y;
-	}
-	for (int i = 1; i <= length - 1; i++) {
-		int k = edge2 + i;
-		k -= (k >= divisions) * divisions;
-		ray.origin = v0[k].position;
-		ray.direction = state.prevDirection;
-		float t = pg::intersectsPlane(ray, plane2);
-		v0[k].position = ray.origin + t*ray.direction;
-		v2[k].position = v0[k].position;
-		v0[k].normal = 0.5f * (v0[k].normal + v2[k].normal);
-		v2[k].normal = v0[k].normal;
-		v0[k].uv.y += t;
-		v2[k].uv.y = v0[k].uv.y;
-	}
-	v2[edge2].position = v1[edge2].position;
-	v2[edge1].position = v1[edge1].position;
-	v2[edge2].normal = v1[edge2].normal;
-	v2[edge1].normal = v1[edge1].normal;
-	for (int i = 1; i <= length - 1; i++) {
-		int k1 = edge1 + divisions / 2 + i;
-		int k2 = edge1 + divisions / 2 - i;
-		k1 -= (k1 >= divisions) * divisions;
-		k2 += (k2 < 0) * divisions;
-		k2 -= (k2 >= divisions) * divisions;
-		ray.origin = v1[k1].position;
-		ray.direction = direction1;
-		float t = pg::intersectsPlane(ray, plane3);
-		v1[k1].position = ray.origin + t*ray.direction;
-		v2[k2].position = v1[k1].position;
-		v1[k1].normal = 0.5f * (v1[k1].normal + v2[k2].normal);
-		v2[k2].normal = v1[k1].normal;
-		v1[k1].uv.y += t;
-		v2[k2].uv.y = v1[k1].uv.y;
-	}
-	v0[divisions].position = v0[0].position;
-	v1[divisions].position = v1[0].position;
-	v2[divisions].position = v2[0].position;
-	v0[divisions].normal = v0[0].normal;
-	v1[divisions].normal = v1[0].normal;
-	v2[divisions].normal = v2[0].normal;
-
-	return true;
 }
 
 /** Remove cross sections from the end of a path until the distance is greater
@@ -268,7 +144,7 @@ void Mesh::addSections(
 				state.mesh);
 	}
 
-	if (hasFork) {
+	if (hasFork && state.section < stem->getPath().getSize()) {
 		addTriangleRing(
 			state.prevIndex,
 			this->vertices[state.mesh].size(),
@@ -279,103 +155,10 @@ void Mesh::addSections(
 		size_t section1 = state.section;
 		size_t section2 = stem->getPath().getSize() - 1;
 		state.texOffset += getTextureLength(stem, section1, section2);
-		state.section = section2 + 0;
+		state.section = section2;
 		addSection(state, rotation, this->crossSection);
-	} else if (stem->getMinRadius() > 0)
+	} else if (!hasFork && stem->getMinRadius() > 0)
 		capStem(stem, state.mesh, state.prevIndex);
-}
-
-void Mesh::createFork(Stem *stem, State &state)
-{
-	Quat rotation = state.prevRotation;
-	size_t section = state.section;
-	state.section = 0;
-	addSection(state, rotation, this->crossSection);
-	state.section = section;
-	state.texOffset += getTextureLength(stem, 0, section - 1);
-	addTriangleRing(
-		state.prevIndex,
-		this->vertices[state.mesh].size(),
-		stem->getSectionDivisions(),
-		state.mesh);
-}
-
-/** Return the point index that is between the dividing line of the section. */
-int Mesh::getForkMidpoint(int divisions, Quat rotation, Vec3 direction,
-	Vec3 direction1, Vec3 direction2)
-{
-	int midpoint = 0;
-	Vec3 normal = pg::normalize(0.5f * (direction1 + direction2));
-	rotation = rotateIntoVecQ(direction, normal) * rotation;
-	direction1 = pg::rotate(pg::conjugate(rotation), direction1);
-	Vec3 n = pg::projectOntoPlane(direction1, Vec3(0.0f, 1.0f, 0.0f));
-	n = pg::normalize(n);
-	float delta = 2.0f * PI / divisions;
-	float theta = std::acos(n.x);
-	if (n.z < 0.0f)
-		theta = 2.0f*PI-theta;
-	if (divisions % 4 == 0)
-		midpoint = std::round(theta / delta);
-	else
-		midpoint = std::floor(theta / delta);
-	if (midpoint >= divisions)
-		midpoint -= divisions;
-	return midpoint;
-}
-
-/** Return the first path indices for cross sections that do not intersect. */
-void Mesh::getForkStart(Stem *fork[2], size_t sections[2])
-{
-	float radius = fork[0]->getMaxRadius();
-	Path paths[2] = {fork[0]->getPath(), fork[1]->getPath()};
-	sections[0] = 1;
-	sections[1] = 1;
-	size_t prevSections[2] = {1, 1};
-	size_t index1 = 0;
-	size_t index2 = 1;
-	bool finished = false;
-
-	while (sections[index1] < paths[index1].getSize()) {
-		Vec3 p1 = paths[index1].get(sections[index1]);
-		bool withinSegment = false;
-		bool withinDiameter = false;
-		float t = 0.0f;
-
-		while (prevSections[index2] <= sections[index2]) {
-			Vec3 p2a = paths[index2].get(prevSections[index2]-1);
-			Vec3 p2b = paths[index2].get(prevSections[index2]);
-			float len = pg::magnitude(p2b-p2a);
-			t = pg::project(p1-p2a, pg::normalize(p2b-p2a));
-			Vec3 p3 = t * pg::normalize(p2b-p2a) + p2a;
-			withinSegment = t < len+radius && t > -radius;
-			withinDiameter = pg::magnitude(p3-p1) < 2.0f*radius;
-			if (withinSegment && withinDiameter)
-				break;
-			else
-				prevSections[index2]++;
-		}
-
-		if (withinSegment) {
-			if (withinDiameter) {
-				sections[index1]++;
-				finished = false;
-			} else if (finished) {
-				break;
-			} else {
-				finished = true;
-				size_t t = index1;
-				index1 = index2;
-				index2 = t;
-			}
-		} else if (finished) {
-			break;
-		} else {
-			finished = true;
-			size_t t = index1;
-			index1 = index2;
-			index2 = t;
-		}
-	}
 }
 
 /** The cross section is rotated so that the first point is always the topmost
@@ -386,7 +169,8 @@ void Mesh::setInitialRotation(Stem *stem, State &state)
 	Path parentPath = stem->getParent()->getPath();
 	Vec3 parentDirection;
 	parentDirection = parentPath.getIntermediateDirection(position);
-	Vec3 stemDirection = stem->getPath().getDirection(0);
+	Path path = stem->getPath();
+	Vec3 stemDirection = path.getDirection(0);
 	Vec3 up(0.0f, 1.0f, 0.0f);
 	state.prevRotation = pg::rotateIntoVecQ(up, stemDirection);
 	state.prevDirection = stemDirection;
@@ -494,6 +278,260 @@ void Mesh::addTriangleRing(
 		index++;
 		addTriangle(mesh, prevIndex, index, prevIndex + 1);
 		prevIndex++;
+	}
+}
+
+bool Mesh::addForks(Stem *fork[2], State state)
+{
+	size_t sections[2];
+	getForkStart(fork, sections);
+	Vec3 direction1 = fork[0]->getPath().get(sections[0]);
+	Vec3 direction2 = fork[1]->getPath().get(sections[1]);
+	if (pg::isZero(direction1) || pg::isZero(direction2))
+		return false;
+	else {
+		direction1 = pg::normalize(direction1);
+		direction2 = pg::normalize(direction2);
+	}
+
+	if (dot(direction1, state.prevDirection) <= 0)
+		return false;
+	if (dot(direction2, state.prevDirection) <= 0)
+		return false;
+	if (fork[0]->getPath().getSize() <= sections[0])
+		return false;
+	if (fork[1]->getPath().getSize() <= sections[1])
+		return false;
+
+	Segment segments[2];
+	State fs;
+	fs.section = sections[0];
+	fs.texOffset = state.texOffset;
+	fs.prevRotation = pg::rotateIntoVecQ(state.prevDirection, direction1);
+	fs.prevRotation *= state.prevRotation;
+	fs.prevDirection = direction1;
+	segments[0] = addStem(fork[0], fs, state, true);
+	fs.section = sections[1];
+	fs.texOffset = state.texOffset;
+	fs.prevRotation = pg::rotateIntoVecQ(state.prevDirection, direction2);
+	fs.prevRotation *= state.prevRotation;
+	fs.prevDirection = direction2;
+	segments[1] = addStem(fork[1], fs, state, true);
+
+	int divisions = state.segment.stem->getSectionDivisions();
+	int midpoint = getForkMidpoint(
+		divisions * 2, state.prevRotation, state.prevDirection,
+		direction1, direction2);
+	int length = divisions / 2;
+	int offset;
+	int edge1;
+	int edge2;
+	int quad = divisions % 4 == 0;
+	if ((quad && midpoint % 2 == 0) || (!quad && midpoint % 2 != 0)) {
+		midpoint /= 2;
+		offset = 1;
+		edge1 = midpoint - length / 2;
+		edge2 = edge1 + length;
+		edge1 += (edge1 < 0) * divisions;
+		edge2 -= (edge2 >= divisions) * divisions;
+	} else {
+		midpoint /= 2;
+		length = divisions / 2;
+		offset = 0;
+		edge1 = midpoint - length / 2 + quad;
+		edge2 = midpoint + length / 2 + 1;
+		length -= 1;
+		edge1 += (edge1 < 0) * divisions;
+		edge2 -= (edge2 >= divisions) * divisions;
+
+		size_t mesh = fork[0]->getMaterial(Stem::Outer);
+		int p = edge1 - 1;
+		p += divisions * (p < 0);
+		this->indices[mesh].push_back(segments[0].vertexStart + edge1);
+		this->indices[mesh].push_back(segments[1].vertexStart + p);
+		this->indices[mesh].push_back(segments[0].vertexStart + p);
+		p = edge2 - 1;
+		p += divisions * (p < 0);
+		this->indices[mesh].push_back(segments[1].vertexStart + edge2);
+		this->indices[mesh].push_back(segments[0].vertexStart + p);
+		this->indices[mesh].push_back(segments[1].vertexStart + p);
+	}
+
+	Plane plane1;
+	plane1.point = fork[0]->getLocation();
+	plane1.normal = pg::normalize(0.5f*(state.prevDirection+direction1));
+	Plane plane2;
+	plane2.point = fork[1]->getLocation();
+	plane2.normal = pg::normalize(0.5f*(state.prevDirection+direction2));
+	Plane plane3;
+	plane3.point = plane1.point;
+	{
+		Vec3 n1 = pg::normalize(pg::cross(direction2, direction1));
+		Vec3 n2 = pg::cross(n1, direction2);
+		Vec3 n3 = pg::cross(n1, direction1);
+		plane3.normal = pg::normalize(n2 + n3);
+	}
+	DVertex *v0;
+	DVertex *v1;
+	DVertex *v2;
+	{
+		size_t start = state.segment.vertexStart;
+		start += state.segment.vertexCount - divisions - 1;
+		size_t mesh = fork[0]->getMaterial(Stem::Outer);
+		v0 = &this->vertices[state.mesh][start];
+		v1 = &this->vertices[mesh][segments[0].vertexStart];
+		v2 = &this->vertices[mesh][segments[1].vertexStart];
+	}
+
+	Ray ray;
+	for (int i = 0; i <= length; i++) {
+		int k = edge1 + i;
+		k -= (k >= divisions) * divisions;
+		ray.origin = v0[k].position;
+		ray.direction = state.prevDirection;
+		float t = pg::intersectsPlane(ray, plane1);
+		v0[k].position = ray.origin + t*ray.direction;
+		v1[k].position = v0[k].position;
+		v0[k].normal = 0.5f * (v0[k].normal + v1[k].normal);
+		v1[k].normal = v0[k].normal;
+		v0[k].uv.y += t;
+		v1[k].uv.y = v0[k].uv.y;
+	}
+	for (int i = offset; i <= length - offset; i++) {
+		int k = edge2 + i;
+		k -= (k >= divisions) * divisions;
+		ray.origin = v0[k].position;
+		ray.direction = state.prevDirection;
+		float t = pg::intersectsPlane(ray, plane2);
+		v0[k].position = ray.origin + t*ray.direction;
+		v2[k].position = v0[k].position;
+		v0[k].normal = 0.5f * (v0[k].normal + v2[k].normal);
+		v2[k].normal = v0[k].normal;
+		v0[k].uv.y += t;
+		v2[k].uv.y = v0[k].uv.y;
+	}
+	if (offset > 0) {
+		v2[edge2].position = v1[edge2].position;
+		v2[edge1].position = v1[edge1].position;
+		v2[edge2].normal = v1[edge2].normal;
+		v2[edge1].normal = v1[edge1].normal;
+	}
+	for (int i = offset; i <= length - offset; i++) {
+		int k1 = edge1 - 1 + offset - i;
+		int k2 = edge1 + i;
+		k1 += (k1 < 0) * divisions;
+		k1 -= (k1 >= divisions) * divisions;
+		k2 += (k2 < 0) * divisions;
+		k2 -= (k2 >= divisions) * divisions;
+		ray.origin = v1[k1].position;
+		ray.direction = direction1;
+		float t = pg::intersectsPlane(ray, plane3);
+		v1[k1].position = ray.origin + t*ray.direction;
+		v2[k2].position = v1[k1].position;
+		v1[k1].normal = 0.5f * (v1[k1].normal + v2[k2].normal);
+		v2[k2].normal = v1[k1].normal;
+		v1[k1].uv.y += t;
+		v2[k2].uv.y = v1[k1].uv.y;
+	}
+	v0[divisions].position = v0[0].position;
+	v1[divisions].position = v1[0].position;
+	v2[divisions].position = v2[0].position;
+	v0[divisions].normal = v0[0].normal;
+	v1[divisions].normal = v1[0].normal;
+	v2[divisions].normal = v2[0].normal;
+
+	return true;
+}
+
+void Mesh::createFork(Stem *stem, State &state)
+{
+	Quat rotation = state.prevRotation;
+	size_t section = state.section;
+	state.section = 0;
+	addSection(state, rotation, this->crossSection);
+	state.section = section;
+	state.texOffset += getTextureLength(stem, 0, section - 1);
+	addTriangleRing(
+		state.prevIndex,
+		this->vertices[state.mesh].size(),
+		stem->getSectionDivisions(),
+		state.mesh);
+}
+
+/** Return the point index that is between the dividing line of the section. */
+int Mesh::getForkMidpoint(int divisions, Quat rotation, Vec3 direction,
+	Vec3 direction1, Vec3 direction2)
+{
+	int midpoint;
+	Vec3 normal = pg::normalize(0.5f * (direction1 + direction2));
+	rotation = rotateIntoVecQ(direction, normal) * rotation;
+	direction1 = pg::rotate(pg::conjugate(rotation), direction1);
+	Vec3 n = pg::projectOntoPlane(direction1, Vec3(0.0f, 1.0f, 0.0f));
+	n = pg::normalize(n);
+	float delta = 2.0f * PI / divisions;
+	float theta = std::acos(n.x);
+	if (n.z < 0.0f)
+		theta = 2.0f*PI-theta;
+	if (divisions % 4 == 0)
+		midpoint = std::round(theta / delta);
+	else
+		midpoint = std::floor(theta / delta);
+	midpoint -= (midpoint >= divisions) * divisions;
+	return midpoint;
+}
+
+/** Return the first path indices for cross sections that do not intersect. */
+void Mesh::getForkStart(Stem *fork[2], size_t sections[2])
+{
+	float radius = fork[0]->getMaxRadius();
+	Path paths[2] = {fork[0]->getPath(), fork[1]->getPath()};
+	sections[0] = 1;
+	sections[1] = 1;
+	size_t prevSections[2] = {1, 1};
+	size_t index1 = 0;
+	size_t index2 = 1;
+	bool finished = false;
+
+	while (sections[index1] < paths[index1].getSize()) {
+		Vec3 p1 = paths[index1].get(sections[index1]);
+		bool withinSegment = false;
+		bool withinDiameter = false;
+		float t = 0.0f;
+
+		while (prevSections[index2] <= sections[index2]) {
+			Vec3 p2a = paths[index2].get(prevSections[index2]-1);
+			Vec3 p2b = paths[index2].get(prevSections[index2]);
+			float len = pg::magnitude(p2b-p2a);
+			t = pg::project(p1-p2a, pg::normalize(p2b-p2a));
+			Vec3 p3 = t * pg::normalize(p2b-p2a) + p2a;
+			withinSegment = t < len+radius && t > -radius;
+			withinDiameter = pg::magnitude(p3-p1) < 2.0f*radius;
+			if (withinSegment && withinDiameter)
+				break;
+			else
+				prevSections[index2]++;
+		}
+
+		if (withinSegment) {
+			if (withinDiameter) {
+				sections[index1]++;
+				finished = false;
+			} else if (finished) {
+				break;
+			} else {
+				finished = true;
+				size_t t = index1;
+				index1 = index2;
+				index2 = t;
+			}
+		} else if (finished) {
+			break;
+		} else {
+			finished = true;
+			size_t t = index1;
+			index1 = index2;
+			index2 = t;
+		}
 	}
 }
 
