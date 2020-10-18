@@ -50,6 +50,7 @@ void PseudoGenerator::grow()
 	root->setDistance(0.0f);
 	root->setMaxRadius(0.2f);
 	root->setMinRadius(0.01f);
+	root->setSwelling(Vec2(1.3f, 1.3f));
 
 	const DerivationNode *node = this->dvn.getRoot();
 	if (!node)

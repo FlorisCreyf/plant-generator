@@ -124,12 +124,8 @@ void Mesh::addSections(
 		this->crossSection.generate(stem->getSectionDivisions());
 	if (isFork)
 		createFork(stem, state);
-	else if (stem->getParent())
+	else
 		createBranchCollar(state, parentSegment);
-	else {
-		state.texOffset = 0.0f;
-		state.section = 0;
-	}
 
 	size_t sections = getSectionCount(stem, hasFork);
 	for (; state.section < sections; state.section++) {
@@ -543,7 +539,7 @@ void Mesh::createBranchCollar(State &state, Segment parentSegment)
 	state.section = 0;
 	state.texOffset = 0.0f;
 	State originalState = state;
-	if (!stem->getParent() || swelling.x < 1.0f || swelling.y < 1.0f)
+	if (swelling.x < 1.0f || swelling.y < 1.0f)
 		return;
 
 	addSection(state, rotateSection(state), this->crossSection);
@@ -585,9 +581,20 @@ size_t Mesh::getBranchCollarSize(Stem *stem)
 }
 
 /** The first step in generating the branch collar is scaling the first cross
-section of the stem. This method returns the quantity to scale by. */
+section of the stem along the parent stem. */
 Mat4 Mesh::getBranchCollarScale(Stem *child, Stem *parent)
 {
+	Mat4 scale = identity();
+
+	if (!parent) {
+		scale[0][0] = child->getSwelling().x;
+		scale[2][2] = child->getSwelling().y;
+		return scale;
+	}
+
+	scale[2][2] = child->getSwelling().x;
+	scale[1][1] = child->getSwelling().y;
+
 	float position = child->getDistance();
 	Vec3 yaxis = parent->getPath().getIntermediateDirection(position);
 	Vec3 xaxis = child->getPath().getDirection(0);
@@ -599,19 +606,26 @@ Mat4 Mesh::getBranchCollarScale(Stem *child, Stem *parent)
 	axes.vectors[1] = toVec4(yaxis, 0.0f);
 	axes.vectors[2] = toVec4(zaxis, 0.0f);
 
-	Mat4 scale = identity();
-	scale[2][2] = child->getSwelling().x;
-	scale[1][1] = child->getSwelling().y;
-
 	return axes * scale * transpose(axes);
 }
 
 /** Project a point from a cross section on its parent's surface. */
-DVertex Mesh::moveToSurface(DVertex vertex, Ray ray, Segment parent, int mesh)
+DVertex Mesh::moveToSurface(DVertex vertex, Ray ray, Segment parent)
 {
 	float length = magnitude(ray.direction);
 	ray.direction = normalize(ray.direction);
 
+	if (!parent.stem) {
+		Plane plane;
+		plane.normal = Vec3(0.0f, 1.0f, 0.0f);
+		plane.point = Vec3(0.0f, 0.0f, 0.0f);
+		float t = -intersectsPlane(ray, plane);
+		Vec3 offset = (t - length) * ray.direction;
+		vertex.position -= offset;
+		return vertex;
+	}
+
+	const unsigned mesh = parent.stem->getMaterial(Stem::Outer);
 	float t = std::numeric_limits<float>::max();
 	unsigned i = parent.indexStart;
 	while (i < parent.indexStart + parent.indexCount) {
@@ -645,8 +659,7 @@ DVertex Mesh::moveToSurface(DVertex vertex, Ray ray, Segment parent, int mesh)
 
 size_t Mesh::connectCollar(Segment child, Segment parent, size_t vertexStart)
 {
-	const unsigned mesh1 = child.stem->getMaterial(Stem::Outer);
-	const unsigned mesh2 = parent.stem->getMaterial(Stem::Outer);
+	const unsigned mesh = child.stem->getMaterial(Stem::Outer);
 	const int sectionDivisions = child.stem->getSectionDivisions();
 	const int collarDivisions = child.stem->getCollarDivisions();
 	const int pathDivisions = child.stem->getPath().getDivisions();
@@ -668,29 +681,29 @@ size_t Mesh::connectCollar(Segment child, Segment parent, size_t vertexStart)
 
 		Ray ray;
 		Vec3 location = child.stem->getLocation();
-		DVertex initPoint = this->vertices[mesh1][index];
+		DVertex initPoint = this->vertices[mesh][index];
 		DVertex scaledPoint;
 
 		scaledPoint.position = initPoint.position - location;
 		scaledPoint.position = scale.apply(scaledPoint.position, 1.0f);
 		scaledPoint.position += location;
-		ray.origin = this->vertices[mesh1][nextIndex].position;
+		ray.origin = this->vertices[mesh][nextIndex].position;
 		ray.direction = ray.origin - scaledPoint.position;
-		scaledPoint = moveToSurface(scaledPoint, ray, parent, mesh2);
+		scaledPoint = moveToSurface(scaledPoint, ray, parent);
 		if (std::isinf(scaledPoint.position.x)) {
-			this->vertices[mesh1].resize(child.vertexStart);
-			this->indices[mesh1].resize(child.indexStart);
+			this->vertices[mesh].resize(child.vertexStart);
+			this->indices[mesh].resize(child.indexStart);
 			return 0;
 		}
-		scaledPoint.weights = this->vertices[mesh1][index].weights;
-		scaledPoint.indices = this->vertices[mesh1][index].indices;
-		this->vertices[mesh1][index] = scaledPoint;
+		scaledPoint.weights = this->vertices[mesh][index].weights;
+		scaledPoint.indices = this->vertices[mesh][index].indices;
+		this->vertices[mesh][index] = scaledPoint;
 
 		ray.direction = ray.origin - initPoint.position;
-		initPoint = moveToSurface(initPoint, ray, parent, mesh2);
+		initPoint = moveToSurface(initPoint, ray, parent);
 		if (std::isinf(initPoint.position.x)) {
-			this->vertices[mesh1].resize(child.vertexStart);
-			this->indices[mesh1].resize(child.indexStart);
+			this->vertices[mesh].resize(child.vertexStart);
+			this->indices[mesh].resize(child.indexStart);
 			return 0;
 		}
 
@@ -698,7 +711,7 @@ size_t Mesh::connectCollar(Segment child, Segment parent, size_t vertexStart)
 		spline.setDegree(3);
 		spline.addControl(scaledPoint.position);
 		spline.addControl(initPoint.position);
-		Vec3 point = this->vertices[mesh1][nextIndex].position;
+		Vec3 point = this->vertices[mesh][nextIndex].position;
 		if (degree == 3)
 			spline.addControl(point - direction);
 		else
@@ -714,14 +727,14 @@ size_t Mesh::connectCollar(Segment child, Segment parent, size_t vertexStart)
 			vertex.indices = scaledPoint.indices;
 			vertex.weights = scaledPoint.weights;
 			size_t offset = index + (sectionDivisions + 1) * j;
-			this->vertices[mesh1][offset] = vertex;
+			this->vertices[mesh][offset] = vertex;
 		}
 	}
 
 	size_t index1 = child.vertexStart;
 	size_t index2 = child.vertexStart + sectionDivisions + 1;
 	for (int i = 0; i <= collarDivisions; i++) {
-		addTriangleRing(index1, index2, sectionDivisions, mesh1);
+		addTriangleRing(index1, index2, sectionDivisions, mesh);
 		index1 = index2;
 		index2 += sectionDivisions + 1;
 	}
@@ -729,9 +742,9 @@ size_t Mesh::connectCollar(Segment child, Segment parent, size_t vertexStart)
 	index1 = child.vertexStart;
 	index2 = vertexStart + collarSize;
 	setBranchCollarNormals(
-		index1, index2, mesh1, sectionDivisions, collarDivisions);
+		index1, index2, mesh, sectionDivisions, collarDivisions);
 	setBranchCollarUVs(
-		index2, child.stem, mesh1, sectionDivisions, collarDivisions);
+		index2, child.stem, mesh, sectionDivisions, collarDivisions);
 	return pathDivisions + 2;
 }
 
