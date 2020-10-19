@@ -48,6 +48,7 @@ namespace pg {
 		void setName(std::string name);
 		void setPlane();
 		void setPerpendicularPlanes();
+		void setPyramid();
 		void setPoints(std::vector<DVertex> points);
 		void setIndices(std::vector<unsigned> indices);
 		const std::vector<DVertex> &getPoints() const;

@@ -90,8 +90,7 @@ namespace pg {
 
 	inline Vec2 toVec2(const Vec3 &vec)
 	{
-		Vec2 v = {vec.x, vec.z};
-		return v;
+		return Vec2(vec.x, vec.z);
 	}
 
 	inline bool isZero(const Vec3 &vec)

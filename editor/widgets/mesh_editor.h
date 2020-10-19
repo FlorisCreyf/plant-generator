@@ -37,10 +37,6 @@ class MeshEditor : public QWidget {
 
 	QVBoxLayout *layout;
 	QComboBox *selectionBox;
-	QPushButton *customButton;
-	QPushButton *planeButton;
-	QPushButton *perpPlaneButton;
-	QPushButton *emptyButton;
 
 	void createSelectionBar();
 	void createFields(QVBoxLayout *form);
@@ -62,6 +58,7 @@ public slots:
 	void loadCustom();
 	void loadPlane();
 	void loadPerpPlane();
+	void loadPyramid();
 	void loadEmpty();
 
 signals:

@@ -683,7 +683,7 @@ size_t Mesh::connectCollar(Segment child, Segment parent, size_t vertexStart)
 		Vec3 location = child.stem->getLocation();
 		DVertex initPoint = this->vertices[mesh][index];
 		DVertex scaledPoint;
-
+		scaledPoint.normal = initPoint.normal;
 		scaledPoint.position = initPoint.position - location;
 		scaledPoint.position = scale.apply(scaledPoint.position, 1.0f);
 		scaledPoint.position += location;
@@ -724,6 +724,7 @@ size_t Mesh::connectCollar(Segment child, Segment parent, size_t vertexStart)
 		for (int j = 0; j < collarDivisions; j++, t += delta) {
 			DVertex vertex;
 			vertex.position = spline.getPoint(0, t);
+			vertex.normal = scaledPoint.normal;
 			vertex.indices = scaledPoint.indices;
 			vertex.weights = scaledPoint.weights;
 			size_t offset = index + (sectionDivisions + 1) * j;
@@ -745,6 +746,7 @@ size_t Mesh::connectCollar(Segment child, Segment parent, size_t vertexStart)
 		index1, index2, mesh, sectionDivisions, collarDivisions);
 	setBranchCollarUVs(
 		index2, child.stem, mesh, sectionDivisions, collarDivisions);
+
 	return pathDivisions + 2;
 }
 

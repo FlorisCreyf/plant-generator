@@ -46,6 +46,8 @@ class GeneratorEditor : public Form {
 	QDoubleSpinBox *leafStartValue;
 	QLabel *radiusThresholdLabel;
 	QDoubleSpinBox *radiusThresholdValue;
+	QLabel *leafScaleLabel[3];
+	QDoubleSpinBox *leafScaleValue[3];
 	QLabel *lengthFactorLabel;
 	QDoubleSpinBox *lengthFactorValue;
 	QLabel *arrangementLabel;

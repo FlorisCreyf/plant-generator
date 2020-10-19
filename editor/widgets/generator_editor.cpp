@@ -88,6 +88,16 @@ void GeneratorEditor::createInterface()
 	this->leafStartValue->setSingleStep(0.1);
 	form->addRow(this->leafStartLabel, this->leafStartValue);
 
+	this->leafScaleValue[0] = new QDoubleSpinBox(this);
+	this->leafScaleValue[1] = new QDoubleSpinBox(this);
+	this->leafScaleValue[2] = new QDoubleSpinBox(this);
+	this->leafScaleLabel[0] = new QLabel(tr("Leaf Scale.X"));
+	this->leafScaleLabel[1] = new QLabel(tr("Leaf Scale.Y"));
+	this->leafScaleLabel[2] = new QLabel(tr("Leaf Scale.Z"));
+	form->addRow(this->leafScaleLabel[0], this->leafScaleValue[0]);
+	form->addRow(this->leafScaleLabel[1], this->leafScaleValue[1]);
+	form->addRow(this->leafScaleLabel[2], this->leafScaleValue[2]);
+
 	this->arrangementLabel = new QLabel(tr("Arrangement"));
 	this->arrangementValue = new QComboBox(this);
 	this->arrangementValue->addItem(tr("Alternate"));
@@ -154,6 +164,12 @@ void GeneratorEditor::createInterface()
 		this, SLOT(change()));
 	connect(this->lengthFactorValue, SIGNAL(editingFinished()),
 		this, SLOT(finishChanging()));
+	for (int i = 0; i < 3; i++) {
+		connect(this->leafScaleValue[i], SIGNAL(valueChanged(double)),
+			this, SLOT(change()));
+		connect(this->leafScaleValue[i], SIGNAL(editingFinished()),
+			this, SLOT(finishChanging()));
+	}
 }
 
 void GeneratorEditor::setFields()
@@ -189,6 +205,9 @@ void GeneratorEditor::setFields(const DerivationTree &dvnTree, string name)
 	this->stemStartValue->setValue(derivation.stemStart);
 	this->leafDensityValue->setValue(derivation.leafDensity);
 	this->leafStartValue->setValue(derivation.leafStart);
+	this->leafScaleValue[0]->setValue(derivation.leafScale.x);
+	this->leafScaleValue[1]->setValue(derivation.leafScale.y);
+	this->leafScaleValue[2]->setValue(derivation.leafScale.z);
 	this->radiusThresholdValue->setValue(derivation.radiusThreshold);
 	this->lengthFactorValue->setValue(derivation.lengthFactor);
 	this->arrangementValue->setCurrentIndex(derivation.arrangement);
@@ -205,6 +224,9 @@ void GeneratorEditor::enable(bool enable)
 	this->radiusThresholdValue->setEnabled(enable);
 	this->lengthFactorValue->setEnabled(enable);
 	this->arrangementValue->setEnabled(enable);
+	this->leafScaleValue[0]->setEnabled(enable);
+	this->leafScaleValue[1]->setEnabled(enable);
+	this->leafScaleValue[2]->setEnabled(enable);
 	this->childButton->setEnabled(enable);
 	this->siblingButton->setEnabled(enable);
 	this->removeButton->setEnabled(enable);
@@ -221,6 +243,9 @@ void GeneratorEditor::blockSignals(bool block)
 	this->radiusThresholdValue->blockSignals(block);
 	this->lengthFactorValue->blockSignals(block);
 	this->arrangementValue->blockSignals(block);
+	this->leafScaleValue[0]->blockSignals(block);
+	this->leafScaleValue[1]->blockSignals(block);
+	this->leafScaleValue[2]->blockSignals(block);
 	this->nodeValue->blockSignals(block);
 }
 
@@ -251,6 +276,9 @@ void GeneratorEditor::change()
 	dvn.radiusThreshold = this->radiusThresholdValue->value();
 	int arrangement = this->arrangementValue->currentIndex();
 	dvn.arrangement = static_cast<Derivation::Arrangement>(arrangement);
+	dvn.leafScale.x = this->leafScaleValue[0]->value();
+	dvn.leafScale.y = this->leafScaleValue[1]->value();
+	dvn.leafScale.z = this->leafScaleValue[2]->value();
 	dvnNode->setData(dvn);
 
 	for (auto instance : instances)

@@ -36,6 +36,7 @@ namespace pg {
 		float leafDensity = 0.0f;
 		Spline stemDensityCurve;
 		Spline leafDensityCurve;
+		Vec3 leafScale = Vec3(1.0f, 1.0f, 1.0f);
 		float stemStart = 0.0f;
 		float leafStart = 0.0f;
 		float lengthFactor = 1.0f;
@@ -44,7 +45,7 @@ namespace pg {
 
 		#ifdef PG_SERIALIZE
 		template<class Archive>
-		void serialize(Archive &ar, const unsigned)
+		void serialize(Archive &ar, const unsigned version)
 		{
 			ar & stemDensity;
 			ar & leafDensity;
@@ -55,6 +56,9 @@ namespace pg {
 			ar & radiusThreshold;
 			ar & lengthFactor;
 			ar & arrangement;
+			if (version == 1) {
+				ar & leafScale;
+			}
 		}
 		#endif /* PG_SERIALIZE */
 	};
@@ -132,5 +136,9 @@ namespace pg {
 		#endif /* PG_SERIALIZE */
 	};
 }
+
+#ifdef PG_SERIALIZE
+BOOST_CLASS_VERSION(pg::Derivation, 1);
+#endif
 
 #endif /* PG_DERIVATION_H */

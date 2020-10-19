@@ -198,7 +198,7 @@ void PseudoGenerator::addLeaves(Stem *stem, const Derivation &dvn)
 			if (percentage == 0.0f)
 				break;
 
-			addLeaf(stem, position, rotation);
+			addLeaf(stem, dvn, position, rotation);
 			rotation = alternate(rotation);
 			position += distance * (1.0f/percentage);
 		}
@@ -209,9 +209,9 @@ void PseudoGenerator::addLeaves(Stem *stem, const Derivation &dvn)
 			if (percentage == 0.0f)
 				break;
 
-			addLeaf(stem, position, rotation);
+			addLeaf(stem, dvn, position, rotation);
 			rotation = alternate(rotation);
-			addLeaf(stem, position, rotation);
+			addLeaf(stem, dvn, position, rotation);
 			rotation = alternate(rotation);
 			position += distance * (1.0f/percentage);
 		}
@@ -225,21 +225,22 @@ void PseudoGenerator::addLeaves(Stem *stem, const Derivation &dvn)
 				break;
 
 			rotation = Quat(1.0f, 0.0f, 0.0f, 0.0f);
-			addLeaf(stem, position, rotation);
+			addLeaf(stem, dvn, position, rotation);
 			rotation *= increment;
-			addLeaf(stem, position, rotation);
+			addLeaf(stem, dvn, position, rotation);
 			rotation *= increment;
-			addLeaf(stem, position, rotation);
+			addLeaf(stem, dvn, position, rotation);
 			position += distance * (1.0f/percentage);
 		}
 	}
 }
 
-void PseudoGenerator::addLeaf(Stem *stem, float position, Quat rotation)
+void PseudoGenerator::addLeaf(
+	Stem *stem, const Derivation &dvn, float position, Quat rotation)
 {
 	Leaf leaf;
 	leaf.setPosition(position);
-	leaf.setScale(Vec3(2.0f, 2.0f, 2.0f));
+	leaf.setScale(dvn.leafScale);
 	leaf.setRotation(rotation);
 	stem->addLeaf(leaf);
 }

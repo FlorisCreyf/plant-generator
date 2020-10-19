@@ -41,7 +41,6 @@ void pg::Geometry::setPlane()
 	p.normal = Vec3(0.0f, 1.0f, 0.0f);
 	points.clear();
 	indices.clear();
-
 	p.position = Vec3(0.5f, 0.0f, 0.0f);
 	p.uv = Vec2(1.0f, 0.0f);
 	points.push_back(p);
@@ -54,11 +53,9 @@ void pg::Geometry::setPlane()
 	p.position = Vec3(-0.5f, 0.0f, 0.0f);
 	p.uv = Vec2(0.0f, 0.0f);
 	points.push_back(p);
-
 	indices.push_back(0);
 	indices.push_back(1);
 	indices.push_back(3);
-
 	indices.push_back(1);
 	indices.push_back(2);
 	indices.push_back(3);
@@ -67,10 +64,8 @@ void pg::Geometry::setPlane()
 void pg::Geometry::setPerpendicularPlanes()
 {
 	DVertex p;
-	p.normal = {0.0f, 1.0f, 0.0f};
-
+	p.normal = Vec3(0.0f, 1.0f, 0.0f);
 	setPlane();
-
 	p.position = Vec3(0.0f, 0.5f, 0.0f);
 	p.uv = Vec2(1.0f, 0.0f);
 	points.push_back(p);
@@ -83,14 +78,51 @@ void pg::Geometry::setPerpendicularPlanes()
 	p.position = Vec3(0.0f, -0.5f, 0.0f);
 	p.uv = Vec2(0.0f, 0.0f);
 	points.push_back(p);
-
 	indices.push_back(4);
 	indices.push_back(5);
 	indices.push_back(7);
-
 	indices.push_back(5);
 	indices.push_back(6);
 	indices.push_back(7);
+}
+
+void pg::Geometry::setPyramid()
+{
+	points.clear();
+	indices.clear();
+	DVertex p;
+	p.normal = Vec3(0.0f, 1.0f, 0.0f);
+	p.position = Vec3(0.0f, 0.5f, 0.5f);
+	p.uv = Vec2(0.5f, 0.5f);
+	points.push_back(p);
+	p.normal = Vec3(0.0f, 0.0f, 1.0f);
+	p.position = Vec3(0.0f, 0.0f, 1.0f);
+	p.uv = Vec2(1.0f, 1.0f);
+	points.push_back(p);
+	p.normal = Vec3(-1.0f, 0.0f, 0.0f);
+	p.position = Vec3(-0.5f, 0.0f, 0.5f);
+	p.uv = Vec2(0.0f, 1.0f);
+	points.push_back(p);
+	p.normal = Vec3(1.0f, 0.0f, 0.0f);
+	p.position = Vec3(0.5f, 0.0f, 0.5f);
+	p.uv = Vec2(1.0f, 0.0f);
+	points.push_back(p);
+	p.normal = Vec3(0.0f, 0.0f, -1.0f);
+	p.position = Vec3(0.0f, 0.0f, 0.0f);
+	p.uv = Vec2(0.0f, 0.0f);
+	points.push_back(p);
+	indices.push_back(0);
+	indices.push_back(1);
+	indices.push_back(2);
+	indices.push_back(1);
+	indices.push_back(0);
+	indices.push_back(3);
+	indices.push_back(4);
+	indices.push_back(3);
+	indices.push_back(0);
+	indices.push_back(2);
+	indices.push_back(4);
+	indices.push_back(0);
 }
 
 void pg::Geometry::setPoints(std::vector<DVertex> points)
@@ -119,12 +151,8 @@ void pg::Geometry::transform(Quat rotation, Vec3 scale, Vec3 translation)
 		point.position.x *= scale.x;
 		point.position.y *= scale.y;
 		point.position.z *= scale.z;
-
-		Quat p = toQuat(point.position, 1.0f);
-		Quat n = toQuat(point.normal, 1.0f);
-		point.position = toVec3(rotation * p * conjugate(rotation));
-		point.normal = toVec3(rotation * n * conjugate(rotation));
-
+		point.position = rotate(rotation, point.position);
+		point.normal = rotate(rotation, point.normal);
 		point.position += translation;
 	}
 }

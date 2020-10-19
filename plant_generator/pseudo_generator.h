@@ -33,7 +33,7 @@ namespace pg {
 		void addLateralStems(Stem *, const DerivationNode *);
 		void addLateralStem(Stem *, float, const DerivationNode *);
 		void addLeaves(Stem *, const Derivation &);
-		void addLeaf(Stem *, float, Quat);
+		void addLeaf(Stem *, const Derivation &, float, Quat);
 		Quat alternate(Quat);
 
 	public:

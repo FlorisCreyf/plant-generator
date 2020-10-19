@@ -120,6 +120,18 @@ void insertVertexInfo(ifstream &file,
 	file.seekg(0, std::ios::beg);
 }
 
+void parseVertex(unsigned s[3], string &line)
+{
+	sscanf(&line[0], "%u", &s[0]);
+	size_t attribute = 1;
+	for (size_t i = 0; i < line.size() && attribute < 3; i++) {
+		if (line[i] == '/') {
+			sscanf(&line[i + 1], "%u", &s[attribute]);
+			attribute++;
+		}
+	}
+}
+
 void Wavefront::importFile(const char *filename, Geometry *geom)
 {
 	ifstream file(filename);
@@ -149,17 +161,14 @@ void Wavefront::importFile(const char *filename, Geometry *geom)
 				DVertex point;
 				shape.push_back(index);
 				descriptors.emplace(descriptor, index++);
-
 				unsigned s[3] = {0};
-				const char *str = descriptor.c_str();
-				sscanf(str, "%u/%u/%u", &s[0], &s[1], &s[2]);
-
+				parseVertex(s, descriptor);
 				if (s[0] <= vs.size())
 					point.position = vs[s[0] - 1];
-				if (s[1] <= vns.size())
-					point.normal = vns[s[1] - 1];
-				if (s[2] <= vts.size())
-					point.uv = vts[s[2] - 1];
+				if (s[1] <= vts.size() && !vts.empty())
+					point.uv = vts[s[1] - 1];
+				if (s[2] <= vns.size() && !vns.empty())
+					point.normal = vns[s[2] - 1];
 				points.push_back(point);
 			} else
 				shape.push_back(it->second);
