@@ -74,37 +74,6 @@ Quat Leaf::getRotation() const
 	return this->rotation;
 }
 
-Quat Leaf::getStemTiltAlignment(Vec3 stemDirection) const
-{
-	Vec3 normal(0.0f, 1.0f, 0.0f);
-	Vec3 planeDirection(0.0f, 0.0f, 1.0f);
-	Vec3 up(0.0f, -1.0f, 0.0f);
-	planeDirection = cross(up, stemDirection);
-	planeDirection = cross(planeDirection, stemDirection);
-	planeDirection = normalize(planeDirection);
-	return rotateIntoVecQ(normal, planeDirection);
-}
-
-Quat Leaf::getDefaultOrientation(Vec3 stemDirection) const
-{
-	Vec3 normal(0.0f, 1.0f, 0.0f);
-	Vec3 planeDirection(0.0f, 0.0f, 1.0f);
-	Vec3 leafDirection;
-	if (isZero(stemDirection - normal))
-		leafDirection = planeDirection;
-	else
-		leafDirection = normalize(cross(stemDirection, normal));
-	Quat tilt = getStemTiltAlignment(stemDirection);
-	return tilt * rotateIntoVecQ(planeDirection, leafDirection);
-}
-
-Vec3 Leaf::getDirection(Vec3 stemDirection) const
-{
-	Vec3 normal(0.0f, 0.0f, 1.0f);
-	Quat rotation = this->rotation * getDefaultOrientation(stemDirection);
-	return rotate(rotation, normal);
-}
-
 void Leaf::setScale(Vec3 scale)
 {
 	this->scale = scale;

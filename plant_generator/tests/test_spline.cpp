@@ -3,11 +3,10 @@
 
 #include "../spline.h"
 
-#define PI 3.14159265359f
-#define TOLERANCE 0.000001f
-
 using namespace pg;
 namespace bt = boost::unit_test;
+
+const float tolerance = 0.000001f
 
 BOOST_AUTO_TEST_SUITE(spline)
 
@@ -26,7 +25,7 @@ std::vector<Vec3> getRandomControls()
 	return controls;
 }
 
-BOOST_AUTO_TEST_CASE(test_to_linear, *bt::tolerance(TOLERANCE))
+BOOST_AUTO_TEST_CASE(test_to_linear, *bt::tolerance(tolerance))
 {
 	Spline spline;
 	std::vector<Vec3> controls = getRandomControls();
@@ -39,7 +38,7 @@ BOOST_AUTO_TEST_CASE(test_to_linear, *bt::tolerance(TOLERANCE))
 	BOOST_TEST(result[2] == controls[6]);
 }
 
-BOOST_AUTO_TEST_CASE(test_move_cubic, *bt::tolerance(TOLERANCE))
+BOOST_AUTO_TEST_CASE(test_move_cubic, *bt::tolerance(tolerance))
 {
 	Spline spline;
 	spline.setDegree(3);
@@ -60,7 +59,7 @@ BOOST_AUTO_TEST_CASE(test_move_cubic, *bt::tolerance(TOLERANCE))
 	BOOST_TEST(result[2].z == controls[2].z - controls[3].z + 7.0f);
 }
 
-BOOST_AUTO_TEST_CASE(test_parallelize_cubic, *bt::tolerance(TOLERANCE))
+BOOST_AUTO_TEST_CASE(test_parallelize_cubic, *bt::tolerance(tolerance))
 {
 	Spline spline;
 	std::vector<Vec3> controls = getRandomControls();

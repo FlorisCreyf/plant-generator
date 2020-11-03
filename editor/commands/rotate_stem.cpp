@@ -32,9 +32,9 @@ RotateStem::RotateStem(
 
 	axes->setPosition(selection->getAveragePositionFP());
 	axes->selectCenter();
-	axis = axes->getSelection();
+	this->axis = axes->getSelection();
 
-	firstDirection = Vec3(0.0f, 0.0f, 0.0f);
+	this->firstDirection = Vec3(0.0f, 0.0f, 0.0f);
 	pg::Ray ray = camera->getRay(x, y);
 	Vec3 normal = camera->getDirection();
 	set(ray, normal);
@@ -44,14 +44,14 @@ RotateStem::RotateStem(
 
 void RotateStem::checkValidity()
 {
-	valid = true;
-	auto instances = selection->getStemInstances();
+	this->valid = true;
+	auto instances = this->selection->getStemInstances();
 	for (auto instance : instances) {
 		pg::Stem *stem1 = instance.first;
 		for (auto instance : instances) {
 			pg::Stem *stem2 = instance.first;
 			if (stem1->isDescendantOf(stem2)) {
-				valid = false;
+				this->valid = false;
 				return;
 			}
 		}
@@ -60,21 +60,22 @@ void RotateStem::checkValidity()
 
 bool RotateStem::isValid()
 {
-	return valid;
+	return this->valid;
 }
 
 void RotateStem::set(pg::Ray ray, Vec3 planeNormal)
 {
 	planeNormal = pg::normalize(planeNormal);
-	pg::Plane plane = {axes->getPosition(), planeNormal};
+	pg::Plane plane = {this->axes->getPosition(), planeNormal};
 	float distance = pg::intersectsPlane(ray, plane);
-	lastDirection = direction;
-	direction = distance * ray.direction + ray.origin - axes->getPosition();
-	direction = pg::normalize(direction);
+	this->lastDirection = this->direction;
+	this->direction = distance * ray.direction + ray.origin;
+	this->direction -= this->axes->getPosition();
+	this->direction = pg::normalize(this->direction);
 	this->ray = ray;
 	this->planeNormal = planeNormal;
-	if (pg::isZero(firstDirection))
-		firstDirection = direction;
+	if (pg::isZero(this->firstDirection))
+		this->firstDirection = this->direction;
 }
 
 Vec3 RotateStem::getDirection()
@@ -85,38 +86,28 @@ Vec3 RotateStem::getDirection()
 Quat RotateStem::getTransformation(Quat q)
 {
 	Vec3 normal;
-
 	if (this->axis == Axes::XAxis) {
-		normal.x = 1.0f;
-		normal.y = 0.0f;
-		normal.z = 0.0f;
-		Quat r = q * pg::toQuat(normal, 0.0f) * pg::conjugate(q);
-		Vec3 v = pg::toVec3(r);
+		normal = Vec3(1.0f, 0.0f, 0.0f);
+		Vec3 v = pg::rotate(q, normal);
 		if (pg::dot(v, this->planeNormal) < 0)
 			normal.x *= -1.0f;
 	} else if (this->axis == Axes::YAxis) {
-		normal.x = 0.0f;
-		normal.y = 1.0f;
-		normal.z = 0.0f;
-		Quat r = q * pg::toQuat(normal, 0.0f) * pg::conjugate(q);
-		Vec3 v = pg::toVec3(r);
+		normal = Vec3(0.0f, 1.0f, 0.0f);
+		Vec3 v = pg::rotate(q, normal);
 		if (pg::dot(v, this->planeNormal) < 0)
 			normal.y *= -1.0f;
 	} else if (this->axis == Axes::ZAxis) {
-		normal.x = 0.0f;
-		normal.y = 0.0f;
-		normal.z = 1.0f;
-		Quat r = q * pg::toQuat(normal, 0.0f) * pg::conjugate(q);
-		Vec3 v = pg::toVec3(r);
+		normal = Vec3(0.0f, 0.0f, 1.0f);
+		Vec3 v = pg::rotate(q, normal);
 		if (pg::dot(v, this->planeNormal) < 0)
 			normal.z *= -1.0f;
 	} else
 		normal = this->planeNormal;
 
 	Quat t = pg::rotateIntoVecQ(this->planeNormal, normal);
-	Quat a = t * pg::toQuat(this->direction, 0.0f) * pg::conjugate(t);
-	Quat b = t * pg::toQuat(this->lastDirection, 0.0f) * pg::conjugate(t);
-	return pg::rotateIntoVecQ(pg::toVec3(b), pg::toVec3(a));
+	Vec3 a = pg::rotate(t, this->direction);
+	Vec3 b = pg::rotate(t, this->lastDirection);
+	return pg::rotateIntoVecQ(b, a);
 }
 
 void RotateStem::rotateChild(pg::Stem *stem, Quat t, float distance)
@@ -135,16 +126,26 @@ void RotateStem::rotateChild(pg::Stem *stem, Quat t, float distance)
 			stem->setPath(path);
 			rotateChild(stem->getChild(), t, 0.0f);
 		}
-
+		rotateChildLeaves(stem, t, distance);
 		stem = stem->getSibling();
 	}
 }
 
+void RotateStem::rotateChildLeaves(pg::Stem *stem, Quat t, float distance)
+{
+	for (size_t i = 0; i < stem->getLeafCount(); i++) {
+		pg::Leaf *leaf = stem->getLeaf(i);
+		if (leaf->getPosition() >= distance)
+			leaf->setRotation(t * leaf->getRotation());
+	}
+}
+
+/** Rotate selected stems. */
 void RotateStem::rotateStems()
 {
 	Quat q(0.0f, 0.0f, 0.0f, 1.0f);
 	Quat t = getTransformation(q);
-	auto stemInstances = selection->getStemInstances();
+	auto stemInstances = this->selection->getStemInstances();
 	for (auto &instance : stemInstances) {
 		pg::Stem *stem = instance.first;
 		PointSelection &ps = instance.second;
@@ -169,6 +170,7 @@ void RotateStem::rotateStems()
 		}
 
 		size_t pathIndex = path.toPathIndex(point);
+		rotateChildLeaves(stem, t, path.getDistance(pathIndex));
 		rotateChild(stem->getChild(), t, path.getDistance(pathIndex));
 
 		spline.setControls(controls);
@@ -177,23 +179,15 @@ void RotateStem::rotateStems()
 	}
 }
 
+/** Rotate selected leaves. */
 void RotateStem::rotateLeaves()
 {
-	auto leafInstances = selection->getLeafInstances();
+	auto leafInstances = this->selection->getLeafInstances();
 	for (auto &instance : leafInstances) {
 		pg::Stem *stem = instance.first;
-		pg::Path path = stem->getPath();
 		for (auto id : instance.second) {
 			pg::Leaf *leaf = stem->getLeaf(id);
-
-			/* Create a rotation 'q' that transforms the global
-			axes into the axes of each leaf. This is needed to
-			determine if rotations move in the same direction as
-			the cursor. */
-			float position = leaf->getPosition();
-			Vec3 d = path.getIntermediateDirection(position);
-			Quat q = leaf->getDefaultOrientation(d);
-			Quat t = getTransformation(q);
+			Quat t = getTransformation(leaf->getRotation());
 			leaf->setRotation(t * leaf->getRotation());
 		}
 	}
@@ -201,7 +195,7 @@ void RotateStem::rotateLeaves()
 
 void RotateStem::execute()
 {
-	if (valid) {
+	if (this->valid) {
 		rotateStems();
 		rotateLeaves();
 	}
@@ -209,24 +203,24 @@ void RotateStem::execute()
 
 void RotateStem::undo()
 {
-	if (valid) {
-		Vec3 d = firstDirection;
-		firstDirection = lastDirection = direction;
-		direction = d;
+	if (this->valid) {
+		Vec3 d = this->firstDirection;
+		this->firstDirection = this->lastDirection = this->direction;
+		this->direction = d;
 		execute();
-		d = firstDirection;
-		firstDirection = lastDirection = direction;
-		direction = d;
+		d = this->firstDirection;
+		this->firstDirection = this->lastDirection = this->direction;
+		this->direction = d;
 	}
 }
 
 void RotateStem::resetRotation()
 {
-	lastDirection = direction;
-	direction = firstDirection;
+	this->lastDirection = this->direction;
+	this->direction = this->firstDirection;
 	execute();
-	lastDirection = firstDirection;
-	direction = firstDirection;
+	this->lastDirection = this->firstDirection;
+	this->direction = this->firstDirection;
 }
 
 bool RotateStem::onMouseMove(QMouseEvent *event)
@@ -235,9 +229,9 @@ bool RotateStem::onMouseMove(QMouseEvent *event)
 	float x = point.x();
 	float y = point.y();
 
-	if (axes->getSelection() != axis) {
+	if (this->axes->getSelection() != this->axis) {
 		resetRotation();
-		axis = axes->getSelection();
+		this->axis = this->axes->getSelection();
 	}
 
 	set(this->camera->getRay(x, y), this->camera->getDirection());
@@ -248,7 +242,7 @@ bool RotateStem::onMouseMove(QMouseEvent *event)
 
 bool RotateStem::onMousePress(QMouseEvent *)
 {
-	done = true;
+	this->done = true;
 	return false;
 }
 
@@ -256,12 +250,12 @@ bool RotateStem::onKeyPress(QKeyEvent *event)
 {
 	char key = event->key();
 	if (key == Qt::Key_C)
-		axes->selectAxis(Axes::Center);
+		this->axes->selectAxis(Axes::Center);
 	else if (key == Qt::Key_X)
-		axes->selectAxis(Axes::XAxis);
+		this->axes->selectAxis(Axes::XAxis);
 	else if (key == Qt::Key_Y)
-		axes->selectAxis(Axes::YAxis);
+		this->axes->selectAxis(Axes::YAxis);
 	else if (key == Qt::Key_Z)
-		axes->selectAxis(Axes::ZAxis);
+		this->axes->selectAxis(Axes::ZAxis);
 	return false;
 }

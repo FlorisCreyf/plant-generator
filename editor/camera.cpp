@@ -19,12 +19,12 @@
 #include <cmath>
 #include <stdio.h>
 
-#define PI 3.14159265359f
-
 using pg::Vec2;
 using pg::Vec3;
 using pg::Vec4;
 using pg::Mat4;
+
+const float pi = std::acos(-1.0);
 
 Camera::Camera()
 {
@@ -112,7 +112,7 @@ void Camera::setPan(float x, float y)
 	Vec3 dir = pg::normalize(eye - target);
 	float speed = distance * panSpeed;
 
-	const float toRadian = PI / 360.0f;
+	const float toRadian = pi / 360.0f;
 	float xx = (this->pos.x - this->posDiff.x) * toRadian;
 	Vec3 c(-std::sin(xx), 0.0f, std::cos(xx));
 	Vec3 d = pg::cross(dir, c);
@@ -142,7 +142,7 @@ void Camera::zoom(float y)
 
 Vec3 Camera::getCameraPosition() const
 {
-	const float toRadian = PI / 180.0f;
+	const float toRadian = pi / 180.0f;
 	float x = (this->pos.x - this->posDiff.x) * toRadian * 0.5f;
 	float y = (this->pos.y - this->posDiff.y) * toRadian * 0.5f;
 	Vec3 eye;
@@ -191,7 +191,7 @@ Mat4 Camera::getInverseVP() const
 Mat4 Camera::getLookAtMatrix(Vec3 eye, Vec3 center) const
 {
 	float x, y, z;
-	float rot = (this->pos.x - this->posDiff.x) * PI / 360.0f;
+	float rot = (this->pos.x - this->posDiff.x) * pi / 360.0f;
 	Vec3 a = pg::normalize(center - eye);
 	Vec3 b(std::sin(rot), 0.0f, -std::cos(rot));
 	Vec3 c = pg::cross(b, a);
@@ -266,7 +266,7 @@ Mat4 Camera::getInverseOrthographic() const
 void Camera::setPerspective(float fovy, float near, float far, float aspect)
 {
 	this->perspective = true;
-	float t = std::tan((fovy * PI / 180.0f) / 2.0f);
+	float t = std::tan((fovy * pi / 180.0f) / 2.0f);
 	float a = 1.0f / (aspect * t);
 	float b = 1.0f / t;
 	float c = -(far + near) / (far - near);

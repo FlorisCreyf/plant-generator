@@ -18,9 +18,9 @@
 #include <cstdlib>
 #include <cmath>
 
-#define PI 3.14159265359f
-
 using namespace pg;
+
+const float pi = 3.14159265359f;
 
 PseudoGenerator::PseudoGenerator(Plant *plant)
 {
@@ -83,8 +83,8 @@ Vec3 PseudoGenerator::getStemDirection(Stem *stem)
 	Path path = stem->getParent()->getPath();
 	float ratio = stem->getDistance() / path.getLength();
 	Vec3 direction = path.getIntermediateDirection(stem->getDistance());
-	std::uniform_real_distribution<float> dis(0.0f, 2.0*PI);
-	float angleX = PI*(0.1f + 0.4f*(1.0f-ratio));
+	std::uniform_real_distribution<float> dis(0.0f, 2.0*pi);
+	float angleX = pi*(0.1f + 0.4f*(1.0f-ratio));
 	float angleY = dis(this->randomGenerator);
 	Mat4 rot = pg::rotateXY(angleX, angleY);
 	Mat4 tran = pg::rotateIntoVec(Vec3(0.0f, 1.0f, 0.0f), direction);
@@ -183,54 +183,68 @@ void PseudoGenerator::setPath(Stem *stem, Vec3 direction, const Derivation &dvn)
 
 void PseudoGenerator::addLeaves(Stem *stem, const Derivation &dvn)
 {
-	if (dvn.leafDensity <= 0.0f)
+	if (dvn.leafDensity <= 0.0f || dvn.leavesPerNode < 1)
 		return;
 
-	float length = stem->getPath().getLength();
+	Path path = stem->getPath();
+	float length = path.getLength();
+	float start = length - dvn.leafDistance;
 	float distance = 1.0f / dvn.leafDensity;
-	float position = dvn.leafStart;
+	float position = length;
 	Quat rotation(0.0f, 0.0f, 0.0f, 1.0f);
 
-	if (dvn.arrangement == Derivation::Alternate) {
-		while (position < length) {
-			float t = position / length;
-			float percentage = dvn.leafDensityCurve.getPoint(t).z;
-			if (percentage == 0.0f)
-				break;
+	if (start < 0.0f)
+		start = 0.0f;
 
-			addLeaf(stem, dvn, position, rotation);
-			rotation = alternate(rotation);
-			position += distance * (1.0f/percentage);
-		}
-	} else if (dvn.arrangement == Derivation::Opposite) {
-		while (position < length) {
-			float t = position / length;
-			float percentage = dvn.leafDensityCurve.getPoint(t).z;
-			if (percentage == 0.0f)
-				break;
+	Vec3 zaxis(0.0f, 0.0f, 1.0f);
+	Vec3 yaxis(0.0f, 1.0f, 0.0f);
+	Vec3 xaxis(1.0f, 0.0f, 0.0f);
 
-			addLeaf(stem, dvn, position, rotation);
-			rotation = alternate(rotation);
-			addLeaf(stem, dvn, position, rotation);
-			rotation = alternate(rotation);
-			position += distance * (1.0f/percentage);
-		}
-	} else if (dvn.arrangement == Derivation::Whorled) {
-		Vec3 axis = Vec3(1.0f, 0.0f, 0.0f);
-		Quat increment = fromAxisAngle(axis, 2.0f*PI/3.0f);
-		while (position < length) {
-			float t = position / length;
-			float percentage = dvn.leafDensityCurve.getPoint(t).z;
-			if (percentage == 0.0f)
-				break;
+	for (int i = 0, j = 1; position > start; i++, j++) {
+		rotation = Quat(0.0f, 0.0f, 0.0f, 1.0f);
+		Vec3 stemDirection = path.getIntermediateDirection(position);
+		float ratio = (length - position) / (length - start);
+		Vec3 vec;
+		Vec3 normal1;
+		Vec3 normal2;
+		float mix;
 
-			rotation = Quat(1.0f, 0.0f, 0.0f, 0.0f);
-			addLeaf(stem, dvn, position, rotation);
-			rotation *= increment;
-			addLeaf(stem, dvn, position, rotation);
-			rotation *= increment;
-			addLeaf(stem, dvn, position, rotation);
-			position += distance * (1.0f/percentage);
+		/* Rotate the leaf into the stem side. */
+		vec = pg::normalize(pg::cross(yaxis, stemDirection));
+		rotation = pg::rotateIntoVecQ(zaxis, vec);
+		Quat angle = fromAxisAngle(stemDirection, dvn.leafRotation*i);
+		rotation = angle * rotation;
+
+		/* Rotate the leaf normal into the stem direction. */
+		Vec3 normal = rotate(rotation, yaxis);
+		rotation = rotateIntoVecQ(normal, stemDirection) * rotation;
+
+
+		/* Rotate the leaf normal into the up vector. */
+		mix = dvn.minUp + (dvn.maxUp - dvn.minUp) * ratio;
+		normal1 = rotate(rotation, yaxis);
+		normal2 = normalize(lerp(yaxis, stemDirection, mix));
+		rotation = rotateIntoVecQ(normal1, normal2) * rotation;
+
+		/* Rotate the leaf direction into the stem. */
+		mix = dvn.minDirection;
+		mix += (dvn.maxDirection - dvn.minDirection) * ratio;
+		normal1 = rotate(rotation, zaxis);
+		normal2 = normalize(lerp(stemDirection, normal1, mix));
+		rotation = rotateIntoVecQ(normal1, normal2) * rotation;
+
+
+
+		float t = position / length;
+		float percentage = dvn.leafDensityCurve.getPoint(t).z;
+		if (percentage == 0.0f)
+			break;
+
+		addLeaf(stem, dvn, position, pg::normalize(rotation));
+
+		if (j == dvn.leavesPerNode) {
+			position -= distance * (1.0f/percentage);
+			j = 0;
 		}
 	}
 }
@@ -243,14 +257,4 @@ void PseudoGenerator::addLeaf(
 	leaf.setScale(dvn.leafScale);
 	leaf.setRotation(rotation);
 	stem->addLeaf(leaf);
-}
-
-Quat PseudoGenerator::alternate(Quat prevRotation)
-{
-	Quat rotation(0.0f, 0.0f, 0.0f, 0.0f);
-	if (prevRotation.w == 1.0f)
-		rotation.y = 1.0f;
-	else
-		rotation.w = 1.0f;
-	return rotation;
 }

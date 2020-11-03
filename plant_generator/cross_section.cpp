@@ -16,7 +16,7 @@
 #include "cross_section.h"
 #include <cmath>
 
-#define PI 3.14159265359f
+const float pi = 3.14159265359f;
 
 using namespace pg;
 
@@ -45,7 +45,7 @@ void CrossSection::generateCircle()
 	vertex.uv.x = 1.0f;
 	float angle = 0.0f;
 	float deltaUV = 1.0f / this->resolution;
-	float deltaAngle = 2.0f * PI / this->resolution;
+	float deltaAngle = 2.0f * pi / this->resolution;
 	this->vertices.resize(this->resolution+1);
 	for (int i = 0; i <= this->resolution; i++) {
 		vertex.position = Vec3(std::cos(angle), 0.0f, std::sin(angle));

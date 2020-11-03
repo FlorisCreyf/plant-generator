@@ -71,7 +71,6 @@ namespace pg {
 		};
 
 		Plant *plant;
-		Geometry defaultLeaf;
 		CrossSection crossSection;
 
 		std::vector<std::vector<DVertex>> vertices;

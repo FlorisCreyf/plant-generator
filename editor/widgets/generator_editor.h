@@ -29,31 +29,52 @@ class GeneratorEditor : public Form {
 	Editor *editor;
 	Generate *generate;
 
-	QGroupBox *group;
+	QGroupBox *nodeGroup;
+	QGroupBox *stemGroup;
+	QGroupBox *leafGroup;
 	QComboBox *nodeValue;
+	QSpinBox *seedValue;
 	QPushButton *childButton;
 	QPushButton *siblingButton;
 	QPushButton *removeButton;
-	QLabel *seedLabel;
-	QSpinBox *seedValue;
-	QLabel *stemDensityLabel;
-	QDoubleSpinBox *stemDensityValue;
-	QLabel *stemStartLabel;
-	QDoubleSpinBox *stemStartValue;
-	QLabel *leafDensityLabel;
-	QDoubleSpinBox *leafDensityValue;
-	QLabel *leafStartLabel;
-	QDoubleSpinBox *leafStartValue;
-	QLabel *radiusThresholdLabel;
-	QDoubleSpinBox *radiusThresholdValue;
-	QLabel *leafScaleLabel[3];
-	QDoubleSpinBox *leafScaleValue[3];
-	QLabel *lengthFactorLabel;
-	QDoubleSpinBox *lengthFactorValue;
-	QLabel *arrangementLabel;
-	QComboBox *arrangementValue;
+
+	enum {
+		LeavesPerNode
+	};
+	enum {
+		StemDensity,
+		StemStart,
+		LengthFactor,
+		RadiusThreshold
+	};
+	enum {
+		LeafDensity,
+		LeafDistance,
+		LeafScaleX,
+		LeafScaleY,
+		LeafScaleZ,
+		LeafRotation,
+		MinUp,
+		MaxUp,
+		MinDirection,
+		MaxDirection
+	};
+
+	static const int dssize = 4;
+	QDoubleSpinBox *dsv[dssize];
+	QLabel *dsl[dssize];
+	static const int dlsize = 10;
+	QDoubleSpinBox *dlv[dlsize];
+	QLabel *dll[dlsize];
+	static const int ilsize = 1;
+	QSpinBox *ilv[ilsize];
+	QLabel *ill[ilsize];
 
 	void createInterface();
+	void createNodeGroup(QBoxLayout *);
+	void createStemGroup(QBoxLayout *);
+	void createLeafGroup(QBoxLayout *);
+	QFormLayout *createForm(QGroupBox *);
 	void removeCurrent();
 	void blockSignals(bool);
 	void enable(bool);

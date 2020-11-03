@@ -38,11 +38,12 @@ class RotateStem : public Command {
 	bool valid;
 
 	void checkValidity();
-	void rotateChild(pg::Stem *stem, pg::Quat t, float distance);
+	void rotateChild(pg::Stem *, pg::Quat, float);
+	void rotateChildLeaves(pg::Stem *, pg::Quat, float);
 	void rotateStems();
 	void rotateLeaves();
 	void resetRotation();
-	pg::Quat getTransformation(pg::Quat q);
+	pg::Quat getTransformation(pg::Quat);
 
 public:
 	RotateStem(

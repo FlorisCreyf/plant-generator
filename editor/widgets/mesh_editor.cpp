@@ -156,7 +156,7 @@ void MeshEditor::add()
 	}
 
 	geom.setName(name);
-	geom.setPerpendicularPlanes();
+	geom.setPlane();
 	add(geom);
 }
 

@@ -22,11 +22,6 @@ Command::Command()
 	time(&this->timer);
 }
 
-Command::Command(const Command &original)
-{
-	this->done = original.done;
-}
-
 time_t Command::getTime() const
 {
 	return this->timer;

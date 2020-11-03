@@ -18,7 +18,7 @@
 #include "geometry.h"
 #include <cmath>
 
-#define PI 3.14159265359f
+const float pi = 3.14159265359f;
 
 using pg::DVertex;
 using pg::Vec2;
@@ -61,7 +61,7 @@ void Geometry::addLine(Vec3 line[2], Vec3 color)
 void Geometry::addCircle(float radius, int points, Vec3 color)
 {
 	float angle = 0.0f;
-	float rotation = 2.0f * PI / points;
+	float rotation = 2.0f * pi / points;
 	for (int i = 0; i < points; i++) {
 		Vec3 point(cos(angle)*radius, 0.0f, sin(angle)*radius);
 		addPoint(point, color);
@@ -99,7 +99,7 @@ void Geometry::addCone(float radius, float height, int points, Vec3 color)
 	unsigned pointStart = this->points.size();
 
 	for (int i = 0; i < points; i++) {
-		float r = i * 2.0f * PI / points;
+		float r = i * 2.0f * pi / points;
 		addPoint(Vec3(cos(r)*radius, 0.0f, sin(r)*radius), color);
 
 		indices.push_back(pointStart + i);

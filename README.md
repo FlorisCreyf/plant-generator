@@ -6,9 +6,13 @@ Plant Generator generates plant geometry. The project is divided into a generato
 
 ![Plant Generator](https://www.fcreyf.com/static/plant/pg.png)
 
-## Documentation
+## Design Document
 
-A compiled LaTeX document can be found at: [documentation.pdf](https://www.fcreyf.com/static/plant/documentation.pdf).
+The design document is intended to provide some intuition on how the program works. A compiled LaTeX document can be found at [www.fcreyf.com/static/plant/documentation.pdf](https://www.fcreyf.com/static/plant/documentation.pdf).
+
+```sh
+pdflatex --shell-escape documentation.tex
+```
 
 ## Instructions
 

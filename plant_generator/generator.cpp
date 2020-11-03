@@ -22,7 +22,7 @@ using std::cos;
 using std::sin;
 using std::vector;
 
-#define PI 3.14159265359f
+const float pi = 3.14159265359f;
 
 Generator::Generator()
 {
@@ -83,13 +83,13 @@ void Generator::addNodes(int node)
 void Generator::castRays()
 {
 	for (int i = 1; i <= this->rayLevels; i++) {
-		float angle = i / (float)this->rayLevels * PI * 0.5f;
+		float angle = i / (float)this->rayLevels * pi * 0.5f;
 		int rayCount = (this->rayCount-1) * std::cos(angle) + 1;
 		float y = std::sin(angle) * this->width;
 		float radius = this->width * std::cos(angle);
 
 		for (int j = 0; j < rayCount; j++) {
-			float angle = j*(2.0f*PI/rayCount);
+			float angle = j*(2.0f*pi/rayCount);
 			float x = std::cos(angle) * radius;
 			float z = std::sin(angle) * radius;
 			Vec3 origin(-x, 0.0f, -z);

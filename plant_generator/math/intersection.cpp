@@ -210,10 +210,10 @@ float pg::intersectsTaperedCylinder(
 
 	{ /* Transform ray into object space of cone. */
 		Vec3 yaxis(0.0f, 1.0f, 0.0f);
-		Mat4 m = rotateIntoVec(direction, yaxis);
+		Quat q = rotateIntoVecQ(direction, yaxis);
 		ray.origin = ray.origin - start;
-		ray.direction = toVec3(m * toVec4(ray.direction, 0.0f));
-		ray.origin = toVec3(m * toVec4(ray.origin, 1.0f));
+		ray.direction = rotate(q, ray.direction);
+		ray.origin = rotate(q, ray.origin);
 	}
 
 	float aq = 0.0f, bq = 0.0f, cq = 0.0f;

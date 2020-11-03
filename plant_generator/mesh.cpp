@@ -17,17 +17,16 @@
 #include <cmath>
 #include <limits>
 
-#define PI 3.14159265359f
-
 using namespace pg;
 using std::map;
 using std::pair;
 using std::vector;
 
+const float pi = 3.14159265359f;
+
 Mesh::Mesh(Plant *plant)
 {
 	this->plant = plant;
-	this->defaultLeaf.setPlane();
 }
 
 void Mesh::generate()
@@ -249,7 +248,7 @@ float Mesh::getTextureLength(Stem *stem, size_t section)
 		float length = stem->getPath().getSegmentLength(section);
 		float radius = this->plant->getRadius(stem, section - 1);
 		float aspect = getAspect(this->plant, stem);
-		return (length * aspect) / (radius * 2.0f * PI);
+		return (length * aspect) / (radius * 2.0f * pi);
 	} else
 		return 0.0f;
 }
@@ -261,7 +260,7 @@ float Mesh::getTextureLength(Stem *stem, size_t section1, size_t section2)
 	float length = pg::magnitude(p2 - p1);
 	float radius = this->plant->getRadius(stem, section1);
 	float aspect = getAspect(this->plant, stem);
-	return (length * aspect) / (radius * 2.0f * PI);
+	return (length * aspect) / (radius * 2.0f * pi);
 }
 
 /** Compute indices between the cross section just generated and the cross
@@ -464,10 +463,10 @@ int Mesh::getForkMidpoint(int divisions, Quat rotation, Vec3 direction,
 	direction1 = pg::rotate(pg::conjugate(rotation), direction1);
 	Vec3 n = pg::projectOntoPlane(direction1, Vec3(0.0f, 1.0f, 0.0f));
 	n = pg::normalize(n);
-	float delta = 2.0f * PI / divisions;
+	float delta = 2.0f * pi / divisions;
 	float theta = std::acos(n.x);
 	if (n.z < 0.0f)
-		theta = 2.0f*PI-theta;
+		theta = 2.0f*pi-theta;
 	if (divisions % 4 == 0)
 		midpoint = std::round(theta / delta);
 	else
@@ -791,7 +790,7 @@ void Mesh::setBranchCollarUVs(
 			index -= size;
 			Vec3 p2 = this->vertices[mesh][index].position;
 			float length = magnitude(p2 - p1);
-			uv.y -= (length * aspect) / (radius * 2.0f * PI);
+			uv.y -= (length * aspect) / (radius * 2.0f * pi);
 			this->vertices[mesh][index].uv = uv;
 		}
 	}
@@ -802,7 +801,7 @@ void Mesh::capStem(Stem *stem, int stemMesh, size_t section)
 	long mesh = stem->getMaterial(Stem::Inner);
 	size_t index = section;
 	size_t divisions = stem->getSectionDivisions();
-	float rotation = 2.0f * PI / divisions;
+	float rotation = 2.0f * pi / divisions;
 	float angle = 0.0f;
 	section = this->vertices[mesh].size();
 
@@ -898,10 +897,7 @@ Geometry Mesh::transformLeaf(const Leaf *leaf, const Stem *stem)
 	}
 
 	Geometry geom = this->plant->getLeafMesh(leaf->getMesh());
-	Quat rotation;
-	rotation = leaf->getDefaultOrientation(direction);
-	rotation *= leaf->getRotation();
-	geom.transform(rotation, leaf->getScale(), location);
+	geom.transform(leaf->getRotation(), leaf->getScale(), location);
 	return geom;
 }
 
@@ -1158,24 +1154,20 @@ size_t Mesh::getLeafCount(int mesh) const
 
 Segment Mesh::findStem(Stem *stem) const
 {
-	Segment segment = {};
 	for (size_t i = 0; i < this->stemSegments.size(); i++) {
-		try {
-			segment = this->stemSegments[i].at(stem);
-			break;
-		} catch (std::out_of_range) {}
+		auto it = this->stemSegments[i].find(stem);
+		if (it != this->stemSegments[i].end())
+			return it->second;
 	}
-	return segment;
+	return Segment();
 }
 
 Segment Mesh::findLeaf(LeafID leaf) const
 {
-	Segment segment = {};
 	for (size_t i = 0; i < this->leafSegments.size(); i++) {
-		try {
-			segment = this->leafSegments[i].at(leaf);
-			break;
-		} catch (std::out_of_range) {}
+		auto it = this->leafSegments[i].find(leaf);
+		if (it != this->leafSegments[i].end())
+			return it->second;
 	}
-	return segment;
+	return Segment();
 }

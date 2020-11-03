@@ -25,6 +25,8 @@ using pg::Derivation;
 using pg::Stem;
 using std::string;
 
+const float pi = 3.14159265359f;
+
 GeneratorEditor::GeneratorEditor(Editor *editor, QWidget *parent) :
 	Form(parent), editor(editor), generate(nullptr)
 {
@@ -41,82 +43,28 @@ QSize GeneratorEditor::sizeHint() const
 
 void GeneratorEditor::createInterface()
 {
-	this->group = new QGroupBox(tr("Stem Generator"), this);
-	this->group->setSizePolicy(
-		QSizePolicy::Expanding, QSizePolicy::Minimum);
-
 	QBoxLayout *layout = new QBoxLayout(QBoxLayout::TopToBottom, this);
 	layout->setMargin(0);
 	layout->setSpacing(0);
-	layout->addWidget(this->group);
+	createNodeGroup(layout);
+	createStemGroup(layout);
+	createLeafGroup(layout);
+}
 
-	QFormLayout *form = new QFormLayout(this->group);
-	form->setSizeConstraint(QLayout::SetMinimumSize);
-	form->setSpacing(0);
-	form->setMargin(0);
-	form->setSpacing(UI_FORM_SPACING);
-	form->setMargin(UI_FORM_MARGIN);
+void GeneratorEditor::createNodeGroup(QBoxLayout *layout)
+{
+	this->nodeGroup = new QGroupBox("Nodes", this);
+	this->nodeGroup->setSizePolicy(
+		QSizePolicy::Expanding, QSizePolicy::Minimum);
+	QFormLayout *form = createForm(this->nodeGroup);
 
-	this->seedLabel = new QLabel(tr("Seed"));
-	this->seedValue = new QSpinBox(this);
+	this->seedValue = new QSpinBox();
 	this->seedValue->setRange(
 		std::numeric_limits<int>::min(),
 		std::numeric_limits<int>::max());
-	this->seedValue->setSingleStep(1);
-	form->addRow(this->seedLabel, this->seedValue);
-
+	form->addRow("Seed", this->seedValue);
 	this->nodeValue = new QComboBox(this);
-	form->addRow(tr("Node"), this->nodeValue);
-
-	this->stemDensityLabel = new QLabel(tr("Stem Density"));
-	this->stemDensityValue = new QDoubleSpinBox(this);
-	this->stemDensityValue->setSingleStep(0.1);
-	form->addRow(this->stemDensityLabel, this->stemDensityValue);
-
-	this->stemStartLabel = new QLabel(tr("Stem Start"));
-	this->stemStartValue = new QDoubleSpinBox(this);
-	this->stemStartValue->setSingleStep(0.1);
-	form->addRow(this->stemStartLabel, this->stemStartValue);
-
-	this->leafDensityLabel = new QLabel(tr("Leaf Density"));
-	this->leafDensityValue = new QDoubleSpinBox();
-	this->leafDensityValue->setSingleStep(0.1);
-	form->addRow(this->leafDensityLabel, this->leafDensityValue);
-
-	this->leafStartLabel = new QLabel(tr("Leaf Start"));
-	this->leafStartValue = new QDoubleSpinBox(this);
-	this->leafStartValue->setSingleStep(0.1);
-	form->addRow(this->leafStartLabel, this->leafStartValue);
-
-	this->leafScaleValue[0] = new QDoubleSpinBox(this);
-	this->leafScaleValue[1] = new QDoubleSpinBox(this);
-	this->leafScaleValue[2] = new QDoubleSpinBox(this);
-	this->leafScaleLabel[0] = new QLabel(tr("Leaf Scale.X"));
-	this->leafScaleLabel[1] = new QLabel(tr("Leaf Scale.Y"));
-	this->leafScaleLabel[2] = new QLabel(tr("Leaf Scale.Z"));
-	form->addRow(this->leafScaleLabel[0], this->leafScaleValue[0]);
-	form->addRow(this->leafScaleLabel[1], this->leafScaleValue[1]);
-	form->addRow(this->leafScaleLabel[2], this->leafScaleValue[2]);
-
-	this->arrangementLabel = new QLabel(tr("Arrangement"));
-	this->arrangementValue = new QComboBox(this);
-	this->arrangementValue->addItem(tr("Alternate"));
-	this->arrangementValue->addItem(tr("Opposite"));
-	this->arrangementValue->addItem(tr("Whorled"));
-	form->addRow(this->arrangementLabel, this->arrangementValue);
-
-	this->radiusThresholdLabel = new QLabel(tr("Radius Threshold"));
-	this->radiusThresholdValue = new QDoubleSpinBox(this);
-	this->radiusThresholdValue->setSingleStep(0.001);
-	this->radiusThresholdValue->setDecimals(3);
-	form->addRow(this->radiusThresholdLabel, this->radiusThresholdValue);
-
-	this->lengthFactorLabel = new QLabel(tr("Length Factor"));
-	this->lengthFactorValue = new QDoubleSpinBox(this);
-	this->lengthFactorValue->setSingleStep(1.0f);
-	this->lengthFactorValue->setRange(0, std::numeric_limits<float>::max());
-	form->addRow(this->lengthFactorLabel, this->lengthFactorValue);
-
+	form->addRow("Node", this->nodeValue);
 	this->childButton = new QPushButton(tr("Add Child Node"), this);
 	form->addRow("", this->childButton);
 	this->siblingButton = new QPushButton(tr("Add Sibling Node"), this);
@@ -125,6 +73,7 @@ void GeneratorEditor::createInterface()
 	form->addRow("", this->removeButton);
 
 	setValueWidths(form);
+	layout->addWidget(this->nodeGroup);
 
 	connect(this->nodeValue, SIGNAL(currentIndexChanged(int)),
 		this, SLOT(select()));
@@ -138,38 +87,105 @@ void GeneratorEditor::createInterface()
 		this, SLOT(change()));
 	connect(this->seedValue, SIGNAL(editingFinished()),
 		this, SLOT(finishChanging()));
-	connect(this->arrangementValue, SIGNAL(currentIndexChanged(int)),
-		this, SLOT(changeOnce()));
-	connect(this->stemDensityValue, SIGNAL(valueChanged(double)),
-		this, SLOT(change()));
-	connect(this->stemDensityValue, SIGNAL(editingFinished()),
-		this, SLOT(finishChanging()));
-	connect(this->stemStartValue, SIGNAL(valueChanged(double)),
-		this, SLOT(change()));
-	connect(this->stemStartValue, SIGNAL(editingFinished()),
-		this, SLOT(finishChanging()));
-	connect(this->leafDensityValue, SIGNAL(valueChanged(double)),
-		this, SLOT(change()));
-	connect(this->leafDensityValue, SIGNAL(editingFinished()),
-		this, SLOT(finishChanging()));
-	connect(this->leafStartValue, SIGNAL(valueChanged(double)),
-		this, SLOT(change()));
-	connect(this->leafStartValue, SIGNAL(editingFinished()),
-		this, SLOT(finishChanging()));
-	connect(this->radiusThresholdValue, SIGNAL(valueChanged(double)),
-		this, SLOT(change()));
-	connect(this->radiusThresholdValue, SIGNAL(editingFinished()),
-		this, SLOT(finishChanging()));
-	connect(this->lengthFactorValue, SIGNAL(valueChanged(double)),
-		this, SLOT(change()));
-	connect(this->lengthFactorValue, SIGNAL(editingFinished()),
-		this, SLOT(finishChanging()));
-	for (int i = 0; i < 3; i++) {
-		connect(this->leafScaleValue[i], SIGNAL(valueChanged(double)),
+}
+
+void GeneratorEditor::createStemGroup(QBoxLayout *layout)
+{
+	this->stemGroup = new QGroupBox("Stems", this);
+	this->stemGroup->setSizePolicy(
+		QSizePolicy::Expanding, QSizePolicy::Minimum);
+	QFormLayout *form = createForm(this->stemGroup);
+
+	for (int i = 0; i < dssize; i++) {
+		this->dsv[i] = new QDoubleSpinBox(this);
+		this->dsv[i]->setSingleStep(0.1);
+	}
+
+	this->dsl[StemDensity] = new QLabel("Stems/Unit");
+	this->dsl[StemStart] = new QLabel("Start");
+	this->dsl[RadiusThreshold] = new QLabel(tr("Radius Threshold"));
+	this->dsv[RadiusThreshold]->setSingleStep(0.001);
+	this->dsv[RadiusThreshold]->setDecimals(3);
+	this->dsl[LengthFactor] = new QLabel(tr("Length Factor"));
+	this->dsv[LengthFactor]->setSingleStep(1.0f);
+	this->dsv[LengthFactor]->setRange(0, std::numeric_limits<float>::max());
+
+	for (int i = 0; i < dssize; i++)
+		form->addRow(this->dsl[i], this->dsv[i]);
+
+	setValueWidths(form);
+	layout->addWidget(this->stemGroup);
+
+	for (int i = 0; i < dssize; i++) {
+		connect(this->dsv[i], SIGNAL(valueChanged(double)),
 			this, SLOT(change()));
-		connect(this->leafScaleValue[i], SIGNAL(editingFinished()),
+		connect(this->dsv[i], SIGNAL(editingFinished()),
 			this, SLOT(finishChanging()));
 	}
+}
+
+void GeneratorEditor::createLeafGroup(QBoxLayout *layout)
+{
+	this->leafGroup = new QGroupBox("Leaves", this);
+	this->leafGroup->setSizePolicy(
+		QSizePolicy::Expanding, QSizePolicy::Minimum);
+	QFormLayout *form = createForm(this->leafGroup);
+
+	for (int i = 0; i < dlsize; i++) {
+		this->dlv[i] = new QDoubleSpinBox(this);
+		this->dlv[i]->setSingleStep(0.1);
+	}
+	for (int i = 0; i < ilsize; i++) {
+		this->ilv[i] = new QSpinBox(this);
+		this->ilv[i]->setSingleStep(1);
+	}
+
+	this->dll[LeafDensity] = new QLabel("Nodes/Unit");
+	this->dll[LeafDistance] = new QLabel("Distance");
+	this->dll[LeafScaleX] = new QLabel("Scale.X");
+	this->dll[LeafScaleY] = new QLabel("Scale.Y");
+	this->dll[LeafScaleZ] = new QLabel("Scale.Z");
+	this->dll[LeafRotation] = new QLabel("Rotation");
+	this->dlv[LeafRotation]->setRange(
+		std::numeric_limits<float>::min(),
+		std::numeric_limits<float>::max());
+	this->dll[MinUp] = new QLabel("Min Up");
+	this->dll[MaxUp] = new QLabel("Max Up");
+	this->dll[MinDirection] = new QLabel("Min Direction");
+	this->dll[MaxDirection] = new QLabel("Max Direction");
+	this->ill[LeavesPerNode] = new QLabel("Leaves/Node");
+
+	for (int i = 0; i < dlsize; i++)
+		form->addRow(this->dll[i], this->dlv[i]);
+	for (int i = 0; i < ilsize; i++)
+		form->addRow(this->ill[i], this->ilv[i]);
+
+	setValueWidths(form);
+	layout->addWidget(this->leafGroup);
+
+	for (int i = 0; i < dlsize; i++) {
+		connect(this->dlv[i], SIGNAL(valueChanged(double)),
+			this, SLOT(change()));
+		connect(this->dlv[i], SIGNAL(editingFinished()),
+			this, SLOT(finishChanging()));
+	}
+	for (int i = 0; i < ilsize; i++) {
+		connect(this->ilv[i], SIGNAL(valueChanged(int)),
+			this, SLOT(change()));
+		connect(this->ilv[i], SIGNAL(editingFinished()),
+			this, SLOT(finishChanging()));
+	}
+}
+
+QFormLayout *GeneratorEditor::createForm(QGroupBox *group)
+{
+	QFormLayout *form = new QFormLayout(group);
+	form->setSizeConstraint(QLayout::SetMinimumSize);
+	form->setSpacing(0);
+	form->setMargin(0);
+	form->setSpacing(UI_FORM_SPACING);
+	form->setMargin(UI_FORM_MARGIN);
+	return form;
 }
 
 void GeneratorEditor::setFields()
@@ -186,14 +202,15 @@ void GeneratorEditor::setFields()
 void GeneratorEditor::setFields(const DerivationTree &dvnTree, string name)
 {
 	blockSignals(true);
+
+	Derivation dvn;
 	DerivationNode *dvnNode = dvnTree.get(name);
-	Derivation derivation;
 	this->nodeValue->clear();
 	if (dvnNode) {
 		std::vector<string> names = dvnTree.getNames();
 		for (string name : names)
 			this->nodeValue->addItem(QString::fromStdString(name));
-		derivation = dvnNode->getData();
+		dvn = dvnNode->getData();
 	} else
 		this->nodeValue->addItem("1");
 
@@ -201,52 +218,51 @@ void GeneratorEditor::setFields(const DerivationTree &dvnTree, string name)
 		this->nodeValue->setCurrentText(QString::fromStdString(name));
 
 	this->seedValue->setValue(dvnTree.getSeed());
-	this->stemDensityValue->setValue(derivation.stemDensity);
-	this->stemStartValue->setValue(derivation.stemStart);
-	this->leafDensityValue->setValue(derivation.leafDensity);
-	this->leafStartValue->setValue(derivation.leafStart);
-	this->leafScaleValue[0]->setValue(derivation.leafScale.x);
-	this->leafScaleValue[1]->setValue(derivation.leafScale.y);
-	this->leafScaleValue[2]->setValue(derivation.leafScale.z);
-	this->radiusThresholdValue->setValue(derivation.radiusThreshold);
-	this->lengthFactorValue->setValue(derivation.lengthFactor);
-	this->arrangementValue->setCurrentIndex(derivation.arrangement);
+	this->dsv[StemDensity]->setValue(dvn.stemDensity);
+	this->dsv[StemStart]->setValue(dvn.stemStart);
+	this->dsv[RadiusThreshold]->setValue(dvn.radiusThreshold);
+	this->dsv[LengthFactor]->setValue(dvn.lengthFactor);
+
+	this->dlv[LeafDensity]->setValue(dvn.leafDensity);
+	this->dlv[LeafDistance]->setValue(dvn.leafDistance);
+	this->dlv[LeafScaleX]->setValue(dvn.leafScale.x);
+	this->dlv[LeafScaleY]->setValue(dvn.leafScale.y);
+	this->dlv[LeafScaleZ]->setValue(dvn.leafScale.z);
+	this->dlv[LeafRotation]->setValue(dvn.leafRotation/pi*180.0f);
+	this->dlv[MinUp]->setValue(dvn.minUp);
+	this->dlv[MaxUp]->setValue(dvn.maxUp);
+	this->dlv[MinDirection]->setValue(dvn.minDirection);
+	this->dlv[MaxDirection]->setValue(dvn.maxDirection);
+	this->ilv[LeavesPerNode]->setValue(dvn.leavesPerNode);
+
 	blockSignals(false);
 }
 
 void GeneratorEditor::enable(bool enable)
 {
 	this->seedValue->setEnabled(enable);
-	this->stemDensityValue->setEnabled(enable);
-	this->stemStartValue->setEnabled(enable);
-	this->leafDensityValue->setEnabled(enable);
-	this->leafStartValue->setEnabled(enable);
-	this->radiusThresholdValue->setEnabled(enable);
-	this->lengthFactorValue->setEnabled(enable);
-	this->arrangementValue->setEnabled(enable);
-	this->leafScaleValue[0]->setEnabled(enable);
-	this->leafScaleValue[1]->setEnabled(enable);
-	this->leafScaleValue[2]->setEnabled(enable);
+	this->nodeValue->setEnabled(enable);
 	this->childButton->setEnabled(enable);
 	this->siblingButton->setEnabled(enable);
 	this->removeButton->setEnabled(enable);
-	this->nodeValue->setEnabled(enable);
+	for (int i = 0; i < dssize; i++)
+		this->dsv[i]->setEnabled(enable);
+	for (int i = 0; i < dlsize; i++)
+		this->dlv[i]->setEnabled(enable);
+	for (int i = 0; i < ilsize; i++)
+		this->ilv[i]->setEnabled(enable);
 }
 
 void GeneratorEditor::blockSignals(bool block)
 {
 	this->seedValue->blockSignals(block);
-	this->stemDensityValue->blockSignals(block);
-	this->stemStartValue->blockSignals(block);
-	this->leafDensityValue->blockSignals(block);
-	this->leafStartValue->blockSignals(block);
-	this->radiusThresholdValue->blockSignals(block);
-	this->lengthFactorValue->blockSignals(block);
-	this->arrangementValue->blockSignals(block);
-	this->leafScaleValue[0]->blockSignals(block);
-	this->leafScaleValue[1]->blockSignals(block);
-	this->leafScaleValue[2]->blockSignals(block);
 	this->nodeValue->blockSignals(block);
+	for (int i = 0; i < dssize; i++)
+		this->dsv[i]->blockSignals(block);
+	for (int i = 0; i < dlsize; i++)
+		this->dlv[i]->blockSignals(block);
+	for (int i = 0; i < ilsize; i++)
+		this->ilv[i]->blockSignals(block);
 }
 
 void GeneratorEditor::change()
@@ -259,7 +275,6 @@ void GeneratorEditor::change()
 	Stem *stem = instances.begin()->first;
 	DerivationTree dvnTree = stem->getDerivation();
 	dvnTree.setSeed(this->seedValue->value());
-
 	DerivationNode *dvnNode;
 	if (dvnTree.getRoot()) {
 		std::string name = this->nodeValue->currentText().toStdString();
@@ -268,19 +283,24 @@ void GeneratorEditor::change()
 		dvnNode = dvnTree.createRoot();
 	Derivation dvn = dvnNode->getData();
 
-	dvn.stemDensity = this->stemDensityValue->value();
-	dvn.leafDensity = this->leafDensityValue->value();
-	dvn.stemStart = this->stemStartValue->value();
-	dvn.leafStart = this->leafStartValue->value();
-	dvn.lengthFactor = this->lengthFactorValue->value();
-	dvn.radiusThreshold = this->radiusThresholdValue->value();
-	int arrangement = this->arrangementValue->currentIndex();
-	dvn.arrangement = static_cast<Derivation::Arrangement>(arrangement);
-	dvn.leafScale.x = this->leafScaleValue[0]->value();
-	dvn.leafScale.y = this->leafScaleValue[1]->value();
-	dvn.leafScale.z = this->leafScaleValue[2]->value();
-	dvnNode->setData(dvn);
+	dvn.stemDensity = this->dsv[StemDensity]->value();
+	dvn.stemStart = this->dsv[StemStart]->value();
+	dvn.lengthFactor = this->dsv[LengthFactor]->value();
+	dvn.radiusThreshold = this->dsv[RadiusThreshold]->value();
 
+	dvn.leafDensity = this->dlv[LeafDensity]->value();
+	dvn.leafDistance = this->dlv[LeafDistance]->value();
+	dvn.leafScale.x = this->dlv[LeafScaleX]->value();
+	dvn.leafScale.y = this->dlv[LeafScaleY]->value();
+	dvn.leafScale.z = this->dlv[LeafScaleZ]->value();
+	dvn.leafRotation = this->dlv[LeafRotation]->value()/180.0f*pi;
+	dvn.minUp = this->dlv[MinUp]->value();
+	dvn.maxUp = this->dlv[MaxUp]->value();
+	dvn.minDirection = this->dlv[MinDirection]->value();
+	dvn.maxDirection = this->dlv[MaxDirection]->value();
+	dvn.leavesPerNode = this->ilv[LeavesPerNode]->value();
+
+	dvnNode->setData(dvn);
 	for (auto instance : instances)
 		instance.first->setDerivation(dvnTree);
 

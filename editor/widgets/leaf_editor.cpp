@@ -86,7 +86,7 @@ void LeafEditor::createInterface()
 	this->meshValue = new QComboBox;
 	form->addRow(this->meshLabel, this->meshValue);
 
-	this->customLabel = new QLabel(tr("Custom"));
+	this->customLabel = new QLabel(tr("Manual"));
 	this->customValue = new QCheckBox;
 	form->addRow(this->customLabel, this->customValue);
 

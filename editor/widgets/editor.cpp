@@ -44,6 +44,8 @@ using pg::Mat4;
 using pg::Vec3;
 using pg::Stem;
 
+const float pi = 3.14159265359f;
+
 Editor::Editor(SharedResources *shared, KeyMap *keymap, QWidget *parent) :
 	QOpenGLWidget(parent),
 	generator(&scene.plant),
@@ -849,18 +851,23 @@ void Editor::endAnimation()
 void Editor::createDefaultPlant()
 {
 	pg::DerivationTree dvnTree = this->generator.getDerivation();
-	pg::DerivationNode *dvnRoot = dvnTree.createRoot();
-	pg::Derivation derivation;
 	std::random_device rd;
 	dvnTree.setSeed(rd());
+	pg::DerivationNode *dvn1 = dvnTree.createRoot();
+	pg::Derivation derivation;
 	derivation.stemDensity = 1.0f;
 	derivation.stemDensityCurve.setDefault(1);
 	derivation.stemStart = 2.0f;
-	derivation.leafDensity = 0.5f;
+	derivation.leafScale = Vec3(0.2f, 0.1f, 0.3f);
+	derivation.leafDensity = 4.0f;
 	derivation.leafDensityCurve.setDefault(1);
-	derivation.leafStart = 1.0f;
+	derivation.leafDistance = 3.0f;
 	derivation.lengthFactor = 50.0f;
-	dvnRoot->setData(derivation);
+	derivation.radiusThreshold = 0.02f;
+	derivation.leafRotation = pi;
+	dvn1->setData(derivation);
+	pg::DerivationNode *dvn2 = dvnTree.addChild(std::string("1"));
+	dvn2->setData(derivation);
 	this->generator.setDerivation(dvnTree);
 	this->generator.grow();
 	this->scene.wind.setSpeed(0.5f);

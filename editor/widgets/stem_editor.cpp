@@ -118,7 +118,7 @@ void StemEditor::createInterface()
 	this->collarYValue->setDecimals(3);
 	form->addRow(this->collarYLabel, this->collarYValue);
 
-	this->customLabel = new QLabel(tr("Custom"));
+	this->customLabel = new QLabel(tr("Manual"));
 	this->customValue = new QCheckBox;
 	form->addRow(this->customLabel, this->customValue);
 

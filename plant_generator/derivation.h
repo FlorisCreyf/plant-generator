@@ -26,22 +26,21 @@
 
 namespace pg {
 	struct Derivation {
-		enum Arrangement {
-			Alternate,
-			Opposite,
-			Whorled
-		};
-
-		float stemDensity = 0.0f;
-		float leafDensity = 0.0f;
 		Spline stemDensityCurve;
 		Spline leafDensityCurve;
 		Vec3 leafScale = Vec3(1.0f, 1.0f, 1.0f);
+		float stemDensity = 0.0f;
+		float leafDensity = 0.0f;
 		float stemStart = 0.0f;
-		float leafStart = 0.0f;
+		float leafDistance = 2.0f;
 		float lengthFactor = 1.0f;
 		float radiusThreshold = 0.0f;
-		Arrangement arrangement = Arrangement::Alternate;
+		float leafRotation = 0.0f;
+		float minUp = 0.0f;
+		float maxUp = 1.0f;
+		float minDirection = 0.0f;
+		float maxDirection = 1.0f;
+		int leavesPerNode = 1;
 
 		#ifdef PG_SERIALIZE
 		template<class Archive>
@@ -52,12 +51,22 @@ namespace pg {
 			ar & stemDensityCurve;
 			ar & leafDensityCurve;
 			ar & stemStart;
-			ar & leafStart;
+			ar & leafDistance;
 			ar & radiusThreshold;
 			ar & lengthFactor;
-			ar & arrangement;
-			if (version == 1) {
+			if (version < 2) {
+				int arrangement;
+				ar & arrangement;
+			}
+			if (version >= 1)
 				ar & leafScale;
+			if (version == 2) {
+				ar & leafRotation;
+				ar & leavesPerNode;
+				ar & minUp;
+				ar & maxUp;
+				ar & minDirection;
+				ar & maxDirection;
 			}
 		}
 		#endif /* PG_SERIALIZE */
@@ -138,7 +147,7 @@ namespace pg {
 }
 
 #ifdef PG_SERIALIZE
-BOOST_CLASS_VERSION(pg::Derivation, 1);
+BOOST_CLASS_VERSION(pg::Derivation, 2);
 #endif
 
 #endif /* PG_DERIVATION_H */

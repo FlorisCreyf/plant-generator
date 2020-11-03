@@ -15,7 +15,7 @@
 
 #include "wind.h"
 
-#define PI 3.14159265359f
+const float pi = 3.14159265359f;
 
 using namespace pg;
 using std::vector;
@@ -92,19 +92,19 @@ void Wind::setRotation(int joint, float distance, float radius, Vec3 direction,
 	float resistance = radius*radius;
 	float intensity = 0.1f * (distance*this->speed) / resistance;
 	Vec3 orthogonalDirection = cross(this->direction, direction);
-	std::uniform_real_distribution<float> dis(0.0f, PI);
+	std::uniform_real_distribution<float> dis(0.0f, pi);
 	float offset = dis(this->randomGenerator);
 
 	for (int i = 0; i < this->frameCount; i++) {
 		KeyFrame &frame = animation.frames[joint][i];
 
-		float x = i * 2.0f*PI/(this->frameCount-1) + offset;
-		float wave = sin(x) * cos(2.0f*x+PI*0.25f);
+		float x = i * 2.0f*pi/(this->frameCount-1) + offset;
+		float wave = sin(x) * cos(2.0f*x+pi*0.25f);
 		float t = intensity * wave;
 		Vec3 movement = lerp(direction, this->direction, t);
 		frame.rotation = rotateIntoVecQ(direction, movement);
 
-		wave = sin(x+PI*0.5f) * cos(2.0f*x+PI*0.25f);
+		wave = sin(x+pi*0.5f) * cos(2.0f*x+pi*0.25f);
 		t = intensity * wave;
 		movement = lerp(direction, orthogonalDirection, t);
 		frame.rotation *= rotateIntoVecQ(direction, movement);
