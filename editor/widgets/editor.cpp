@@ -215,7 +215,7 @@ void Editor::keyPressEvent(QKeyEvent *event)
 		event->modifiers() & Qt::AltModifier);
 
 	if (commandName == tr("Add Leaf")) {
-		bool stemCount = this->selection.getStemInstances().size();
+		size_t stemCount = this->selection.getStemInstances().size();
 		if (stemCount == 1) {
 			this->command = new AddLeaf(
 				&this->selection, &this->camera, x, y);
@@ -224,7 +224,7 @@ void Editor::keyPressEvent(QKeyEvent *event)
 			emit selectionChanged();
 		}
 	} else if (commandName == tr("Add Stem")) {
-		bool stemCount = this->selection.getStemInstances().size();
+		size_t stemCount = this->selection.getStemInstances().size();
 		Stem *root = this->scene.plant.getRoot();
 		if (stemCount == 1 || !root) {
 			this->command = new AddStem(
