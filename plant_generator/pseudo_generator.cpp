@@ -25,51 +25,64 @@ const float pi = 3.14159265359f;
 PseudoGenerator::PseudoGenerator(Plant *plant)
 {
 	this->plant = plant;
-	this->randomGenerator.seed(this->dvn.getSeed());
 }
 
-DerivationTree PseudoGenerator::getDerivation() const
+ParameterTree PseudoGenerator::getParameterTree() const
 {
-	return this->dvn;
+	return this->parameterTree;
 }
 
-void PseudoGenerator::setDerivation(DerivationTree dvn)
+void PseudoGenerator::setParameterTree(ParameterTree parameterTree)
 {
-	this->dvn = dvn;
+	this->parameterTree = parameterTree;
 }
 
 void PseudoGenerator::reset()
 {
-	this->randomGenerator.seed(this->dvn.getSeed());
+	ParameterRoot *root = this->parameterTree.getRoot();
+	if (root)
+		this->randomGenerator.seed(root->getSeed());
 }
 
 void PseudoGenerator::grow()
 {
-	Stem *root = this->plant->createRoot();
-	root->setDerivation(this->dvn);
-	root->setDistance(0.0f);
-	root->setMaxRadius(0.2f);
-	root->setMinRadius(0.01f);
-	root->setSwelling(Vec2(1.3f, 1.3f));
+	Stem *stem = this->plant->createRoot();
+	stem->setParameterTree(this->parameterTree);
+	stem->setDistance(0.0f);
+	stem->setMaxRadius(0.2f);
+	stem->setMinRadius(0.01f);
+	stem->setSwelling(Vec2(1.3f, 1.3f));
 
-	const DerivationNode *node = this->dvn.getRoot();
+	const ParameterRoot *root = this->parameterTree.getRoot();
+	if (!root)
+		return;
+	const ParameterNode *node = root->getNode();
 	if (!node)
-		node = this->dvn.createRoot();
+		return;
 
-	setPath(root, Vec3(0.0f, 1.0f, 0.0f), node->getData());
+	setPath(stem, Vec3(0.0f, 1.0f, 0.0f), node->getData());
+	addLeaves(stem, root->getData());
+
 	reset();
 	while (node) {
-		addLateralStems(root, node);
+		addLateralStems(stem, node);
 		node = node->getSibling();
 	}
 }
 
 void PseudoGenerator::grow(Stem *stem)
 {
-	this->dvn = stem->getDerivation();
-	const DerivationNode *node = this->dvn.getRoot();
+	this->parameterTree = stem->getParameterTree();
+
+	const ParameterRoot *root = this->parameterTree.getRoot();
+	if (!root)
+		return;
+
+	addLeaves(stem, root->getData());
+
+	const ParameterNode *node = root->getNode();
 	if (!node)
-		node = this->dvn.createRoot();
+		return;
 
 	reset();
 	while (node) {
@@ -92,19 +105,19 @@ Vec3 PseudoGenerator::getStemDirection(Stem *stem)
 	return tran.apply(Vec3(0.0f, 1.0f, 0.0f), 1.0f);
 }
 
-void PseudoGenerator::addLateralStems(Stem *parent, const DerivationNode *node)
+void PseudoGenerator::addLateralStems(Stem *parent, const ParameterNode *node)
 {
-	Derivation dvn = node->getData();
-	if (dvn.stemDensity == 0.0f)
+	StemData stemData = node->getData();
+	if (stemData.density == 0.0f)
 		return;
 
 	float length = parent->getPath().getLength();
-	float distance = 1.0f / dvn.stemDensity;
-	float position = dvn.stemStart;
+	float distance = 1.0f / stemData.density;
+	float position = stemData.start;
 
 	while (position < length) {
 		float t = position / length;
-		float percentage = dvn.stemDensityCurve.getPoint(t).z;
+		float percentage = stemData.densityCurve.getPoint(t).z;
 		if (percentage == 0.0f)
 			break;
 		addLateralStem(parent, position, node);
@@ -113,7 +126,7 @@ void PseudoGenerator::addLateralStems(Stem *parent, const DerivationNode *node)
 }
 
 void PseudoGenerator::addLateralStem(
-	Stem *parent, float position, const DerivationNode *node)
+	Stem *parent, float position, const ParameterNode *node)
 {
 	Vec2 swelling(1.2f, 3.0f);
 	float radius = getRadius(parent, 1.5f, position);
@@ -127,7 +140,7 @@ void PseudoGenerator::addLateralStem(
 	stem->setDistance(position);
 	stem->setSectionDivisions(5);
 	setPath(stem, getStemDirection(stem), node->getData());
-	addLeaves(stem, node->getData());
+	addLeaves(stem, node->getData().leaf);
 
 	if (node->getChild())
 		addLateralStems(stem, node->getChild());
@@ -149,10 +162,10 @@ float PseudoGenerator::getMinRadius(float radius)
 	return minRadius;
 }
 
-void PseudoGenerator::setPath(Stem *stem, Vec3 direction, const Derivation &dvn)
+void PseudoGenerator::setPath(Stem *stem, Vec3 direction, StemData stemData)
 {
 	float radius = stem->getMaxRadius();
-	float length = radius * dvn.lengthFactor;
+	float length = radius * stemData.lengthFactor;
 	int points = static_cast<int>(length / 2.0f) + 1;
 	float increment = length / points;
 
@@ -181,15 +194,15 @@ void PseudoGenerator::setPath(Stem *stem, Vec3 direction, const Derivation &dvn)
 	stem->setPath(path);
 }
 
-void PseudoGenerator::addLeaves(Stem *stem, const Derivation &dvn)
+void PseudoGenerator::addLeaves(Stem *stem, LeafData data)
 {
-	if (dvn.leafDensity <= 0.0f || dvn.leavesPerNode < 1)
+	if (data.density <= 0.0f || data.leavesPerNode < 1)
 		return;
 
 	Path path = stem->getPath();
 	float length = path.getLength();
-	float start = length - dvn.leafDistance;
-	float distance = 1.0f / dvn.leafDensity;
+	float start = length - data.distance;
+	float distance = 1.0f / data.density;
 	float position = length;
 	Quat rotation(0.0f, 0.0f, 0.0f, 1.0f);
 
@@ -204,45 +217,42 @@ void PseudoGenerator::addLeaves(Stem *stem, const Derivation &dvn)
 		rotation = Quat(0.0f, 0.0f, 0.0f, 1.0f);
 		Vec3 stemDirection = path.getIntermediateDirection(position);
 		float ratio = (length - position) / (length - start);
-		Vec3 vec;
+		Vec3 normal;
 		Vec3 normal1;
 		Vec3 normal2;
 		float mix;
 
 		/* Rotate the leaf into the stem side. */
-		vec = pg::normalize(pg::cross(yaxis, stemDirection));
-		rotation = pg::rotateIntoVecQ(zaxis, vec);
-		Quat angle = fromAxisAngle(stemDirection, dvn.leafRotation*i);
+		normal = pg::normalize(pg::cross(yaxis, stemDirection));
+		rotation = pg::rotateIntoVecQ(zaxis, normal);
+		Quat angle = fromAxisAngle(stemDirection, data.rotation*i);
 		rotation = angle * rotation;
 
 		/* Rotate the leaf normal into the stem direction. */
-		Vec3 normal = rotate(rotation, yaxis);
+		normal = rotate(rotation, yaxis);
 		rotation = rotateIntoVecQ(normal, stemDirection) * rotation;
 
-
 		/* Rotate the leaf normal into the up vector. */
-		mix = dvn.minUp + (dvn.maxUp - dvn.minUp) * ratio;
+		mix = data.minUp + (data.maxUp - data.minUp) * ratio;
 		normal1 = rotate(rotation, yaxis);
 		normal2 = normalize(lerp(yaxis, stemDirection, mix));
 		rotation = rotateIntoVecQ(normal1, normal2) * rotation;
 
 		/* Rotate the leaf direction into the stem. */
-		mix = dvn.minDirection;
-		mix += (dvn.maxDirection - dvn.minDirection) * ratio;
+		mix = data.minDirection;
+		mix += (data.maxDirection - data.minDirection) * ratio;
 		normal1 = rotate(rotation, zaxis);
 		normal2 = normalize(lerp(stemDirection, normal1, mix));
 		rotation = rotateIntoVecQ(normal1, normal2) * rotation;
 
-
-
 		float t = position / length;
-		float percentage = dvn.leafDensityCurve.getPoint(t).z;
+		float percentage = data.densityCurve.getPoint(t).z;
 		if (percentage == 0.0f)
 			break;
 
-		addLeaf(stem, dvn, position, pg::normalize(rotation));
+		addLeaf(stem, data, position, pg::normalize(rotation));
 
-		if (j == dvn.leavesPerNode) {
+		if (j == data.leavesPerNode) {
 			position -= distance * (1.0f/percentage);
 			j = 0;
 		}
@@ -250,11 +260,11 @@ void PseudoGenerator::addLeaves(Stem *stem, const Derivation &dvn)
 }
 
 void PseudoGenerator::addLeaf(
-	Stem *stem, const Derivation &dvn, float position, Quat rotation)
+	Stem *stem, LeafData data, float position, Quat rotation)
 {
 	Leaf leaf;
 	leaf.setPosition(position);
-	leaf.setScale(dvn.leafScale);
+	leaf.setScale(data.scale);
 	leaf.setRotation(rotation);
 	stem->addLeaf(leaf);
 }

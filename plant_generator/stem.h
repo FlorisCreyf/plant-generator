@@ -16,7 +16,7 @@
 #ifndef PG_STEM_H
 #define PG_STEM_H
 
-#include "derivation.h"
+#include "parameter_tree.h"
 #include "leaf.h"
 #include "math/curve.h"
 #include "path.h"
@@ -60,7 +60,7 @@ namespace pg {
 		Path path;
 
 		bool custom;
-		DerivationTree derivation;
+		ParameterTree parameterTree;
 
 		void updatePositions(Stem *stem);
 		void copy(const Stem &stem);
@@ -89,7 +89,7 @@ namespace pg {
 			ar & minRadius;
 			ar & joints;
 			ar & custom;
-			ar & derivation;
+			ar & parameterTree;
 		}
 		#endif /* PG_SERIALIZE */
 
@@ -106,8 +106,8 @@ namespace pg {
 
 		void setCustom(bool custom);
 		bool isCustom() const;
-		void setDerivation(DerivationTree derivation);
-		DerivationTree getDerivation() const;
+		void setParameterTree(ParameterTree parameterTree);
+		ParameterTree getParameterTree() const;
 
 		size_t addLeaf(const Leaf &leaf);
 		void insertLeaf(const Leaf &leaf, size_t index);

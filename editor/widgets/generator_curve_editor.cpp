@@ -60,16 +60,14 @@ void GeneratorCurveEditor::setFields()
 	}
 
 	pg::Stem *stem = instances.begin()->first;
-	pg::DerivationTree dvnTree = stem->getDerivation();
-	std::vector<std::string> names = dvnTree.getNames();
+	pg::ParameterTree tree = stem->getParameterTree();
+	std::vector<std::string> names = tree.getNames();
 	this->nodeSelectionBox->clear();
-	if (names.empty())
-		this->nodeSelectionBox->addItem("1");
-	else
-		for (std::string name : names) {
-			QString item = QString::fromStdString(name);
-			this->nodeSelectionBox->addItem(item);
-		}
+	this->nodeSelectionBox->addItem("");
+	for (std::string name : names) {
+		QString item = QString::fromStdString(name);
+		this->nodeSelectionBox->addItem(item);
+	}
 
 	select();
 }
@@ -83,14 +81,20 @@ void GeneratorCurveEditor::select()
 
 	int index = this->selectionBox->currentIndex();
 	pg::Stem *stem = instances.begin()->first;
-	pg::DerivationTree dvnTree = stem->getDerivation();
-	std::string name = this->nodeSelectionBox->currentText().toStdString();
-	pg::DerivationNode *root = dvnTree.get(name);
-	if (root) {
+	pg::ParameterTree tree = stem->getParameterTree();
+
+	if (this->nodeSelectionBox->currentIndex() > 0) {
+		std::string name;
+		name = this->nodeSelectionBox->currentText().toStdString();
+		pg::ParameterNode *node = tree.get(name);
 		if (index == 0)
-			setSpline(root->getData().stemDensityCurve);
+			setSpline(node->getData().densityCurve);
 		else
-			setSpline(root->getData().leafDensityCurve);
+			setSpline(node->getData().leaf.densityCurve);
+	} else if (index == 0) {
+		this->viewer->clear();
+	} else if (tree.getRoot()) {
+		setSpline(tree.getRoot()->getData().densityCurve);
 	} else {
 		Spline spline;
 		spline.setDefault(1);
@@ -100,7 +104,6 @@ void GeneratorCurveEditor::select()
 	this->degree->blockSignals(true);
 	this->degree->setCurrentIndex(this->spline.getDegree() == 3 ? 1 : 0);
 	this->degree->blockSignals(false);
-
 	enable(true);
 }
 
@@ -124,31 +127,42 @@ void GeneratorCurveEditor::change(bool curveChanged)
 	if (curveChanged && !instances.empty()) {
 		if (!this->generate)
 			this->generate = new Generate(selection);
-		updateDerivation();
+		updateParameterTree();
 		this->generate->execute();
 		this->editor->change();
 	}
 	this->viewer->change(this->spline, this->selection);
 }
 
-void GeneratorCurveEditor::updateDerivation()
+void GeneratorCurveEditor::updateParameterTree()
 {
 	std::string name = this->nodeSelectionBox->currentText().toStdString();
 	auto instances = this->editor->getSelection()->getStemInstances();
 	for (auto instance : instances) {
 		int index = this->selectionBox->currentIndex();
 		pg::Stem *stem = instance.first;
-		pg::DerivationTree dvnTree = stem->getDerivation();
-		pg::DerivationNode *dvnNode = dvnTree.get(name);
-		if (!dvnNode)
-			dvnNode = dvnTree.createRoot();
-		pg::Derivation dvn = dvnNode->getData();
-		if (index == 0)
-			dvn.stemDensityCurve = this->spline;
-		else
-			dvn.leafDensityCurve = this->spline;
-		dvnNode->setData(dvn);
-		stem->setDerivation(dvnTree);
+		pg::ParameterTree tree = stem->getParameterTree();
+
+		if (!tree.getRoot())
+			continue;
+
+		if (this->nodeSelectionBox->currentIndex() == 0) {
+			pg::LeafData data = tree.getRoot()->getData();
+			data.densityCurve = this->spline;
+			tree.getRoot()->setData(data);
+			stem->setParameterTree(tree);
+		} else {
+			pg::ParameterNode *node = tree.get(name);
+			if (!node)
+				continue;
+			pg::StemData data = node->getData();
+			if (index == 0)
+				data.densityCurve = this->spline;
+			else
+				data.leaf.densityCurve = this->spline;
+			node->setData(data);
+			stem->setParameterTree(tree);
+		}
 	}
 }
 

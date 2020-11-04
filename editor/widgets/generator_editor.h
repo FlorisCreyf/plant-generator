@@ -79,7 +79,11 @@ class GeneratorEditor : public Form {
 	void blockSignals(bool);
 	void enable(bool);
 	void beginChanging();
-	void setFields(const pg::DerivationTree &, std::string);
+	void setFields(const pg::ParameterTree &, std::string);
+	void setStemData(pg::StemData);
+	void setLeafData(pg::LeafData);
+	pg::StemData getStemData(pg::StemData);
+	pg::LeafData getLeafData(pg::LeafData);
 
 public:
 	GeneratorEditor(Editor *editor, QWidget *parent);
@@ -96,7 +100,7 @@ public slots:
 	void removeNode();
 
 signals:
-	void derivationModified();
+	void parameterTreeModified();
 };
 
 #endif

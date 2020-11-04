@@ -35,7 +35,7 @@ class GeneratorCurveEditor : public CurveEditor {
 	void enable(bool enable);
 	bool eventFilter(QObject *object, QEvent *event);
 	bool isDescendant(QWidget *);
-	void updateDerivation();
+	void updateParameterTree();
 
 private slots:
 	void setFields();

@@ -19,9 +19,11 @@
 #include "definitions.h"
 #include <limits>
 
-using pg::DerivationTree;
-using pg::DerivationNode;
-using pg::Derivation;
+using pg::ParameterTree;
+using pg::ParameterNode;
+using pg::ParameterRoot;
+using pg::LeafData;
+using pg::StemData;
 using pg::Stem;
 using std::string;
 
@@ -66,11 +68,11 @@ void GeneratorEditor::createNodeGroup(QBoxLayout *layout)
 	this->nodeValue = new QComboBox(this);
 	form->addRow("Node", this->nodeValue);
 	this->childButton = new QPushButton(tr("Add Child Node"), this);
-	form->addRow("", this->childButton);
+	form->addRow("Action", this->childButton);
 	this->siblingButton = new QPushButton(tr("Add Sibling Node"), this);
-	form->addRow("", this->siblingButton);
+	form->addRow("Action", this->siblingButton);
 	this->removeButton = new QPushButton(tr("Remove Node"), this);
-	form->addRow("", this->removeButton);
+	form->addRow("Action", this->removeButton);
 
 	setValueWidths(form);
 	layout->addWidget(this->nodeGroup);
@@ -192,50 +194,68 @@ void GeneratorEditor::setFields()
 {
 	enable(false);
 	auto instances = this->editor->getSelection()->getStemInstances();
-	if (instances.empty())
-		return;
-	DerivationTree dvnTree = instances.begin()->first->getDerivation();
-	setFields(dvnTree, "");
-	enable(true);
+	if (!instances.empty()) {
+		ParameterTree tree;
+		tree = instances.begin()->first->getParameterTree();
+		setFields(tree, "");
+	}
 }
 
-void GeneratorEditor::setFields(const DerivationTree &dvnTree, string name)
+void GeneratorEditor::setFields(const ParameterTree &tree, string name)
 {
 	blockSignals(true);
 
-	Derivation dvn;
-	DerivationNode *dvnNode = dvnTree.get(name);
+	StemData data;
+	ParameterNode *node = name == "" ? nullptr : tree.get(name);
+
 	this->nodeValue->clear();
-	if (dvnNode) {
-		std::vector<string> names = dvnTree.getNames();
+	this->nodeValue->addItem("");
+	if (tree.getRoot()) {
+		std::vector<string> names = tree.getNames();
 		for (string name : names)
 			this->nodeValue->addItem(QString::fromStdString(name));
-		dvn = dvnNode->getData();
+
+		this->seedValue->setValue(tree.getRoot()->getSeed());
 	} else
-		this->nodeValue->addItem("1");
+		this->seedValue->setValue(0);
 
-	if (!name.empty())
+	if (!node && !tree.getRoot()) {
+		this->nodeValue->setCurrentText("");
+		setLeafData(data.leaf);
+	} else if (!node && tree.getRoot()) {
+		this->nodeValue->setCurrentText("");
+		setLeafData(tree.getRoot()->getData());
+	} else {
 		this->nodeValue->setCurrentText(QString::fromStdString(name));
+		setStemData(node->getData());
+	}
 
-	this->seedValue->setValue(dvnTree.getSeed());
-	this->dsv[StemDensity]->setValue(dvn.stemDensity);
-	this->dsv[StemStart]->setValue(dvn.stemStart);
-	this->dsv[RadiusThreshold]->setValue(dvn.radiusThreshold);
-	this->dsv[LengthFactor]->setValue(dvn.lengthFactor);
-
-	this->dlv[LeafDensity]->setValue(dvn.leafDensity);
-	this->dlv[LeafDistance]->setValue(dvn.leafDistance);
-	this->dlv[LeafScaleX]->setValue(dvn.leafScale.x);
-	this->dlv[LeafScaleY]->setValue(dvn.leafScale.y);
-	this->dlv[LeafScaleZ]->setValue(dvn.leafScale.z);
-	this->dlv[LeafRotation]->setValue(dvn.leafRotation/pi*180.0f);
-	this->dlv[MinUp]->setValue(dvn.minUp);
-	this->dlv[MaxUp]->setValue(dvn.maxUp);
-	this->dlv[MinDirection]->setValue(dvn.minDirection);
-	this->dlv[MaxDirection]->setValue(dvn.maxDirection);
-	this->ilv[LeavesPerNode]->setValue(dvn.leavesPerNode);
-
+	enable(true);
 	blockSignals(false);
+}
+
+void GeneratorEditor::setStemData(pg::StemData data)
+{
+	this->dsv[StemDensity]->setValue(data.density);
+	this->dsv[StemStart]->setValue(data.start);
+	this->dsv[RadiusThreshold]->setValue(data.radiusThreshold);
+	this->dsv[LengthFactor]->setValue(data.lengthFactor);
+	setLeafData(data.leaf);
+}
+
+void GeneratorEditor::setLeafData(pg::LeafData data)
+{
+	this->dlv[LeafDensity]->setValue(data.density);
+	this->dlv[LeafDistance]->setValue(data.distance);
+	this->dlv[LeafScaleX]->setValue(data.scale.x);
+	this->dlv[LeafScaleY]->setValue(data.scale.y);
+	this->dlv[LeafScaleZ]->setValue(data.scale.z);
+	this->dlv[LeafRotation]->setValue(data.rotation/pi*180.0f);
+	this->dlv[MinUp]->setValue(data.minUp);
+	this->dlv[MaxUp]->setValue(data.maxUp);
+	this->dlv[MinDirection]->setValue(data.minDirection);
+	this->dlv[MaxDirection]->setValue(data.maxDirection);
+	this->ilv[LeavesPerNode]->setValue(data.leavesPerNode);
 }
 
 void GeneratorEditor::enable(bool enable)
@@ -245,8 +265,11 @@ void GeneratorEditor::enable(bool enable)
 	this->childButton->setEnabled(enable);
 	this->siblingButton->setEnabled(enable);
 	this->removeButton->setEnabled(enable);
+	bool stemEnable = enable;
+	if (this->nodeValue->currentIndex() <= 0)
+		stemEnable = false;
 	for (int i = 0; i < dssize; i++)
-		this->dsv[i]->setEnabled(enable);
+		this->dsv[i]->setEnabled(stemEnable);
 	for (int i = 0; i < dlsize; i++)
 		this->dlv[i]->setEnabled(enable);
 	for (int i = 0; i < ilsize; i++)
@@ -273,39 +296,54 @@ void GeneratorEditor::change()
 
 	beginChanging();
 	Stem *stem = instances.begin()->first;
-	DerivationTree dvnTree = stem->getDerivation();
-	dvnTree.setSeed(this->seedValue->value());
-	DerivationNode *dvnNode;
-	if (dvnTree.getRoot()) {
+	ParameterTree tree = stem->getParameterTree();
+
+	if (this->nodeValue->currentIndex() > 0) {
 		std::string name = this->nodeValue->currentText().toStdString();
-		dvnNode = dvnTree.get(name);
-	} else
-		dvnNode = dvnTree.createRoot();
-	Derivation dvn = dvnNode->getData();
+		ParameterNode *node = tree.get(name);
+		StemData data = getStemData(node->getData());
+		node->setData(data);
+	} else {
+		ParameterRoot *root = tree.getRoot();
+		if (!root)
+			root = tree.createRoot();
+		LeafData data = getLeafData(tree.getRoot()->getData());
+		root->setData(data);
+	}
 
-	dvn.stemDensity = this->dsv[StemDensity]->value();
-	dvn.stemStart = this->dsv[StemStart]->value();
-	dvn.lengthFactor = this->dsv[LengthFactor]->value();
-	dvn.radiusThreshold = this->dsv[RadiusThreshold]->value();
+	tree.getRoot()->setSeed(this->seedValue->value());
 
-	dvn.leafDensity = this->dlv[LeafDensity]->value();
-	dvn.leafDistance = this->dlv[LeafDistance]->value();
-	dvn.leafScale.x = this->dlv[LeafScaleX]->value();
-	dvn.leafScale.y = this->dlv[LeafScaleY]->value();
-	dvn.leafScale.z = this->dlv[LeafScaleZ]->value();
-	dvn.leafRotation = this->dlv[LeafRotation]->value()/180.0f*pi;
-	dvn.minUp = this->dlv[MinUp]->value();
-	dvn.maxUp = this->dlv[MaxUp]->value();
-	dvn.minDirection = this->dlv[MinDirection]->value();
-	dvn.maxDirection = this->dlv[MaxDirection]->value();
-	dvn.leavesPerNode = this->ilv[LeavesPerNode]->value();
-
-	dvnNode->setData(dvn);
 	for (auto instance : instances)
-		instance.first->setDerivation(dvnTree);
+		instance.first->setParameterTree(tree);
 
 	this->generate->execute();
 	this->editor->change();
+}
+
+pg::StemData GeneratorEditor::getStemData(StemData data)
+{
+	data.density = this->dsv[StemDensity]->value();
+	data.start = this->dsv[StemStart]->value();
+	data.lengthFactor = this->dsv[LengthFactor]->value();
+	data.radiusThreshold = this->dsv[RadiusThreshold]->value();
+	data.leaf = getLeafData(data.leaf);
+	return data;
+}
+
+pg::LeafData GeneratorEditor::getLeafData(LeafData data)
+{
+	data.density = this->dlv[LeafDensity]->value();
+	data.distance = this->dlv[LeafDistance]->value();
+	data.scale.x = this->dlv[LeafScaleX]->value();
+	data.scale.y = this->dlv[LeafScaleY]->value();
+	data.scale.z = this->dlv[LeafScaleZ]->value();
+	data.rotation = this->dlv[LeafRotation]->value()/180.0f*pi;
+	data.minUp = this->dlv[MinUp]->value();
+	data.maxUp = this->dlv[MaxUp]->value();
+	data.minDirection = this->dlv[MinDirection]->value();
+	data.maxDirection = this->dlv[MaxDirection]->value();
+	data.leavesPerNode = this->ilv[LeavesPerNode]->value();
+	return data;
 }
 
 void GeneratorEditor::changeOnce()
@@ -336,8 +374,8 @@ void GeneratorEditor::select()
 		return;
 
 	Stem *stem = instances.begin()->first;
-	DerivationTree dvnTree = stem->getDerivation();
-	setFields(dvnTree, this->nodeValue->currentText().toStdString());
+	ParameterTree tree = stem->getParameterTree();
+	setFields(tree, this->nodeValue->currentText().toStdString());
 }
 
 void GeneratorEditor::addChildNode()
@@ -348,28 +386,35 @@ void GeneratorEditor::addChildNode()
 
 	beginChanging();
 	Stem *stem = instances.begin()->first;
-	DerivationTree dvnTree = stem->getDerivation();
-	string name = this->nodeValue->currentText().toStdString();
-	dvnTree.addChild(name);
-	setFields(dvnTree, name + ".1");
+	ParameterTree tree = stem->getParameterTree();
+
+	if (this->nodeValue->currentIndex() == 0) {
+		tree.addChild("");
+		setFields(tree, "1");
+	} else {
+		string name = this->nodeValue->currentText().toStdString();
+		tree.addChild(name);
+		setFields(tree, name + ".1");
+	}
+
 	for (auto it = instances.begin(); it != instances.end(); it++)
-		it->first->setDerivation(dvnTree);
+		it->first->setParameterTree(tree);
 
 	changeOnce();
-	emit derivationModified();
+	emit parameterTreeModified();
 }
 
 void GeneratorEditor::addSiblingNode()
 {
 	auto instances = this->editor->getSelection()->getStemInstances();
-	if (instances.empty())
+	if (instances.empty() || this->nodeValue->currentIndex() <= 0)
 		return;
 
 	beginChanging();
 	Stem *stem = instances.begin()->first;
-	DerivationTree dvnTree = stem->getDerivation();
+	ParameterTree tree = stem->getParameterTree();
 	string name = this->nodeValue->currentText().toStdString();
-	dvnTree.addSibling(name);
+	tree.addSibling(name);
 
 	int size;
 	size_t index = name.rfind('.');
@@ -381,12 +426,12 @@ void GeneratorEditor::addSiblingNode()
 		name.clear();
 	}
 
-	setFields(dvnTree, name + std::to_string(size+1));
+	setFields(tree, name + std::to_string(size+1));
 	for (auto it = instances.begin(); it != instances.end(); it++)
-		it->first->setDerivation(dvnTree);
+		it->first->setParameterTree(tree);
 
 	changeOnce();
-	emit derivationModified();
+	emit parameterTreeModified();
 }
 
 void GeneratorEditor::removeNode()
@@ -397,16 +442,17 @@ void GeneratorEditor::removeNode()
 
 	beginChanging();
 	Stem *stem = instances.begin()->first;
-	DerivationTree dvnTree = stem->getDerivation();
+	ParameterTree tree = stem->getParameterTree();
 	string name = this->nodeValue->currentText().toStdString();
-	if (name == "1")
-		return;
+	if (this->nodeValue->currentIndex() == 0)
+		tree.reset();
+	else
+		tree.remove(name);
 
-	dvnTree.remove(name);
-	setFields(dvnTree, "");
+	setFields(tree, "");
 	for (auto it = instances.begin(); it != instances.end(); it++)
-		it->first->setDerivation(dvnTree);
+		it->first->setParameterTree(tree);
 
 	changeOnce();
-	emit derivationModified();
+	emit parameterTreeModified();
 }

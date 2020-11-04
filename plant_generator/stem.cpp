@@ -51,7 +51,7 @@ void Stem::init(Stem *parent)
 	this->sectionDivisions = 8;
 	this->collarDivisions = 1;
 	this->custom = false;
-	this->derivation.reset();
+	this->parameterTree.reset();
 	this->nextSibling = nullptr;
 	this->prevSibling = nullptr;
 	this->child = nullptr;
@@ -86,7 +86,7 @@ void Stem::copy(const Stem &stem)
 	this->leaves = stem.leaves;
 	this->swelling = stem.swelling;
 	this->custom = stem.custom;
-	this->derivation = stem.derivation;
+	this->parameterTree = stem.parameterTree;
 }
 
 bool Stem::operator==(const Stem &stem) const
@@ -124,14 +124,14 @@ bool Stem::isCustom() const
 	return this->custom;
 }
 
-void Stem::setDerivation(DerivationTree derivation)
+void Stem::setParameterTree(ParameterTree parameterTree)
 {
-	this->derivation = derivation;
+	this->parameterTree = parameterTree;
 }
 
-DerivationTree Stem::getDerivation() const
+ParameterTree Stem::getParameterTree() const
 {
-	return this->derivation;
+	return this->parameterTree;
 }
 
 size_t Stem::addLeaf(const Leaf &leaf)

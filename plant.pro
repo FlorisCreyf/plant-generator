@@ -40,12 +40,12 @@ plant_generator/math/vec4.cpp \
 plant_generator/animation.cpp \
 plant_generator/cross_section.cpp \
 plant_generator/curve.cpp \
-plant_generator/derivation.cpp \
 plant_generator/geometry.cpp \
 plant_generator/joint.cpp \
 plant_generator/leaf.cpp \
 plant_generator/material.cpp \
 plant_generator/mesh.cpp \
+plant_generator/parameter_tree.cpp \
 plant_generator/path.cpp \
 plant_generator/plant.cpp \
 plant_generator/pseudo_generator.cpp \
@@ -102,12 +102,12 @@ plant_generator/math/vec4.h \
 plant_generator/animation.h \
 plant_generator/cross_section.h \
 plant_generator/curve.h \
-plant_generator/derivation.h \
 plant_generator/geometry.h \
 plant_generator/joint.h \
 plant_generator/leaf.h \
 plant_generator/material.h \
 plant_generator/mesh.h \
+plant_generator/parameter_tree.h \
 plant_generator/path.h \
 plant_generator/plant.h \
 plant_generator/pseudo_generator.h \

@@ -850,25 +850,27 @@ void Editor::endAnimation()
 
 void Editor::createDefaultPlant()
 {
-	pg::DerivationTree dvnTree = this->generator.getDerivation();
+	pg::ParameterTree tree = this->generator.getParameterTree();
+	pg::ParameterRoot *root = tree.createRoot();
 	std::random_device rd;
-	dvnTree.setSeed(rd());
-	pg::DerivationNode *dvn1 = dvnTree.createRoot();
-	pg::Derivation derivation;
-	derivation.stemDensity = 1.0f;
-	derivation.stemDensityCurve.setDefault(1);
-	derivation.stemStart = 2.0f;
-	derivation.leafScale = Vec3(0.2f, 0.1f, 0.3f);
-	derivation.leafDensity = 4.0f;
-	derivation.leafDensityCurve.setDefault(1);
-	derivation.leafDistance = 3.0f;
-	derivation.lengthFactor = 50.0f;
-	derivation.radiusThreshold = 0.02f;
-	derivation.leafRotation = pi;
-	dvn1->setData(derivation);
-	pg::DerivationNode *dvn2 = dvnTree.addChild(std::string("1"));
-	dvn2->setData(derivation);
-	this->generator.setDerivation(dvnTree);
+	root->setSeed(rd());
+	pg::ParameterNode *node1 = tree.addChild("");
+	pg::StemData data;
+	data.density = 1.0f;
+	data.densityCurve.setDefault(1);
+	data.start = 2.0f;
+	data.lengthFactor = 50.0f;
+	data.radiusThreshold = 0.02f;
+	data.leaf.scale = Vec3(0.2f, 0.1f, 0.3f);
+	data.leaf.density = 4.0f;
+	data.leaf.densityCurve.setDefault(1);
+	data.leaf.distance = 3.0f;
+	data.leaf.rotation = pi;
+	node1->setData(data);
+	pg::ParameterNode *node2 = tree.addChild("1");
+	node2->setData(data);
+	root->setData(data.leaf);
+	this->generator.setParameterTree(tree);
 	this->generator.grow();
 	this->scene.wind.setSpeed(0.5f);
 	this->scene.wind.setDirection(Vec3(0.0f, 0.0f, 1.0f));

@@ -130,7 +130,7 @@ void Window::createEditors()
 	addDockWidget(static_cast<Qt::DockWidgetArea>(1), dw[6]);
 
 	connect(this->procEditor->getGeneratorEditor(),
-		SIGNAL(derivationModified()),
+		SIGNAL(parameterTreeModified()),
 		this->gCurveEditor, SLOT(setFields()));
 
 	tabifyDockWidget(dw[1], dw[5]);

@@ -32,8 +32,10 @@ Generate::Generate(Selection *selection) :
 	this->remove.execute();
 
 	auto instances = selection->getStemInstances();
-	for (auto &instance : instances)
-		this->derivations.push_back(instance.first->getDerivation());
+	for (auto &instance : instances) {
+		pg::ParameterTree tree = instance.first->getParameterTree();
+		this->parameterTrees.push_back(tree);
+	}
 }
 
 void Generate::createRemovalSelection(Selection *selection, Selection *removals)
@@ -86,8 +88,10 @@ void Generate::undo()
 {
 	size_t index = 0;
 	auto instances = this->selection->getStemInstances();
-	for (auto instance : instances)
-		instance.first->setDerivation(this->derivations[index++]);
+	for (auto instance : instances) {
+		pg::ParameterTree tree = this->parameterTrees[index++];
+		instance.first->setParameterTree(tree);
+	}
 
 	createRemovalSelection(this->selection, &this->removals);
 	RemoveStem removeGenerated(&this->removals);
@@ -108,8 +112,8 @@ void Generate::redo()
 	this->remove.undo();
 	this->remove = removeOriginal;
 
-	pg::DerivationTree dv = this->gen.getDerivation();
+	pg::ParameterTree parameterTree = this->gen.getParameterTree();
 	auto instances = this->selection->getStemInstances();
 	for (auto instance : instances)
-		instance.first->setDerivation(dv);
+		instance.first->setParameterTree(parameterTree);
 }

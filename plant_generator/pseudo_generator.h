@@ -16,7 +16,6 @@
 #ifndef PG_PSEUDO_GENERATOR_H
 #define PG_PSEUDO_GENERATOR_H
 
-#include "derivation.h"
 #include "plant.h"
 #include <random>
 
@@ -24,24 +23,24 @@ namespace pg {
 	class PseudoGenerator {
 		Plant *plant;
 		std::mt19937 randomGenerator;
-		DerivationTree dvn;
+		ParameterTree parameterTree;
 
 		Vec3 getStemDirection(Stem *);
 		float getRadius(Stem *, float, float);
 		float getMinRadius(float);
-		void setPath(Stem *, Vec3, const Derivation &);
-		void addLateralStems(Stem *, const DerivationNode *);
-		void addLateralStem(Stem *, float, const DerivationNode *);
-		void addLeaves(Stem *, const Derivation &);
-		void addLeaf(Stem *, const Derivation &, float, Quat);
+		void setPath(Stem *, Vec3, StemData);
+		void addLateralStems(Stem *, const ParameterNode *);
+		void addLateralStem(Stem *, float, const ParameterNode *);
+		void addLeaves(Stem *, LeafData);
+		void addLeaf(Stem *, LeafData, float, Quat);
 
 	public:
 		PseudoGenerator(Plant *plant);
 		void grow();
 		void grow(Stem *stem);
 		void reset();
-		void setDerivation(DerivationTree dv);
-		DerivationTree getDerivation() const;
+		void setParameterTree(ParameterTree parameterTree);
+		ParameterTree getParameterTree() const;
 	};
 }
 
