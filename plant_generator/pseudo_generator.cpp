@@ -61,48 +61,31 @@ void PseudoGenerator::grow()
 		return;
 
 	setPath(stem, Vec3(0.0f, 1.0f, 0.0f), node->getData());
-	addLeaves(stem, root->getData());
-
 	reset();
-	while (node) {
-		addLateralStems(stem, node);
-		node = node->getSibling();
-	}
+	addStems(stem, node);
 }
 
 void PseudoGenerator::grow(Stem *stem)
 {
 	this->parameterTree = stem->getParameterTree();
-
 	const ParameterRoot *root = this->parameterTree.getRoot();
 	if (!root)
 		return;
-
-	addLeaves(stem, root->getData());
-
 	const ParameterNode *node = root->getNode();
 	if (!node)
 		return;
 
 	reset();
-	while (node) {
-		addLateralStems(stem, node);
-		node = node->getSibling();
-	}
+	addStems(stem, node);
 }
 
-Vec3 PseudoGenerator::getStemDirection(Stem *stem)
+void PseudoGenerator::addStems(Stem *stem, const ParameterNode *node)
 {
-	Path path = stem->getParent()->getPath();
-	float ratio = stem->getDistance() / path.getLength();
-	Vec3 direction = path.getIntermediateDirection(stem->getDistance());
-	std::uniform_real_distribution<float> dis(0.0f, 2.0*pi);
-	float angleX = pi*(0.1f + 0.4f*(1.0f-ratio));
-	float angleY = dis(this->randomGenerator);
-	Mat4 rot = pg::rotateXY(angleX, angleY);
-	Mat4 tran = pg::rotateIntoVec(Vec3(0.0f, 1.0f, 0.0f), direction);
-	tran = tran * rot;
-	return tran.apply(Vec3(0.0f, 1.0f, 0.0f), 1.0f);
+	while (node) {
+		addLateralStems(stem, node);
+		addLeaves(stem, node->getData().leaf);
+		node = node->getSibling();
+	}
 }
 
 void PseudoGenerator::addLateralStems(Stem *parent, const ParameterNode *node)
@@ -115,18 +98,18 @@ void PseudoGenerator::addLateralStems(Stem *parent, const ParameterNode *node)
 	float distance = 1.0f / stemData.density;
 	float position = stemData.start;
 
-	while (position < length) {
+	for (int i = 0; position < length; i++) {
 		float t = position / length;
 		float percentage = stemData.densityCurve.getPoint(t).z;
 		if (percentage == 0.0f)
 			break;
-		addLateralStem(parent, position, node);
+		addLateralStem(parent, position, node, i);
 		position += distance * (1.0f/percentage);
 	}
 }
 
 void PseudoGenerator::addLateralStem(
-	Stem *parent, float position, const ParameterNode *node)
+	Stem *parent, float position, const ParameterNode *node, int index)
 {
 	Vec2 swelling(1.2f, 3.0f);
 	float radius = getRadius(parent, 1.5f, position);
@@ -139,33 +122,42 @@ void PseudoGenerator::addLateralStem(
 	stem->setSwelling(swelling);
 	stem->setDistance(position);
 	stem->setSectionDivisions(5);
-	setPath(stem, getStemDirection(stem), node->getData());
-	addLeaves(stem, node->getData().leaf);
+	StemData data = node->getData();
+	Vec3 direction = getStemDirection(stem, data, index);
+	setPath(stem, direction, data);
 
 	if (node->getChild())
-		addLateralStems(stem, node->getChild());
+		addStems(stem, node->getChild());
 }
 
-float PseudoGenerator::getRadius(Stem *parent, float margin, float position)
+Vec3 PseudoGenerator::getStemDirection(Stem *stem, StemData data, int index)
 {
-	float r = this->plant->getIntermediateRadius(parent, position);
-	return r / margin;
+	float variation = data.angleVariation*pi;
+	std::uniform_real_distribution<float> dis(-variation, variation);
+	float distance = stem->getDistance();
+	Path path = stem->getParent()->getPath();
+	Vec3 parentDirection = path.getIntermediateDirection(distance);
+	float ratio = distance / path.getLength();
+	float angle = data.leaf.rotation*index + dis(this->randomGenerator);
+	Quat rotation = fromAxisAngle(parentDirection, angle);
+
+	Vec3 direction;
+	if (parentDirection == Vec3(0.0f, 1.0f, 0.0f))
+		direction = Vec3(0.0f, 0.0f, 1.0f);
+	else
+		direction = cross(Vec3(0.0f, 1.0f, 0.0f), parentDirection);
+	direction = normalize(direction);
+	direction = rotate(rotation, direction);
+
+	dis = std::uniform_real_distribution<float>(ratio*0.5f, ratio);
+	float t = dis(this->randomGenerator) - 0.1f;
+	return normalize(lerp(direction, parentDirection, t));
 }
 
-float PseudoGenerator::getMinRadius(float radius)
-{
-	float minRadius = radius / 5.0f;
-	if (minRadius < 0.001f)
-		minRadius = 0.001f;
-	else if (minRadius > 0.01f)
-		minRadius = 0.01f;
-	return minRadius;
-}
-
-void PseudoGenerator::setPath(Stem *stem, Vec3 direction, StemData stemData)
+void PseudoGenerator::setPath(Stem *stem, Vec3 direction, StemData data)
 {
 	float radius = stem->getMaxRadius();
-	float length = radius * stemData.lengthFactor;
+	float length = radius * data.length;
 	int points = static_cast<int>(length / 2.0f) + 1;
 	float increment = length / points;
 
@@ -194,6 +186,22 @@ void PseudoGenerator::setPath(Stem *stem, Vec3 direction, StemData stemData)
 	stem->setPath(path);
 }
 
+float PseudoGenerator::getRadius(Stem *parent, float margin, float position)
+{
+	float r = this->plant->getIntermediateRadius(parent, position);
+	return r / margin;
+}
+
+float PseudoGenerator::getMinRadius(float radius)
+{
+	float minRadius = radius / 5.0f;
+	if (minRadius < 0.001f)
+		minRadius = 0.001f;
+	else if (minRadius > 0.01f)
+		minRadius = 0.01f;
+	return minRadius;
+}
+
 void PseudoGenerator::addLeaves(Stem *stem, LeafData data)
 {
 	if (data.density <= 0.0f || data.leavesPerNode < 1)
@@ -204,7 +212,6 @@ void PseudoGenerator::addLeaves(Stem *stem, LeafData data)
 	float start = length - data.distance;
 	float distance = 1.0f / data.density;
 	float position = length;
-	Quat rotation(0.0f, 0.0f, 0.0f, 1.0f);
 
 	if (start < 0.0f)
 		start = 0.0f;
@@ -214,7 +221,7 @@ void PseudoGenerator::addLeaves(Stem *stem, LeafData data)
 	Vec3 xaxis(1.0f, 0.0f, 0.0f);
 
 	for (int i = 0, j = 1; position > start; i++, j++) {
-		rotation = Quat(0.0f, 0.0f, 0.0f, 1.0f);
+		Quat rotation(0.0f, 0.0f, 0.0f, 1.0f);
 		Vec3 stemDirection = path.getIntermediateDirection(position);
 		float ratio = (length - position) / (length - start);
 		Vec3 normal;
@@ -223,9 +230,12 @@ void PseudoGenerator::addLeaves(Stem *stem, LeafData data)
 		float mix;
 
 		/* Rotate the leaf into the stem side. */
-		normal = pg::normalize(pg::cross(yaxis, stemDirection));
-		rotation = pg::rotateIntoVecQ(zaxis, normal);
+		if (stemDirection == yaxis)
+			normal = zaxis;
+		else
+			normal = normalize(cross(yaxis, stemDirection));
 		Quat angle = fromAxisAngle(stemDirection, data.rotation*i);
+		rotation = rotateIntoVecQ(zaxis, normal);
 		rotation = angle * rotation;
 
 		/* Rotate the leaf normal into the stem direction. */
@@ -250,7 +260,7 @@ void PseudoGenerator::addLeaves(Stem *stem, LeafData data)
 		if (percentage == 0.0f)
 			break;
 
-		addLeaf(stem, data, position, pg::normalize(rotation));
+		addLeaf(stem, data, position, normalize(rotation));
 
 		if (j == data.leavesPerNode) {
 			position -= distance * (1.0f/percentage);

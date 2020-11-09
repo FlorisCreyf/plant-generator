@@ -27,6 +27,9 @@ namespace pg {
 		Spline spline;
 		int divisions = 0;
 		int subdivisions = 0;
+		float length = 0.0f;
+
+ 		void setLength();
 
 		#ifdef PG_SERIALIZE
 		friend class boost::serialization::access;
@@ -37,6 +40,7 @@ namespace pg {
 			ar & spline;
 			ar & divisions;
 			ar & subdivisions;
+			setLength();
 		}
 		#endif
 

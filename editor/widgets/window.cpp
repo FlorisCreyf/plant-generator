@@ -58,7 +58,7 @@ Window::Window(int argc, char **argv)
 QDockWidget *Window::createDockWidget(
 	const char *name, QWidget *widget, bool scrollbar)
 {
-	QDockWidget *dw = new QDockWidget(tr(name), this);
+	QDockWidget *dw = new QDockWidget(name, this);
 	dw->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
 	dw->setMinimumWidth(UI_WIDGET_WIDTH);
 	if (scrollbar) {
@@ -206,8 +206,8 @@ void Window::setFilename(QString filename)
 		message.append(" | ");
 		message.append(time.time().toString());
 	} else {
-		title = tr("Plant Generator");
-		message = tr("Not Saved");
+		title = "Plant Generator";
+		message = "Not Saved";
 	}
 	this->fileLabel->setText(message);
 	setWindowTitle(title);
@@ -231,7 +231,7 @@ void Window::newFile()
 void Window::openDialogBox()
 {
 	QString filename = QFileDialog::getOpenFileName(
-		this, tr("Open File"), "", tr("Plant (*.plant)"));
+		this, "Open File", "", "Plant (*.plant)");
 
 	if (!filename.isNull() || !filename.isEmpty()) {
 		#ifdef VIEWPORT_ONLY
@@ -252,8 +252,7 @@ void Window::openDialogBox()
 void Window::saveAsDialogBox()
 {
 	QString filename = QFileDialog::getSaveFileName(
-		this, tr("Save File"), "saved/untitled.plant",
-		tr("Plant (*.plant)"));
+		this, "Save File", "saved/untitled.plant", "Plant (*.plant)");
 
 	if (!filename.isNull() || !filename.isEmpty()) {
 		std::ofstream stream(filename.toLatin1());
@@ -285,8 +284,8 @@ void Window::exportWavefrontDialogBox()
 	const pg::Plant *plant = this->editor->getPlant();
 
 	QString filename = QFileDialog::getSaveFileName(
-		this, tr("Export File"), "saved/plant.obj",
-		tr("Wavefront (*.obj);;All Files (*)"));
+		this, "Export File", "saved/plant.obj",
+		"Wavefront (*.obj);;All Files (*)");
 
 	if (!filename.isEmpty()) {
 		pg::Wavefront obj;
@@ -302,8 +301,8 @@ void Window::exportColladaDialogBox()
 	const pg::Scene *scene = this->editor->getScene();
 
 	QString filename = QFileDialog::getSaveFileName(
-		this, tr("Export File"), "saved/plant.dae",
-		tr("Collada (*.dae);;All Files (*)"));
+		this, "Export File", "saved/plant.dae",
+		"Collada (*.dae);;All Files (*)");
 
 	if (!filename.isEmpty()) {
 		pg::Collada dae;

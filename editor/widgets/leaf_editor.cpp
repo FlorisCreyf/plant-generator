@@ -47,7 +47,7 @@ QSize LeafEditor::sizeHint() const
 
 void LeafEditor::createInterface()
 {
-	this->leafGroup = new QGroupBox(tr("Leaf"), this);
+	this->leafGroup = new QGroupBox("Leaf", this);
 	this->leafGroup->setSizePolicy(
 		QSizePolicy::Expanding, QSizePolicy::Maximum);
 
@@ -60,33 +60,33 @@ void LeafEditor::createInterface()
 	form->setSpacing(UI_FORM_SPACING);
 	form->setMargin(UI_FORM_MARGIN);
 
-	this->scaleXLabel = new QLabel(tr("Scale.X"));
+	this->scaleXLabel = new QLabel("Scale.X");
 	this->scaleXValue = new QDoubleSpinBox;
 	this->scaleXValue->setMinimum(0.01);
 	this->scaleXValue->setSingleStep(0.1);
 	form->addRow(this->scaleXLabel, this->scaleXValue);
 
-	this->scaleYLabel = new QLabel(tr("Scale.Y"));
+	this->scaleYLabel = new QLabel("Scale.Y");
 	this->scaleYValue = new QDoubleSpinBox;
 	this->scaleYValue->setMinimum(0.01);
 	this->scaleYValue->setSingleStep(0.1);
 	form->addRow(this->scaleYLabel, this->scaleYValue);
 
-	this->scaleZLabel = new QLabel(tr("Scale.Z"));
+	this->scaleZLabel = new QLabel("Scale.Z");
 	this->scaleZValue = new QDoubleSpinBox;
 	this->scaleZValue->setMinimum(0.01);
 	this->scaleZValue->setSingleStep(0.1);
 	form->addRow(this->scaleZLabel, this->scaleZValue);
 
-	this->materialLabel = new QLabel(tr("Material"));
+	this->materialLabel = new QLabel("Material");
 	this->materialValue = new QComboBox;
 	form->addRow(this->materialLabel, this->materialValue);
 
-	this->meshLabel = new QLabel(tr("Mesh"));
+	this->meshLabel = new QLabel("Mesh");
 	this->meshValue = new QComboBox;
 	form->addRow(this->meshLabel, this->meshValue);
 
-	this->customLabel = new QLabel(tr("Manual"));
+	this->customLabel = new QLabel("Manual");
 	this->customValue = new QCheckBox;
 	form->addRow(this->customLabel, this->customValue);
 

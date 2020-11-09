@@ -34,19 +34,19 @@ GeneratorCurveEditor::GeneratorCurveEditor(
 
 void GeneratorCurveEditor::createSelectionBar()
 {
-	this->selectionBox = new QComboBox(this);
-	this->selectionBox->addItem(tr("Stem Density"));
-	this->selectionBox->addItem(tr("Leaf Density"));
-	this->selectionBox->installEventFilter(this);
-	this->selectionBox->view()->installEventFilter(this);
-	this->layout->addWidget(this->selectionBox);
-	connect(this->selectionBox, SIGNAL(currentIndexChanged(int)),
-		this, SLOT(select()));
-
 	this->nodeSelectionBox = new QComboBox(this);
 	this->nodeSelectionBox->installEventFilter(this);
 	this->layout->addWidget(this->nodeSelectionBox);
 	connect(this->nodeSelectionBox, SIGNAL(currentIndexChanged(int)),
+		this, SLOT(select()));
+
+	this->selectionBox = new QComboBox(this);
+	this->selectionBox->addItem("Stem Density");
+	this->selectionBox->addItem("Leaf Density");
+	this->selectionBox->installEventFilter(this);
+	this->selectionBox->view()->installEventFilter(this);
+	this->layout->addWidget(this->selectionBox);
+	connect(this->selectionBox, SIGNAL(currentIndexChanged(int)),
 		this, SLOT(select()));
 }
 
@@ -68,6 +68,8 @@ void GeneratorCurveEditor::setFields()
 		QString item = QString::fromStdString(name);
 		this->nodeSelectionBox->addItem(item);
 	}
+	if (!names.empty())
+		this->nodeSelectionBox->setCurrentIndex(1);
 
 	select();
 }
@@ -91,15 +93,8 @@ void GeneratorCurveEditor::select()
 			setSpline(node->getData().densityCurve);
 		else
 			setSpline(node->getData().leaf.densityCurve);
-	} else if (index == 0) {
+	} else
 		this->viewer->clear();
-	} else if (tree.getRoot()) {
-		setSpline(tree.getRoot()->getData().densityCurve);
-	} else {
-		Spline spline;
-		spline.setDefault(1);
-		setSpline(spline);
-	}
 
 	this->degree->blockSignals(true);
 	this->degree->setCurrentIndex(this->spline.getDegree() == 3 ? 1 : 0);
@@ -111,6 +106,7 @@ void GeneratorCurveEditor::enable(bool enable)
 {
 	this->degree->setEnabled(enable);
 	this->nodeSelectionBox->setEnabled(enable);
+	this->selectionBox->setEnabled(enable);
 }
 
 void GeneratorCurveEditor::clear()
@@ -146,12 +142,7 @@ void GeneratorCurveEditor::updateParameterTree()
 		if (!tree.getRoot())
 			continue;
 
-		if (this->nodeSelectionBox->currentIndex() == 0) {
-			pg::LeafData data = tree.getRoot()->getData();
-			data.densityCurve = this->spline;
-			tree.getRoot()->setData(data);
-			stem->setParameterTree(tree);
-		} else {
+		if (this->nodeSelectionBox->currentIndex() > 0) {
 			pg::ParameterNode *node = tree.get(name);
 			if (!node)
 				continue;

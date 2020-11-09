@@ -177,7 +177,7 @@ void MeshEditor::loadCustom()
 {
 	if (this->selectionBox->count() > 0) {
 		QString filename = QFileDialog::getOpenFileName(
-			this, tr("Open File"), "", tr("Wavefront OBJ (*.obj)"));
+			this, "Open File", "", "Wavefront OBJ (*.obj)");
 
 		if (!filename.isNull()) {
 			pg::Plant *plant = this->editor->getPlant();

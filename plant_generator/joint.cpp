@@ -45,6 +45,7 @@ void Joint::updateLocation(Vec3 location)
 	this->location = location;
 }
 
-Vec3 Joint::getLocation() const {
+Vec3 Joint::getLocation() const
+{
 	return this->location;
 }

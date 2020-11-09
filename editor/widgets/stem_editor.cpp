@@ -48,7 +48,7 @@ QSize StemEditor::sizeHint() const
 
 void StemEditor::createInterface()
 {
-	this->stemGroup = new QGroupBox(tr("Stem"), this);
+	this->stemGroup = new QGroupBox("Stem", this);
 	this->stemGroup->setSizePolicy(
 		QSizePolicy::Expanding, QSizePolicy::Minimum);
 
@@ -61,64 +61,64 @@ void StemEditor::createInterface()
 	form->setSpacing(UI_FORM_SPACING);
 	form->setMargin(UI_FORM_MARGIN);
 
-	this->radiusLabel = new QLabel(tr("Radius"));
+	this->radiusLabel = new QLabel("Radius");
 	this->radiusValue = new QDoubleSpinBox;
 	this->radiusValue->setSingleStep(0.001);
 	this->radiusValue->setDecimals(3);
 	form->addRow(this->radiusLabel, this->radiusValue);
 
-	this->minRadiusLabel = new QLabel(tr("Min Radius"));
+	this->minRadiusLabel = new QLabel("Min Radius");
 	this->minRadiusValue = new QDoubleSpinBox;
 	this->minRadiusValue->setSingleStep(0.001);
 	this->minRadiusValue->setDecimals(3);
 	form->addRow(this->minRadiusLabel, this->minRadiusValue);
 
-	this->radiusCurveLabel = new QLabel(tr("Radius Curve"));
+	this->radiusCurveLabel = new QLabel("Radius Curve");
 	this->radiusCurveValue = new QComboBox;
 	form->addRow(this->radiusCurveLabel, this->radiusCurveValue);
 
-	this->pDivisionLabel = new QLabel(tr("Path Divisions"));
+	this->pDivisionLabel = new QLabel("Path Divisions");
 	this->pDivisionValue = new QSpinBox;
 	this->pDivisionValue->setMinimum(0);
 	form->addRow(this->pDivisionLabel, this->pDivisionValue);
 
-	this->sDivisionLabel = new QLabel(tr("Section Divisions"));
+	this->sDivisionLabel = new QLabel("Section Divisions");
 	this->sDivisionValue = new QSpinBox;
 	this->sDivisionValue->setMinimum(3);
 	form->addRow(this->sDivisionLabel, this->sDivisionValue);
 
-	this->cDivisionLabel = new QLabel(tr("Collar Divisions"));
+	this->cDivisionLabel = new QLabel("Collar Divisions");
 	this->cDivisionValue = new QSpinBox;
 	this->cDivisionValue->setMinimum(0);
 	form->addRow(this->cDivisionLabel, this->cDivisionValue);
 
-	this->degreeLabel = new QLabel(tr("Degree"));
+	this->degreeLabel = new QLabel("Degree");
 	this->degreeValue = new QComboBox;
 	this->degreeValue->addItem(QString("Linear"));
 	this->degreeValue->addItem(QString("Cubic"));
 	form->addRow(this->degreeLabel, this->degreeValue);
 
-	this->stemMaterialLabel = new QLabel(tr("Material"));
+	this->stemMaterialLabel = new QLabel("Material");
 	this->stemMaterialValue = new QComboBox;
 	form->addRow(this->stemMaterialLabel, this->stemMaterialValue);
 
-	this->capMaterialLabel = new QLabel(tr("Cap Material"));
+	this->capMaterialLabel = new QLabel("Cap Material");
 	this->capMaterialValue = new QComboBox;
 	form->addRow(this->capMaterialLabel, this->capMaterialValue);
 
-	this->collarXLabel = new QLabel(tr("Collar.X"));
+	this->collarXLabel = new QLabel("Collar.X");
 	this->collarXValue = new QDoubleSpinBox;
 	this->collarXValue->setSingleStep(0.1);
 	this->collarXValue->setDecimals(3);
 	form->addRow(this->collarXLabel, this->collarXValue);
 
-	this->collarYLabel = new QLabel(tr("Collar.Y"));
+	this->collarYLabel = new QLabel("Collar.Y");
 	this->collarYValue = new QDoubleSpinBox;
 	this->collarYValue->setSingleStep(0.1);
 	this->collarYValue->setDecimals(3);
 	form->addRow(this->collarYLabel, this->collarYValue);
 
-	this->customLabel = new QLabel(tr("Manual"));
+	this->customLabel = new QLabel("Manual");
 	this->customValue = new QCheckBox;
 	form->addRow(this->customLabel, this->customValue);
 

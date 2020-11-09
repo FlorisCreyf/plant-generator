@@ -25,12 +25,13 @@ namespace pg {
 		std::mt19937 randomGenerator;
 		ParameterTree parameterTree;
 
-		Vec3 getStemDirection(Stem *);
+		Vec3 getStemDirection(Stem *, StemData, int);
 		float getRadius(Stem *, float, float);
 		float getMinRadius(float);
 		void setPath(Stem *, Vec3, StemData);
+		void addStems(Stem *stem, const ParameterNode *);
 		void addLateralStems(Stem *, const ParameterNode *);
-		void addLateralStem(Stem *, float, const ParameterNode *);
+		void addLateralStem(Stem *, float, const ParameterNode *, int);
 		void addLeaves(Stem *, LeafData);
 		void addLeaf(Stem *, LeafData, float, Quat);
 

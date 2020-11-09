@@ -40,23 +40,23 @@ void KeyMap::loadFromXMLFile(const char *filename)
 		QString key;
 
 		QDomNodeList nodes;
-		nodes = element.elementsByTagName(tr("name"));
+		nodes = element.elementsByTagName("name");
 		if (nodes.size() > 0)
 			name = nodes.at(0).firstChild().toText().data();
-		nodes = element.elementsByTagName(tr("key"));
+		nodes = element.elementsByTagName("key");
 		if (nodes.size() > 0)
 			key = nodes.at(0).firstChild().toText().data();
 
 		QStringList list = key.split("+");
 		for (int i = 0; i < list.size(); i++) {
 			QString part = list.at(i);
-			if (part == tr("CTRL"))
+			if (part == "CTRL")
 			 	binding.ctrl = true;
-			else if (part == tr("ALT"))
+			else if (part == "ALT")
 				binding.alt = true;
-			else if (part == tr("SHIFT"))
+			else if (part == "SHIFT")
 				binding.shift = true;
-			else if (part == tr("DEL"))
+			else if (part == "DEL")
 				binding.key = Qt::Key_Delete;
 			else
 				binding.key = part[0].toLatin1();
@@ -90,7 +90,7 @@ QString KeyMap::toString(KeyMap::Binding binding) const
 		str += "ALT+";
 
 	if (binding.key == Qt::Key_Delete)
-		return str + tr("DEL");
+		return str + "DEL";
 	else
 		return str + binding.key;
 }

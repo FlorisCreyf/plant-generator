@@ -26,7 +26,7 @@ WindEditor::WindEditor(Editor *editor, QWidget *parent) : Form(parent)
 
 void WindEditor::createInterface()
 {
-	this->group = new QGroupBox(tr("Wind"), this);
+	this->group = new QGroupBox("Wind", this);
 	this->group->setSizePolicy(
 		QSizePolicy::Expanding, QSizePolicy::Minimum);
 
@@ -44,7 +44,7 @@ void WindEditor::createInterface()
 		std::numeric_limits<int>::min(),
 		std::numeric_limits<int>::max());
 	this->seedValue->setSingleStep(1);
-	form->addRow(tr("Seed"), this->seedValue);
+	form->addRow("Seed", this->seedValue);
 
 	this->directionXValue = new QDoubleSpinBox(this);
 	this->directionXValue->setSingleStep(0.01);
@@ -52,7 +52,7 @@ void WindEditor::createInterface()
 	this->directionXValue->setRange(
 		std::numeric_limits<float>::lowest(),
 		std::numeric_limits<float>::max());
-	form->addRow(tr("Direction.X"), this->directionXValue);
+	form->addRow("Direction.X", this->directionXValue);
 
 	this->directionYValue = new QDoubleSpinBox(this);
 	this->directionYValue->setSingleStep(0.01);
@@ -60,7 +60,7 @@ void WindEditor::createInterface()
 	this->directionYValue->setRange(
 		std::numeric_limits<float>::lowest(),
 		std::numeric_limits<float>::max());
-	form->addRow(tr("Direction.Y"), this->directionYValue);
+	form->addRow("Direction.Y", this->directionYValue);
 
 	this->directionZValue = new QDoubleSpinBox(this);
 	this->directionZValue->setSingleStep(0.01);
@@ -69,15 +69,15 @@ void WindEditor::createInterface()
 	this->directionZValue->setRange(
 		std::numeric_limits<float>::lowest(),
 		std::numeric_limits<float>::max());
-	form->addRow(tr("Direction.Z"), this->directionZValue);
+	form->addRow("Direction.Z", this->directionZValue);
 
 	this->timeStepValue = new QSpinBox(this);
 	this->timeStepValue->setValue(30);
-	form->addRow(tr("Time Step"), this->timeStepValue);
+	form->addRow("Time Step", this->timeStepValue);
 
 	this->frameCountValue = new QSpinBox(this);
 	this->frameCountValue->setValue(21);
-	form->addRow(tr("Frames"), this->frameCountValue);
+	form->addRow("Frames", this->frameCountValue);
 
 	setValueWidths(form);
 

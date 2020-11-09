@@ -79,11 +79,11 @@ void Editor::createToolBar()
 	layout->setMargin(0);
 	layout->setAlignment(Qt::AlignBottom | Qt::AlignRight);
 	QToolBar *toolbar = new QToolBar(this);
-	this->perspectiveAction = toolbar->addAction(tr("Perspective"));
-	this->orthographicAction = toolbar->addAction(tr("Orthographic"));
-	this->wireframeAction = toolbar->addAction(tr("Wireframe"));
-	this->solidAction = toolbar->addAction(tr("Solid"));
-	this->materialAction = toolbar->addAction(tr("Material"));
+	this->perspectiveAction = toolbar->addAction("Perspective");
+	this->orthographicAction = toolbar->addAction("Orthographic");
+	this->wireframeAction = toolbar->addAction("Wireframe");
+	this->solidAction = toolbar->addAction("Solid");
+	this->materialAction = toolbar->addAction("Material");
 	this->perspectiveAction->setCheckable(true);
 	this->orthographicAction->setCheckable(true);
 	this->wireframeAction->setCheckable(true);
@@ -214,7 +214,7 @@ void Editor::keyPressEvent(QKeyEvent *event)
 		event->modifiers() & Qt::ShiftModifier,
 		event->modifiers() & Qt::AltModifier);
 
-	if (commandName == tr("Add Leaf")) {
+	if (commandName == "Add Leaf") {
 		size_t stemCount = this->selection.getStemInstances().size();
 		if (stemCount == 1) {
 			this->command = new AddLeaf(
@@ -223,7 +223,7 @@ void Editor::keyPressEvent(QKeyEvent *event)
 			change();
 			emit selectionChanged();
 		}
-	} else if (commandName == tr("Add Stem")) {
+	} else if (commandName == "Add Stem") {
 		size_t stemCount = this->selection.getStemInstances().size();
 		Stem *root = this->scene.plant.getRoot();
 		if (stemCount == 1 || !root) {
@@ -235,7 +235,7 @@ void Editor::keyPressEvent(QKeyEvent *event)
 			change();
 			emit selectionChanged();
 		}
-	} else if (commandName == tr("Extrude")) {
+	} else if (commandName == "Extrude") {
 		if (this->selection.hasPoints()) {
 			ExtrudeStem *extrude = new ExtrudeStem(
 				&this->selection,
@@ -246,7 +246,7 @@ void Editor::keyPressEvent(QKeyEvent *event)
 			this->command = extrude;
 			emit selectionChanged();
 		}
-	} else if (commandName == tr("Move Point")) {
+	} else if (commandName == "Move Point") {
 		bool hasFirstPoint = this->selection.hasPoint(0);
 		if (this->selection.hasPoints() && !hasFirstPoint) {
 			MovePath *movePath = new MovePath(
@@ -258,7 +258,7 @@ void Editor::keyPressEvent(QKeyEvent *event)
 			movePath->setClickOffset(crd.x - x, crd.y - y);
 			this->command = movePath;
 		}
-	} else if (commandName == tr("Move Stem")) {
+	} else if (commandName == "Move Stem") {
 		Stem *root = this->scene.plant.getRoot();
 		bool hasStems = this->selection.hasStems();
 		bool hasLeaves = this->selection.hasLeaves();
@@ -266,14 +266,14 @@ void Editor::keyPressEvent(QKeyEvent *event)
 		if ((hasStems || hasLeaves) && !containsRoot)
 			this->command = new MoveStem(
 				&this->selection, &this->camera, x, y);
-	} else if (commandName == tr("Reduce To Ancestors")) {
+	} else if (commandName == "Reduce To Ancestors") {
 		if (this->selection.hasStems()) {
 			SaveSelection *copy;
 			copy = new SaveSelection(&this->selection);
 			this->selection.reduceToAncestors();
 			addSelectionToHistory(copy);
 		}
-	} else if (commandName == tr("Remove")) {
+	} else if (commandName == "Remove") {
 		bool hasStems = this->selection.hasStems();
 		bool hasLeaves = this->selection.hasLeaves();
 		if (hasStems || hasLeaves) {
@@ -285,7 +285,7 @@ void Editor::keyPressEvent(QKeyEvent *event)
 			updateSelection();
 			change();
 		}
-	} else if (commandName == tr("Rotate")) {
+	} else if (commandName == "Rotate") {
 		bool hasStems = this->selection.hasStems();
 		bool hasLeaves = this->selection.hasLeaves();
 		if (hasStems || hasLeaves) {
@@ -296,36 +296,36 @@ void Editor::keyPressEvent(QKeyEvent *event)
 			this->command = rotate;
 			this->rotating = true;
 		}
-	} else if (commandName == tr("Select Points")) {
+	} else if (commandName == "Select Points") {
 		SaveSelection *copy = new SaveSelection(&this->selection);
 		this->selection.selectAllPoints();
 		addSelectionToHistory(copy);
-	} else if (commandName == tr("Select Children")) {
+	} else if (commandName == "Select Children") {
 		SaveSelection *copy = new SaveSelection(&this->selection);
 		selection.selectChildren();
 		addSelectionToHistory(copy);
-	} else if (commandName == tr("Select Leaves")) {
+	} else if (commandName == "Select Leaves") {
 		SaveSelection *copy = new SaveSelection(&this->selection);
 		selection.selectLeaves();
 		selection.removeStems();
 		addSelectionToHistory(copy);
-	} else if (commandName == tr("Select Previous Points")) {
+	} else if (commandName == "Select Previous Points") {
 		SaveSelection *copy = new SaveSelection(&this->selection);
 		this->selection.selectPreviousPoints();
 		addSelectionToHistory(copy);
-	} else if (commandName == tr("Select Next Points")) {
+	} else if (commandName == "Select Next Points") {
 		SaveSelection *copy = new SaveSelection(&this->selection);
 		this->selection.selectNextPoints();
 		addSelectionToHistory(copy);
-	} else if (commandName == tr("Select Siblings")) {
+	} else if (commandName == "Select Siblings") {
 		SaveSelection *copy = new SaveSelection(&this->selection);
 		this->selection.selectSiblings();
 		addSelectionToHistory(copy);
-	} else if (commandName == tr("Select Stems")) {
+	} else if (commandName == "Select Stems") {
 		SaveSelection *copy = new SaveSelection(&this->selection);
 		this->selection.selectStems();
 		addSelectionToHistory(copy);
-	} if (commandName == tr("Animate")) {
+	} if (commandName == "Animate") {
 		if (this->timer->isActive())
 			endAnimation();
 		else
@@ -859,9 +859,9 @@ void Editor::createDefaultPlant()
 	data.density = 1.0f;
 	data.densityCurve.setDefault(1);
 	data.start = 2.0f;
-	data.lengthFactor = 50.0f;
+	data.length = 50.0f;
 	data.radiusThreshold = 0.02f;
-	data.leaf.scale = Vec3(0.2f, 0.1f, 0.3f);
+	data.leaf.scale = Vec3(0.5f, 0.5f, 0.5f);
 	data.leaf.density = 4.0f;
 	data.leaf.densityCurve.setDefault(1);
 	data.leaf.distance = 3.0f;
@@ -869,7 +869,9 @@ void Editor::createDefaultPlant()
 	node1->setData(data);
 	pg::ParameterNode *node2 = tree.addChild("1");
 	node2->setData(data);
-	root->setData(data.leaf);
+	pg::ParameterNode *node3 = tree.addChild("1.1");
+	data.density = 0.0f;
+	node3->setData(data);
 	this->generator.setParameterTree(tree);
 	this->generator.grow();
 	this->scene.wind.setSpeed(0.5f);

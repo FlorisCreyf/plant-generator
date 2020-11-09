@@ -65,16 +65,6 @@ int ParameterRoot::getSeed() const
 	return this->seed;
 }
 
-LeafData ParameterRoot::getData() const
-{
-	return this->leaf;
-}
-
-void ParameterRoot::setData(LeafData data)
-{
-	this->leaf = data;
-}
-
 ParameterNode *ParameterRoot::getNode() const
 {
 	return this->node;
@@ -138,7 +128,6 @@ void ParameterTree::copy(const ParameterTree &tree)
 {
 	if (tree.root) {
 		this->root = new ParameterRoot();
-		this->root->leaf = tree.root->leaf;
 		this->root->seed = tree.root->seed;
 		if (tree.root->node) {
 			this->root->node = new ParameterNode();
@@ -167,7 +156,6 @@ ParameterRoot *ParameterTree::createRoot()
 {
 	reset();
 	this->root = new ParameterRoot();
-	this->root->leaf.densityCurve.setDefault(1);
 	return this->root;
 }
 

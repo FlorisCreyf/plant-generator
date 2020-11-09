@@ -61,7 +61,8 @@ namespace pg {
 		Spline densityCurve;
 		float density = 0.0f;
 		float start = 0.0f;
-		float lengthFactor = 1.0f;
+		float angleVariation = 0.5f;
+		float length = 1.0f;
 		float radiusThreshold = 0.0f;
 		LeafData leaf;
 
@@ -71,12 +72,13 @@ namespace pg {
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned)
 		{
+			ar & leaf;
 			ar & densityCurve;
 			ar & density;
 			ar & start;
-			ar & lengthFactor;
+			ar & length;
 			ar & radiusThreshold;
-			ar & leaf;
+			ar & angleVariation;
 		}
 		#endif /* PG_SERIALIZE */
 	};
@@ -118,7 +120,6 @@ namespace pg {
 
 		unsigned seed = 0;
 		ParameterNode *node = nullptr;
-		LeafData leaf;
 
 		#ifdef PG_SERIALIZE
 		friend class boost::serialization::access;
@@ -127,15 +128,12 @@ namespace pg {
 		{
 			ar & seed;
 			ar & node;
-			ar & leaf;
 		}
 		#endif /* PG_SERIALIZE */
 
 	public:
 		void setSeed(int seed);
 		int getSeed() const;
-		LeafData getData() const;
-		void setData(LeafData data);
 		ParameterNode *getNode() const;
 	};
 

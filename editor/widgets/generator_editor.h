@@ -30,6 +30,7 @@ class GeneratorEditor : public Form {
 	Generate *generate;
 
 	QGroupBox *nodeGroup;
+	QGroupBox *rootGroup;
 	QGroupBox *stemGroup;
 	QGroupBox *leafGroup;
 	QComboBox *nodeValue;
@@ -39,12 +40,10 @@ class GeneratorEditor : public Form {
 	QPushButton *removeButton;
 
 	enum {
-		LeavesPerNode
-	};
-	enum {
 		StemDensity,
 		StemStart,
-		LengthFactor,
+		StemLength,
+		StemAngleVariation,
 		RadiusThreshold
 	};
 	enum {
@@ -59,8 +58,11 @@ class GeneratorEditor : public Form {
 		MinDirection,
 		MaxDirection
 	};
+	enum  {
+		LeavesPerNode
+	};
 
-	static const int dssize = 4;
+	static const int dssize = 5;
 	QDoubleSpinBox *dsv[dssize];
 	QLabel *dsl[dssize];
 	static const int dlsize = 10;
@@ -72,6 +74,7 @@ class GeneratorEditor : public Form {
 
 	void createInterface();
 	void createNodeGroup(QBoxLayout *);
+	void createRootGroup(QBoxLayout *);
 	void createStemGroup(QBoxLayout *);
 	void createLeafGroup(QBoxLayout *);
 	QFormLayout *createForm(QGroupBox *);

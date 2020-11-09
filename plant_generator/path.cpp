@@ -36,8 +36,8 @@ bool Path::operator!=(const Path &path) const
 
 void Path::generate()
 {
-	size_t numControls = this->spline.getControls().size();
-	if (numControls <= 1)
+	size_t size = this->spline.getControls().size();
+	if (size <= 1)
 	 	return;
 
 	this->path.clear();
@@ -46,16 +46,23 @@ void Path::generate()
 
 	while (curve < curves) {
 		float r = 1.0f / (this->divisions+1);
-		float t = 0.0f;
 		for (int i = 0; i <= this->divisions; i++) {
-			t = r * i;
+			float t = r * i;
 			Vec3 point = this->spline.getPoint(curve, t);
 			this->path.push_back(point);
 		}
 		curve++;
 	}
 
-	this->path.push_back(this->spline.getControls()[numControls-1]);
+	this->path.push_back(this->spline.getControls()[size-1]);
+	setLength();
+}
+
+void Path::setLength()
+{
+	this->length = 0.0f;
+	for (size_t i = 0; i < this->path.size() - 1; i++)
+		this->length += magnitude(this->path[i + 1] - this->path[i]);
 }
 
 void Path::setSpline(const Spline &spline)
@@ -145,10 +152,7 @@ size_t Path::getIndex(float distance) const
 
 float Path::getLength() const
 {
-	float length = 0.0f;
-	for (size_t i = 0; i < this->path.size() - 1; i++)
-		length += magnitude(this->path[i + 1] - this->path[i]);
-	return length;
+	return this->length;
 }
 
 Vec3 Path::getDirection(size_t index) const

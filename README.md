@@ -4,7 +4,7 @@ Plant Generator generates plant geometry. The project is divided into a generato
 
 ## Screenshot
 
-![Plant Generator](https://www.fcreyf.com/static/plant/pg.png)
+![Plant Generator](https://www.fcreyf.com/static/plant/pg.jpg)
 
 ## Design Document
 

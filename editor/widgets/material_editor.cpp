@@ -109,7 +109,7 @@ void MaterialEditor::initFields(QFormLayout *form)
 	diffuseLayout->addWidget(this->diffuseBox);
 	diffuseLayout->addWidget(this->removeDiffuseButton);
 	diffuseLayout->addWidget(this->addDiffuseButton);
-	form->addRow(tr("Diffuse"), sizeWidget);
+	form->addRow("Diffuse", sizeWidget);
 
 	form->setFormAlignment(Qt::AlignRight | Qt::AlignTop);
 	form->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
@@ -187,7 +187,7 @@ void MaterialEditor::add()
 	this->editor->getPlant()->addMaterial(params.getMaterial());
 	this->materialViewer->updateMaterial(index);
 
-	this->diffuseBox->setText(tr(""));
+	this->diffuseBox->setText("");
 	this->selectionBox->addItem(qname);
 	this->selectionBox->setCurrentIndex(
 		this->selectionBox->findText(qname));
@@ -243,11 +243,8 @@ void MaterialEditor::openDiffuseFile()
 {
 	unsigned index = this->selectionBox->currentIndex();
 	ShaderParams params = this->shared->getMaterial(index);
-
-	QString filename = QFileDialog::getOpenFileName(
-		this, tr("Open File"), "",
-		tr("All Files (*);;PNG (*.png);;JPEG (*.jpg);;SVG (*.svg)"));
-
+	QString filename = QFileDialog::getOpenFileName(this, "Open File", "",
+		"All Files (*);;PNG (*.png);;JPEG (*.jpg);;SVG (*.svg)");
 	if (!filename.isNull() || !filename.isEmpty())
 		if (params.loadTexture(0, filename)) {
 			this->diffuseBox->setText(filename);

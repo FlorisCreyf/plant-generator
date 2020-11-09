@@ -97,7 +97,7 @@ void CurveEditor::keyPressEvent(QKeyEvent *event)
 	bool alt = event->modifiers() & Qt::AltModifier;
 	QString command = this->keymap->getBinding(key, ctrl, shift, alt);
 
-	if (command == tr("Select Next Points")) {
+	if (command == "Select Next Points") {
 		SavePointSelection *selectionCopy =
 			new SavePointSelection(&this->selection);
 		this->selection.selectNext(this->spline.getSize());
@@ -106,7 +106,7 @@ void CurveEditor::keyPressEvent(QKeyEvent *event)
 			this->history.add(selectionCopy);
 			change(false);
 		}
-	} else if (command == tr("Select Previous Points")) {
+	} else if (command == "Select Previous Points") {
 		SavePointSelection *selectionCopy =
 			new SavePointSelection(&this->selection);
 		this->selection.selectPrevious();
@@ -115,7 +115,7 @@ void CurveEditor::keyPressEvent(QKeyEvent *event)
 			this->history.add(selectionCopy);
 			change(false);
 		}
-	} else if (command == tr("Select Points")) {
+	} else if (command == "Select Points") {
 		SavePointSelection *selectionCopy =
 			new SavePointSelection(&this->selection);
 		this->selection.selectAll(this->spline.getSize());
@@ -124,9 +124,9 @@ void CurveEditor::keyPressEvent(QKeyEvent *event)
 			this->history.add(selectionCopy);
 			change(false);
 		}
-	} else if (command == tr("Extrude")) {
+	} else if (command == "Extrude") {
 		extrude();
-	} else if (command == tr("Remove")) {
+	} else if (command == "Remove") {
 		/* The first and last points cannot be removed. */
 		auto points = this->selection.getPoints();
 		int lastPoint = this->spline.getSize() - 1;
