@@ -178,20 +178,13 @@ Vec3 Path::getAverageDirection(size_t index) const
 Vec3 Path::getIntermediateDirection(float t) const
 {
 	Vec3 direction;
-	float dist = 0.0f;
-
+	float s = 0.0f;
 	for (size_t i = 0; i < this->path.size() - 1; i++) {
-		dist += magnitude(this->path[i+1] - this->path[i]);
-		if (dist >= t) {
-			direction = getDirection(i);
-			break;
-		}
+		s += magnitude(this->path[i+1] - this->path[i]);
+		if (s >= t)
+			return getDirection(i);
 	}
-
-	if (dist < t)
-		return getDirection(this->path.size() - 1);
-	else
-		return direction;
+	return getDirection(this->path.size() - 1);
 }
 
 float Path::getDistance(size_t index) const

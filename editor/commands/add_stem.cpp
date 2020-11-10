@@ -86,8 +86,10 @@ void AddStem::setRadius()
 			stem->setMinRadius(radius);
 		else
 			stem->setMinRadius(parent->getMinRadius());
-	} else
+	} else {
 		stem->setMaxRadius(0.2f);
+		stem->setSwelling(pg::Vec2(1.2f, 1.2f));
+	}
 }
 
 bool AddStem::onMouseMove(QMouseEvent *event)

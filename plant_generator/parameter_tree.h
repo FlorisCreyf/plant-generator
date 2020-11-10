@@ -30,7 +30,7 @@ namespace pg {
 		Vec3 scale = Vec3(1.0f, 1.0f, 1.0f);
 		float density = 0.0f;
 		float distance = 2.0f;
-		float rotation = 0.0f;
+		float rotation = 3.14159265359f;
 		float minUp = 0.0f;
 		float maxUp = 1.0f;
 		float minDirection = 0.0f;
@@ -64,6 +64,7 @@ namespace pg {
 		float angleVariation = 0.5f;
 		float length = 1.0f;
 		float radiusThreshold = 0.0f;
+		float scale = 1.0f;
 		LeafData leaf;
 
 	private:
@@ -79,6 +80,7 @@ namespace pg {
 			ar & length;
 			ar & radiusThreshold;
 			ar & angleVariation;
+			ar & scale;
 		}
 		#endif /* PG_SERIALIZE */
 	};

@@ -43,8 +43,10 @@ class GeneratorEditor : public Form {
 		StemDensity,
 		StemStart,
 		StemLength,
+		StemScale,
 		StemAngleVariation,
-		RadiusThreshold
+		RadiusThreshold,
+		DSSize
 	};
 	enum {
 		LeafDensity,
@@ -56,21 +58,20 @@ class GeneratorEditor : public Form {
 		MinUp,
 		MaxUp,
 		MinDirection,
-		MaxDirection
+		MaxDirection,
+		DLSize
 	};
 	enum  {
-		LeavesPerNode
+		LeavesPerNode,
+		ILSize
 	};
 
-	static const int dssize = 5;
-	QDoubleSpinBox *dsv[dssize];
-	QLabel *dsl[dssize];
-	static const int dlsize = 10;
-	QDoubleSpinBox *dlv[dlsize];
-	QLabel *dll[dlsize];
-	static const int ilsize = 1;
-	QSpinBox *ilv[ilsize];
-	QLabel *ill[ilsize];
+	QDoubleSpinBox *dsv[DSSize];
+	QLabel *dsl[DSSize];
+	QDoubleSpinBox *dlv[DLSize];
+	QLabel *dll[DLSize];
+	QSpinBox *ilv[ILSize];
+	QLabel *ill[ILSize];
 
 	void createInterface();
 	void createNodeGroup(QBoxLayout *);

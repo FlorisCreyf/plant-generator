@@ -111,8 +111,10 @@ void PseudoGenerator::addLateralStems(Stem *parent, const ParameterNode *node)
 void PseudoGenerator::addLateralStem(
 	Stem *parent, float position, const ParameterNode *node, int index)
 {
+	StemData data = node->getData();
 	Vec2 swelling(1.2f, 3.0f);
-	float radius = getRadius(parent, 1.5f, position);
+	float radius = this->plant->getIntermediateRadius(parent, position);
+	radius = radius / swelling.x * data.scale;
 	if (radius < node->getData().radiusThreshold)
 		return;
 
@@ -122,7 +124,6 @@ void PseudoGenerator::addLateralStem(
 	stem->setSwelling(swelling);
 	stem->setDistance(position);
 	stem->setSectionDivisions(5);
-	StemData data = node->getData();
 	Vec3 direction = getStemDirection(stem, data, index);
 	setPath(stem, direction, data);
 
@@ -154,11 +155,26 @@ Vec3 PseudoGenerator::getStemDirection(Stem *stem, StemData data, int index)
 	return normalize(lerp(direction, parentDirection, t));
 }
 
+float getCollarLength(Stem *stem, Vec3 direction, Plant *plant)
+{
+	float scale = stem->getMaxRadius() * 2.0f;
+	if (stem->getParent()) {
+		Stem *parent = stem->getParent();
+		float distance = stem->getDistance();
+		Path path = parent->getPath();
+		Vec3 parentDirection = path.getIntermediateDirection(distance);
+		float difference = std::abs(dot(direction, parentDirection));
+		float radius = plant->getIntermediateRadius(parent, distance);
+		scale += radius / std::sqrt(1.0f - difference);
+	}
+	return scale;
+}
+
 void PseudoGenerator::setPath(Stem *stem, Vec3 direction, StemData data)
 {
 	float radius = stem->getMaxRadius();
 	float length = radius * data.length;
-	int points = static_cast<int>(length / 2.0f) + 1;
+	int points = static_cast<int>(length) + 1;
 	float increment = length / points;
 
 	Path path;
@@ -167,16 +183,29 @@ void PseudoGenerator::setPath(Stem *stem, Vec3 direction, StemData data)
 
 	Vec3 control(0.0f, 0.0f, 0.0f);
 	controls.push_back(control);
-	control += radius * 5.0f * direction;
+	control += getCollarLength(stem, direction, this->plant) * direction;
 	controls.push_back(control);
 
 	for (int i = 0; i < points; i++) {
 		control = control + increment * direction;
-		direction.x += dis(this->randomGenerator);
-		direction.y += dis(this->randomGenerator);
-		direction.z += dis(this->randomGenerator);
-		direction = normalize(direction);
+		control.x += dis(this->randomGenerator);
+		control.y += dis(this->randomGenerator);
+		control.z += dis(this->randomGenerator);
 		controls.push_back(control);
+
+		float divergence = 1.0f;
+		if (dis(this->randomGenerator) > 0.0f) {
+			float influence = radius;
+			if (influence < 0.1f)
+				influence = 0.1f;
+			divergence = dis(this->randomGenerator);
+			divergence /= influence * influence;
+		}
+		Vec3 change;
+		change.x = dis(this->randomGenerator) * divergence;
+		change.y = dis(this->randomGenerator) * divergence;
+		change.z = dis(this->randomGenerator) * divergence;
+		direction = normalize(direction + change);
 	}
 
 	Spline spline;
@@ -184,12 +213,6 @@ void PseudoGenerator::setPath(Stem *stem, Vec3 direction, StemData data)
 	spline.setControls(controls);
 	path.setSpline(spline);
 	stem->setPath(path);
-}
-
-float PseudoGenerator::getRadius(Stem *parent, float margin, float position)
-{
-	float r = this->plant->getIntermediateRadius(parent, position);
-	return r / margin;
 }
 
 float PseudoGenerator::getMinRadius(float radius)

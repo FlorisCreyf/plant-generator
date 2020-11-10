@@ -112,13 +112,14 @@ void GeneratorEditor::createStemGroup(QBoxLayout *layout)
 		QSizePolicy::Expanding, QSizePolicy::Minimum);
 	QFormLayout *form = createForm(this->stemGroup);
 
-	for (int i = 0; i < dssize; i++) {
+	for (int i = 0; i < DSSize; i++) {
 		this->dsv[i] = new QDoubleSpinBox(this);
 		this->dsv[i]->setSingleStep(0.1);
 	}
 
 	this->dsl[StemDensity] = new QLabel("Stems/Unit");
 	this->dsl[StemStart] = new QLabel("Start");
+	this->dsl[StemScale] = new QLabel("Scale");
 	this->dsl[StemAngleVariation] = new QLabel("Angle Variation");
 	this->dsl[RadiusThreshold] = new QLabel("Radius Threshold");
 	this->dsv[RadiusThreshold]->setSingleStep(0.001);
@@ -127,13 +128,13 @@ void GeneratorEditor::createStemGroup(QBoxLayout *layout)
 	this->dsv[StemLength]->setSingleStep(1.0f);
 	this->dsv[StemLength]->setRange(0, std::numeric_limits<float>::max());
 
-	for (int i = 0; i < dssize; i++)
+	for (int i = 0; i < DSSize; i++)
 		form->addRow(this->dsl[i], this->dsv[i]);
 
 	setValueWidths(form);
 	layout->addWidget(this->stemGroup);
 
-	for (int i = 0; i < dssize; i++) {
+	for (int i = 0; i < DSSize; i++) {
 		connect(this->dsv[i], SIGNAL(valueChanged(double)),
 			this, SLOT(change()));
 		connect(this->dsv[i], SIGNAL(editingFinished()),
@@ -148,11 +149,11 @@ void GeneratorEditor::createLeafGroup(QBoxLayout *layout)
 		QSizePolicy::Expanding, QSizePolicy::Minimum);
 	QFormLayout *form = createForm(this->leafGroup);
 
-	for (int i = 0; i < dlsize; i++) {
+	for (int i = 0; i < DLSize; i++) {
 		this->dlv[i] = new QDoubleSpinBox(this);
 		this->dlv[i]->setSingleStep(0.1);
 	}
-	for (int i = 0; i < ilsize; i++) {
+	for (int i = 0; i < ILSize; i++) {
 		this->ilv[i] = new QSpinBox(this);
 		this->ilv[i]->setSingleStep(1);
 	}
@@ -172,21 +173,21 @@ void GeneratorEditor::createLeafGroup(QBoxLayout *layout)
 	this->dll[MaxDirection] = new QLabel("Max Direction");
 	this->ill[LeavesPerNode] = new QLabel("Leaves/Node");
 
-	for (int i = 0; i < dlsize; i++)
+	for (int i = 0; i < DLSize; i++)
 		form->addRow(this->dll[i], this->dlv[i]);
-	for (int i = 0; i < ilsize; i++)
+	for (int i = 0; i < ILSize; i++)
 		form->addRow(this->ill[i], this->ilv[i]);
 
 	setValueWidths(form);
 	layout->addWidget(this->leafGroup);
 
-	for (int i = 0; i < dlsize; i++) {
+	for (int i = 0; i < DLSize; i++) {
 		connect(this->dlv[i], SIGNAL(valueChanged(double)),
 			this, SLOT(change()));
 		connect(this->dlv[i], SIGNAL(editingFinished()),
 			this, SLOT(finishChanging()));
 	}
-	for (int i = 0; i < ilsize; i++) {
+	for (int i = 0; i < ILSize; i++) {
 		connect(this->ilv[i], SIGNAL(valueChanged(int)),
 			this, SLOT(change()));
 		connect(this->ilv[i], SIGNAL(editingFinished()),
@@ -250,6 +251,7 @@ void GeneratorEditor::setStemData(pg::StemData data)
 {
 	this->dsv[StemDensity]->setValue(data.density);
 	this->dsv[StemStart]->setValue(data.start);
+	this->dsv[StemScale]->setValue(data.scale);
 	this->dsv[StemAngleVariation]->setValue(data.angleVariation);
 	this->dsv[RadiusThreshold]->setValue(data.radiusThreshold);
 	this->dsv[StemLength]->setValue(data.length);
@@ -280,11 +282,11 @@ void GeneratorEditor::enable(bool enable)
 	this->removeButton->setEnabled(enable);
 	if (this->nodeValue->currentIndex() == 0)
 		enable = false;
-	for (int i = 0; i < dssize; i++)
+	for (int i = 0; i < DSSize; i++)
 		this->dsv[i]->setEnabled(enable);
-	for (int i = 0; i < dlsize; i++)
+	for (int i = 0; i < DLSize; i++)
 		this->dlv[i]->setEnabled(enable);
-	for (int i = 0; i < ilsize; i++)
+	for (int i = 0; i < ILSize; i++)
 		this->ilv[i]->setEnabled(enable);
 }
 
@@ -292,11 +294,11 @@ void GeneratorEditor::blockSignals(bool block)
 {
 	this->seedValue->blockSignals(block);
 	this->nodeValue->blockSignals(block);
-	for (int i = 0; i < dssize; i++)
+	for (int i = 0; i < DSSize; i++)
 		this->dsv[i]->blockSignals(block);
-	for (int i = 0; i < dlsize; i++)
+	for (int i = 0; i < DLSize; i++)
 		this->dlv[i]->blockSignals(block);
-	for (int i = 0; i < ilsize; i++)
+	for (int i = 0; i < ILSize; i++)
 		this->ilv[i]->blockSignals(block);
 }
 
@@ -309,6 +311,9 @@ void GeneratorEditor::change()
 	beginChanging();
 	Stem *stem = instances.begin()->first;
 	ParameterTree tree = stem->getParameterTree();
+	if (!tree.getRoot())
+		tree.createRoot();
+
 	tree.getRoot()->setSeed(this->seedValue->value());
 	if (this->nodeValue->currentIndex() > 0) {
 		std::string name = this->nodeValue->currentText().toStdString();
@@ -328,6 +333,7 @@ pg::StemData GeneratorEditor::getStemData(StemData data)
 {
 	data.density = this->dsv[StemDensity]->value();
 	data.start = this->dsv[StemStart]->value();
+	data.scale = this->dsv[StemScale]->value();
 	data.angleVariation = this->dsv[StemAngleVariation]->value();
 	data.length = this->dsv[StemLength]->value();
 	data.radiusThreshold = this->dsv[RadiusThreshold]->value();
@@ -392,6 +398,9 @@ void GeneratorEditor::addChildNode()
 	beginChanging();
 	Stem *stem = instances.begin()->first;
 	ParameterTree tree = stem->getParameterTree();
+
+	if (!tree.getRoot())
+		tree.createRoot();
 
 	if (this->nodeValue->currentIndex() == 0) {
 		tree.addChild("");

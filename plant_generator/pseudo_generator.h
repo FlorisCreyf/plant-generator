@@ -26,7 +26,6 @@ namespace pg {
 		ParameterTree parameterTree;
 
 		Vec3 getStemDirection(Stem *, StemData, int);
-		float getRadius(Stem *, float, float);
 		float getMinRadius(float);
 		void setPath(Stem *, Vec3, StemData);
 		void addStems(Stem *stem, const ParameterNode *);
