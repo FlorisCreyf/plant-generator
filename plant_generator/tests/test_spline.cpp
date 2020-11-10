@@ -6,7 +6,7 @@
 using namespace pg;
 namespace bt = boost::unit_test;
 
-const float tolerance = 0.000001f
+const float tolerance = 0.000001f;
 
 BOOST_AUTO_TEST_SUITE(spline)
 

@@ -14,6 +14,7 @@ BOOST_AUTO_TEST_CASE(test_index_bounds)
 	Spline radiusCurve;
 	radiusCurve.setDefault(0);
 	plant.addCurve(Curve(radiusCurve));
+	plant.addMaterial(Material());
 	Stem *root = plant.createRoot();
 
 	{

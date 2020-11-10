@@ -15,7 +15,7 @@ math/vec4.o \
 animation.o \
 cross_section.o \
 curve.o \
-derivation.o \
+parameter_tree.o \
 generator.o \
 geometry.o \
 joint.o \
@@ -31,7 +31,7 @@ wind.o \
 )
 TEST_OBJECTS := $(addprefix $(BUILDDIR)/, \
 tests/test.o \
-tests/test_derivation.o \
+tests/test_ptree.o \
 tests/test_path.o \
 tests/test_math.o \
 tests/test_mesh.o \

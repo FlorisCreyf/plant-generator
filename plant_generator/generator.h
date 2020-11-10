@@ -37,7 +37,6 @@ namespace pg {
 		float primaryGrowthRate;
 		float secondaryGrowthRate;
 		Plant plant;
-		long leafGeomID;
 		float minRadius;
 		int rayCount;
 		int rayLevels;

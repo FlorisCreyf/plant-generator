@@ -1,18 +1,19 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "../derivation.h"
+#include "../parameter_tree.h"
 #include <algorithm>
 
 using namespace pg;
 namespace bt = boost::unit_test;
 
-BOOST_AUTO_TEST_SUITE(derivation)
+BOOST_AUTO_TEST_SUITE(parameter_tree)
 
 BOOST_AUTO_TEST_CASE(test_get_names)
 {
-	DerivationTree tree;
+	ParameterTree tree;
 	tree.createRoot();
+	tree.addChild("");
 	tree.addSibling("1");
 	tree.addChild("2");
 	tree.addSibling("2.1");
@@ -49,13 +50,14 @@ BOOST_AUTO_TEST_CASE(test_get_names)
 
 BOOST_AUTO_TEST_CASE(test_assignment)
 {
-	DerivationTree tree;
+	ParameterTree tree;
 	tree.createRoot();
+	tree.addChild("");
 	tree.addChild("1");
 	tree.addChild("1.1");
 	tree.addSibling("1");
 	tree.addChild("2");
-	DerivationTree treeCopy;
+	ParameterTree treeCopy;
 	treeCopy.createRoot();
 	treeCopy.addChild("1");
 	treeCopy.addSibling("1.1");
@@ -76,7 +78,7 @@ BOOST_AUTO_TEST_CASE(test_assignment)
 
 BOOST_AUTO_TEST_CASE(test_nonexistent)
 {
-	DerivationTree tree;
+	ParameterTree tree;
 	tree.createRoot();
 	BOOST_TEST(tree.addChild("2") == nullptr);
 	BOOST_TEST(tree.addSibling("1.1") == nullptr);
@@ -85,11 +87,12 @@ BOOST_AUTO_TEST_CASE(test_nonexistent)
 
 BOOST_AUTO_TEST_CASE(test_structure)
 {
-	DerivationTree tree;
-	DerivationNode *node1 = tree.createRoot();
-	DerivationNode *node2 = tree.addSibling("1");
-	DerivationNode *node1_1 = tree.addChild("1");
-	DerivationNode *node1_2 = tree.addSibling("1.1");
+	ParameterTree tree;
+	ParameterRoot *root = tree.createRoot();
+	ParameterNode *node1 = tree.addChild("");
+	ParameterNode *node2 = tree.addSibling("1");
+	ParameterNode *node1_1 = tree.addChild("1");
+	ParameterNode *node1_2 = tree.addSibling("1.1");
 
 	BOOST_TEST(node2->getPrevSibling() == node1);
 	BOOST_TEST(node2->getNextSibling() == nullptr);
@@ -107,12 +110,13 @@ BOOST_AUTO_TEST_CASE(test_structure)
 
 BOOST_AUTO_TEST_CASE(test_remove_second_sibling)
 {
-	DerivationTree tree;
+	ParameterTree tree;
 	tree.createRoot();
+	tree.addChild("");
 	tree.addChild("1");
 	tree.addSibling("1.1");
 	BOOST_TEST(tree.remove("1.2"));
-	DerivationNode *node = tree.getRoot();
+	ParameterNode *node = tree.getRoot()->getNode();
 	BOOST_TEST(node);
 	BOOST_TEST(node->getChild());
 	BOOST_TEST(node->getChild()->getParent() == node);
@@ -123,12 +127,13 @@ BOOST_AUTO_TEST_CASE(test_remove_second_sibling)
 
 BOOST_AUTO_TEST_CASE(test_remove_first_sibling)
 {
-	DerivationTree tree;
+	ParameterTree tree;
 	tree.createRoot();
+	tree.addChild("");
 	tree.addChild("1");
 	tree.addSibling("1.1");
 	BOOST_TEST(tree.remove("1.1"));
-	DerivationNode *node = tree.getRoot();
+	ParameterNode *node = tree.getRoot()->getNode();
 	BOOST_TEST(node);
 	BOOST_TEST(node->getChild());
 	BOOST_TEST(node->getChild()->getParent() == node);

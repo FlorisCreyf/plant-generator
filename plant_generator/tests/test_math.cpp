@@ -71,7 +71,7 @@ BOOST_AUTO_TEST_CASE(test_rotate_around_axis, *bt::tolerance(tolerance))
 	BOOST_TEST(rotation1.w == rotation2.w);
 
 	Vec3 vec(0.0f, 0.0f, 1.0f);
-	vec = rotate(rotation2, vec, 0.0f);
+	vec = rotate(rotation2, vec);
 	BOOST_TEST(vec.x == 0.0f);
 	BOOST_TEST(vec.y == 0.0f);
 	BOOST_TEST(vec.z == -1.0f);

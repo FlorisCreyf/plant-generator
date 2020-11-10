@@ -15,6 +15,7 @@
 
 #include "intersection.h"
 #include "mat4.h"
+#include "quat.h"
 #include <cmath>
 #include <stdlib.h>
 #include <float.h>
