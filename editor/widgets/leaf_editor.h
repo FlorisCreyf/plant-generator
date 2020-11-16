@@ -18,9 +18,11 @@
 #ifndef LEAF_EDITOR_H
 #define LEAF_EDITOR_H
 
-#include "form.h"
+#include "editor.h"
+#include "../commands/save_stem.h"
+#include <QtWidgets>
 
-class LeafEditor : public Form {
+class LeafEditor : public QWidget {
 	Q_OBJECT
 
 public:

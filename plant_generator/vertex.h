@@ -33,17 +33,20 @@ namespace pg {
 	struct DVertex {
 		Vec3 position;
 		Vec3 normal;
+		Vec3 tangent;
+		float tangentScale;
 		Vec2 uv;
 		Vec2 indices;
 		Vec2 weights;
 
 		#ifdef PG_SERIALIZE
-		friend class boost::serialization::access;
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned)
 		{
 			ar & position;
 			ar & normal;
+			ar & tangent;
+			ar & tangentScale;
 			ar & uv;
 			ar & weights;
 			ar & indices;

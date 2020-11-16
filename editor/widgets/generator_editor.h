@@ -18,12 +18,12 @@
 #ifndef GENERATOR_EDITOR_H
 #define GENERATOR_EDITOR_H
 
-#include "form.h"
 #include "editor.h"
 #include "../commands/generate.h"
+#include <QtWidgets>
 #include <string>
 
-class GeneratorEditor : public Form {
+class GeneratorEditor : public QWidget {
 	Q_OBJECT
 
 	Editor *editor;

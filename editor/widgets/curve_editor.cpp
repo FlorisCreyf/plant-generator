@@ -48,13 +48,13 @@ void CurveEditor::createInterface(SharedResources *shared)
 	this->degree->addItem(QString("Cubic"));
 	this->degree->setFixedHeight(UI_FIELD_HEIGHT);
 	this->layout->addWidget(this->degree);
+	connect(this->degree,
+		QOverload<int>::of(&QComboBox::currentIndexChanged),
+		this, &CurveEditor::setDegree);
 
 	this->viewer = new CurveViewer(shared, this);
 	this->viewer->installEventFilter(this);
 	this->layout->addWidget(this->viewer);
-
-	connect(this->degree, SIGNAL(currentIndexChanged(int)),
-		this, SLOT(setDegree(int)));
 }
 
 QSize CurveEditor::sizeHint() const

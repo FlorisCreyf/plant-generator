@@ -33,7 +33,7 @@ AddStem::AddStem(
 void AddStem::create()
 {
 	Plant *plant = this->selection->getPlant();
-	Stem *stem;
+	Stem *stem = nullptr;
 	int pathDivisions = 1;
 	auto instances = this->selection->getStemInstances();
 	if (instances.size() == 1) {

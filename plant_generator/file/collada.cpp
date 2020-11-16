@@ -166,6 +166,16 @@ void setGeometry(XMLWriter &xml, const Mesh &mesh, const Plant &plant)
 	xml << "</library_geometries>";
 }
 
+void addImage(XMLWriter &xml, string path, const char *type)
+{
+	if (!path.empty()) {
+		string id = getName(path) + type;
+		xml >> ("<image id='" + id + "' name='" + id + "'>");
+		xml += "<init_from>" + path + "</init_from>";
+		xml << "</image>";
+	}
+}
+
 void setImages(XMLWriter &xml, const Mesh &mesh, const Plant &plant)
 {
 	xml >> "<library_images>";
@@ -175,17 +185,44 @@ void setImages(XMLWriter &xml, const Mesh &mesh, const Plant &plant)
 
 		unsigned materialIndex = mesh.getMaterialIndex(i);
 		Material material = plant.getMaterial(materialIndex);
-		if (material.getTexture().empty())
-			continue;
-
-		string path = material.getTexture();
-		string texture = getName(path);
-
-		xml >> ("<image id='" + texture + "' name='" + texture + "'>");
-		xml += "<init_from>" + path + "</init_from>";
-		xml << "</image>";
+		string path;
+		path = material.getTexture(Material::Albedo);
+		addImage(xml, path, "-albedo");
+		path = material.getTexture(Material::Opacity);
+		addImage(xml, path, "-opacity");
+		path = material.getTexture(Material::Specular);
+		addImage(xml, path, "-specular");
+		path = material.getTexture(Material::Normal);
+		addImage(xml, path, "-normal");
 	}
 	xml << "</library_images>";
+}
+
+void addSampler(XMLWriter &xml, string path, const char *type)
+{
+	if (!path.empty()) {
+		string name = getName(path) + type;
+		xml >> ("<newparam sid='" + name + "-surface'>");
+		xml >> "<surface type='2D'>";
+		xml += ("<init_from>" + name + "</init_from>");
+		xml << "</surface>";
+		xml << "</newparam>";
+
+		xml >> ("<newparam sid='" + name + "-sampler'>");
+		xml >> "<sampler2D>";
+		xml += ("<source>" + name + "-surface</source>");
+		xml << "</sampler2D>";
+		xml << "</newparam>";
+	}
+}
+
+void addTexture(XMLWriter &xml, string path, const char *type)
+{
+	if (!path.empty()) {
+		string name = getName(path) + type;
+		xml += ("<texture texcoord='UVMap' "
+			"texture='" + name + "-sampler'/>");
+	}
 }
 
 void setEffects(XMLWriter &xml, const Mesh &mesh, const Plant &plant)
@@ -197,35 +234,58 @@ void setEffects(XMLWriter &xml, const Mesh &mesh, const Plant &plant)
 
 		unsigned materialIndex = mesh.getMaterialIndex(i);
 		Material material = plant.getMaterial(materialIndex);
-		if (material.getTexture().empty())
-			continue;
+		string materialName = getMaterialName(materialIndex, plant);
+		string path;
 
-		std::string name = getMaterialName(materialIndex, plant);
-		string path = material.getTexture();
-		string texture = getName(path);
-
-		xml >> ("<effect id='" + name + "-effect'>");
+		xml >> ("<effect id='" + materialName + "-effect'>");
 		xml >> "<profile_COMMON>";
 
-		xml >> ("<newparam sid='" + texture + "-surface'>");
-		xml >> "<surface type='2D'>";
-		xml += ("<init_from>" + texture + "</init_from>");
-		xml << "</surface>";
-		xml << "</newparam>";
-
-		xml >> ("<newparam sid='" + texture + "-sampler'>");
-		xml >> "<sampler2D>";
-		xml += ("<source>" + texture + "-surface</source>");
-		xml << "</sampler2D>";
-		xml << "</newparam>";
+		path = material.getTexture(Material::Albedo);
+		addSampler(xml, path, "-albedo");
+		path = material.getTexture(Material::Opacity);
+		addSampler(xml, path, "-opacity");
+		path = material.getTexture(Material::Specular);
+		addSampler(xml, path, "-specular");
+		path = material.getTexture(Material::Normal);
+		addSampler(xml, path, "-normal");
 
 		xml >> "<technique sid='common'>";
-		xml >> "<lambert>";
+		xml >> "<blinn>";
+
+		xml >> "<ambient>";
+		Vec3 ambient = material.getAmbient();
+		xml += ("<color sid='ambient'>" + toString(ambient.x) + " " +
+			toString(ambient.y) + " " + toString(ambient.z) +
+			"</color>");
+		xml << "</ambient>";
+
 		xml >> "<diffuse>";
-		xml += ("<texture texcoord='UVMap' "
-			"texture='" + texture + "-sampler'/>");
+		path = material.getTexture(Material::Albedo);
+		addTexture(xml, path, "-albedo");
 		xml << "</diffuse>";
-		xml << "</lambert>";
+
+		xml >> "<transparent>";
+		path = material.getTexture(Material::Opacity);
+		addTexture(xml, path, "-opacity");
+		xml << "</transparent>";
+
+		xml >> "<specular>";
+		path = material.getTexture(Material::Specular);
+		addTexture(xml, path, "-specular");
+		xml << "</specular>";
+
+		xml >> "<shininess>";
+		xml += ("<float sid='shininess'>" +
+			toString(material.getShininess()) +
+			"</float>");
+		xml << "</shininess>";
+
+		xml >> "<bump>";
+		path = material.getTexture(Material::Normal);
+		addTexture(xml, path, "-normal");
+		xml << "</bump>";
+
+		xml << "</blinn>";
 		xml << "</technique>";
 
 		xml << "</profile_COMMON>";
@@ -243,15 +303,11 @@ void setMaterials(XMLWriter &xml, const Mesh &mesh, const Plant &plant)
 
 		unsigned materialIndex = mesh.getMaterialIndex(i);
 		string name = getMaterialName(materialIndex, plant);
+		string url = "#" + name + "-effect";
+
 		xml >> ("<material id='" + name + "-material' "
 			"name='" + name + "-material'>");
-
-		Material material = plant.getMaterial(materialIndex);
-		if (!material.getTexture().empty()) {
-			string url = "#" + name + "-effect";
-			xml += "<instance_effect url='" + url + "'/>";
-		}
-
+		xml += "<instance_effect url='" + url + "'/>";
 		xml << "</material>";
 	}
 	xml << "</library_materials>";

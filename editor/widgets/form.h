@@ -18,22 +18,11 @@
 #ifndef FORM_H
 #define FORM_H
 
-#include "editor.h"
-#include "editor/commands/save_stem.h"
-#include <QtWidgets>
+#include <QWidget>
+#include <QFormLayout>
 
-class Form : public QWidget {
-	Q_OBJECT
-public:
-	Form(QWidget *parent);	
-
-protected:
-	void setValueWidths(QFormLayout *layout);
-	void indicateDifferences(QWidget *widget);
-	void indicateSimilarities(QWidget *widget);
-
-private:
-	Editor *editor;
-};
+void setValueWidths(QFormLayout *layout);
+void indicateDifferences(QWidget *widget);
+void indicateSimilarities(QWidget *widget);
 
 #endif

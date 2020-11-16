@@ -18,8 +18,6 @@
 #ifndef EDITOR_H
 #define EDITOR_H
 
-#define PG_SERIALIZE
-
 #include "editor/camera.h"
 #include "editor/history.h"
 #include "editor/keymap.h"
@@ -144,7 +142,7 @@ private:
 	void paintOutline(const pg::Mat4 &, const pg::Vec3 &);
 	void paintWire(const pg::Mat4 &);
 	void paintSolid(const pg::Mat4 &, const pg::Vec3 &);
-	void paintMaterial(const pg::Mat4 &);
+	void paintMaterial(const pg::Mat4 &, const pg::Vec3 &);
 	void paintAxes();
 	void resizeGL(int, int);
 	void selectStem(QMouseEvent *);

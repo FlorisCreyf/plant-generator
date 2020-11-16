@@ -17,6 +17,7 @@
 
 #include "leaf_editor.h"
 #include "definitions.h"
+#include "form.h"
 #include <iterator>
 #include <string>
 
@@ -30,7 +31,7 @@ using std::map;
 
 LeafEditor::LeafEditor(
 	SharedResources *shared, Editor *editor, QWidget *parent) :
-	Form(parent)
+	QWidget(parent)
 {
 	this->shared = shared;
 	this->editor = editor;
@@ -65,52 +66,56 @@ void LeafEditor::createInterface()
 	this->scaleXValue->setMinimum(0.01);
 	this->scaleXValue->setSingleStep(0.1);
 	form->addRow(this->scaleXLabel, this->scaleXValue);
+	connect(this->scaleXValue,
+		QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+		this, &LeafEditor::changeXScale);
+	connect(this->scaleXValue, &QDoubleSpinBox::editingFinished,
+		this, &LeafEditor::finishChanging);
 
 	this->scaleYLabel = new QLabel("Scale.Y");
 	this->scaleYValue = new QDoubleSpinBox;
 	this->scaleYValue->setMinimum(0.01);
 	this->scaleYValue->setSingleStep(0.1);
 	form->addRow(this->scaleYLabel, this->scaleYValue);
+	connect(this->scaleYValue,
+		QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+		this, &LeafEditor::changeYScale);
+	connect(this->scaleYValue, &QDoubleSpinBox::editingFinished,
+		this, &LeafEditor::finishChanging);
 
 	this->scaleZLabel = new QLabel("Scale.Z");
 	this->scaleZValue = new QDoubleSpinBox;
 	this->scaleZValue->setMinimum(0.01);
 	this->scaleZValue->setSingleStep(0.1);
 	form->addRow(this->scaleZLabel, this->scaleZValue);
+	connect(this->scaleZValue,
+		QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+		this, &LeafEditor::changeZScale);
+	connect(this->scaleZValue, &QDoubleSpinBox::editingFinished,
+		this, &LeafEditor::finishChanging);
 
 	this->materialLabel = new QLabel("Material");
 	this->materialValue = new QComboBox;
 	form->addRow(this->materialLabel, this->materialValue);
+	connect(this->materialValue,
+		QOverload<int>::of(&QComboBox::currentIndexChanged),
+		this, &LeafEditor::changeLeafMaterial);
 
 	this->meshLabel = new QLabel("Mesh");
 	this->meshValue = new QComboBox;
 	form->addRow(this->meshLabel, this->meshValue);
+	connect(this->meshValue,
+		QOverload<int>::of(&QComboBox::currentIndexChanged),
+		this, &LeafEditor::changeLeafMesh);
 
 	this->customLabel = new QLabel("Manual");
 	this->customValue = new QCheckBox;
 	form->addRow(this->customLabel, this->customValue);
+	connect(this->customValue, &QCheckBox::stateChanged,
+		this, &LeafEditor::changeCustom);
 
 	enable(false);
 	setValueWidths(form);
-
-	connect(this->customValue, SIGNAL(stateChanged(int)),
-		this, SLOT(changeCustom(int)));
-	connect(this->scaleXValue, SIGNAL(valueChanged(double)),
-		this, SLOT(changeXScale(double)));
-	connect(this->scaleXValue, SIGNAL(editingFinished()),
-		this, SLOT(finishChanging()));
-	connect(this->scaleYValue, SIGNAL(valueChanged(double)),
-		this, SLOT(changeYScale(double)));
-	connect(this->scaleYValue, SIGNAL(editingFinished()),
-		this, SLOT(finishChanging()));
-	connect(this->scaleZValue, SIGNAL(valueChanged(double)),
-		this, SLOT(changeZScale(double)));
-	connect(this->scaleZValue, SIGNAL(editingFinished()),
-		this, SLOT(finishChanging()));
-	connect(this->materialValue, SIGNAL(currentIndexChanged(int)),
-		this, SLOT(changeLeafMaterial()));
-	connect(this->meshValue, SIGNAL(currentIndexChanged(int)),
-		this, SLOT(changeLeafMesh()));
 }
 
 void LeafEditor::setFields(map<Stem *, set<size_t>> instances)
@@ -361,7 +366,6 @@ void LeafEditor::finishChanging()
 	if (this->saveStem && !this->saveStem->isSameAsCurrent()) {
 		this->saveStem->setNewSelection();
 		this->editor->add(this->saveStem);
-		/* The history will delete the command. */
 		this->saveStem = nullptr;
 	}
 }

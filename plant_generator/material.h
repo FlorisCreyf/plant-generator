@@ -24,9 +24,35 @@
 
 namespace pg {
 	class Material {
+	public:
+		enum Type {
+			Albedo,
+			Opacity,
+			Normal,
+			Specular,
+			MapQuantity
+		};
+
+		Material();
+		void setName(const char *name);
+		void setName(std::string name);
+		std::string getName() const;
+		void setTexture(const char *file, int index);
+		void setTexture(std::string file, int index);
+		std::string getTexture(int index) const;
+		void setRatio(float ratio);
+		float getRatio() const;
+		void setShininess(float shininess);
+		float getShininess() const;
+		void setAmbient(Vec3 ambient);
+		Vec3 getAmbient() const;
+
+	private:
 		std::string name;
-		std::string texture;
+		std::string textures[MapQuantity];
 		float ratio = 1.0f;
+		float shininess;
+		Vec3 ambient;
 
 		#ifdef PG_SERIALIZE
 		friend class boost::serialization::access;
@@ -34,20 +60,12 @@ namespace pg {
 		void serialize(Archive &ar, const unsigned)
 		{
 			ar & name;
-			ar & texture;
+			ar & textures;
 			ar & ratio;
+			ar & shininess;
+			ar & ambient;
 		}
 		#endif
-
-	public:
-		void setName(const char *name);
-		void setName(std::string name);
-		std::string getName() const;
-		void setTexture(const char *file);
-		void setTexture(std::string file);
-		std::string getTexture() const;
-		void setRatio(float ratio);
-		float getRatio() const;
 	};
 }
 

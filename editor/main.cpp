@@ -2,6 +2,8 @@
 #include <QApplication>
 #include <QStyleFactory>
 
+#define PG_SERIALIZE
+
 int main(int argc, char *argv[])
 {
 	QSurfaceFormat format;

@@ -39,12 +39,11 @@ void Geometry::addIndex(unsigned index)
 	indices.push_back(index);
 }
 
-void Geometry::addPoint(Vec3 point, Vec3 color, Vec2 uv)
+void Geometry::addPoint(Vec3 point, Vec3 normal)
 {
 	DVertex vertex;
 	vertex.position = point;
-	vertex.normal = color;
-	vertex.uv = uv;
+	vertex.normal = normal;
 	this->points.push_back(vertex);
 }
 
@@ -79,12 +78,25 @@ void Geometry::addCurve(const pg::Spline &spline, Vec3 color, int size)
 	}
 }
 
-void Geometry::addPlane(Vec3 a, Vec3 b, Vec3 c, Vec3 color)
+void Geometry::addPlane(Vec3 a, Vec3 b, Vec3 c, Vec3 normal, Vec3 tangent)
 {
-	addPoint(c, color, Vec2(0.0f, 0.0f));
-	addPoint(c + a, color, Vec2(1.0f, 0.0f));
-	addPoint(c + b, color, Vec2(0.0f, 1.0f));
-	addPoint(c + a + b, color, Vec2(1.0f, 1.0f));
+	DVertex vertex;
+	vertex.normal = normal;
+	vertex.tangent = tangent;
+	vertex.tangentScale = 1.0f;
+
+	vertex.position = c;
+	vertex.uv = Vec2(0.0f, 0.0f);
+	this->points.push_back(vertex);
+	vertex.position = c + a;
+	vertex.uv = Vec2(1.0f, 0.0f);
+	this->points.push_back(vertex);
+	vertex.position = c + b;
+	vertex.uv = Vec2(0.0f, 1.0f);
+	this->points.push_back(vertex);
+	vertex.position = c + a + b;
+	vertex.uv = Vec2(1.0f, 1.0f);
+	this->points.push_back(vertex);
 
 	indices.push_back(0);
 	indices.push_back(1);

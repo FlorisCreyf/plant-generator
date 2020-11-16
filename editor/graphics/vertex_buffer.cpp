@@ -140,20 +140,33 @@ void VertexBuffer::setVertexFormat()
 {
 	GLsizei stride = sizeof(DVertex);
 	GLvoid *ptr = (GLvoid *)(offsetof(DVertex, position));
+
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, ptr);
 	glEnableVertexAttribArray(0);
+
 	ptr = (GLvoid *)(offsetof(DVertex, normal));
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, ptr);
 	glEnableVertexAttribArray(1);
-	ptr = (GLvoid *)(offsetof(DVertex, uv));
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, ptr);
+
+	ptr = (GLvoid *)(offsetof(DVertex, tangent));
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, stride, ptr);
 	glEnableVertexAttribArray(2);
-	ptr = (GLvoid *)(offsetof(DVertex, indices));
-	glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, stride, ptr);
+
+	ptr = (GLvoid *)(offsetof(DVertex, tangentScale));
+	glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, stride, ptr);
 	glEnableVertexAttribArray(3);
-	ptr = (GLvoid *)(offsetof(DVertex, weights));
+
+	ptr = (GLvoid *)(offsetof(DVertex, uv));
 	glVertexAttribPointer(4, 2, GL_FLOAT, GL_FALSE, stride, ptr);
 	glEnableVertexAttribArray(4);
+
+	ptr = (GLvoid *)(offsetof(DVertex, indices));
+	glVertexAttribPointer(5, 2, GL_FLOAT, GL_FALSE, stride, ptr);
+	glEnableVertexAttribArray(5);
+
+	ptr = (GLvoid *)(offsetof(DVertex, weights));
+	glVertexAttribPointer(6, 2, GL_FLOAT, GL_FALSE, stride, ptr);
+	glEnableVertexAttribArray(6);
 }
 
 void VertexBuffer::use()

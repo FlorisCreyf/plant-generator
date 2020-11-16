@@ -28,8 +28,8 @@ GeneratorCurveEditor::GeneratorCurveEditor(
 	createInterface(shared);
 	this->degree->installEventFilter(this);
 	this->degree->view()->installEventFilter(this);
-	connect(this->editor, SIGNAL(selectionChanged()),
-		this, SLOT(setFields()));
+	connect(this->editor, &Editor::selectionChanged,
+		this, &GeneratorCurveEditor::setFields);
 }
 
 void GeneratorCurveEditor::createSelectionBar()
@@ -37,8 +37,9 @@ void GeneratorCurveEditor::createSelectionBar()
 	this->nodeSelectionBox = new QComboBox(this);
 	this->nodeSelectionBox->installEventFilter(this);
 	this->layout->addWidget(this->nodeSelectionBox);
-	connect(this->nodeSelectionBox, SIGNAL(currentIndexChanged(int)),
-		this, SLOT(select()));
+	connect(this->nodeSelectionBox,
+		QOverload<int>::of(&QComboBox::currentIndexChanged),
+		this, &GeneratorCurveEditor::select);
 
 	this->selectionBox = new QComboBox(this);
 	this->selectionBox->addItem("Stem Density");
@@ -46,8 +47,9 @@ void GeneratorCurveEditor::createSelectionBar()
 	this->selectionBox->installEventFilter(this);
 	this->selectionBox->view()->installEventFilter(this);
 	this->layout->addWidget(this->selectionBox);
-	connect(this->selectionBox, SIGNAL(currentIndexChanged(int)),
-		this, SLOT(select()));
+	connect(this->selectionBox,
+		QOverload<int>::of(&QComboBox::currentIndexChanged),
+		this, &GeneratorCurveEditor::select);
 }
 
 void GeneratorCurveEditor::setFields()
@@ -164,7 +166,6 @@ bool GeneratorCurveEditor::eventFilter(QObject *object, QEvent *event)
 		bool focused = isDescendant(QApplication::focusWidget());
 		if (!focused && this->generate) {
 			this->editor->add(this->generate);
-			/* The history will delete the command. */
 			this->generate = nullptr;
 		}
 	}

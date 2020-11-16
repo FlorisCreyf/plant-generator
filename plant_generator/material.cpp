@@ -15,42 +15,71 @@
 
 #include "material.h"
 
-void pg::Material::setName(const char *name)
+using pg::Material;
+using pg::Vec3;
+
+Material::Material()
+{
+	this->shininess = 16.0f;
+	this->ambient = Vec3(0.1f, 0.1f, 0.1f);
+}
+
+void Material::setName(const char *name)
 {
 	this->name = name;
 }
 
-void pg::Material::setName(std::string name)
+void Material::setName(std::string name)
 {
 	this->name = name;
 }
 
-std::string pg::Material::getName() const
+std::string Material::getName() const
 {
 	return name;
 }
 
-void pg::Material::setTexture(const char *file)
+void Material::setTexture(const char *file, int index)
 {
-	this->texture = file;
+	this->textures[index] = file;
 }
 
-void pg::Material::setTexture(std::string file)
+void Material::setTexture(std::string file, int index)
 {
-	this->texture = file;
+	this->textures[index] = file;
 }
 
-std::string pg::Material::getTexture() const
+std::string Material::getTexture(int index) const
 {
-	return texture;
+	return this->textures[index];
 }
 
-void pg::Material::setRatio(float ratio)
+void Material::setRatio(float ratio)
 {
 	this->ratio = ratio;
 }
 
-float pg::Material::getRatio() const
+float Material::getRatio() const
 {
 	return ratio;
+}
+
+void Material::setShininess(float shininess)
+{
+	this->shininess = shininess;
+}
+
+float Material::getShininess() const
+{
+	return this->shininess;
+}
+
+void Material::setAmbient(Vec3 ambient)
+{
+	this->ambient = ambient;
+}
+
+Vec3 Material::getAmbient() const
+{
+	return this->ambient;
 }

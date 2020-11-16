@@ -40,18 +40,24 @@ public:
 		DynamicOutline,
 		Point,
 		Line,
-		Flat
+		Flat,
+		ShaderQuantity
 	};
 	enum Texture {
 		DotTexture,
-		DefaultTexture
+		BlackTexture,
+		WhiteTexture,
+		BlueTexture,
+		TextureQuantity
 	};
 
 	SharedResources();
 	void initialize();
 	GLuint getShader(Shader shader);
 	GLuint getTexture(Texture texture);
-	GLuint addTexture(const QImage &image);
+	GLuint addTexture(
+		const QImage &image, GLenum baseformat, GLenum sizeformat);
+	GLuint addDefaultTexture(const unsigned char color[3]);
 	void removeTexture(GLuint texture);
 
 	unsigned addMaterial(ShaderParams params);
@@ -68,10 +74,9 @@ signals:
 	void materialRemoved(unsigned index);
 
 private:
-	GLuint programs[11];
-	GLuint textures[2];
+	GLuint programs[ShaderQuantity];
+	GLuint textures[TextureQuantity];
 	bool initialized;
-	ShaderParams defaultMaterial;
 	std::vector<ShaderParams> materials;
 	QOffscreenSurface surface;
 

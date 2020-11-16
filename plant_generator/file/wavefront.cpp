@@ -35,9 +35,23 @@ string Wavefront::exportMaterials(string filename, const Plant &plant)
 
 	for (Material &material : plant.getMaterials()) {
 		file << "newmtl " << material.getName() << "\n";
-		string diffuse = material.getTexture();
-		if (!diffuse.empty())
-			file << "map_Kd " << diffuse << "\n";
+
+		Vec3 ka = material.getAmbient();
+		file << "Ka " << ka.x << " " << ka.y << " " << ka.z << "\n";
+		file << "Na " << material.getShininess() << "\n";
+
+		string albedo = material.getTexture(Material::Albedo);
+		string opacity = material.getTexture(Material::Opacity);
+		string specular = material.getTexture(Material::Specular);
+		string normal = material.getTexture(Material::Normal);
+		if (!albedo.empty())
+			file << "map_Kd " << albedo << "\n";
+		if (!opacity.empty())
+			file << "map_d" << opacity << "\n";
+		if (!specular.empty())
+			file << "map_Ks " << specular << "\n";
+		if (!normal.empty())
+			file << "map_bump " << normal << "\n";
 	}
 
 	file.close();
@@ -175,12 +189,10 @@ void Wavefront::importFile(const char *filename, Geometry *geom)
 		}
 
 		if (shape.size() == 3) {
-			/* Insert a triangle. */
 			indices.push_back(shape[0]);
 			indices.push_back(shape[1]);
 			indices.push_back(shape[2]);
 		} else if (shape.size() == 4) {
-			/* Convert a rectangle into two triangles. */
 			indices.push_back(shape[0]);
 			indices.push_back(shape[1]);
 			indices.push_back(shape[2]);
@@ -192,4 +204,5 @@ void Wavefront::importFile(const char *filename, Geometry *geom)
 	}
 	geom->setPoints(points);
 	geom->setIndices(indices);
+	geom->computeTangents();
 }

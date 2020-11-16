@@ -37,28 +37,30 @@ void PropertyCurveEditor::createSelectionBar()
 	QPushButton *addButton = new QPushButton("+", this);
 	addButton->setFixedHeight(UI_FIELD_HEIGHT);
 	addButton->setFixedWidth(UI_FIELD_HEIGHT);
+	connect(addButton, &QPushButton::clicked,
+		this, QOverload<>::of(&PropertyCurveEditor::add));
 
 	QPushButton *removeButton = new QPushButton("-", this);
 	removeButton->setFixedHeight(UI_FIELD_HEIGHT);
 	removeButton->setFixedWidth(UI_FIELD_HEIGHT);
+	connect(removeButton, &QPushButton::clicked,
+		this, &PropertyCurveEditor::remove);
 
 	this->selectionBox = new QComboBox(this);
 	this->selectionBox->setEditable(true);
 	this->selectionBox->setInsertPolicy(QComboBox::InsertAtCurrent);
 	this->selectionBox->setItemDelegate(new ItemDelegate());
+	connect(this->selectionBox,
+		QOverload<int>::of(&QComboBox::currentIndexChanged),
+		this, &PropertyCurveEditor::select);
+	connect(this->selectionBox->lineEdit(), &QLineEdit::editingFinished,
+		this, &PropertyCurveEditor::rename);
 
 	row->addWidget(this->selectionBox);
 	row->addWidget(removeButton);
 	row->addWidget(addButton);
 	row->setAlignment(Qt::AlignTop);
 	this->layout->addLayout(row);
-
-	connect(this->selectionBox, SIGNAL(currentIndexChanged(int)),
-		this, SLOT(select()));
-	connect(this->selectionBox->lineEdit(), SIGNAL(editingFinished()),
-		this, SLOT(rename()));
-	connect(addButton, SIGNAL(clicked()), this, SLOT(add()));
-	connect(removeButton, SIGNAL(clicked()), this, SLOT(remove()));
 }
 
 void PropertyCurveEditor::reset()

@@ -1,10 +1,12 @@
 #version 430 core
 
-layout(location = 0) in vec4 point;
-layout(location = 1) in vec4 normal;
-layout(location = 2) in vec2 tex;
-layout(location = 3) in vec2 indices;
-layout(location = 4) in vec2 weights;
+layout(location = 0) in vec3 position;
+layout(location = 1) in vec3 normal;
+layout(location = 2) in vec3 tangent;
+layout(location = 3) in float tangentScale;
+layout(location = 4) in vec2 uv;
+layout(location = 5) in vec2 indices;
+layout(location = 6) in vec2 weights;
 layout(location = 0) uniform mat4 vp;
 
 #ifdef DYNAMIC
@@ -32,11 +34,11 @@ vec4 conjugateQuat(vec4 q)
 	return vec4(-q.x, -q.y, -q.z, q.w);
 }
 
-vec4 getAnimatedPoint()
+vec4 getAnimatedPoint(vec4 v)
 {
 	Joint joint;
-	vec4 v1 = point;
-	vec4 v2 = point;
+	vec4 v1 = v;
+	vec4 v2 = v;
 
 	joint = joints[int(indices.x)];
 	v1 -= joint.translation1;
@@ -53,66 +55,77 @@ vec4 getAnimatedPoint()
 	return weights.x*v1 + weights.y*v2;
 }
 
-#endif /* DYNAMIC */
+#endif
 #ifdef SOLID
 
+layout(location = 2) uniform mat4 view;
+layout(location = 3) uniform mat4 projection;
+
 out vec3 vertexPosition;
+out vec3 vertexNormal;
 
 void main()
 {
-	vec4 vertex = point;
-	#ifdef DYNAMIC
-	vertex = getAnimatedPoint();
-	#endif /* DYNAMIC */
-	gl_Position = vp * vertex;
-	vertexPosition = vec3(vertex) / point.w;
+	vec4 tp = vec4(position, 1.0);
+#ifdef DYNAMIC
+	tp = getAnimatedPoint(tp);
+#endif
+	vertexPosition = tp.xyz;
+	vertexNormal = normal;
+	gl_Position = vp * tp;
 }
 
-#endif /* SOLID */
+#endif
 #ifdef WIREFRAME
 
-layout(location = 1) uniform vec4 color;
 out vec4 vertexColor;
 
 void main()
 {
-	vec4 vertex = point;
-	#ifdef DYNAMIC
-	vertex = getAnimatedPoint();
-	#endif /* DYNAMIC */
-	vertexColor = color;
-	gl_Position = vp * vertex;
+	vec4 tp = vec4(position, 1.0);
+#ifdef DYNAMIC
+	tp = getAnimatedPoint(tp);
+#endif
+	vertexColor = vec4(0.13, 0.13, 0.13, 1.0);
+	gl_Position = vp * tp;
 }
 
-#endif /* WIREFRAME */
+#endif
 #ifdef MATERIAL
 
-out vec2 vertTexCoord;
+out vec3 vertexPosition;
+out vec3 vertexNormal;
+out vec2 vertexUV;
+out mat3 tbn;
 
 void main()
 {
-	vec4 vertex = point;
-	#ifdef DYNAMIC
-	vertex = getAnimatedPoint();
-	#endif /* DYNAMIC */
-	vertTexCoord = tex;
-	gl_Position = vp * vertex;
+	vec4 tp = vec4(position, 1.0);
+	vec3 tn = normal;
+#ifdef DYNAMIC
+	tp = getAnimatedPoint(tp);
+#endif
+	gl_Position = vp * tp;
+	vertexPosition = tp.xyz;
+	vertexNormal = tn;
+	vertexUV = uv;
+	vec3 bitangent = cross(tangent, normal);
+	tbn = mat3(tangent, bitangent, normal);
 }
 
-#endif /* MATERIAL */
+#endif
 #ifdef OUTLINE
 
 layout(location = 2) uniform int thickness;
 
 void main()
 {
-	vec4 vertex = point;
-	#ifdef DYNAMIC
+	vec4 tp = vec4(position, 1.0);
+#ifdef DYNAMIC
 	if (thickness == 0)
-		vertex = getAnimatedPoint();
-	#endif /* DYNAMIC */
-	gl_Position = vp * vertex;
+		tp = getAnimatedPoint(tp);
+#endif
+	gl_Position = vp * tp;
 }
 
-
-#endif /* OUTLINE */
+#endif

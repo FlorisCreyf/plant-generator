@@ -26,10 +26,9 @@ MaterialViewer::MaterialViewer(SharedResources *shared, QWidget *parent) :
 	QOpenGLWidget(parent)
 {
 	this->shared = shared;
-
+	this->materialIndex = 0;
 	setFocusPolicy(Qt::StrongFocus);
 	setMouseTracking(true);
-
 	camera.setTarget(Vec3(0.5f, 0.0f, 0.5f));
 	camera.setOrientation(180.0f, -180.0f);
 	camera.setDistance(0.8f);
@@ -53,9 +52,10 @@ void MaterialViewer::createInterface()
 	Geometry plane;
 	Vec3 a(1.0f, 0.0f, 0.0f);
 	Vec3 b(0.0f, 0.0f, 1.0f);
-	Vec3 center(0.0f, 0.0f, 0.0f);
-	Vec3 color(0.34f, 0.34f, 0.34f);
-	plane.addPlane(a, b, center, color);
+	Vec3 c(0.0f, 0.0f, 0.0f);
+	Vec3 normal(0.0f, 0.0f, 1.0f);
+	Vec3 tangent(0.0f, 1.0f, 0.0f);
+	plane.addPlane(a, b, c, normal, tangent);
 	planeSegment = plane.getSegment();
 	buffer.update(plane);
 }
@@ -85,8 +85,9 @@ void MaterialViewer::paintGL()
 	glClearDepth(1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	camera.updateVP();
+	this->camera.updateVP();
 	ShaderParams params = shared->getMaterial(this->materialIndex);
+	pg::Material material = params.getMaterial();
 
 	float aspect = params.getMaterial().getRatio();
 	Mat4 scale;
@@ -94,22 +95,37 @@ void MaterialViewer::paintGL()
 		scale = pg::scale(Vec3(1.0f, 1.0f/aspect, 1.0f));
 	else
 		scale = pg::scale(Vec3(aspect, 1.0f, 1.0f));
-	Mat4 vp = scale * camera.getVP();
 	buffer.use();
 	glUseProgram(shared->getShader(SharedResources::Material));
-	glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
 
-	GLuint texture = params.getTexture(0);
-	if (texture == 0)
-		texture = shared->getTexture(SharedResources::DefaultTexture);
+	Mat4 projection = scale * this->camera.getVP();
+	Vec3 position = this->camera.getPosition();
+	glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
+	glUniform3f(1, position.x, position.y, position.z);
+
+	float shininess = material.getShininess();
+	Vec3 ambient = material.getAmbient();
+	glUniform3f(2, ambient.x, ambient.y, ambient.z);
+	glUniform1f(3, shininess);
+
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texture);
+	glBindTexture(GL_TEXTURE_2D, params.getTexture(pg::Material::Albedo));
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, params.getTexture(pg::Material::Opacity));
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, params.getTexture(pg::Material::Specular));
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, params.getTexture(pg::Material::Normal));
 
 	auto size = sizeof(unsigned);
 	GLvoid *start = (GLvoid *)(planeSegment.istart * size);
 	GLsizei count = planeSegment.icount;
 	glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, start);
 
+	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_TRUE);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 	glFlush();
 }
 

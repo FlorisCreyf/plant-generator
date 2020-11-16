@@ -71,7 +71,7 @@ void MeshViewer::paintGL()
 	buffer.use();
 	glUseProgram(shared->getShader(SharedResources::Solid));
 	glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
-	glUniform4f(1, cp.x, cp.y, cp.z, 0.0f);
+	glUniform3f(1, cp.x, cp.y, cp.z);
 	glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, 0);
 	glFlush();
 }

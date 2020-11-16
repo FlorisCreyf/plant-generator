@@ -5,33 +5,21 @@ out vec4 fragmentColor;
 #ifdef SOLID
 
 in vec3 vertexPosition;
-layout(location = 1) uniform vec4 cameraPosition;
+in vec3 vertexNormal;
+layout(location = 1) uniform vec3 cameraPosition;
 
 void main()
 {
-	vec3 ambientColor = vec3(0.2, 0.2, 0.2);
-	vec3 diffuseColor = vec3(0.5, 0.5, 0.5);
-	vec3 specColor = vec3(0.5, 0.5, 0.5);
-
+	vec3 ambient = vec3(0.2, 0.2, 0.2);
+	vec3 albedo = vec3(0.6, 0.6, 0.6);
 	vec3 normal = cross(dFdx(vertexPosition), dFdy(vertexPosition));
 	normal = normalize(normal);
-	vec3 lightDir = normalize(cameraPosition.xyz - vertexPosition);
-	float lambertian = max(dot(lightDir, normal), 0.1);
-	float specular = 0.0;
-
-	if (lambertian > 0.0) {
-		vec3 viewDir = normalize(-cameraPosition.xyz);
-		vec3 halfDir = normalize(lightDir + viewDir);
-		float specAngle = max(dot(halfDir, normal), 0);
-		specular = pow(specAngle, 16.0);
-	}
-
-	diffuseColor *= lambertian;
-	specColor *= specular;
-	fragmentColor = vec4(ambientColor + diffuseColor + specColor, 1.0);
+	vec3 lightDirection = normalize(cameraPosition - vertexPosition);
+	float angle = abs(dot(lightDirection, normal));
+	fragmentColor = vec4(ambient + angle * albedo, 1.0);
 }
 
-#endif /* SOLID */
+#endif
 #ifdef WIREFRAME
 
 in vec4 vertexColor;
@@ -41,21 +29,44 @@ void main()
 	fragmentColor = vertexColor;
 }
 
-#endif /* WIREFRAME */
+#endif
 #ifdef MATERIAL
 
-in vec2 vertTexCoord;
-uniform sampler2D image;
+in vec3 vertexPosition;
+in vec3 vertexNormal;
+in vec2 vertexUV;
+in mat3 tbn;
+layout(location = 1) uniform vec3 cameraPosition;
+layout(location = 2) uniform vec3 ambient;
+layout(location = 3) uniform float shininess;
+layout(binding = 0) uniform sampler2D albedoMap;
+layout(binding = 1) uniform sampler2D opacityMap;
+layout(binding = 2) uniform sampler2D specularMap;
+layout(binding = 3) uniform sampler2D normalMap;
 
 void main()
 {
-	vec4 color = texture(image, vertTexCoord);
-	if(color.a < 0.1)
+	vec3 normal = texture(normalMap, vertexUV).rgb * 2.0 - 1.0;
+	normal = normalize(tbn * normal);
+	vec3 lightDirection = normalize(cameraPosition - vertexPosition);
+	float diffuseAngle = abs(dot(lightDirection, normal));
+
+	vec3 reflection = reflect(-lightDirection, normal);
+	float specular = max(dot(lightDirection, reflection), 0.0);
+	specular = pow(specular, shininess);
+
+	vec4 color = vec4(ambient, 1.0);
+	color += texture(albedoMap, vertexUV) * diffuseAngle;
+	color += texture(specularMap, vertexUV) * specular;
+
+	vec4 opacity = texture(opacityMap, vertexUV);
+	color.a = opacity.r;
+	if (color.a < 0.5)
 		discard;
 	fragmentColor = color;
 }
 
-#endif /* MATERIAL */
+#endif
 #ifdef OUTLINE
 
 layout(location = 2) uniform int thickness;
@@ -91,9 +102,9 @@ void drawOutline()
 	}
 
 	if (color.r == 0.0)
-		fragmentColor = vec4(0.102f, 0.212f, 0.6f, result);
+		fragmentColor = vec4(0.102, 0.212, 0.6, result);
 	else if (color.r > 0.0)
-		fragmentColor = vec4(0.102f, 0.212f, 0.6f, 1.0 - color.r);
+		fragmentColor = vec4(0.102, 0.212, 0.6, 1.0f - color.r);
 	else
 		fragmentColor = vec4(0.0, 0.0, 0.0, 0.0);
 }
@@ -106,4 +117,4 @@ void main()
 		drawSilhouette();
 }
 
-#endif /* OUTLINE */
+#endif

@@ -31,11 +31,20 @@ class MaterialEditor : public QWidget {
 	MaterialViewer *materialViewer;
 	SharedResources *shared;
 
+	enum {
+		Shininess,
+		AmbientR,
+		AmbientG,
+		AmbientB,
+		FieldQuantity
+	};
+
 	QVBoxLayout *layout;
 	QComboBox *selectionBox;
-	QLineEdit *diffuseBox;
-	QPushButton *addDiffuseButton;
-	QPushButton *removeDiffuseButton;
+	QLineEdit *fileField[pg::Material::MapQuantity];
+	QPushButton *addButton[pg::Material::MapQuantity];
+	QPushButton *removeButton[pg::Material::MapQuantity];
+	QDoubleSpinBox *fields[FieldQuantity];
 
 	void initFields(QFormLayout *form);
 	void createSelectionBar();
@@ -51,12 +60,15 @@ public:
 	QSize sizeHint() const;
 
 public slots:
-	void add();
-	void select();
+	void addEmpty();
+	void select(int index);
 	void rename();
 	void remove();
-	void openDiffuseFile();
-	void removeDiffuseFile();
+	void change();
+	void clearFields();
+	void fillFields(const pg::Material &material);
+	void openFile(int index);
+	void removeFile(int index);
 };
 
 #endif /* MATERIAL_EDITOR_H */

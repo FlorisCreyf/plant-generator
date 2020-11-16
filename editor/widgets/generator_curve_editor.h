@@ -37,7 +37,7 @@ class GeneratorCurveEditor : public CurveEditor {
 	bool isDescendant(QWidget *);
 	void updateParameterTree();
 
-private slots:
+public slots:
 	void setFields();
 	void select();
 

@@ -22,10 +22,13 @@
 #include <sstream>
 #include <iostream>
 
+using pg::Material;
+
 SharedResources::SharedResources()
 {
 	this->initialized = false;
-	this->textures[0] = this->textures[1] = 0;
+	for (int i = 0; i < TextureQuantity; i++)
+		this->textures[i] = 0;
 }
 
 void SharedResources::initialize()
@@ -34,15 +37,25 @@ void SharedResources::initialize()
 		initializeOpenGLFunctions();
 		createPrograms();
 
-		QImage image1("resources/dot.png");
-		this->textures[DotTexture] = addTexture(image1);
-		QImage image2("resources/default.png");
-		this->textures[DefaultTexture] = addTexture(image2);
+		QImage img("resources/dot.png");
+		this->textures[DotTexture] = addTexture(img, GL_RGBA, GL_RGBA8);
+		unsigned char black[3] = {0, 0, 0};
+		unsigned char white[3] = {255, 255, 255};
+		unsigned char blue[3] = {127, 127, 255};
+		this->textures[BlackTexture] = addDefaultTexture(black);
+		this->textures[WhiteTexture] = addDefaultTexture(white);
+		this->textures[BlueTexture] = addDefaultTexture(blue);
 
 		for (ShaderParams &param : this->materials)
 			if (!param.isValid()) {
-				GLuint tex = this->textures[DefaultTexture];
-				param.setDefaultTexture(0, tex);
+				param.setDefaultTexture(Material::Albedo,
+					this->textures[BlackTexture]);
+				param.setDefaultTexture(Material::Opacity,
+					this->textures[WhiteTexture]);
+				param.setDefaultTexture(Material::Normal,
+					this->textures[BlueTexture]);
+				param.setDefaultTexture(Material::Specular,
+					this->textures[WhiteTexture]);
 				param.initialize();
 			}
 
@@ -119,26 +132,36 @@ void SharedResources::createPrograms()
 	this->programs[Shader::Point] = buildProgram(shaders, 2);
 }
 
-GLuint SharedResources::addTexture(const QImage &image)
+GLuint SharedResources::addTexture(
+	const QImage &image, GLenum baseformat, GLenum sizeformat)
 {
 	GLuint name;
 	GLsizei width = image.width();
 	GLsizei height = image.height();
-
 	glGenTextures(1, &name);
-	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, name);
-
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-	glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, width, height);
+	glTexStorage2D(GL_TEXTURE_2D, 1, sizeformat, width, height);
 	glTexSubImage2D(
-		GL_TEXTURE_2D, 0, 0, 0, width, height, GL_BGRA,
+		GL_TEXTURE_2D, 0, 0, 0, width, height, baseformat,
 		GL_UNSIGNED_BYTE, image.bits());
+	return name;
+}
 
+GLuint SharedResources::addDefaultTexture(const unsigned char color[3])
+{
+	GLuint name;
+	GLsizei width = 1;
+	GLsizei height = 1;
+	glGenTextures(1, &name);
+	glBindTexture(GL_TEXTURE_2D, name);
+	glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGB8, width, height);
+	glTexSubImage2D(
+		GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGB,
+		GL_UNSIGNED_BYTE, color);
 	return name;
 }
 
@@ -212,18 +235,23 @@ GLuint SharedResources::buildShader(
 GLuint SharedResources::buildProgram(GLuint *shaders, int size)
 {
 	GLuint program = glCreateProgram();
-
 	for (int i = 0; i < size; i++)
 		if (shaders[i] != 0)
 			glAttachShader(program, shaders[i]);
-
 	glLinkProgram(program);
 	return program;
 }
 
 unsigned SharedResources::addMaterial(ShaderParams params)
 {
-	params.setDefaultTexture(0, this->textures[DefaultTexture]);
+	params.setDefaultTexture(
+		Material::Albedo, this->textures[BlackTexture]);
+	params.setDefaultTexture(
+		Material::Opacity, this->textures[WhiteTexture]);
+	params.setDefaultTexture(
+		Material::Normal, this->textures[BlueTexture]);
+	params.setDefaultTexture(
+		Material::Specular, this->textures[WhiteTexture]);
 	this->materials.push_back(params);
 	emit materialAdded(params);
 	return this->materials.size()-1;
@@ -260,7 +288,7 @@ void SharedResources::clearMaterials()
 ShaderParams SharedResources::getMaterial(unsigned index)
 {
 	this->materials[index].initialize();
-	return this->materials[index];
+	return this->materials.at(index);
 }
 
 unsigned SharedResources::getMaterialCount() const

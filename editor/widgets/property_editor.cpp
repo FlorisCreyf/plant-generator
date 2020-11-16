@@ -32,8 +32,8 @@ PropertyEditor::PropertyEditor(
 	layout->addWidget(this->stemEditor);
 	layout->addWidget(this->leafEditor);
 	layout->addStretch(1);
-	connect(this->editor, SIGNAL(selectionChanged()),
-		this, SLOT(setFields()));
+	connect(this->editor, &Editor::selectionChanged,
+		this, &PropertyEditor::setFields);
 }
 
 void PropertyEditor::setFields()

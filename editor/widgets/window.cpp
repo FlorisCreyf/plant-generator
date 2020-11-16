@@ -36,27 +36,27 @@ Window::Window(int argc, char **argv)
 
 	this->editor = new Editor(&this->shared, &this->keymap, this);
 	setCentralWidget(this->editor);
-	#ifndef VIEWPORT_ONLY
+#ifndef VIEWPORT_ONLY
 	createEditors();
-	#endif
+#endif
 	initEditor();
 	this->widget.setupUi(this);
 
-	#ifndef VIEWPORT_ONLY
+#ifndef VIEWPORT_ONLY
 	QMenu *menu = createPopupMenu();
 	menu->setTitle("Window");
 	menuBar()->insertMenu(this->widget.menuHelp->menuAction(), menu);
-	#endif
+#endif
 
-	connect(this->editor, SIGNAL(changed()), this, SLOT(updateStatus()));
-	connect(this->widget.actionReportIssue, SIGNAL(triggered()),
-		this, SLOT(reportIssue()));
+	connect(this->editor, &Editor::changed, this, &Window::updateStatus);
+	connect(this->widget.actionReportIssue, &QAction::triggered,
+		this, &Window::reportIssue);
 }
 
 #ifndef VIEWPORT_ONLY
 
-QDockWidget *Window::createDockWidget(
-	const char *name, QWidget *widget, bool scrollbar)
+QDockWidget *Window::createDockWidget(const char *name, QWidget *widget,
+	bool scrollbar)
 {
 	QDockWidget *dw = new QDockWidget(name, this);
 	dw->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
@@ -80,13 +80,12 @@ void Window::createEditors()
 		&this->shared, this->editor, this);
 	dw[0] = createDockWidget("Properties", this->propertyEditor, true);
 	addDockWidget(static_cast<Qt::DockWidgetArea>(1), dw[0]);
-
-	connect(&shared, SIGNAL(materialAdded(ShaderParams)),
-		this->propertyEditor, SLOT(addMaterial(ShaderParams)));
-	connect(&shared, SIGNAL(materialModified(unsigned)),
-		this->propertyEditor, SLOT(updateMaterials()));
-	connect(&shared, SIGNAL(materialRemoved(unsigned)),
-		this->propertyEditor, SLOT(removeMaterial(unsigned)));
+	connect(&shared, &SharedResources::materialAdded,
+		this->propertyEditor, &PropertyEditor::addMaterial);
+	connect(&shared, &SharedResources::materialModified,
+		this->propertyEditor, &PropertyEditor::updateMaterials);
+	connect(&shared, &SharedResources::materialRemoved,
+		this->propertyEditor, &PropertyEditor::removeMaterial);
 
 	this->keyEditor = new KeyEditor(&keymap, this);
 	dw[1] = createDockWidget("Key Map", this->keyEditor, true);
@@ -96,13 +95,12 @@ void Window::createEditors()
 		&this->shared, &this->keymap, this->editor, this);
 	dw[2] = createDockWidget("Curves", this->pCurveEditor, false);
 	addDockWidget(static_cast<Qt::DockWidgetArea>(1), dw[2]);
-
-	connect(this->pCurveEditor, SIGNAL(curveAdded(pg::Curve)),
-		this->propertyEditor, SLOT(addCurve(pg::Curve)));
-	connect(this->pCurveEditor, SIGNAL(curveModified(pg::Curve, unsigned)),
-		this->propertyEditor, SLOT(updateCurve(pg::Curve, unsigned)));
-	connect(this->pCurveEditor, SIGNAL(curveRemoved(unsigned)),
-		this->propertyEditor, SLOT(removeCurve(unsigned)));
+	connect(this->pCurveEditor, &PropertyCurveEditor::curveAdded,
+		this->propertyEditor, &PropertyEditor::addCurve);
+	connect(this->pCurveEditor, &PropertyCurveEditor::curveModified,
+		this->propertyEditor, &PropertyEditor::updateCurve);
+	connect(this->pCurveEditor, &PropertyCurveEditor::curveRemoved,
+		this->propertyEditor, &PropertyEditor::removeCurve);
 
 	this->materialEditor = new MaterialEditor(
 		&this->shared, this->editor, this);
@@ -116,22 +114,20 @@ void Window::createEditors()
 	this->procEditor = new ProceduralEditor(this->editor, this);
 	dw[5] = createDockWidget("Generator", this->procEditor, true);
 	addDockWidget(static_cast<Qt::DockWidgetArea>(1), dw[5]);
-
-	connect(this->meshEditor, SIGNAL(meshAdded(pg::Geometry)),
-		this->propertyEditor, SLOT(addMesh(pg::Geometry)));
-	connect(this->meshEditor, SIGNAL(meshModified(pg::Geometry, unsigned)),
-		this->propertyEditor, SLOT(updateMesh(pg::Geometry, unsigned)));
-	connect(this->meshEditor, SIGNAL(meshRemoved(unsigned)),
-		this->propertyEditor, SLOT(removeMesh(unsigned)));
+	connect(this->meshEditor, &MeshEditor::meshAdded,
+		this->propertyEditor, &PropertyEditor::addMesh);
+	connect(this->meshEditor, &MeshEditor::meshModified,
+		this->propertyEditor, &PropertyEditor::updateMesh);
+	connect(this->meshEditor, &MeshEditor::meshRemoved,
+		this->propertyEditor, &PropertyEditor::removeMesh);
 
 	this->gCurveEditor = new GeneratorCurveEditor(
 		&this->shared, &this->keymap, this->editor, this);
 	dw[6] = createDockWidget("Generator Curves", this->gCurveEditor, false);
 	addDockWidget(static_cast<Qt::DockWidgetArea>(1), dw[6]);
-
 	connect(this->procEditor->getGeneratorEditor(),
-		SIGNAL(parameterTreeModified()),
-		this->gCurveEditor, SLOT(setFields()));
+		&GeneratorEditor::parameterTreeModified,
+		this->gCurveEditor, &GeneratorCurveEditor::setFields);
 
 	tabifyDockWidget(dw[1], dw[5]);
 	tabifyDockWidget(dw[1], dw[0]);
@@ -147,17 +143,17 @@ void Window::initEditor()
 	if (this->filename.isEmpty())
 		newFile();
 	else {
-		#ifdef VIEWPORT_ONLY
+#ifdef VIEWPORT_ONLY
 		this->editor->load(this->filename.toLatin1());
 		this->editor->reset();
-		#else
+#else
 		this->propertyEditor->clearOptions();
 		this->editor->load(this->filename.toLatin1());
 		this->pCurveEditor->reset();
 		this->meshEditor->reset();
 		this->materialEditor->reset();
 		this->editor->reset();
-		#endif
+#endif
 	}
 }
 
@@ -215,14 +211,14 @@ void Window::setFilename(QString filename)
 
 void Window::newFile()
 {
-	#ifndef VIEWPORT_ONLY
+#ifndef VIEWPORT_ONLY
 	this->pCurveEditor->clear();
 	this->pCurveEditor->add();
 	this->materialEditor->clear();
-	this->materialEditor->add();
+	this->materialEditor->addEmpty();
 	this->meshEditor->clear();
-	this->meshEditor->add();
-	#endif
+	this->meshEditor->addEmpty();
+#endif
 	this->editor->load(nullptr);
 	this->editor->reset();
 	setFilename("");
@@ -234,17 +230,17 @@ void Window::openDialogBox()
 		this, "Open File", "", "Plant (*.plant)");
 
 	if (!filename.isNull() || !filename.isEmpty()) {
-		#ifdef VIEWPORT_ONLY
+#ifdef VIEWPORT_ONLY
 		this->editor->load(filename.toLatin1());
 		this->editor->reset();
-		#else
+#else
 		this->propertyEditor->clearOptions();
 		this->editor->load(filename.toLatin1());
 		this->pCurveEditor->reset();
 		this->meshEditor->reset();
 		this->materialEditor->reset();
 		this->editor->reset();
-		#endif
+#endif
 		setFilename(filename);
 	}
 }
@@ -289,8 +285,8 @@ void Window::exportWavefrontDialogBox()
 
 	if (!filename.isEmpty()) {
 		pg::Wavefront obj;
-		QByteArray b = filename.toLatin1();
-		obj.exportFile(b.data(), *mesh, *plant);
+		QByteArray array = filename.toLatin1();
+		obj.exportFile(array.data(), *mesh, *plant);
 	}
 }
 
@@ -306,8 +302,8 @@ void Window::exportColladaDialogBox()
 
 	if (!filename.isEmpty()) {
 		pg::Collada dae;
-		QByteArray b = filename.toLatin1();
-		dae.exportFile(b.data(), *mesh, *scene);
+		QByteArray array = filename.toLatin1();
+		dae.exportFile(array.data(), *mesh, *scene);
 	}
 }
 

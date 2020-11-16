@@ -17,6 +17,7 @@
 
 #include "generator_editor.h"
 #include "definitions.h"
+#include "form.h"
 #include <limits>
 
 using pg::ParameterTree;
@@ -30,7 +31,7 @@ using std::string;
 const float pi = 3.14159265359f;
 
 GeneratorEditor::GeneratorEditor(Editor *editor, QWidget *parent) :
-	Form(parent), editor(editor), generate(nullptr)
+	QWidget(parent), editor(editor), generate(nullptr)
 {
 	createInterface();
 	enable(false);
@@ -63,24 +64,24 @@ void GeneratorEditor::createNodeGroup(QBoxLayout *layout)
 
 	this->nodeValue = new QComboBox(this);
 	form->addRow(this->nodeValue);
+	connect(this->nodeValue,
+		QOverload<int>::of(&QComboBox::currentIndexChanged),
+		this, &GeneratorEditor::select);
 	this->childButton = new QPushButton("Add Child Node", this);
 	form->addRow(this->childButton);
+	connect(this->childButton, &QPushButton::clicked,
+		this, &GeneratorEditor::addChildNode);
 	this->siblingButton = new QPushButton("Add Sibling Node", this);
 	form->addRow(this->siblingButton);
+	connect(this->siblingButton, &QPushButton::clicked,
+		this, &GeneratorEditor::addSiblingNode);
 	this->removeButton = new QPushButton("Remove Node", this);
 	form->addRow(this->removeButton);
+	connect(this->removeButton, &QPushButton::clicked,
+		this, &GeneratorEditor::removeNode);
 
 	setValueWidths(form);
 	layout->addWidget(this->nodeGroup);
-
-	connect(this->nodeValue, SIGNAL(currentIndexChanged(int)),
-		this, SLOT(select()));
-	connect(this->childButton, SIGNAL(clicked()),
-		this, SLOT(addChildNode()));
-	connect(this->siblingButton, SIGNAL(clicked()),
-		this, SLOT(addSiblingNode()));
-	connect(this->removeButton, SIGNAL(clicked()),
-		this, SLOT(removeNode()));
 }
 
 void GeneratorEditor::createRootGroup(QBoxLayout *layout)
@@ -95,14 +96,14 @@ void GeneratorEditor::createRootGroup(QBoxLayout *layout)
 		std::numeric_limits<int>::min(),
 		std::numeric_limits<int>::max());
 	form->addRow("Seed", this->seedValue);
+	connect(this->seedValue,
+		QOverload<int>::of(&QSpinBox::valueChanged),
+		this, &GeneratorEditor::change);
+	connect(this->seedValue, &QSpinBox::editingFinished,
+		this, &GeneratorEditor::finishChanging);
 
 	setValueWidths(form);
 	layout->addWidget(this->rootGroup);
-
-	connect(this->seedValue, SIGNAL(valueChanged(int)),
-		this, SLOT(change()));
-	connect(this->seedValue, SIGNAL(editingFinished()),
-		this, SLOT(finishChanging()));
 }
 
 void GeneratorEditor::createStemGroup(QBoxLayout *layout)
@@ -120,6 +121,8 @@ void GeneratorEditor::createStemGroup(QBoxLayout *layout)
 	this->dsl[StemDensity] = new QLabel("Stems/Unit");
 	this->dsl[StemStart] = new QLabel("Start");
 	this->dsl[StemScale] = new QLabel("Scale");
+	this->dsv[StemScale]->setSingleStep(0.001);
+	this->dsv[StemScale]->setDecimals(3);
 	this->dsl[StemAngleVariation] = new QLabel("Angle Variation");
 	this->dsl[RadiusThreshold] = new QLabel("Radius Threshold");
 	this->dsv[RadiusThreshold]->setSingleStep(0.001);
@@ -135,10 +138,11 @@ void GeneratorEditor::createStemGroup(QBoxLayout *layout)
 	layout->addWidget(this->stemGroup);
 
 	for (int i = 0; i < DSSize; i++) {
-		connect(this->dsv[i], SIGNAL(valueChanged(double)),
-			this, SLOT(change()));
-		connect(this->dsv[i], SIGNAL(editingFinished()),
-			this, SLOT(finishChanging()));
+		connect(this->dsv[i],
+			QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+			this, &GeneratorEditor::change);
+		connect(this->dsv[i], &QDoubleSpinBox::editingFinished,
+			this, &GeneratorEditor::finishChanging);
 	}
 }
 
@@ -182,16 +186,18 @@ void GeneratorEditor::createLeafGroup(QBoxLayout *layout)
 	layout->addWidget(this->leafGroup);
 
 	for (int i = 0; i < DLSize; i++) {
-		connect(this->dlv[i], SIGNAL(valueChanged(double)),
-			this, SLOT(change()));
-		connect(this->dlv[i], SIGNAL(editingFinished()),
-			this, SLOT(finishChanging()));
+		connect(this->dlv[i],
+			QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+			this, &GeneratorEditor::change);
+		connect(this->dlv[i], &QDoubleSpinBox::editingFinished,
+			this, &GeneratorEditor::finishChanging);
 	}
 	for (int i = 0; i < ILSize; i++) {
-		connect(this->ilv[i], SIGNAL(valueChanged(int)),
-			this, SLOT(change()));
-		connect(this->ilv[i], SIGNAL(editingFinished()),
-			this, SLOT(finishChanging()));
+		connect(this->ilv[i],
+			QOverload<int>::of(&QSpinBox::valueChanged),
+			this, &GeneratorEditor::change);
+		connect(this->ilv[i], &QSpinBox::editingFinished,
+			this, &GeneratorEditor::finishChanging);
 	}
 }
 

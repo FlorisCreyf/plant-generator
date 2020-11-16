@@ -18,12 +18,7 @@
 #include "form.h"
 #include "definitions.h"
 
-Form::Form(QWidget *parent) : QWidget(parent)
-{
-
-}
-
-void Form::setValueWidths(QFormLayout *layout)
+void setValueWidths(QFormLayout *layout)
 {
 	layout->setFormAlignment(Qt::AlignRight | Qt::AlignTop);
 	layout->setFieldGrowthPolicy(QFormLayout::FieldsStayAtSizeHint);
@@ -39,12 +34,12 @@ void Form::setValueWidths(QFormLayout *layout)
 	}
 }
 
-void Form::indicateDifferences(QWidget *widget)
+void indicateDifferences(QWidget *widget)
 {
 	widget->setStyleSheet("font-weight:bold;");
 }
 
-void Form::indicateSimilarities(QWidget *widget)
+void indicateSimilarities(QWidget *widget)
 {
 	widget->setStyleSheet("");
 }

@@ -17,6 +17,7 @@
 
 #include "stem_editor.h"
 #include "definitions.h"
+#include "form.h"
 #include <iterator>
 #include <string>
 
@@ -31,7 +32,7 @@ using std::map;
 
 StemEditor::StemEditor(
 	SharedResources *shared, Editor *editor, QWidget *parent) :
-	Form(parent)
+	QWidget(parent)
 {
 	this->shared = shared;
 	this->editor = editor;
@@ -51,12 +52,10 @@ void StemEditor::createInterface()
 	this->stemGroup = new QGroupBox("Stem", this);
 	this->stemGroup->setSizePolicy(
 		QSizePolicy::Expanding, QSizePolicy::Minimum);
-
 	QBoxLayout *layout = new QBoxLayout(QBoxLayout::TopToBottom, this);
 	layout->setMargin(0);
 	layout->setSpacing(0);
 	layout->addWidget(this->stemGroup);
-
 	QFormLayout *form = new QFormLayout(this->stemGroup);
 	form->setSpacing(UI_FORM_SPACING);
 	form->setMargin(UI_FORM_MARGIN);
@@ -66,102 +65,112 @@ void StemEditor::createInterface()
 	this->radiusValue->setSingleStep(0.001);
 	this->radiusValue->setDecimals(3);
 	form->addRow(this->radiusLabel, this->radiusValue);
+	connect(this->radiusValue,
+		QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+		this, &StemEditor::changeRadius);
+	connect(this->radiusValue, &QDoubleSpinBox::editingFinished,
+		this, &StemEditor::finishChanging);
 
 	this->minRadiusLabel = new QLabel("Min Radius");
 	this->minRadiusValue = new QDoubleSpinBox;
 	this->minRadiusValue->setSingleStep(0.001);
 	this->minRadiusValue->setDecimals(3);
 	form->addRow(this->minRadiusLabel, this->minRadiusValue);
+	connect(this->minRadiusValue,
+		QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+		this, &StemEditor::changeMinRadius);
+	connect(this->minRadiusValue, &QDoubleSpinBox::editingFinished,
+		this, &StemEditor::finishChanging);
 
 	this->radiusCurveLabel = new QLabel("Radius Curve");
 	this->radiusCurveValue = new QComboBox;
 	form->addRow(this->radiusCurveLabel, this->radiusCurveValue);
+	connect(this->radiusCurveValue,
+		QOverload<int>::of(&QComboBox::currentIndexChanged),
+		this, &StemEditor::changeRadiusCurve);
 
 	this->pDivisionLabel = new QLabel("Path Divisions");
 	this->pDivisionValue = new QSpinBox;
 	this->pDivisionValue->setMinimum(0);
 	form->addRow(this->pDivisionLabel, this->pDivisionValue);
+	connect(this->pDivisionValue,
+		QOverload<int>::of(&QSpinBox::valueChanged),
+		this, &StemEditor::changePathDivisions);
+	connect(this->pDivisionValue, &QSpinBox::editingFinished,
+		this, &StemEditor::finishChanging);
 
 	this->sDivisionLabel = new QLabel("Section Divisions");
 	this->sDivisionValue = new QSpinBox;
 	this->sDivisionValue->setMinimum(3);
 	form->addRow(this->sDivisionLabel, this->sDivisionValue);
+	connect(this->sDivisionValue,
+		QOverload<int>::of(&QSpinBox::valueChanged),
+		this, &StemEditor::changeSectionDivisions);
+	connect(this->sDivisionValue, &QSpinBox::editingFinished,
+		this, &StemEditor::finishChanging);
 
 	this->cDivisionLabel = new QLabel("Collar Divisions");
 	this->cDivisionValue = new QSpinBox;
 	this->cDivisionValue->setMinimum(0);
 	form->addRow(this->cDivisionLabel, this->cDivisionValue);
+	connect(this->cDivisionValue,
+		QOverload<int>::of(&QSpinBox::valueChanged),
+		this, &StemEditor::changeCollarDivisions);
+	connect(this->cDivisionValue, &QSpinBox::editingFinished,
+		this, &StemEditor::finishChanging);
 
 	this->degreeLabel = new QLabel("Degree");
 	this->degreeValue = new QComboBox;
 	this->degreeValue->addItem(QString("Linear"));
 	this->degreeValue->addItem(QString("Cubic"));
 	form->addRow(this->degreeLabel, this->degreeValue);
+	connect(this->degreeValue,
+		QOverload<int>::of(&QComboBox::currentIndexChanged),
+		this, &StemEditor::changePathDegree);
 
 	this->stemMaterialLabel = new QLabel("Material");
 	this->stemMaterialValue = new QComboBox;
 	form->addRow(this->stemMaterialLabel, this->stemMaterialValue);
+	connect(this->stemMaterialValue,
+		QOverload<int>::of(&QComboBox::currentIndexChanged),
+		this, &StemEditor::changeStemMaterial);
 
 	this->capMaterialLabel = new QLabel("Cap Material");
 	this->capMaterialValue = new QComboBox;
 	form->addRow(this->capMaterialLabel, this->capMaterialValue);
+	connect(this->capMaterialValue,
+		QOverload<int>::of(&QComboBox::currentIndexChanged),
+		this, &StemEditor::changeCapMaterial);
 
 	this->collarXLabel = new QLabel("Collar.X");
 	this->collarXValue = new QDoubleSpinBox;
 	this->collarXValue->setSingleStep(0.1);
 	this->collarXValue->setDecimals(3);
 	form->addRow(this->collarXLabel, this->collarXValue);
+	connect(this->collarXValue,
+		QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+		this, &StemEditor::changeXCollar);
+	connect(this->collarXValue, &QDoubleSpinBox::editingFinished,
+		this, &StemEditor::finishChanging);
 
 	this->collarYLabel = new QLabel("Collar.Y");
 	this->collarYValue = new QDoubleSpinBox;
 	this->collarYValue->setSingleStep(0.1);
 	this->collarYValue->setDecimals(3);
 	form->addRow(this->collarYLabel, this->collarYValue);
+	connect(this->collarYValue,
+		QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+		this, &StemEditor::changeYCollar);
+	connect(this->collarYValue, &QDoubleSpinBox::editingFinished,
+		this, &StemEditor::finishChanging);
 
 	this->customLabel = new QLabel("Manual");
 	this->customValue = new QCheckBox;
 	form->addRow(this->customLabel, this->customValue);
+	connect(this->customValue, &QCheckBox::stateChanged,
+		this, &StemEditor::changeCustom);
 
 	setValueWidths(form);
-
-	connect(this->customValue, SIGNAL(stateChanged(int)),
-		this, SLOT(changeCustom(int)));
-	connect(this->degreeValue, SIGNAL(currentIndexChanged(int)),
-		this, SLOT(changePathDegree(int)));
-	connect(this->sDivisionValue, SIGNAL(editingFinished()),
-		this, SLOT(finishChanging()));
-	connect(this->sDivisionValue, SIGNAL(valueChanged(int)),
-		this, SLOT(changeSectionDivisions(int)));
-	connect(this->pDivisionValue, SIGNAL(editingFinished()),
-		this, SLOT(finishChanging()));
-	connect(this->pDivisionValue, SIGNAL(valueChanged(int)),
-		this, SLOT(changePathDivisions(int)));
-	connect(this->cDivisionValue, SIGNAL(editingFinished()),
-		this, SLOT(finishChanging()));
-	connect(this->cDivisionValue, SIGNAL(valueChanged(int)),
-		this, SLOT(changeCollarDivisions(int)));
-	connect(this->radiusValue, SIGNAL(editingFinished()),
-		this, SLOT(finishChanging()));
-	connect(this->radiusValue, SIGNAL(valueChanged(double)),
-		this, SLOT(changeRadius(double)));
-	connect(this->minRadiusValue, SIGNAL(editingFinished()),
-		this, SLOT(finishChanging()));
-	connect(this->minRadiusValue, SIGNAL(valueChanged(double)),
-		this, SLOT(changeMinRadius(double)));
-	connect(this->radiusCurveValue, SIGNAL(currentIndexChanged(int)),
-		this, SLOT(changeRadiusCurve(int)));
-	connect(this->stemMaterialValue, SIGNAL(currentIndexChanged(int)),
-		this, SLOT(changeStemMaterial()));
-	connect(this->collarXValue, SIGNAL(editingFinished()),
-		this, SLOT(finishChanging()));
-	connect(this->collarXValue, SIGNAL(valueChanged(double)),
-		this, SLOT(changeXCollar(double)));
-	connect(this->collarYValue, SIGNAL(editingFinished()),
-		this, SLOT(finishChanging()));
-	connect(this->collarYValue, SIGNAL(valueChanged(double)),
-		this, SLOT(changeYCollar(double)));
-	connect(this->capMaterialValue, SIGNAL(currentIndexChanged(int)),
-		this, SLOT(changeCapMaterial()));
 }
 
 void StemEditor::setFields(map<Stem *, PointSelection> instances)
@@ -516,7 +525,6 @@ void StemEditor::finishChanging()
 	if (this->saveStem && !this->saveStem->isSameAsCurrent()) {
 		this->saveStem->setNewSelection();
 		this->editor->add(this->saveStem);
-		/* The history will delete the command. */
 		this->saveStem = nullptr;
 	}
 }

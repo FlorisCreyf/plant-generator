@@ -18,11 +18,12 @@
 #ifndef STEM_EDITOR_H
 #define STEM_EDITOR_H
 
-#include "form.h"
 #include "curve_editor.h"
+#include "../commands/save_stem.h"
+#include <QtWidgets>
 #include <map>
 
-class StemEditor : public Form {
+class StemEditor : public QWidget {
 	Q_OBJECT
 
 public:

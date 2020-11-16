@@ -17,12 +17,10 @@
 
 #include "material_editor.h"
 #include "definitions.h"
+#include "form.h"
 #include "item_delegate.h"
-#include "plant_generator/math/vec3.h"
-#include "plant_generator/math/mat4.h"
 
-using pg::Vec3;
-using pg::Mat4;
+using pg::Material;
 
 MaterialEditor::MaterialEditor(
 	SharedResources *shared, Editor *editor, QWidget *parent) :
@@ -81,44 +79,66 @@ void MaterialEditor::createSelectionBar()
 	row->setAlignment(Qt::AlignTop);
 	this->layout->addLayout(row);
 
-	connect(this->selectionBox, SIGNAL(currentIndexChanged(int)),
-		this, SLOT(select()));
-	connect(this->selectionBox->lineEdit(), SIGNAL(editingFinished()),
-		this, SLOT(rename()));
-	connect(addButton, SIGNAL(clicked()), this, SLOT(add()));
-	connect(removeButton, SIGNAL(clicked()), this, SLOT(remove()));
+	connect(this->selectionBox,
+		QOverload<int>::of(&QComboBox::currentIndexChanged),
+		this, &MaterialEditor::select);
+	connect(this->selectionBox->lineEdit(), &QLineEdit::editingFinished,
+		this, &MaterialEditor::rename);
+	connect(addButton, &QPushButton::clicked,
+		this, &MaterialEditor::addEmpty);
+	connect(removeButton, &QPushButton::clicked,
+		this, &MaterialEditor::remove);
 }
 
 void MaterialEditor::initFields(QFormLayout *form)
 {
-	QHBoxLayout *diffuseLayout = new QHBoxLayout();
-	this->diffuseBox = new QLineEdit(this);
-	this->diffuseBox->setFixedHeight(UI_FIELD_HEIGHT);
-	this->diffuseBox->setReadOnly(true);
-	this->addDiffuseButton = new QPushButton("+", this);
-	this->addDiffuseButton->setFixedWidth(UI_FIELD_HEIGHT);
-	this->addDiffuseButton->setFixedHeight(UI_FIELD_HEIGHT);
-	this->removeDiffuseButton = new QPushButton("-", this);
-	this->removeDiffuseButton->setFixedWidth(UI_FIELD_HEIGHT);
-	this->removeDiffuseButton->setFixedHeight(UI_FIELD_HEIGHT);
+	QWidget *fileFields[Material::MapQuantity];
+	for (int i = 0; i < Material::MapQuantity; i++) {
+		QHBoxLayout *layout = new QHBoxLayout();
+		this->fileField[i] = new QLineEdit(this);
+		this->fileField[i]->setFixedHeight(UI_FIELD_HEIGHT);
+		this->fileField[i]->setReadOnly(true);
+		this->removeButton[i] = new QPushButton("-", this);
+		this->removeButton[i]->setFixedWidth(UI_FIELD_HEIGHT);
+		this->removeButton[i]->setFixedHeight(UI_FIELD_HEIGHT);
+		this->addButton[i] = new QPushButton("+", this);
+		this->addButton[i]->setFixedWidth(UI_FIELD_HEIGHT);
+		this->addButton[i]->setFixedHeight(UI_FIELD_HEIGHT);
+		fileFields[i] = new QWidget();
+		fileFields[i]->setLayout(layout);
+		layout->setSpacing(0);
+		layout->setMargin(0);
+		layout->addWidget(this->fileField[i]);
+		layout->addWidget(this->removeButton[i]);
+		layout->addWidget(this->addButton[i]);
 
-	QWidget *sizeWidget = new QWidget();
-	sizeWidget->setLayout(diffuseLayout);
-	diffuseLayout->setSpacing(0);
-	diffuseLayout->setMargin(0);
-	diffuseLayout->addWidget(this->diffuseBox);
-	diffuseLayout->addWidget(this->removeDiffuseButton);
-	diffuseLayout->addWidget(this->addDiffuseButton);
-	form->addRow("Diffuse", sizeWidget);
+		connect(this->addButton[i], &QPushButton::clicked,
+			this, [this, i]() {this->openFile(i);});
+		connect(this->removeButton[i], &QPushButton::clicked,
+			this, [this, i]() {this->removeFile(i);});
+	}
+	form->addRow("Albedo", fileFields[Material::Albedo]);
+	form->addRow("Opacity", fileFields[Material::Opacity]);
+	form->addRow("Normal", fileFields[Material::Normal]);
+	form->addRow("Specular", fileFields[Material::Specular]);
 
-	form->setFormAlignment(Qt::AlignRight | Qt::AlignTop);
-	form->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
-	form->setLabelAlignment(Qt::AlignRight | Qt::AlignCenter);
+	for (int i = 0; i < FieldQuantity; i++) {
+		this->fields[i] = new QDoubleSpinBox(this);
+		this->fields[i]->setSingleStep(0.001);
+		this->fields[i]->setDecimals(3);
 
-	connect(this->addDiffuseButton, SIGNAL(clicked()),
-		this, SLOT(openDiffuseFile()));
-	connect(this->removeDiffuseButton, SIGNAL(clicked()),
-		this, SLOT(removeDiffuseFile()));
+		connect(this->fields[i],
+			QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+			this, &MaterialEditor::change);
+	}
+	form->addRow("Shininess", this->fields[Shininess]);
+	this->fields[Shininess]->setSingleStep(1);
+	this->fields[Shininess]->setDecimals(1);
+	form->addRow("Ambient.R", this->fields[AmbientR]);
+	form->addRow("Ambient.G", this->fields[AmbientG]);
+	form->addRow("Ambient.B", this->fields[AmbientB]);
+
+	setValueWidths(form);
 }
 
 const MaterialViewer *MaterialEditor::getViewer() const
@@ -126,50 +146,48 @@ const MaterialViewer *MaterialEditor::getViewer() const
 	return this->materialViewer;
 }
 
+void loadMaterial(ShaderParams &params, Material &material)
+{
+	QString file;
+	for (int i = 0; i < Material::MapQuantity; i++) {
+		if (!material.getTexture(i).empty()) {
+			file = QString::fromStdString(material.getTexture(i));
+			params.loadTexture(i, file);
+		}
+	}
+}
+
 void MaterialEditor::reset()
 {
 	this->shared->clearMaterials();
 	this->selectionBox->clear();
-	this->diffuseBox->clear();
+	clearFields();
 
 	auto materials = this->editor->getPlant()->getMaterials();
 	for (pg::Material material : materials) {
 		ShaderParams params(material);
 		QString name = QString::fromStdString(params.getName());
-		if (!material.getTexture().empty()) {
-			QString file;
-			file = QString::fromStdString(material.getTexture());
-			params.loadTexture(0, file);
-		}
+		loadMaterial(params, material);
 		this->shared->addMaterial(params);
 		this->selectionBox->addItem(name);
 	}
 
-	select();
+	select(this->selectionBox->currentIndex());
 }
 
-/** Add an existing material to the material list. */
 void MaterialEditor::add(pg::Material material)
 {
 	ShaderParams params(material);
 	QString name = QString::fromStdString(params.getName());
 	this->selectionBox->addItem(name);
 	this->selectionBox->setCurrentIndex(this->selectionBox->count() - 1);
-
-	if (!material.getTexture().empty()) {
-		QString filename;
-		filename = QString::fromStdString(material.getTexture());
-		this->diffuseBox->setText(filename);
-		params.loadTexture(0, filename);
-	}
-
-	unsigned index = this->shared->addMaterial(params);
+	loadMaterial(params, material);
+	this->shared->addMaterial(params);
 	this->editor->getPlant()->addMaterial(params.getMaterial());
-	this->materialViewer->updateMaterial(index);
+	select(this->selectionBox->currentIndex());
 }
 
-/** Add an empty material with a unique name to the material list. */
-void MaterialEditor::add()
+void MaterialEditor::addEmpty()
 {
 	ShaderParams params;
 	std::string name;
@@ -186,11 +204,10 @@ void MaterialEditor::add()
 	unsigned index = this->shared->addMaterial(params);
 	this->editor->getPlant()->addMaterial(params.getMaterial());
 	this->materialViewer->updateMaterial(index);
-
-	this->diffuseBox->setText("");
 	this->selectionBox->addItem(qname);
-	this->selectionBox->setCurrentIndex(
-		this->selectionBox->findText(qname));
+	index = this->selectionBox->findText(qname);
+	this->selectionBox->setCurrentIndex(index);
+	clearFields();
 }
 
 void MaterialEditor::clear()
@@ -203,7 +220,7 @@ void MaterialEditor::clear()
 	}
 	this->selectionBox->clear();
 	this->shared->clearMaterials();
-	this->diffuseBox->clear();
+	clearFields();
 }
 
 void MaterialEditor::rename()
@@ -215,14 +232,43 @@ void MaterialEditor::rename()
 	update(params, index);
 }
 
-void MaterialEditor::select()
+QString filterFilename(QString filename)
+{
+	return filename.split("/").back();
+}
+
+void MaterialEditor::fillFields(const Material &material)
+{
+	for (int i = 0; i < Material::MapQuantity; i++) {
+		std::string filename = material.getTexture(i);
+		QString qfilename = QString::fromStdString(filename);
+		this->fileField[i]->setText(filterFilename(qfilename));
+	}
+	this->fields[Shininess]->setValue(material.getShininess());
+	this->fields[AmbientR]->setValue(material.getAmbient().x);
+	this->fields[AmbientG]->setValue(material.getAmbient().y);
+	this->fields[AmbientB]->setValue(material.getAmbient().z);
+}
+
+void MaterialEditor::change()
+{
+	unsigned index = this->selectionBox->currentIndex();
+	ShaderParams params = this->shared->getMaterial(index);
+	Material material = params.getMaterial();
+	material.setShininess(this->fields[Shininess]->value());
+	material.setAmbient(pg::Vec3(
+		this->fields[AmbientR]->value(),
+		this->fields[AmbientG]->value(),
+		this->fields[AmbientB]->value()));
+	params.swapMaterial(material);
+	update(params, index);
+}
+
+void MaterialEditor::select(int index)
 {
 	if (this->selectionBox->count()) {
-		unsigned index = this->selectionBox->currentIndex();
 		ShaderParams params = this->shared->getMaterial(index);
-		std::string filename = params.getMaterial().getTexture();
-		QString qfilename = QString::fromStdString(filename);
-		this->diffuseBox->setText(qfilename);
+		fillFields(params.getMaterial());
 		this->materialViewer->updateMaterial(index);
 	}
 }
@@ -235,30 +281,37 @@ void MaterialEditor::remove()
 		this->shared->removeMaterial(index);
 		this->editor->getPlant()->removeMaterial(index);
 		this->editor->change();
-		select();
+		select(this->selectionBox->currentIndex());
 	}
 }
 
-void MaterialEditor::openDiffuseFile()
+void MaterialEditor::clearFields()
 {
-	unsigned index = this->selectionBox->currentIndex();
-	ShaderParams params = this->shared->getMaterial(index);
-	QString filename = QFileDialog::getOpenFileName(this, "Open File", "",
-		"All Files (*);;PNG (*.png);;JPEG (*.jpg);;SVG (*.svg)");
-	if (!filename.isNull() || !filename.isEmpty())
-		if (params.loadTexture(0, filename)) {
-			this->diffuseBox->setText(filename);
-			update(params, index);
-		}
+	for (int i = 0; i < Material::MapQuantity; i++)
+		this->fileField[i]->clear();
 }
 
-void MaterialEditor::removeDiffuseFile()
+void MaterialEditor::openFile(int index)
 {
-	unsigned index = this->selectionBox->currentIndex();
-	ShaderParams params = this->shared->getMaterial(index);
-	params.removeTexture(0);
-	this->diffuseBox->clear();
-	update(params, index);
+	int selection = this->selectionBox->currentIndex();
+	ShaderParams params = this->shared->getMaterial(selection);
+	QString filename = QFileDialog::getOpenFileName(this, "Open File", "",
+		"All Files (*);;PNG (*.png);;JPEG (*.jpg);;SVG (*.svg)");
+
+	if (!filename.isNull() || !filename.isEmpty()) {
+		this->fileField[index]->setText(filterFilename(filename));
+		if (params.loadTexture(index, filename))
+			update(params, selection);
+	}
+}
+
+void MaterialEditor::removeFile(int index)
+{
+	int selection = this->selectionBox->currentIndex();
+	ShaderParams params = this->shared->getMaterial(selection);
+	params.removeTexture(index);
+	this->fileField[index]->clear();
+	update(params, selection);
 }
 
 void MaterialEditor::update(ShaderParams params, unsigned index)

@@ -34,7 +34,6 @@ class MeshEditor : public QWidget {
 	QLineEdit *meshField;
 	QPushButton *meshList;
 	QMenu *meshMenu;
-
 	QVBoxLayout *layout;
 	QComboBox *selectionBox;
 
@@ -50,7 +49,7 @@ public:
 	QSize sizeHint() const;
 
 public slots:
-	void add();
+	void addEmpty();
 	void add(pg::Geometry);
 	void select();
 	void rename();
@@ -58,7 +57,6 @@ public slots:
 	void loadCustom();
 	void loadPlane();
 	void loadPerpPlane();
-	void loadPyramid();
 	void loadEmpty();
 
 signals:

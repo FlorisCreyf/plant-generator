@@ -17,8 +17,9 @@
 
 #include "wind_editor.h"
 #include "definitions.h"
+#include "form.h"
 
-WindEditor::WindEditor(Editor *editor, QWidget *parent) : Form(parent)
+WindEditor::WindEditor(Editor *editor, QWidget *parent) : QWidget(parent)
 {
 	this->editor = editor;
 	createInterface();
@@ -29,12 +30,10 @@ void WindEditor::createInterface()
 	this->group = new QGroupBox("Wind", this);
 	this->group->setSizePolicy(
 		QSizePolicy::Expanding, QSizePolicy::Minimum);
-
 	QBoxLayout *layout = new QBoxLayout(QBoxLayout::TopToBottom, this);
 	layout->setMargin(0);
 	layout->setSpacing(0);
 	layout->addWidget(this->group);
-
 	QFormLayout *form = new QFormLayout(this->group);
 	form->setSpacing(UI_FORM_SPACING);
 	form->setMargin(UI_FORM_MARGIN);
@@ -45,6 +44,8 @@ void WindEditor::createInterface()
 		std::numeric_limits<int>::max());
 	this->seedValue->setSingleStep(1);
 	form->addRow("Seed", this->seedValue);
+	connect(this->seedValue, QOverload<int>::of(&QSpinBox::valueChanged),
+		this, &WindEditor::change);
 
 	this->directionXValue = new QDoubleSpinBox(this);
 	this->directionXValue->setSingleStep(0.01);
@@ -53,6 +54,9 @@ void WindEditor::createInterface()
 		std::numeric_limits<float>::lowest(),
 		std::numeric_limits<float>::max());
 	form->addRow("Direction.X", this->directionXValue);
+	connect(this->directionXValue,
+		QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+		this, &WindEditor::change);
 
 	this->directionYValue = new QDoubleSpinBox(this);
 	this->directionYValue->setSingleStep(0.01);
@@ -61,6 +65,9 @@ void WindEditor::createInterface()
 		std::numeric_limits<float>::lowest(),
 		std::numeric_limits<float>::max());
 	form->addRow("Direction.Y", this->directionYValue);
+	connect(this->directionYValue,
+		QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+		this, &WindEditor::change);
 
 	this->directionZValue = new QDoubleSpinBox(this);
 	this->directionZValue->setSingleStep(0.01);
@@ -70,29 +77,25 @@ void WindEditor::createInterface()
 		std::numeric_limits<float>::lowest(),
 		std::numeric_limits<float>::max());
 	form->addRow("Direction.Z", this->directionZValue);
+	connect(this->directionZValue,
+		QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+		this, &WindEditor::change);
 
 	this->timeStepValue = new QSpinBox(this);
 	this->timeStepValue->setValue(30);
 	form->addRow("Time Step", this->timeStepValue);
+	connect(this->timeStepValue,
+		QOverload<int>::of(&QSpinBox::valueChanged),
+		this, &WindEditor::change);
 
 	this->frameCountValue = new QSpinBox(this);
 	this->frameCountValue->setValue(21);
 	form->addRow("Frames", this->frameCountValue);
+	connect(this->frameCountValue,
+		QOverload<int>::of(&QSpinBox::valueChanged),
+		this, &WindEditor::change);
 
 	setValueWidths(form);
-
-	connect(this->seedValue, SIGNAL(valueChanged(int)),
-		this, SLOT(change()));
-	connect(this->directionXValue, SIGNAL(valueChanged(double)),
-		this, SLOT(change()));
-	connect(this->directionYValue, SIGNAL(valueChanged(double)),
-		this, SLOT(change()));
-	connect(this->directionZValue, SIGNAL(valueChanged(double)),
-		this, SLOT(change()));
-	connect(this->timeStepValue, SIGNAL(valueChanged(int)),
-		this, SLOT(change()));
-	connect(this->frameCountValue, SIGNAL(valueChanged(int)),
-		this, SLOT(change()));
 }
 
 void WindEditor::change()

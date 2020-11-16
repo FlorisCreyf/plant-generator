@@ -70,7 +70,7 @@ Editor::Editor(SharedResources *shared, KeyMap *keymap, QWidget *parent) :
 
 	this->timer = new QTimer(this);
 	this->timer->setInterval(33);
-	connect(this->timer, SIGNAL(timeout()), this, SLOT(animate()));
+	connect(this->timer, &QTimer::timeout, this, &Editor::animate);
 }
 
 void Editor::createToolBar()
@@ -92,8 +92,8 @@ void Editor::createToolBar()
 	this->perspectiveAction->toggle();
 	this->solidAction->toggle();
 	layout->addWidget(toolbar);
-	connect(toolbar, SIGNAL(actionTriggered(QAction *)),
-		this, SLOT(change(QAction *)));
+	connect(toolbar, QOverload<QAction *>::of(&QToolBar::actionTriggered),
+		this, QOverload<QAction *>::of(&Editor::change));
 }
 
 void Editor::initializeGL()
@@ -173,8 +173,11 @@ void Editor::initializeBuffers()
 
 	Geometry plane;
 	plane.addPlane(
-		Vec3(2.0f, 0.0f, 0.0f), Vec3(0.0f, 2.0f, 0.0f),
-		Vec3(-1.0f, -1.0f, -1.0f), Vec3(0.0f, 0.0f, 0.0f));
+		Vec3(2.0f, 0.0f, 0.0f),
+		Vec3(0.0f, 2.0f, 0.0f),
+		Vec3(-1.0f, -1.0f, -1.0f),
+		Vec3(0.0f, 0.0f, 0.0f),
+		Vec3(0.0f, 0.0f, 0.0f));
 
 	Vec3 colors[2];
 	colors[0] = Vec3(0.4f, 0.4f, 0.4f);
@@ -491,7 +494,6 @@ void Editor::paintGL()
 	Mat4 projection = this->camera.updateVP();
 	Vec3 position = this->camera.getPosition();
 
-	/* Render the scene normally. */
 	glClearDepth(1.0f);
 	glClearColor(0.22f, 0.23f, 0.24f, 1.0);
 	glDepthFunc(GL_LEQUAL);
@@ -511,8 +513,7 @@ void Editor::paintGL()
 	else if (this->shader == SharedResources::Wireframe)
 		paintWire(projection);
 	else if (this->shader == SharedResources::Material)
-		paintMaterial(projection);
-
+		paintMaterial(projection, position);
 
 	if (this->selection.hasStems() || this->selection.hasLeaves())
 		paintOutline(projection, position);
@@ -531,8 +532,8 @@ void Editor::paintGL()
 
 		segment = this->path.getLineSegment();
 		GLvoid *offset = (GLvoid *)(segment.istart * sizeof(unsigned));
-		glDrawElements(GL_LINE_STRIP, segment.icount, GL_UNSIGNED_INT,
-			offset);
+		glDrawElements(GL_LINE_STRIP, segment.icount,
+			GL_UNSIGNED_INT, offset);
 
 		auto texture = this->shared->getTexture(shared->DotTexture);
 		glBindTexture(GL_TEXTURE_2D, texture);
@@ -547,6 +548,10 @@ void Editor::paintGL()
 	} else if (this->selection.hasLeaves() && !isAnimating())
 		paintAxes();
 
+	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_TRUE);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 	glFlush();
 }
 
@@ -564,7 +569,7 @@ void Editor::paintOutline(const Mat4 &projection, const Vec3 &position)
 		glUseProgram(this->shared->getShader(type));
 	}
 	glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
-	glUniform4f(1, position.x, position.y, position.z, 0.0f);
+	glUniform3f(1, position.x, position.y, position.z);
 	glUniform2f(3, (GLfloat)width(), (GLfloat)height());
 
 	glBindFramebuffer(GL_FRAMEBUFFER, this->msSilhouetteFramebuffer);
@@ -610,7 +615,6 @@ void Editor::paintWire(const Mat4 &projection)
 		glUseProgram(this->shared->getShader(type));
 	}
 	glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
-	glUniform4f(1, 0.13f, 0.13f, 0.13f, 1.0f);
 	glPointSize(4);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
 	glDrawArrays(GL_POINTS, 0, vsize);
@@ -629,29 +633,51 @@ void Editor::paintSolid(const Mat4 &projection, const Vec3 &position)
 		glUseProgram(this->shared->getShader(SharedResources::Solid));
 
 	glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
-	glUniform4f(1, position.x, position.y, position.z, 0.0f);
+	glUniform3f(1, position.x, position.y, position.z);
 	GLsizei size = this->mesh.getIndexCount();
 	glDrawElements(GL_TRIANGLES, size, GL_UNSIGNED_INT, 0);
 }
 
-void Editor::paintMaterial(const Mat4 &projection)
+void Editor::paintMaterial(const Mat4 &projection, const Vec3 &position)
 {
+	GLuint program;
 	if (isAnimating()) {
 		auto type = SharedResources::DynamicMaterial;
-		glUseProgram(this->shared->getShader(type));
+		program = this->shared->getShader(type);
+		glUseProgram(program);
 		updateJoints();
 	} else {
 		auto type = SharedResources::Material;
-		glUseProgram(this->shared->getShader(type));
+		program = this->shared->getShader(type);
+		glUseProgram(program);
 	}
 	glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
+	glUniform3f(1, position.x, position.y, position.z);
 
 	size_t start = 0;
 	for (size_t i = 0; i < this->mesh.getMeshCount(); i++) {
 		unsigned index = this->mesh.getMaterialIndex(i);
 		ShaderParams params = this->shared->getMaterial(index);
+		pg::Material material = params.getMaterial();
+
+		float shininess = material.getShininess();
+		Vec3 ambient = material.getAmbient();
+		glUniform3f(2, ambient.x, ambient.y, ambient.z);
+		glUniform1f(3, shininess);
+
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, params.getTexture(0));
+		glBindTexture(GL_TEXTURE_2D,
+			params.getTexture(pg::Material::Albedo));
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D,
+			params.getTexture(pg::Material::Opacity));
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D,
+			params.getTexture(pg::Material::Specular));
+		glActiveTexture(GL_TEXTURE3);
+		glBindTexture(GL_TEXTURE_2D,
+			params.getTexture(pg::Material::Normal));
+
 		GLsizei size = this->mesh.getIndices(i)->size();
 		GLvoid *ptr = (GLvoid *)start;
 		glDrawElements(GL_TRIANGLES, size, GL_UNSIGNED_INT, ptr);

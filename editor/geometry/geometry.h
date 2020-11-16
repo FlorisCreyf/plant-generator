@@ -37,15 +37,13 @@ public:
 	};
 
 	void clear();
-	/** Used in conjunction with addPoint for line strips. */
 	void addIndex(unsigned index);
-	void addPoint(
-		pg::Vec3 point, pg::Vec3 color,
-		pg::Vec2 texture = {0.0f, 0.0f});
+	void addPoint(pg::Vec3 point, pg::Vec3 color);
 	void addLine(pg::Vec3 line[2], pg::Vec3 color);
 	void addCircle(float radius, int points, pg::Vec3 color);
 	void addCurve(const pg::Spline &spline, pg::Vec3 color, int size);
-	void addPlane(pg::Vec3 a, pg::Vec3 b, pg::Vec3 c, pg::Vec3 color);
+	void addPlane(pg::Vec3 a, pg::Vec3 b, pg::Vec3 c,
+		pg::Vec3 normal, pg::Vec3 tangent);
 	void addCone(float radius, float height, int points, pg::Vec3 color);
 	void addGrid(int size, pg::Vec3 pcolor[2], pg::Vec3 scolor);
 	void transform(size_t start, size_t count, const pg::Mat4 &transform);

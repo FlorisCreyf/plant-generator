@@ -156,6 +156,45 @@ void Mesh::addSections(
 		capStem(stem, state.mesh, state.prevIndex);
 }
 
+/** Generate a cross section for a point in the stem's path. Indices are added
+at a latter stage to connect the sections. */
+void Mesh::addSection(State &state, Quat rotation, const CrossSection &section)
+{
+	Stem *stem = state.segment.stem;
+	DVertex vertex;
+	vertex.tangentScale = 1.0f;
+	vertex.tangent = stem->getPath().getAverageDirection(state.section);
+	vertex.uv.y = getTextureLength(stem, state.section) + state.texOffset;
+	state.texOffset = vertex.uv.y;
+	Vec3 location = stem->getLocation();
+	location += stem->getPath().get(state.section);
+
+	Vec2 indices;
+	Vec2 weights;
+	if (stem->getJoints().size() > 0)
+		updateJointState(state, indices, weights);
+	else {
+		indices = Vec2(state.jointID, 0.0f);
+		weights = Vec2(1.0f, 0.0f);
+	}
+
+	float radius = this->plant->getRadius(stem, state.section);
+	const std::vector<SVertex> sectionVertices = section.getVertices();
+	for (size_t i = 0; i < sectionVertices.size(); i++) {
+		vertex.position = sectionVertices[i].position;
+		vertex.position = radius * vertex.position;
+		vertex.position = rotate(rotation, vertex.position);
+		vertex.position += location;
+		vertex.normal = sectionVertices[i].normal;
+		vertex.normal = rotate(rotation, vertex.normal);
+		vertex.normal = normalize(vertex.normal);
+		vertex.uv.x = sectionVertices[i].uv.x;
+		vertex.weights = weights;
+		vertex.indices = indices;
+		this->vertices[state.mesh].push_back(vertex);
+	}
+}
+
 /** The cross section is rotated so that the first point is always the topmost
 point relative to the parent stem direction. */
 void Mesh::setInitialRotation(Stem *stem, State &state)
@@ -191,43 +230,6 @@ Quat Mesh::rotateSection(State &state)
 	state.prevRotation = rotation;
 	state.prevDirection = direction;
 	return rotation;
-}
-
-/** Generate a cross section for a point in the stem's path. Indices are added
-at a latter stage to connect the sections. */
-void Mesh::addSection(State &state, Quat rotation, const CrossSection &section)
-{
-	Stem *stem = state.segment.stem;
-	DVertex vertex;
-	vertex.uv.y = getTextureLength(stem, state.section) + state.texOffset;
-	state.texOffset = vertex.uv.y;
-	Vec3 location = stem->getLocation();
-	location += stem->getPath().get(state.section);
-
-	Vec2 indices;
-	Vec2 weights;
-	if (stem->getJoints().size() > 0)
-		updateJointState(state, indices, weights);
-	else {
-		indices = Vec2(state.jointID, 0.0f);
-		weights = Vec2(1.0f, 0.0f);
-	}
-
-	float radius = this->plant->getRadius(stem, state.section);
-	const std::vector<SVertex> sectionVertices = section.getVertices();
-	for (size_t i = 0; i < sectionVertices.size(); i++) {
-		vertex.position = sectionVertices[i].position;
-		vertex.position = radius * vertex.position;
-		vertex.position = rotate(rotation, vertex.position);
-		vertex.position += location;
-		vertex.normal = sectionVertices[i].normal;
-		vertex.normal = rotate(rotation, vertex.normal);
-		vertex.normal = normalize(vertex.normal);
-		vertex.uv.x = sectionVertices[i].uv.x;
-		vertex.weights = weights;
-		vertex.indices = indices;
-		this->vertices[state.mesh].push_back(vertex);
-	}
 }
 
 float getAspect(const Plant *plant, const Stem *stem)
@@ -389,6 +391,8 @@ bool Mesh::addForks(Stem *fork[2], State state)
 		v1[k].position = v0[k].position;
 		v0[k].normal = 0.5f * (v0[k].normal + v1[k].normal);
 		v1[k].normal = v0[k].normal;
+		v0[k].tangent = 0.5f * (v0[k].tangent + v1[k].tangent);
+		v1[k].tangent = v0[k].tangent;
 		v0[k].uv.y += t;
 		v1[k].uv.y = v0[k].uv.y;
 	}
@@ -402,6 +406,8 @@ bool Mesh::addForks(Stem *fork[2], State state)
 		v2[k].position = v0[k].position;
 		v0[k].normal = 0.5f * (v0[k].normal + v2[k].normal);
 		v2[k].normal = v0[k].normal;
+		v0[k].tangent = 0.5f * (v0[k].tangent + v2[k].tangent);
+		v2[k].tangent = v0[k].tangent;
 		v0[k].uv.y += t;
 		v2[k].uv.y = v0[k].uv.y;
 	}
@@ -410,6 +416,8 @@ bool Mesh::addForks(Stem *fork[2], State state)
 		v2[edge1].position = v1[edge1].position;
 		v2[edge2].normal = v1[edge2].normal;
 		v2[edge1].normal = v1[edge1].normal;
+		v2[edge2].tangent = v1[edge2].tangent;
+		v2[edge1].tangent = v1[edge1].tangent;
 	}
 	for (int i = offset; i <= length - offset; i++) {
 		int k1 = edge1 - 1 + offset - i;
@@ -425,6 +433,8 @@ bool Mesh::addForks(Stem *fork[2], State state)
 		v2[k2].position = v1[k1].position;
 		v1[k1].normal = 0.5f * (v1[k1].normal + v2[k2].normal);
 		v2[k2].normal = v1[k1].normal;
+		v1[k1].tangent = 0.5f * (v1[k1].tangent + v2[k2].tangent);
+		v2[k2].tangent = v1[k1].tangent;
 		v1[k1].uv.y += t;
 		v2[k2].uv.y = v1[k1].uv.y;
 	}
@@ -434,6 +444,9 @@ bool Mesh::addForks(Stem *fork[2], State state)
 	v0[divisions].normal = v0[0].normal;
 	v1[divisions].normal = v1[0].normal;
 	v2[divisions].normal = v2[0].normal;
+	v0[divisions].tangent = v0[0].tangent;
+	v1[divisions].tangent = v1[0].tangent;
+	v2[divisions].tangent = v2[0].tangent;
 
 	return true;
 }
@@ -683,6 +696,8 @@ size_t Mesh::connectCollar(Segment child, Segment parent, size_t vertexStart)
 		DVertex initPoint = this->vertices[mesh][index];
 		DVertex scaledPoint;
 		scaledPoint.normal = initPoint.normal;
+		scaledPoint.tangent = initPoint.tangent;
+		scaledPoint.tangentScale = initPoint.tangentScale;
 		scaledPoint.position = initPoint.position - location;
 		scaledPoint.position = scale.apply(scaledPoint.position, 1.0f);
 		scaledPoint.position += location;
@@ -724,6 +739,8 @@ size_t Mesh::connectCollar(Segment child, Segment parent, size_t vertexStart)
 			DVertex vertex;
 			vertex.position = spline.getPoint(0, t);
 			vertex.normal = scaledPoint.normal;
+			vertex.tangent = scaledPoint.tangent;
+			vertex.tangentScale = scaledPoint.tangentScale;
 			vertex.indices = scaledPoint.indices;
 			vertex.weights = scaledPoint.weights;
 			size_t offset = index + (sectionDivisions + 1) * j;
@@ -757,13 +774,19 @@ void Mesh::setBranchCollarNormals(
 	for (int i = 0; i <= resolution; i++) {
 		Vec3 normal1 = this->vertices[mesh][index1].normal;
 		Vec3 normal2 = this->vertices[mesh][index2].normal;
+		Vec3 tangent1 = this->vertices[mesh][index1].tangent;
+		Vec3 tangent2 = this->vertices[mesh][index2].tangent;
 
 		for (int j = 1; j <= divisions; j++) {
 			float t = j/static_cast<float>(divisions);
 			Vec3 normal = lerp(normal1, normal2, t);
 			normal = normalize(normal);
+			Vec3 tangent = lerp(tangent1, tangent2, t);
+			tangent = normalize(tangent);
+
 			size_t offset = j * (resolution + 1);
 			this->vertices[mesh][index1 + offset].normal = normal;
+			this->vertices[mesh][index1 + offset].tangent = tangent;
 		}
 
 		index1++;

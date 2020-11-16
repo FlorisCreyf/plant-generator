@@ -60,55 +60,55 @@ void MeshEditor::createSelectionBar()
 	QPushButton *addButton = new QPushButton("+", this);
 	addButton->setFixedHeight(UI_FIELD_HEIGHT);
 	addButton->setFixedWidth(UI_FIELD_HEIGHT);
+	connect(addButton, &QPushButton::clicked, this, &MeshEditor::addEmpty);
 
 	QPushButton *removeButton = new QPushButton("-", this);
 	removeButton->setFixedHeight(UI_FIELD_HEIGHT);
 	removeButton->setFixedWidth(UI_FIELD_HEIGHT);
+	connect(removeButton, &QPushButton::clicked, this, &MeshEditor::remove);
 
 	this->selectionBox = new QComboBox(this);
 	this->selectionBox->setEditable(true);
 	this->selectionBox->setInsertPolicy(QComboBox::InsertAtCurrent);
 	this->selectionBox->setItemDelegate(new ItemDelegate());
+	connect(this->selectionBox,
+		QOverload<int>::of(&QComboBox::currentIndexChanged),
+		this, &MeshEditor::select);
+	connect(this->selectionBox->lineEdit(), &QLineEdit::editingFinished,
+		this, &MeshEditor::rename);
 
 	row->addWidget(this->selectionBox);
 	row->addWidget(removeButton);
 	row->addWidget(addButton);
 	row->setAlignment(Qt::AlignTop);
 	this->layout->addLayout(row);
-
-	connect(this->selectionBox, SIGNAL(currentIndexChanged(int)),
-		this, SLOT(select()));
-	connect(this->selectionBox->lineEdit(), SIGNAL(editingFinished()),
-		this, SLOT(rename()));
-	connect(addButton, SIGNAL(clicked()), this, SLOT(add()));
-	connect(removeButton, SIGNAL(clicked()), this, SLOT(remove()));
 }
 
 void MeshEditor::createFields(QVBoxLayout *layout)
 {
-	QPushButton *button[5];
+	QPushButton *button[4];
 	button[0] = new QPushButton("Custom", this);
 	button[0]->setFixedHeight(UI_FIELD_HEIGHT);
 	button[1] = new QPushButton("Plane", this);
 	button[1]->setFixedHeight(UI_FIELD_HEIGHT);
 	button[2] = new QPushButton("Perpendicular Planes", this);
 	button[2]->setFixedHeight(UI_FIELD_HEIGHT);
-	button[3] = new QPushButton("Pyramid");
+	button[3] = new QPushButton("Empty", this);
 	button[3]->setFixedHeight(UI_FIELD_HEIGHT);
-	button[4] = new QPushButton("Empty", this);
-	button[4]->setFixedHeight(UI_FIELD_HEIGHT);
 
 	layout->addWidget(button[0]);
 	layout->addWidget(button[1]);
 	layout->addWidget(button[2]);
 	layout->addWidget(button[3]);
-	layout->addWidget(button[4]);
 
-	connect(button[0], SIGNAL(clicked()), this, SLOT(loadCustom()));
-	connect(button[1], SIGNAL(clicked()), this, SLOT(loadPlane()));
-	connect(button[2], SIGNAL(clicked()), this, SLOT(loadPerpPlane()));
-	connect(button[3], SIGNAL(clicked()), this, SLOT(loadPyramid()));
-	connect(button[4], SIGNAL(clicked()), this, SLOT(loadEmpty()));
+	connect(button[0], &QPushButton::clicked,
+		this, &MeshEditor::loadCustom);
+	connect(button[1], &QPushButton::clicked,
+		this, &MeshEditor::loadPlane);
+	connect(button[2], &QPushButton::clicked,
+		this, &MeshEditor::loadPerpPlane);
+	connect(button[3], &QPushButton::clicked,
+		this, &MeshEditor::loadEmpty);
 }
 
 void MeshEditor::clear()
@@ -142,7 +142,7 @@ void MeshEditor::reset()
 	select();
 }
 
-void MeshEditor::add()
+void MeshEditor::addEmpty()
 {
 	pg::Geometry geom;
 	std::string name;
@@ -209,17 +209,6 @@ void MeshEditor::loadPerpPlane()
 		unsigned index = this->selectionBox->currentIndex();
 		pg::Geometry geom = plant->getLeafMesh(index);
 		geom.setPerpendicularPlanes();
-		modify(geom, index);
-	}
-}
-
-void MeshEditor::loadPyramid()
-{
-	if (this->selectionBox->count() > 0) {
-		pg::Plant *plant = this->editor->getPlant();
-		unsigned index = this->selectionBox->currentIndex();
-		pg::Geometry geom = plant->getLeafMesh(index);
-		geom.setPyramid();
 		modify(geom, index);
 	}
 }

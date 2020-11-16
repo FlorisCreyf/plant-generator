@@ -18,11 +18,13 @@
 #ifndef WIND_EDITOR_H
 #define WIND_EDITOR_H
 
-#include "form.h"
+#include "editor.h"
 #include "plant_generator/wind.h"
-#include <QtWidgets>
+#include <QGroupBox>
+#include <QDoubleSpinBox>
+#include <QSpinBox>
 
-class WindEditor : public Form {
+class WindEditor : public QWidget {
 	Q_OBJECT
 
 	Editor *editor;

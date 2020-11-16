@@ -80,7 +80,7 @@ void CurveViewer::appendInterface(Geometry &geometry)
 	Vec3 b(0.0f, 0.0f, 1.0f);
 	Vec3 center(0.0f, 0.2f, 0.0f);
 	Vec3 color(0.34f, 0.34f, 0.34f);
-	plane.addPlane(a, b, center, color);
+	plane.addPlane(a, b, center, color, Vec3(0.0f, 0.0f, 0.0f));
 	this->planeSegment = geometry.append(plane);
 
 	Geometry grid;

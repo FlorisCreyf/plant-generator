@@ -22,12 +22,11 @@
 #include <QOpenGLFunctions_4_3_Core>
 
 class ShaderParams {
-	GLuint textures[4] = {};
-	GLuint defaultTextures[4] = {};
+	GLuint textures[pg::Material::MapQuantity] = {};
+	GLuint defaultTextures[pg::Material::MapQuantity] = {};
+	QString textureFiles[pg::Material::MapQuantity];
 	pg::Material material;
-
 	bool valid = false;
-	QString textureFiles[4];
 
 	GLuint loadTexture(QImage image);
 
@@ -38,12 +37,13 @@ public:
 	void initialize();
 	void setName(std::string name);
 	std::string getName();
-	GLuint getTexture(unsigned index);
-	bool loadTexture(unsigned index, QString filename);
-	void removeTexture(unsigned index);
+	GLuint getTexture(int index);
+	bool loadTexture(int index, QString filename);
+	void removeTexture(int index);
 	void clearTextures();
+	void swapMaterial(pg::Material material);
 	pg::Material getMaterial();
-	void setDefaultTexture(unsigned index, GLuint name);
+	void setDefaultTexture(int index, GLuint name);
 };
 
 #endif /* SHADER_PARAMS_H */
