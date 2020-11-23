@@ -112,7 +112,7 @@ void PseudoGenerator::addLateralStem(
 	Stem *parent, float position, const ParameterNode *node, int index)
 {
 	StemData data = node->getData();
-	Vec2 swelling(1.2f, 3.0f);
+	Vec2 swelling(1.5f, 3.0f);
 	float radius = this->plant->getIntermediateRadius(parent, position);
 	radius = radius / swelling.x * data.scale;
 	if (radius < node->getData().radiusThreshold)
@@ -123,7 +123,8 @@ void PseudoGenerator::addLateralStem(
 	stem->setMinRadius(getMinRadius(radius));
 	stem->setSwelling(swelling);
 	stem->setDistance(position);
-	stem->setSectionDivisions(5);
+	if (parent->getSectionDivisions() > 4)
+		stem->setSectionDivisions(parent->getSectionDivisions()-2);
 	Vec3 direction = getStemDirection(stem, data, index);
 	setPath(stem, direction, data);
 

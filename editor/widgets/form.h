@@ -18,8 +18,7 @@
 #ifndef FORM_H
 #define FORM_H
 
-#include <QWidget>
-#include <QFormLayout>
+#include <QtWidgets>
 
 void setValueWidths(QFormLayout *layout);
 void indicateDifferences(QWidget *widget);

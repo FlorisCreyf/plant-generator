@@ -20,7 +20,6 @@
 
 #include "editor.h"
 #include "material_viewer.h"
-#include <QPushButton>
 #include <vector>
 #include <QtWidgets>
 

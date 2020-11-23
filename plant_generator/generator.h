@@ -33,10 +33,10 @@ namespace pg {
 			float t;
 		};
 
+		Plant *plant;
 		std::map<Stem *, Light> growth;
 		float primaryGrowthRate;
 		float secondaryGrowthRate;
-		Plant plant;
 		float minRadius;
 		int rayCount;
 		int rayLevels;
@@ -56,12 +56,11 @@ namespace pg {
 		void updateBoundingBox(Vec3 point);
 
 	public:
-		Generator();
+		Generator(Plant *plant);
 		void grow(int cycles, int nodes);
 		void setPrimaryGrowthRate(float rate);
 		void setSecondaryGrowthRate(float rate);
 		void setRayDensity(int baseCount, int levels);
-		Plant *getPlant();
 	};
 }
 

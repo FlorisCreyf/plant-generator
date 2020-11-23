@@ -49,7 +49,6 @@ namespace pg {
 
 		int depth;
 		int sectionDivisions;
-		int collarDivisions;
 		unsigned radiusCurve;
 		unsigned material[2];
 		float distance;
@@ -79,7 +78,6 @@ namespace pg {
 			ar & leaves;
 			ar & path;
 			ar & sectionDivisions;
-			ar & collarDivisions;
 			ar & distance;
 			ar & location;
 			ar & material;
@@ -128,7 +126,7 @@ namespace pg {
 		void setCollarDivisions(int divisions);
 		int getCollarDivisions() const;
 		void setPath(Path &path);
-		Path getPath() const;
+		const Path &getPath() const;
 		void setSwelling(Vec2 scale);
 		Vec2 getSwelling() const;
 		void setDistance(float distance);

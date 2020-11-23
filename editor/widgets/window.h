@@ -34,11 +34,7 @@
 #include "editor/qt/ui_window.h"
 #include "editor.h"
 
-#include <QFileDialog>
-#include <QLabel>
-#include <QStatusBar>
-#include <QDateTime>
-#include <QDesktopServices>
+#include <QtWidgets>
 
 class Window : public QMainWindow {
 	Q_OBJECT

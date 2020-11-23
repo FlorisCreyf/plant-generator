@@ -49,7 +49,6 @@ void Stem::init(Stem *parent)
 	this->material[0] = 0;
 	this->material[1] = 0;
 	this->sectionDivisions = 8;
-	this->collarDivisions = 1;
 	this->custom = false;
 	this->parameterTree.reset();
 	this->nextSibling = nullptr;
@@ -78,7 +77,6 @@ void Stem::copy(const Stem &stem)
 	this->radiusCurve = stem.radiusCurve;
 	this->path = stem.path;
 	this->sectionDivisions = stem.sectionDivisions;
-	this->collarDivisions = stem.collarDivisions;
 	this->distance = stem.distance;
 	this->location = stem.location;
 	this->material[0] = stem.material[0];
@@ -98,7 +96,6 @@ bool Stem::operator==(const Stem &stem) const
 		this->maxRadius == stem.maxRadius &&
 		this->path == stem.path &&
 		this->sectionDivisions == stem.sectionDivisions &&
-		this->collarDivisions == stem.collarDivisions &&
 		this->distance == stem.distance &&
 		this->location == stem.location &&
 		this->material[0] == stem.material[0] &&
@@ -170,9 +167,9 @@ void Stem::removeLeaf(size_t index)
 	this->leaves.erase(this->leaves.begin() + index);
 }
 
-void Stem::setSectionDivisions(int resolution)
+void Stem::setSectionDivisions(int divisions)
 {
-	this->sectionDivisions = resolution;
+	this->sectionDivisions = divisions;
 }
 
 int Stem::getSectionDivisions() const
@@ -182,12 +179,13 @@ int Stem::getSectionDivisions() const
 
 void Stem::setCollarDivisions(int divisions)
 {
-	this->collarDivisions = divisions;
+	this->path.setInitialDivisions(divisions);
+	this->path.generate();
 }
 
 int Stem::getCollarDivisions() const
 {
-	return this->collarDivisions;
+	return this->path.getInitialDivisions();
 }
 
 void Stem::setPath(Path &path)
@@ -197,7 +195,7 @@ void Stem::setPath(Path &path)
 	updatePositions(this);
 }
 
-Path Stem::getPath() const
+const Path &Stem::getPath() const
 {
 	return this->path;
 }

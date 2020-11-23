@@ -15,6 +15,7 @@
 
 #include "plant.h"
 #include "generator.h"
+#include "pseudo_generator.h"
 #include "mesh.h"
 #include "file/wavefront.h"
 #include <iostream>
@@ -79,20 +80,59 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	pg::Generator gen;
-	gen.setPrimaryGrowthRate(pgr);
-	gen.setSecondaryGrowthRate(sgr);
-	gen.setRayDensity(rays, divisions);
-	gen.grow(cycles, nodes);
+	pg::Plant plant;
+	pg::Geometry geometry;
+	geometry.setPlane();
+	plant.addLeafMesh(geometry);
+	plant.addMaterial(pg::Material());
+	plant.addCurve(pg::Curve(0));
 
-	pg::Mesh mesh = pg::Mesh(gen.getPlant());
+#ifndef PSEUDO_GENERATOR
+	pg::Generator generator(&plant);
+	generator.setPrimaryGrowthRate(pgr);
+	generator.setSecondaryGrowthRate(sgr);
+	generator.setRayDensity(rays, divisions);
+	generator.grow(cycles, nodes);
+#else
+	pg::PseudoGenerator generator(&plant);
+	pg::ParameterTree tree = generator.getParameterTree();
+	pg::ParameterRoot *root = tree.createRoot();
+	std::random_device rd;
+	root->setSeed(rd());
+	pg::ParameterNode *node1 = tree.addChild("");
+	pg::StemData data;
+	data.density = 1.0f;
+	data.densityCurve.setDefault(1);
+	data.start = 2.0f;
+	data.scale = 0.8f;
+	data.length = 50.0f;
+	data.radiusThreshold = 0.02f;
+	data.leaf.scale = pg::Vec3(1.0f, 1.0f, 1.0f);
+	data.leaf.density = 3.0f;
+	data.leaf.densityCurve.setDefault(1);
+	data.leaf.distance = 3.0f;
+	data.leaf.rotation = 3.141f;
+	node1->setData(data);
+	pg::ParameterNode *node2 = tree.addChild("1");
+	data.start = 1.0f;
+	data.radiusThreshold = 0.01f;
+	data.angleVariation = 0.2f;
+	node2->setData(data);
+	pg::ParameterNode *node3 = tree.addChild("1.1");
+	data.density = 0.0f;
+	node3->setData(data);
+	generator.setParameterTree(tree);
+	generator.grow();
+#endif
+
+	pg::Mesh mesh = pg::Mesh(&plant);
 	mesh.generate();
 
 	pg::Wavefront obj;
 	if (argc == 2)
-		obj.exportFile(argv[1], mesh, *gen.getPlant());
+		obj.exportFile(argv[1], mesh, plant);
 	else
-		obj.exportFile(filename.c_str(), mesh, *gen.getPlant());
+		obj.exportFile(filename.c_str(), mesh, plant);
 
 	return 0;
 }

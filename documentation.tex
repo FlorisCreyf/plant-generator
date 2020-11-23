@@ -38,42 +38,61 @@ The project is split in two parts. The editor handles all user input and provide
 
 \section{Background}
 
+\subsection{Stems}
+
+Auxin (IAA) lengthens cells by increasing cell wall elasticity. It is transported away from light through the shifting of PIN proteins in cell membranes. This process results in stems bending towards light. A common hypothesis is that auxin determines the apical dominance of the plant through a source-sink model. Fully saturating stems with auxin prevents axillary buds from releasing auxin into the stem and prevents further growth. The effects of auxin are countered with cytokinins (CK) that stimulate growth.
+
+Formation of reaction wood is required for stems to grow upward or otherwise stems will bend down as their mass increases. Angiosperms produce tension wood in the upper part of the stem. Gymnosperms produce compression wood in the lower part of the stem. A stem under apical control develops only enough reaction wood to retain its angle but not enough to grow upward. Reaction wood enables one of the axillary stems to become the new central leader if the apical node is removed.
+
+The apical meristem exhibits determinate growth if it produces a flower. The loss of apical control causes sympodial branching. Monopodial branching occurs when the apical meristem exhibits indeterminate growth. Dichotomous branching occurs when the apical node splits in two.
+
+Growth is limited by the nitrogen concentration of the soil. More energy is put into roots when nitrogen is scarce and more stems are grown when nitrogen is abundant. There are other factors that affect growth such as altitude and temperature. Plants with needle-like leaves will resist freezing and water loss but not absorb as much sunlight.
+
+\subsubsection{Terms}
+
+\begin{itemize}
+\item \texttt{Phytomer}: a unit containing a node, internode, and axillary bud
+\item \texttt{Orthotropic}: vertical growth
+\item \texttt{Plagiotropic}: horizontal growth
+\item \texttt{Anisotropic}: unequal growth in different directions
+\item \texttt{Isotropic}: equal growth in all directions
+\item \texttt{Excurrent}: the plant maintains a single central leader
+\item \texttt{Decurrent}: lateral stems compete with the central leader
+\item \texttt{Acrotony}: stems first develop near the apex
+\item \texttt{Mesotony}: stems first develop in the center
+\item \texttt{Basitony}: stems first develop at the base
+\item \texttt{Inflorescence}: a cluster of flowers including the stem
+\item \texttt{Tortuous}: containing twists and turns
+\item \texttt{Furrowed}: describes some bark textures
+\end{itemize}
+
+\subsection{Leaves}
+
+The shape of a leaf is partly influenced by venation. The veins are composed of xylem cells (for the transportation of water) and phloem cells (for the outward transportation of sugars). Major veins provide support for the leaf and extend from the petiole to the leaf apices. Parallel venation can sometimes be seen in secondary veins, while minor veins form a network or a reticulate pattern. Minor veins can connect secondary veins creating loops.
+
+The edge of a leaf is termed the leaf margin. Margins, for example, can be smooth, serrated, or sinuous. The margins and the overal shape is commonly used to determine what species a plant is. Alder, Elm and Birch trees have serrated leaves, while oak trees have sinuous leaves.
+
+Leaves and leaflets are also differentiated by their overal shape. Some shapes are elliptic, deltoid, cordate, orbicular, and lobed. If a leaf is lobed, the tips can be either pointed or rounded.
+
+\subsubsection{Terms}
+
+\begin{itemize}
+\item \texttt{Lamina}: the leaf surface
+\item \texttt{Pinnate}: a feather-like arrangement
+\item \texttt{Palmate}: a hand-shaped arrangement
+\item \texttt{Craspedodromous}: secondary veins that extend towards the leaf margins
+\item \texttt{Parallelodromous}: secondary veins that converge at the leaf apex
+\item \texttt{Phyllotaxis}: the arrangement of leaves
+\item \texttt{Acropetal}: leaves and flowers start developing at the top
+\item \texttt{Basipetal}: leaves and flowers start developing at the bottom
+\end{itemize}
+
 \subsection{Ray Tracing Model}
 
 A plant is grown over a certain number of growth cycles. A bounding box is generated at the beginning of each cycle and is used to construct a dome (the sky). Rays (light) originating on the dome intersect leaves to determine the efficiency of each stem in the plant. A stem is efficient if many intersections occur with its leaves and is grown by a random growth factor. Otherwise, if a stem receives no or little ray intersections, then the stem is shedded by the plant (known as cladoptosis). Remaining stems will grow in the average directions of rays that intersect with their leaves.
 
 Each stem develops buds at the beginning of each iteration. Leaves form along the dormant nodes in the current iteration, and stems grow from the nodes in the following iteration. As stems grow older, a branch collar (swelling) forms at the base to secure the stem to the parent stem. Additionally, growth of lateral stems is suppressed by some factor depending on the distance to the apex of the parent stem. This suppression factor is intended to approximate the effects of auxin hormones that control the apical dominance of the plant.
 
-\subsection{Internal and External Influences}
-
-Auxin (IAA) lengthens cells by increasing cell wall elasticity. Auxin is transported away from light through the shifting of PIN proteins in cell membranes. This process results in stems bending towards light. A common hypothesis is that auxin determines the apical dominance of the plant through a source-sink model. Fully saturating stems with auxin prevents axillary buds from releasing auxin into the stem and prevents further growth. The effects of auxin are countered with cytokinins (CK) that stimulate growth.
-
-Formation of reaction wood is required for stems to grow upward or otherwise stems will bend down as their mass increases. Angiosperms produce tension wood in the upper part of the stem. Gymnosperms produce compression wood in the lower part of the stem. A stem under apical control develops only enough reaction wood to retain its angle but not enough to grow upward. Reaction wood enables one of the axillary stems to become the new central leader if the apical node is removed.
-
-The apical meristem exhibits determinate growth if it produces a flower. The loss of apical control causes sympodial branching. Monopodial branching occurs when the apical meristem exhibits indeterminate growth. Dichotomous branching occurs when the apical node splits in two.
-
-Growth is limited by the nitrogen concentration of the soil. More energy is put into roots when nitrogen is scarce. More stems are grown when nitrogen is abundant.
-
-\subsection{Terms}
-
-\begin{itemize}
-\item Phytomer: a unit containing a node, internode, and axillary bud
-\item Phyllotaxis: the arrangement of leaves
-\item Acropetal: leaves and flowers start developing at the top
-\item Basipetal: leaves and flowers start developing at the bottom
-\item Orthotropic: vertical growth
-\item Plagiotropic: horizontal growth
-\item Anisotropic: unequal growth in different directions
-\item Isotropic: equal growth in all directions
-\item Excurrent: the plant maintains a single central leader
-\item Decurrent: lateral stems compete with the central leader
-\item Acrotony: stems first develop near the apex
-\item Mesotony: stems first develop in the center
-\item Basitony: stems first develop at the base
-\item Inflorescence: a cluster of flowers including the stem
-\end{itemize}
-
-\pagebreak
 \section{Editor}
 
 \subsection{Camera}
@@ -110,7 +129,6 @@ A \texttt{SharedResources} object stores all the shader programs and materials t
 
 The history maintains a list of past and future commands. The timestamps within commands are used to verify that new commands are more recent than the previous command. Commands can be flipped if their timestamps are out of order, which could happen if they are added to the history during focus events.
 
-\pagebreak
 \section{Generator}
 
 \subsection{Stems}
@@ -121,6 +139,10 @@ The positions of stems are stored as distances along parent stems. Stems interna
 
 \begin{minipage}[t]{0.46\textwidth}
 The branch collar is a swelling at the base of the stem that increases the structural integrity of the joint. The bark ridge can be generated by using two B\'{e}zier curves, but that would require finding a third point and increasing the complexity of the algorithm.
+
+\setlength{\parindent}{1.5em}
+A cone intersection test (for tapered cylinders) can be used to fuse one stem to the other, but this is only ideal if the cross sections are guaranteed to be circular. Triangle intersection tests will work for all shapes but with the cost of worse performance. To increase performance, intersections should start at the the location of the stem and move outwards towards the top and bottom of the parent stem. If triangle intersections only pass when the ray intersects with the front side of triangles, then the first intersection is likely to be the correct one.
+
 \end{minipage}
 \hfill
 \begin{minipage}[t]{0.46\textwidth}
@@ -220,7 +242,6 @@ Cross products can be used to derive the rotations of leaves, but only in the ab
 \begin{itemize}
 \item Leaves tend to point in the same direction as shoots because shoots grow towards light.
 \item The locations of buds influence the rotations of leaves, although petioles reduce this influence.
-\item Gravity influences the rotation of leaves.
 \end{itemize}
 
 \end{minipage}

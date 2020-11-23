@@ -53,6 +53,7 @@ namespace pg {
 	float intersectsOBB(Ray &ray, Obb &obb);
 	float intersectsAABB(Ray &ray, Aabb &aabb);
 	float intersectsTriangle(Ray &ray, Vec3 p1, Vec3 p2, Vec3 p3);
+	float intersectsFrontTriangle(Ray &ray, Vec3 p1, Vec3 p2, Vec3 p3);
 	float intersectsPlane(Ray &ray, Plane &plane);
 	float intersectsRectangle(Ray ray, Vec3 a, Vec3 b, Vec3 d);
 	float intersectsSphere(Ray &ray, Vec3 position, float radius);

@@ -142,18 +142,59 @@ namespace pg {
 		return vec;
 	}
 
-	float angle(Vec3 a, Vec3 b);
-	Vec3 cross(Vec3 a, Vec3 b);
+	inline float magnitude(Vec3 vec)
+	{
+		return std::sqrt(vec.x*vec.x + vec.y*vec.y + vec.z*vec.z);
+	}
+
+	inline Vec3 normalize(Vec3 vec)
+	{
+		Vec3 result;
+		float m = 1.0f / magnitude(vec);
+		result.x = vec.x * m;
+		result.y = vec.y * m;
+		result.z = vec.z * m;
+		return result;
+	}
+
+	inline float dot(Vec3 a, Vec3 b)
+	{
+		return a.x*b.x + a.y*b.y + a.z*b.z;
+	}
+
+	/** Projects a onto b and returns distance along b. */
+	inline float project(Vec3 a, Vec3 b)
+	{
+		return dot(a, b) / dot(b, b);
+	}
+
+	inline Vec3 projectOntoPlane(Vec3 vector, Vec3 normal)
+	{
+		return vector - project(vector, normal) * normal;
+	}
+
+	inline float angle(Vec3 a, Vec3 b)
+	{
+		return std::acos(dot(a, b) / (magnitude(a) * magnitude(b)));
+	}
+
+	inline Vec3 cross(Vec3 a, Vec3 b)
+	{
+		Vec3 result;
+		result.x = a.y*b.z - a.z*b.y;
+		result.y = a.z*b.x - a.x*b.z;
+		result.z = a.x*b.y - a.y*b.x;
+		return result;
+	}
+
+	inline Vec3 lerp(Vec3 a, Vec3 b, float t)
+	{
+		return (1.0f - t) * a + t * b;
+	}
+
 	/** Clamp "a" if the dot product is less than "max". */
 	Vec3 clamp(Vec3 a, Vec3 b, float max);
-	float dot(Vec3 a, Vec3 b);
-	float magnitude(Vec3 vec);
-	Vec3 normalize(Vec3 vec);
-	/** Projects a onto b and returns distance along b. */
-	float project(Vec3 a, Vec3 b);
-	Vec3 projectOntoPlane(Vec3 vec, Vec3 normal);
 	Vec3 rotateAroundAxis(Vec3 vec, Vec3 axis, float n);
-	Vec3 lerp(Vec3 a, Vec3 b, float t);
 }
 
 #endif

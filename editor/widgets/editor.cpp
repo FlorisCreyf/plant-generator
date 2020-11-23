@@ -31,12 +31,7 @@
 #include <fstream>
 #include <iterator>
 
-#include <QMenu>
-#include <QScrollArea>
-#include <QtOpenGL/QGLFormat>
-#include <QtGui/QKeyEvent>
-#include <QtGui/QMouseEvent>
-#include <QVBoxLayout>
+#include <QtWidgets>
 
 #include <boost/archive/text_iarchive.hpp>
 
@@ -442,8 +437,10 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
 		exitCommand(this->command->onMouseMove(event));
 	else {
 		QPoint point = event->pos();
-		this->camera.executeAction(point.x(), point.y());
-		update();
+		bool executed;
+		executed = this->camera.executeAction(point.x(), point.y());
+		if (executed)
+			update();
 	}
 }
 

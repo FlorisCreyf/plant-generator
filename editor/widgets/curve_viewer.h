@@ -23,10 +23,7 @@
 #include "editor/geometry/path.h"
 #include "editor/graphics/vertex_buffer.h"
 #include "editor/graphics/shared_resources.h"
-#include <QOpenGLFunctions_4_3_Core>
-#include <QOpenGLWidget>
-#include <QMouseEvent>
-#include <QWheelEvent>
+#include <QtWidgets>
 
 class CurveViewer : public QOpenGLWidget, protected QOpenGLFunctions_4_3_Core {
 	Q_OBJECT

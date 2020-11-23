@@ -24,8 +24,6 @@
 #include "editor/geometry/geometry.h"
 #include "plant_generator/math/curve.h"
 #include "plant_generator/math/intersection.h"
-#include <QtGui/QMouseEvent>
-#include <QTabBar>
 #include <cmath>
 
 using pg::Vec2;

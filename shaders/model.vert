@@ -102,15 +102,18 @@ void main()
 {
 	vec4 tp = vec4(position, 1.0);
 	vec3 tn = normal;
+	vec3 tt = tangent;
 #ifdef DYNAMIC
 	tp = getAnimatedPoint(tp);
+	tn = getAnimatedPoint(vec4(tn, 0.0)).xyz;
+	tt = getAnimatedPoint(vec4(tt, 0.0)).xyz;
 #endif
 	gl_Position = vp * tp;
 	vertexPosition = tp.xyz;
 	vertexNormal = tn;
 	vertexUV = uv;
-	vec3 bitangent = cross(tangent, normal);
-	tbn = mat3(tangent, bitangent, normal);
+	vec3 bitangent = cross(tt, tn);
+	tbn = mat3(tt, bitangent, tn);
 }
 
 #endif

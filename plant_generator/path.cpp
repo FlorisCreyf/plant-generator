@@ -20,6 +20,14 @@ using pg::Path;
 using pg::Spline;
 using pg::Vec3;
 
+Path::Path()
+{
+	this->divisions = 0;
+	this->initialDivisions = 0;
+	this->subdivisions = 0;
+	this->length = 0.0f;
+}
+
 bool Path::operator==(const Path &path) const
 {
 	return (
@@ -37,21 +45,26 @@ bool Path::operator!=(const Path &path) const
 void Path::generate()
 {
 	size_t size = this->spline.getControls().size();
+	int curves = this->spline.getCurveCount();
 	if (size <= 1)
 	 	return;
 
 	this->path.clear();
-	int curves = this->spline.getCurveCount();
-	int curve = 0;
 
-	while (curve < curves) {
-		float r = 1.0f / (this->divisions+1);
+	float delta = 1.0f / (this->initialDivisions+1);
+	for (int i = 0; i <= this->initialDivisions; i++) {
+		float t = delta * i;
+		Vec3 point = this->spline.getPoint(0, t);
+		this->path.push_back(point);
+	}
+
+	delta = 1.0f / (this->divisions+1);
+	for (int curve = 1; curve < curves; curve++) {
 		for (int i = 0; i <= this->divisions; i++) {
-			float t = r * i;
+			float t = delta * i;
 			Vec3 point = this->spline.getPoint(curve, t);
 			this->path.push_back(point);
 		}
-		curve++;
 	}
 
 	this->path.push_back(this->spline.getControls()[size-1]);
@@ -70,12 +83,11 @@ void Path::setSpline(const Spline &spline)
 	this->spline = spline;
 }
 
-Spline Path::getSpline()
+Spline Path::getSpline() const
 {
 	return this->spline;
 }
 
-/** Sets the divisions for each curve in the path. */
 void Path::setDivisions(int resolution)
 {
 	this->divisions = resolution;
@@ -84,6 +96,16 @@ void Path::setDivisions(int resolution)
 int Path::getDivisions() const
 {
 	return this->divisions;
+}
+
+void Path::setInitialDivisions(int divisions)
+{
+	this->initialDivisions = divisions;
+}
+
+int Path::getInitialDivisions() const
+{
+	return this->initialDivisions;
 }
 
 void Path::subdivide(int level)
@@ -114,12 +136,11 @@ size_t Path::getSize() const
 
 Vec3 Path::getIntermediate(float distance) const
 {
-	Vec3 point = {
-		std::numeric_limits<float>::quiet_NaN(),
-		std::numeric_limits<float>::quiet_NaN(),
-		std::numeric_limits<float>::quiet_NaN()
-	};
 	float total = 0.0f;
+	Vec3 point(
+		std::numeric_limits<float>::quiet_NaN(),
+		std::numeric_limits<float>::quiet_NaN(),
+		std::numeric_limits<float>::quiet_NaN());
 
 	for (size_t i = 0; i < this->path.size() - 1; i++) {
 		float length = magnitude(this->path[i + 1] - this->path[i]);
@@ -213,7 +234,10 @@ float Path::getSegmentLength(size_t index) const
 
 size_t Path::toPathIndex(size_t control) const
 {
-	return control / this->spline.getDegree() * (this->divisions + 1);
+	size_t i = control / this->spline.getDegree();
+	if (i == 0)
+		return 0;
+	return (i-1) * (1+this->divisions) + (1+this->initialDivisions);
 }
 
 float Path::getPercentage(size_t index) const
@@ -221,5 +245,5 @@ float Path::getPercentage(size_t index) const
 	float length = 0.0f;
 	for (size_t i = 0; i < index; i++)
 		length += magnitude(this->path[i+1] - this->path[i]);
-	return length / getLength();
+	return length / this->length;
 }

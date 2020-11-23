@@ -88,7 +88,7 @@ BOOST_AUTO_TEST_CASE(test_nonexistent)
 BOOST_AUTO_TEST_CASE(test_structure)
 {
 	ParameterTree tree;
-	ParameterRoot *root = tree.createRoot();
+	tree.createRoot();
 	ParameterNode *node1 = tree.addChild("");
 	ParameterNode *node2 = tree.addSibling("1");
 	ParameterNode *node1_1 = tree.addChild("1");

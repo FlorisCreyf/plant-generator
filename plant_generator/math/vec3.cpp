@@ -17,48 +17,12 @@
 
 using pg::Vec3;
 
-float pg::magnitude(Vec3 vec)
+Vec3 pg::rotateAroundAxis(Vec3 vec, Vec3 axis, float n)
 {
-	return std::sqrt(vec.x*vec.x + vec.y*vec.y + vec.z*vec.z);
-}
-
-Vec3 pg::normalize(Vec3 vec)
-{
-	Vec3 result;
-	float m = magnitude(vec);
-	result.x = vec.x / m;
-	result.y = vec.y / m;
-	result.z = vec.z / m;
-	return result;
-}
-
-float pg::project(Vec3 a, Vec3 b)
-{
-	return dot(a, b) / dot(b, b);
-}
-
-Vec3 pg::projectOntoPlane(Vec3 vector, Vec3 normal)
-{
-	return vector - project(vector, normal) * normal;
-}
-
-float pg::angle(Vec3 a, Vec3 b)
-{
-	return std::acos(dot(a, b) / (magnitude(a) * magnitude(b)));
-}
-
-float pg::dot(Vec3 a, Vec3 b)
-{
-	return a.x*b.x + a.y*b.y + a.z*b.z;
-}
-
-Vec3 pg::cross(Vec3 a, Vec3 b)
-{
-	Vec3 result;
-	result.x = a.y*b.z - a.z*b.y;
-	result.y = a.z*b.x - a.x*b.z;
-	result.z = a.x*b.y - a.y*b.x;
-	return result;
+	Vec3 a = std::cos(n) * vec;
+	Vec3 b = std::sin(n) * cross(axis, vec);
+	Vec3 c = (1.0f - std::cos(n)) * dot(axis, vec) * axis;
+	return normalize(a + b + c);
 }
 
 Vec3 pg::clamp(Vec3 a, Vec3 b, float max)
@@ -71,9 +35,4 @@ Vec3 pg::clamp(Vec3 a, Vec3 b, float max)
 		return max*rejection + max*b;
 	} else
 		return a;
-}
-
-Vec3 pg::lerp(Vec3 a, Vec3 b, float t)
-{
-	return (1.0f - t) * a + t * b;
 }

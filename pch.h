@@ -11,4 +11,7 @@
 #include "plant_generator/material.h"
 #include "plant_generator/spline.h"
 #include "plant_generator/vertex.h"
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <QtWidgets>
 #endif

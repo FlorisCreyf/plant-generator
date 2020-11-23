@@ -25,9 +25,10 @@ namespace pg {
 	protected:
 		std::vector<Vec3> path;
 		Spline spline;
-		int divisions = 0;
-		int subdivisions = 0;
-		float length = 0.0f;
+		int divisions;
+		int initialDivisions;
+		int subdivisions;
+		float length;
 
  		void setLength();
 
@@ -39,6 +40,7 @@ namespace pg {
 			ar & path;
 			ar & spline;
 			ar & divisions;
+			ar & initialDivisions;
 			ar & subdivisions;
 			setLength();
 		}
@@ -48,11 +50,15 @@ namespace pg {
 		bool operator==(const Path &path) const;
 		bool operator!=(const Path &path) const;
 
+		Path();
+
 		void setSpline(const Spline &spline);
-		Spline getSpline();
+		Spline getSpline() const;
 		/** Set the divisions for each curve in the path. */
 		void setDivisions(int divisions);
 		int getDivisions() const;
+		void setInitialDivisions(int divisions);
+		int getInitialDivisions() const;
 		void subdivide(int level);
 		int getSubdivisions() const;
 		/** Evaluate points along the spline. */

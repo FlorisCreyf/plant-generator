@@ -34,8 +34,8 @@ Mat4 Mat4::transpose() const
 
 Mat4 pg::rotateIntoVec(const Vec3 &normal, const Vec3 &direction)
 {
-	Vec3 v = pg::cross(normal, direction);
-	float e = pg::dot(normal, direction);
+	Vec3 v = cross(normal, direction);
+	float e = dot(normal, direction);
 	float h = 1.0f / (1.0f + e);
 	return Mat4(
 		e + h*v.x*v.x, h*v.x*v.y + v.z, h*v.x*v.z - v.y, 0.0f,

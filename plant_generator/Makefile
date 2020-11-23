@@ -1,4 +1,4 @@
-CPPFLAGS += --pedantic -W -g
+CPPFLAGS += --pedantic -Wall -pg -O3
 BUILDDIR := build
 LIBS = /usr/lib/x86_64-linux-gnu/libboost_program_options.a
 OBJECTS := $(addprefix $(BUILDDIR)/, \
@@ -24,6 +24,7 @@ material.o \
 mesh.o \
 path.o \
 plant.o \
+pseudo_generator.o \
 spline.o \
 stem.o \
 stem_pool.o \
@@ -41,10 +42,10 @@ tests/test_wind.o \
 )
 
 plant: $(OBJECTS) $(BUILDDIR)/main.o
-	g++ $(OBJECTS) $(BUILDDIR)/main.o $(LIBS) -o $@
+	g++ $(OBJECTS) $(BUILDDIR)/main.o $(LIBS) $(CPPFLAGS) -o $@
 
 test: $(OBJECTS) $(TEST_OBJECTS)
-	g++ $(OBJECTS) $(TEST_OBJECTS) $(LIBS) -o $@ -lboost_unit_test_framework
+	g++ $(CPPFLAGS) $(OBJECTS) $(TEST_OBJECTS) $(LIBS) -o $@ -lboost_unit_test_framework
 
 clean:
 	rm -r build
@@ -63,6 +64,6 @@ $(BUILDDIR)%/.:
 
 $(BUILDDIR)/%.o: %.cpp | $$(@D)/.
 	g++ -M $*.cpp > $(BUILDDIR)/$*.d
-	g++ -c $(CPPFLAGS) $*.cpp -o $(BUILDDIR)/$*.o
+	g++ $(CPPFLAGS) -c $*.cpp -o $(BUILDDIR)/$*.o
 
 .PHONY: clean

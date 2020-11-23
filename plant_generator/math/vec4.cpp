@@ -18,14 +18,6 @@
 using pg::Vec3;
 using pg::Vec4;
 
-Vec3 pg::rotateAroundAxis(Vec3 vec, Vec3 axis, float n)
-{
-	Vec3 a = std::cos(n) * vec;
-	Vec3 b = std::sin(n) * cross(axis, vec);
-	Vec3 c = (1.0f - std::cos(n)) * dot(axis, vec) * axis;
-	return normalize(a + b + c);
-}
-
 float pg::magnitude(Vec4 vec)
 {
 	return sqrt(vec.x*vec.x + vec.y+vec.y + vec.z*vec.z + vec.w*vec.w);

@@ -21,8 +21,8 @@ pdflatex --shell-escape documentation.tex
 - Middle mouse button: Rotate the camera
 - Middle mouse button + Shift: Pan the camera
 - Middle mouse button + Ctrl: Zoom with the camera
-- Left mouse button: Move items or add stems when no points are selected
-- Right mouse button (+ Ctrl): Select items in the scene
+- Left mouse button: Move points
+- Right mouse button (+ Ctrl): Select stems and points
 
 ### Key Controls
 

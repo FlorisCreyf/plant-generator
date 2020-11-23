@@ -99,9 +99,9 @@ Segment Mesh::addStem(Stem *stem, State state, State parentState, bool isFork)
 than the radius. */
 size_t getSectionCount(Stem *stem, bool hasFork)
 {
-	size_t sections = stem->getPath().getSize();
+	const Path &path = stem->getPath();
+	size_t sections = path.getSize();
 	if (hasFork) {
-		Path path = stem->getPath();
 		float radius = stem->getMinRadius();
 		float t = 0.0f;
 		for (sections--; sections > 0 && t <= radius; sections--) {
@@ -123,8 +123,13 @@ void Mesh::addSections(
 		this->crossSection.generate(stem->getSectionDivisions());
 	if (isFork)
 		createFork(stem, state);
-	else
-		createBranchCollar(state, parentSegment);
+	else {
+		state.section = 0;
+		state.texOffset = 0.0f;
+		Vec2 swelling = stem->getSwelling();
+		if (swelling.x >= 1.0f && swelling.y >= 1.0f)
+			createBranchCollar(state, parentSegment);
+	}
 
 	size_t sections = getSectionCount(stem, hasFork);
 	for (; state.section < sections; state.section++) {
@@ -161,13 +166,14 @@ at a latter stage to connect the sections. */
 void Mesh::addSection(State &state, Quat rotation, const CrossSection &section)
 {
 	Stem *stem = state.segment.stem;
+	size_t index = state.section;
 	DVertex vertex;
 	vertex.tangentScale = 1.0f;
-	vertex.tangent = stem->getPath().getAverageDirection(state.section);
-	vertex.uv.y = getTextureLength(stem, state.section) + state.texOffset;
+	vertex.tangent = stem->getPath().getAverageDirection(index);
+	vertex.uv.y = getTextureLength(stem, index) + state.texOffset;
 	state.texOffset = vertex.uv.y;
 	Vec3 location = stem->getLocation();
-	location += stem->getPath().get(state.section);
+	location += stem->getPath().get(index);
 
 	Vec2 indices;
 	Vec2 weights;
@@ -178,7 +184,7 @@ void Mesh::addSection(State &state, Quat rotation, const CrossSection &section)
 		weights = Vec2(1.0f, 0.0f);
 	}
 
-	float radius = this->plant->getRadius(stem, state.section);
+	float radius = this->plant->getRadius(stem, index);
 	const std::vector<SVertex> sectionVertices = section.getVertices();
 	for (size_t i = 0; i < sectionVertices.size(); i++) {
 		vertex.position = sectionVertices[i].position;
@@ -200,10 +206,10 @@ point relative to the parent stem direction. */
 void Mesh::setInitialRotation(Stem *stem, State &state)
 {
 	float position = stem->getDistance();
-	Path parentPath = stem->getParent()->getPath();
+	const Path &parentPath = stem->getParent()->getPath();
 	Vec3 parentDirection;
 	parentDirection = parentPath.getIntermediateDirection(position);
-	Path path = stem->getPath();
+	const Path &path = stem->getPath();
 	Vec3 stemDirection = path.getDirection(0);
 	Vec3 up(0.0f, 1.0f, 0.0f);
 	state.prevRotation = pg::rotateIntoVecQ(up, stemDirection);
@@ -224,7 +230,8 @@ to the global axis. */
 Quat Mesh::rotateSection(State &state)
 {
 	Stem *stem = state.segment.stem;
-	Vec3 direction = stem->getPath().getAverageDirection(state.section);
+	const Path &path = stem->getPath();
+	Vec3 direction = path.getAverageDirection(state.section);
 	Quat rotation = rotateIntoVecQ(state.prevDirection, direction);
 	rotation *= state.prevRotation;
 	state.prevRotation = rotation;
@@ -547,19 +554,14 @@ void Mesh::getForkStart(Stem *fork[2], size_t sections[2])
 void Mesh::createBranchCollar(State &state, Segment parentSegment)
 {
 	Stem *stem = state.segment.stem;
-	Vec2 swelling = stem->getSwelling();
-	state.section = 0;
-	state.texOffset = 0.0f;
 	State originalState = state;
-	if (swelling.x < 1.0f || swelling.y < 1.0f)
-		return;
 
 	addSection(state, rotateSection(state), this->crossSection);
 	size_t start = this->vertices[state.mesh].size();
 	reserveBranchCollarSpace(stem, state.mesh);
 	state.prevIndex = this->vertices[state.mesh].size();
 	state.texOffset = 0.0f;
-	state.section = stem->getPath().getDivisions() + 1;
+	state.section = stem->getPath().getInitialDivisions() + 1;
 	state.prevIndex = this->vertices[state.mesh].size();
 	addSection(state, rotateSection(state), this->crossSection);
 
@@ -589,7 +591,8 @@ void Mesh::reserveBranchCollarSpace(Stem *stem, int mesh)
 /** Return the amount of memory needed for the branch collar. */
 size_t Mesh::getBranchCollarSize(Stem *stem)
 {
-	return (stem->getSectionDivisions()+1) * stem->getCollarDivisions();
+	int cd = stem->getPath().getInitialDivisions();
+	return (stem->getSectionDivisions()+1) * cd;
 }
 
 /** The first step in generating the branch collar is scaling the first cross
@@ -622,42 +625,67 @@ Mat4 Mesh::getBranchCollarScale(Stem *child, Stem *parent)
 }
 
 /** Project a point from a cross section on its parent's surface. */
-DVertex Mesh::moveToSurface(DVertex vertex, Ray ray, Segment parent)
+DVertex Mesh::moveToSurface(DVertex vertex, Ray ray, Segment parent,
+	size_t firstIndex)
 {
 	float length = magnitude(ray.direction);
 	ray.direction = normalize(ray.direction);
 
 	if (!parent.stem) {
 		Plane plane;
-		plane.normal = Vec3(0.0f, 1.0f, 0.0f);
+		plane.normal = Vec3(0.0f, -1.0f, 0.0f);
 		plane.point = Vec3(0.0f, 0.0f, 0.0f);
-		float t = -intersectsPlane(ray, plane);
+		float t = intersectsPlane(ray, plane);
 		Vec3 offset = (t - length) * ray.direction;
-		vertex.position -= offset;
+		vertex.position += offset;
 		return vertex;
 	}
 
 	const unsigned mesh = parent.stem->getMaterial(Stem::Outer);
 	float t = std::numeric_limits<float>::max();
-	unsigned i = parent.indexStart;
-	while (i < parent.indexStart + parent.indexCount) {
-		unsigned index;
-		index = this->indices[mesh][i++];
-		Vec3 p1 = this->vertices[mesh][index].position;
-		index = this->indices[mesh][i++];
-		Vec3 p2 = this->vertices[mesh][index].position;
-		index = this->indices[mesh][i++];
-		Vec3 p3 = this->vertices[mesh][index].position;
+	size_t offset = 0;
+	size_t halfLength = parent.indexCount / 2;
+	size_t lastIndex = parent.indexStart + parent.indexCount;
 
-		float s = -intersectsTriangle(ray, p1, p3, p2);
-		if (s != 0 && s < t) {
-			t = s;
-			vertex.normal = cross(p1-p2, p1-p3);
+	while (offset < halfLength) {
+		size_t i = firstIndex + offset;
+		size_t j = firstIndex - offset;
+		offset += 3;
+
+		if (i < lastIndex) {
+			size_t index;
+			index = this->indices[mesh][i];
+			Vec3 p1 = this->vertices[mesh][index].position;
+			index = this->indices[mesh][i+1];
+			Vec3 p2 = this->vertices[mesh][index].position;
+			index = this->indices[mesh][i+2];
+			Vec3 p3 = this->vertices[mesh][index].position;
+			float s = intersectsFrontTriangle(ray, p1, p2, p3);
+			if (s != 0) {
+				t = s;
+				vertex.normal = cross(p2-p1, p3-p1);
+				break;
+			}
+		}
+		if (j >= parent.indexStart && offset <= firstIndex) {
+			size_t index;
+			index = this->indices[mesh][j];
+			Vec3 p1 = this->vertices[mesh][index].position;
+			index = this->indices[mesh][j+1];
+			Vec3 p2 = this->vertices[mesh][index].position;
+			index = this->indices[mesh][j+2];
+			Vec3 p3 = this->vertices[mesh][index].position;
+			float s = intersectsFrontTriangle(ray, p1, p2, p3);
+			if (s != 0) {
+				t = s;
+				vertex.normal = cross(p2-p1, p3-p1);
+				break;
+			}
 		}
 	}
 
 	if (t != std::numeric_limits<float>::max()) {
-		Vec3 offset = (t - length) * ray.direction;
+		Vec3 offset = (length - t) * ray.direction;
 		vertex.normal = normalize(vertex.normal);
 		vertex.position -= offset;
 	} else {
@@ -669,18 +697,36 @@ DVertex Mesh::moveToSurface(DVertex vertex, Ray ray, Segment parent)
 	return vertex;
 }
 
+/** Return a starting point for branch collar triangle intersections. */
+inline size_t getTriangleOffset(const Segment &parent, const Segment &child)
+{
+	size_t offset = 0;
+	if (parent.stem) {
+		const Path &path = parent.stem->getPath();
+		size_t pathIndex = path.getIndex(child.stem->getDistance());
+		size_t sectionDivisions = parent.stem->getSectionDivisions();
+		offset = pathIndex * sectionDivisions * 6;
+		offset += sectionDivisions * 3;
+		if (offset > parent.indexCount)
+			offset = parent.indexCount - 3;
+		offset += parent.indexStart;
+	}
+	return offset;
+}
+
 size_t Mesh::connectCollar(Segment child, Segment parent, size_t vertexStart)
 {
 	const unsigned mesh = child.stem->getMaterial(Stem::Outer);
+	const Path &path = child.stem->getPath();
 	const int sectionDivisions = child.stem->getSectionDivisions();
-	const int collarDivisions = child.stem->getCollarDivisions();
-	const int pathDivisions = child.stem->getPath().getDivisions();
+	const int collarDivisions = path.getInitialDivisions();
 	size_t collarSize = getBranchCollarSize(child.stem);
 	Mat4 scale = getBranchCollarScale(child.stem, parent.stem);
+	size_t triangleOffset = getTriangleOffset(parent, child);
 
 	int degree;
 	Vec3 direction;
-	Spline spline = child.stem->getPath().getSpline();
+	Spline spline = path.getSpline();
 	degree = spline.getDegree();
 	if (degree == 3) {
 		auto controls = spline.getControls();
@@ -702,8 +748,9 @@ size_t Mesh::connectCollar(Segment child, Segment parent, size_t vertexStart)
 		scaledPoint.position = scale.apply(scaledPoint.position, 1.0f);
 		scaledPoint.position += location;
 		ray.origin = this->vertices[mesh][nextIndex].position;
-		ray.direction = ray.origin - scaledPoint.position;
-		scaledPoint = moveToSurface(scaledPoint, ray, parent);
+		ray.direction = scaledPoint.position - ray.origin;
+		scaledPoint = moveToSurface(
+			scaledPoint, ray, parent, triangleOffset);
 		if (std::isinf(scaledPoint.position.x)) {
 			this->vertices[mesh].resize(child.vertexStart);
 			this->indices[mesh].resize(child.indexStart);
@@ -713,8 +760,9 @@ size_t Mesh::connectCollar(Segment child, Segment parent, size_t vertexStart)
 		scaledPoint.indices = this->vertices[mesh][index].indices;
 		this->vertices[mesh][index] = scaledPoint;
 
-		ray.direction = ray.origin - initPoint.position;
-		initPoint = moveToSurface(initPoint, ray, parent);
+		ray.direction = initPoint.position - ray.origin;
+		initPoint = moveToSurface(
+			initPoint, ray, parent, triangleOffset);
 		if (std::isinf(initPoint.position.x)) {
 			this->vertices[mesh].resize(child.vertexStart);
 			this->indices[mesh].resize(child.indexStart);
@@ -763,7 +811,7 @@ size_t Mesh::connectCollar(Segment child, Segment parent, size_t vertexStart)
 	setBranchCollarUVs(
 		index2, child.stem, mesh, sectionDivisions, collarDivisions);
 
-	return pathDivisions + 2;
+	return collarDivisions + 2;
 }
 
 /** Interpolate normals from the first cross section of the stem with normals
@@ -875,11 +923,10 @@ void Mesh::addLeaf(Stem *stem, unsigned leafIndex, const State &state)
 	if (stem->hasJoints()) {
 		float position = leaf->getPosition();
 		auto pair = getJoint(position, stem);
-		size_t index = pair.first;
-		size_t pathIndex = pair.second.getPathIndex();
-		float jointPosition = stem->getPath().getDistance(pathIndex);
+		size_t index = pair.second.getPathIndex();
+		float jointPosition = stem->getPath().getDistance(index);
 		float offset = position - jointPosition;
-		setJointInfo(stem, offset, index, weights, indices);
+		setJointInfo(stem, offset, pair.first, weights, indices);
 	} else {
 		weights.x = 1.0f;
 		weights.y = 0.0f;
@@ -983,7 +1030,7 @@ void Mesh::incrementJoint(State &state, const vector<Joint> &joints)
 void Mesh::updateJointState(State &state, Vec2 &indices, Vec2 &weights)
 {
 	const Stem *stem = state.segment.stem;
-	const Path path = stem->getPath();
+	const Path &path = stem->getPath();
 	const vector<Joint> joints = stem->getJoints();
 	incrementJoint(state, joints);
 	size_t pathIndex = joints[state.jointIndex].getPathIndex();
@@ -993,7 +1040,7 @@ void Mesh::updateJointState(State &state, Vec2 &indices, Vec2 &weights)
 		weights.y = 0.0f;
 		indices.x = static_cast<float>(state.jointID);
 		indices.y = indices.x;
-	} else if (state.section == 0 || state.section == path.getSize()-1) {
+	} else if (state.section == 0 || state.section == path.getSize() - 1) {
 		weights.x = 1.0f;
 		weights.y = 0.0f;
 		indices.x = static_cast<float>(state.jointID);
@@ -1006,9 +1053,9 @@ void Mesh::updateJointState(State &state, Vec2 &indices, Vec2 &weights)
 		indices.y = static_cast<float>(prevID);
 	} else {
 		if (state.section != pathIndex) {
-			Vec3 point1 = stem->getPath().get(state.section);
-			Vec3 point2 = stem->getPath().get(state.section - 1);
-			state.jointOffset += magnitude(point1-point2);
+			Vec3 point1 = path.get(state.section);
+			Vec3 point2 = path.get(state.section - 1);
+			state.jointOffset += magnitude(point1 - point2);
 		}
 		setJointInfo(stem, state.jointOffset, state.jointIndex,
 			weights, indices);
@@ -1019,7 +1066,7 @@ void Mesh::setJointInfo(const Stem *stem, float jointOffset, size_t jointIndex,
 	Vec2 &weights, Vec2 &indices)
 {
 	const vector<Joint> joints = stem->getJoints();
-	const Path path = stem->getPath();
+	const Path &path = stem->getPath();
 	size_t pathIndex = joints[jointIndex].getPathIndex();
 	unsigned jointID = joints[jointIndex].getID();
 

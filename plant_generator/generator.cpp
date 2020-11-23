@@ -24,8 +24,9 @@ using std::vector;
 
 const float pi = 3.14159265359f;
 
-Generator::Generator()
+Generator::Generator(Plant *plant)
 {
+	this->plant = plant;
 	this->rayCount = 20;
 	this->rayLevels = 10;
 	this->minRadius = 0.001f;
@@ -33,12 +34,7 @@ Generator::Generator()
 	this->secondaryGrowthRate = 0.001f;
 	this->maxSwelling = Vec2(1.5f, 1.5f);
 
-	Stem *root = this->plant.createRoot();
-	this->plant.addMaterial(Material());
-	this->plant.addCurve(Curve(0));
-	Geometry geom;
-	geom.setPlane();
-	this->plant.addLeafMesh(geom);
+	Stem *root = this->plant->createRoot();
 
 	Path path;
 	Spline spline;
@@ -60,7 +56,7 @@ void Generator::grow(int cycles, int nodes)
 {
 	for (int i = 0; i < cycles; i++) {
 		if (i > 0)
-			addStems(this->plant.getRoot());
+			addStems(this->plant->getRoot());
 		for (int j = 0; j < nodes; j++)
 			addNodes(j);
 	}
@@ -68,7 +64,7 @@ void Generator::grow(int cycles, int nodes)
 
 void Generator::addNodes(int node)
 {
-	Stem *root = plant.getRoot();
+	Stem *root = this->plant->getRoot();
 	this->growth.clear();
 	castRays();
 	propagate(root);
@@ -100,7 +96,7 @@ void Generator::castRays()
 
 void Generator::updateGrowth(Ray ray)
 {
-	Intersection intersection = intersect(plant.getRoot(), ray);
+	Intersection intersection = intersect(this->plant->getRoot(), ray);
 	Stem *stem = intersection.stem;
 	if (stem) {
 		if (this->growth.find(stem) == this->growth.end()) {
@@ -221,7 +217,7 @@ int Generator::propagate(Stem *stem)
 			this->growth[stem] = light;
 		} else {
 			this->growth.erase(stem);
-			plant.deleteStem(stem);
+			this->plant->deleteStem(stem);
 		}
 	} else {
 		Path path = stem->getPath();
@@ -268,7 +264,7 @@ void Generator::addStems(Stem *stem)
 		Vec3 direction = getInitialDirection(stem, leaf);
 		Vec3 point = this->primaryGrowthRate * direction;
 
-		Stem *child = plant.addStem(stem);
+		Stem *child = this->plant->addStem(stem);
 		child->setDistance(leaf.getPosition());
 		child->setSwelling(Vec2(1.0f, 1.0f));
 		Path path;
@@ -326,11 +322,6 @@ void Generator::updateBoundingBox(Vec3 point)
 		this->width = point.y;
 	if (point.z > this->width)
 		this->width = point.z;
-}
-
-Plant *Generator::getPlant()
-{
-	return &this->plant;
 }
 
 void Generator::setPrimaryGrowthRate(float rate)

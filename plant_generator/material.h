@@ -16,6 +16,7 @@
 #ifndef PG_MATERIAL_H
 #define PG_MATERIAL_H
 
+#include "math/vec3.h"
 #include <string>
 
 #ifdef PG_SERIALIZE

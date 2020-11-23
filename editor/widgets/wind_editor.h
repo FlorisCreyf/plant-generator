@@ -20,9 +20,7 @@
 
 #include "editor.h"
 #include "plant_generator/wind.h"
-#include <QGroupBox>
-#include <QDoubleSpinBox>
-#include <QSpinBox>
+#include <QtWidgets>
 
 class WindEditor : public QWidget {
 	Q_OBJECT

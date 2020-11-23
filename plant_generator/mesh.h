@@ -98,7 +98,7 @@ namespace pg {
 		void reserveBranchCollarSpace(Stem *, int);
 		size_t getBranchCollarSize(Stem *);
 		Mat4 getBranchCollarScale(Stem *, Stem *);
-		DVertex moveToSurface(DVertex, Ray, Segment);
+		DVertex moveToSurface(DVertex, Ray, Segment, size_t);
 		void setBranchCollarNormals(size_t, size_t, int, int, int);
 		void setBranchCollarUVs(size_t, Stem *, int, int, int);
 

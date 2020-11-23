@@ -113,7 +113,33 @@ float pg::intersectsTriangle(Ray &ray, Vec3 p1, Vec3 p2, Vec3 p3)
 	Vec3 q = cross(ray.direction, edge2);
 	float a = dot(edge1, q);
 
-	if (std::abs(a) > 0.0001f) {
+	if (a != 0.0f) {
+		float f = 1.0f / a;
+		Vec3 s = ray.origin - p1;
+		float u = f * dot(s, q);
+		if (u < 0.0f)
+			return 0.0f;
+
+		Vec3 r = cross(s, edge1);
+		float v = f * dot(ray.direction, r);
+		if (v < 0.0f || u + v > 1.0f)
+			return 0.0f;
+
+		t = f * dot(edge2, r);
+	}
+
+	return t;
+}
+
+float pg::intersectsFrontTriangle(Ray &ray, Vec3 p1, Vec3 p2, Vec3 p3)
+{
+	float t = 0.0f;
+	Vec3 edge1 = p2 - p1;
+	Vec3 edge2 = p3 - p1;
+	Vec3 q = cross(ray.direction, edge2);
+	float a = dot(edge1, q);
+
+	if (a > 0.0f) {
 		float f = 1.0f / a;
 		Vec3 s = ray.origin - p1;
 		float u = f * dot(s, q);
@@ -198,7 +224,8 @@ bool findRoots(float a, float b, float c, float (&roots)[2])
 float pg::intersectsTaperedCylinder(
 	Ray ray, Vec3 start, Vec3 direction, float height, float r1, float r2)
 {
-	Vec3 s(1.0f/r1, (1.0f - r2/r1)/height, 1.0f/r1);
+	float rr1 = 1.0f / r1;
+	Vec3 s(rr1, (1.0f-r2*rr1)/height, rr1);
 	Vec3 p(0.0f, -1.0f, 0.0f);
 
 	float a = s.x*s.x;
