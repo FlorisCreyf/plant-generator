@@ -39,7 +39,7 @@ namespace pg {
 		Vec2 indices;
 		Vec2 weights;
 
-		#ifdef PG_SERIALIZE
+#ifdef PG_SERIALIZE
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned)
 		{
@@ -51,7 +51,7 @@ namespace pg {
 			ar & weights;
 			ar & indices;
 		}
-		#endif
+#endif
 	};
 }
 

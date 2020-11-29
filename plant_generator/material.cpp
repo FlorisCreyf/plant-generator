@@ -18,10 +18,9 @@
 using pg::Material;
 using pg::Vec3;
 
-Material::Material()
+Material::Material() : ratio(1.0f), shininess(16.0f), ambient(0.1f, 0.1f, 0.1f)
 {
-	this->shininess = 16.0f;
-	this->ambient = Vec3(0.1f, 0.1f, 0.1f);
+
 }
 
 void Material::setName(const char *name)

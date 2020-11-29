@@ -17,9 +17,7 @@
 
 #ifndef WINDOW_H
 #define WINDOW_H
-#define PG_SERIALIZE
 
-#ifndef VIEWPORT_ONLY
 #include "generator_curve_editor.h"
 #include "property_curve_editor.h"
 #include "procedural_editor.h"
@@ -27,12 +25,11 @@
 #include "mesh_editor.h"
 #include "key_editor.h"
 #include "property_editor.h"
-#endif
+#include "editor.h"
 
 #include "editor/keymap.h"
 #include "editor/graphics/shared_resources.h"
 #include "editor/qt/ui_window.h"
-#include "editor.h"
 
 #include <QtWidgets>
 
@@ -62,7 +59,6 @@ private:
 	QLabel *objectLabel;
 	QLabel *fileLabel;
 
-	#ifndef VIEWPORT_ONLY
 	PropertyEditor *propertyEditor;
 	GeneratorCurveEditor *gCurveEditor;
 	PropertyCurveEditor *pCurveEditor;
@@ -70,7 +66,6 @@ private:
 	MaterialEditor *materialEditor;
 	MeshEditor *meshEditor;
 	KeyEditor *keyEditor;
-	#endif
 
 	void keyPressEvent(QKeyEvent *event);
 	void createPropertyBox();
@@ -79,4 +74,4 @@ private:
 	void setFilename(QString filename);
 };
 
-#endif /* WINDOW_H */
+#endif

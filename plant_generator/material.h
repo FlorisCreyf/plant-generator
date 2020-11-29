@@ -51,11 +51,11 @@ namespace pg {
 	private:
 		std::string name;
 		std::string textures[MapQuantity];
-		float ratio = 1.0f;
+		float ratio;
 		float shininess;
 		Vec3 ambient;
 
-		#ifdef PG_SERIALIZE
+#ifdef PG_SERIALIZE
 		friend class boost::serialization::access;
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned)
@@ -66,8 +66,8 @@ namespace pg {
 			ar & shininess;
 			ar & ambient;
 		}
-		#endif
+#endif
 	};
 }
 
-#endif /* PG_MATERIAL_H */
+#endif

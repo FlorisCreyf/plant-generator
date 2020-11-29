@@ -34,4 +34,4 @@ public:
 	size_t getSize() const;
 };
 
-#endif /* STORAGE_BUFFER_H */
+#endif

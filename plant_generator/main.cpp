@@ -81,11 +81,7 @@ int main(int argc, char **argv)
 	}
 
 	pg::Plant plant;
-	pg::Geometry geometry;
-	geometry.setPlane();
-	plant.addLeafMesh(geometry);
-	plant.addMaterial(pg::Material());
-	plant.addCurve(pg::Curve(0));
+	plant.setDefault();
 
 #ifndef PSEUDO_GENERATOR
 	pg::Generator generator(&plant);
@@ -125,7 +121,7 @@ int main(int argc, char **argv)
 	generator.grow();
 #endif
 
-	pg::Mesh mesh = pg::Mesh(&plant);
+	pg::Mesh mesh(&plant);
 	mesh.generate();
 
 	pg::Wavefront obj;

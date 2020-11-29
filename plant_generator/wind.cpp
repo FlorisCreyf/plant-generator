@@ -20,11 +20,15 @@ const float pi = 3.14159265359f;
 using namespace pg;
 using std::vector;
 
-Wind::Wind()
+Wind::Wind() :
+	direction(1.0f, 0.0f, 0.0f),
+	speed(1.0f),
+	timeStep(30),
+	frameCount(21),
+	seed(0),
+	randomGenerator(0)
 {
-	this->seed = 0;
-	this->timeStep = 30;
-	this->frameCount = 21;
+
 }
 
 void Wind::setSeed(int seed)

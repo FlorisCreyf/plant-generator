@@ -23,7 +23,7 @@ void setValueWidths(QFormLayout *layout)
 	layout->setFormAlignment(Qt::AlignRight | Qt::AlignTop);
 	layout->setFieldGrowthPolicy(QFormLayout::FieldsStayAtSizeHint);
 	layout->setLabelAlignment(Qt::AlignRight);
-	for(int i = 0; i < layout->rowCount(); i++) {
+	for (int i = 0; i < layout->rowCount(); i++) {
 		QLayoutItem *item = layout->itemAt(i, QFormLayout::FieldRole);
 		QWidget *label = layout->labelForField(item->widget());
 		if (item && item->widget()) {

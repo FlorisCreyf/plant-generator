@@ -63,4 +63,4 @@ private:
 	void setVertexFormat();
 };
 
-#endif /* VERTEX_BUFFER_H */
+#endif

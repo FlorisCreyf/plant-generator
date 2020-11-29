@@ -1,6 +1,6 @@
 # Plant Generator
 
-Plant Generator generates plant geometry. The project is divided into a generator and editor component. The generator is licensed under the Apache License (version 2.0) and the editor is licensed under the GPL 3.0. The editor depends on Qt5, but the project can be compiled without a GUI using the Makefile in _plant_generator/plant_generator_. Both components depend on Boost for serialization and parsing command line arguments, but Boost is not a critical component of the program.
+Plant Generator generates plant geometry. The project is divided into a generator and editor component. The generator is licensed under the Apache License (version 2.0) and the editor is licensed under the GPL 3.0. The editor depends on Qt5, but the project can be partially built without a GUI. Both components depend on Boost for serialization and parsing command line arguments, but Boost is not a critical component of the program.
 
 ## Screenshot
 
@@ -35,8 +35,7 @@ Commands and key bindings can be viewed and edited in _keymap.xml_.
 ```sh
 sudo dnf install qt5-devel
 sudo dnf install boost-devel
-cd ~/plant
-git submodule update --init --recursive
+cd ~/plant-generator
 make release
 ```
 

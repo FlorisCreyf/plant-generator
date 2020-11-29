@@ -23,17 +23,15 @@ using pg::Vec3;
 using pg::Mat4;
 
 MaterialViewer::MaterialViewer(SharedResources *shared, QWidget *parent) :
-	QOpenGLWidget(parent)
+	QOpenGLWidget(parent), shared(shared), materialIndex(0)
 {
-	this->shared = shared;
-	this->materialIndex = 0;
 	setFocusPolicy(Qt::StrongFocus);
 	setMouseTracking(true);
-	camera.setTarget(Vec3(0.5f, 0.0f, 0.5f));
-	camera.setOrientation(180.0f, -180.0f);
-	camera.setDistance(0.8f);
-	camera.setPanSpeed(0.004f);
-	camera.setZoom(0.01f, 0.3f, 2.0f);
+	this->camera.setTarget(Vec3(0.5f, 0.0f, 0.5f));
+	this->camera.setOrientation(180.0f, -180.0f);
+	this->camera.setDistance(0.8f);
+	this->camera.setPanSpeed(0.004f);
+	this->camera.setZoom(0.01f, 0.3f, 2.0f);
 }
 
 QSize MaterialViewer::sizeHint() const
@@ -56,8 +54,8 @@ void MaterialViewer::createInterface()
 	Vec3 normal(0.0f, 0.0f, 1.0f);
 	Vec3 tangent(0.0f, 1.0f, 0.0f);
 	plane.addPlane(a, b, c, normal, tangent);
-	planeSegment = plane.getSegment();
-	buffer.update(plane);
+	this->planeSegment = plane.getSegment();
+	this->buffer.update(plane);
 }
 
 void MaterialViewer::initializeGL()
@@ -71,12 +69,12 @@ void MaterialViewer::initializeGL()
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_PRIMITIVE_RESTART);
-	buffer.initialize(GL_DYNAMIC_DRAW);
-	buffer.allocatePointMemory(20);
-	buffer.allocateIndexMemory(10);
+	this->buffer.initialize(GL_DYNAMIC_DRAW);
+	this->buffer.allocatePointMemory(20);
+	this->buffer.allocateIndexMemory(10);
 	glPrimitiveRestartIndex(Geometry::primitiveReset);
 	createInterface();
-	shared->initialize();
+	this->shared->initialize();
 }
 
 void MaterialViewer::paintGL()
@@ -86,7 +84,7 @@ void MaterialViewer::paintGL()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	this->camera.updateVP();
-	ShaderParams params = shared->getMaterial(this->materialIndex);
+	ShaderParams params = this->shared->getMaterial(this->materialIndex);
 	pg::Material material = params.getMaterial();
 
 	float aspect = params.getMaterial().getRatio();
@@ -95,8 +93,8 @@ void MaterialViewer::paintGL()
 		scale = pg::scale(Vec3(1.0f, 1.0f/aspect, 1.0f));
 	else
 		scale = pg::scale(Vec3(aspect, 1.0f, 1.0f));
-	buffer.use();
-	glUseProgram(shared->getShader(SharedResources::Material));
+	this->buffer.use();
+	glUseProgram(this->shared->getShader(SharedResources::Material));
 
 	Mat4 projection = scale * this->camera.getVP();
 	Vec3 position = this->camera.getPosition();
@@ -118,8 +116,8 @@ void MaterialViewer::paintGL()
 	glBindTexture(GL_TEXTURE_2D, params.getTexture(pg::Material::Normal));
 
 	auto size = sizeof(unsigned);
-	GLvoid *start = (GLvoid *)(planeSegment.istart * size);
-	GLsizei count = planeSegment.icount;
+	GLvoid *start = (GLvoid *)(this->planeSegment.istart * size);
+	GLsizei count = this->planeSegment.icount;
 	glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, start);
 
 	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_TRUE);
@@ -132,8 +130,8 @@ void MaterialViewer::paintGL()
 void MaterialViewer::resizeGL(int width, int height)
 {
 	float ratio = static_cast<float>(width) / static_cast<float>(height);
-	camera.setWindowSize(width, height);
-	camera.setOrthographic(
+	this->camera.setWindowSize(width, height);
+	this->camera.setOrthographic(
 		Vec3(-ratio, -1.0f, 0.0f), Vec3(ratio, 1.0f, 100.0f));
 }
 
@@ -141,24 +139,24 @@ void MaterialViewer::mousePressEvent(QMouseEvent *event)
 {
 	QPoint p = event->pos();
 	if (event->button() == Qt::MidButton) {
-		camera.setStartCoordinates(p.x(), p.y());
+		this->camera.setStartCoordinates(p.x(), p.y());
 		if (event->modifiers() & Qt::ControlModifier)
-			camera.setAction(Camera::Zoom);
+			this->camera.setAction(Camera::Zoom);
 		else if (event->modifiers() & Qt::ShiftModifier)
-			camera.setAction(Camera::Pan);
+			this->camera.setAction(Camera::Pan);
 	}
 }
 
 void MaterialViewer::mouseReleaseEvent(QMouseEvent *event)
 {
 	if (event->button() == Qt::MidButton)
-		camera.setAction(Camera::None);
+		this->camera.setAction(Camera::None);
 }
 
 void MaterialViewer::mouseMoveEvent(QMouseEvent *event)
 {
 	QPoint p = event->pos();
-	camera.executeAction(p.x(), p.y());
+	this->camera.executeAction(p.x(), p.y());
 	update();
 }
 
@@ -168,7 +166,7 @@ void MaterialViewer::wheelEvent(QWheelEvent *event)
 	if (!a.isNull()) {
 		float y = a.y() / 10.0f;
 		if (y != 0.0f) {
-			camera.zoom(y);
+			this->camera.zoom(y);
 			update();
 		}
 	}

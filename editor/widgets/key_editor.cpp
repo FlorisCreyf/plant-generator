@@ -18,14 +18,12 @@
 #include "key_editor.h"
 #include "definitions.h"
 
-KeyEditor::KeyEditor(KeyMap *keymap, QWidget *parent) : QWidget(parent)
+KeyEditor::KeyEditor(KeyMap *keymap, QWidget *parent) :
+	QWidget(parent), form(new QFormLayout(this)), keymap(keymap)
 {
-	form = new QFormLayout(this);
-	form->setSpacing(UI_FORM_SPACING);
-	form->setMargin(UI_FORM_MARGIN);
-	form->setLabelAlignment(Qt::AlignRight);
-
-	this->keymap = keymap;
+	this->form->setSpacing(UI_FORM_SPACING);
+	this->form->setMargin(UI_FORM_MARGIN);
+	this->form->setLabelAlignment(Qt::AlignRight);
 
 	auto bindings = keymap->getBindings();
 	for (auto binding : bindings) {
@@ -34,7 +32,7 @@ KeyEditor::KeyEditor(KeyMap *keymap, QWidget *parent) : QWidget(parent)
 		button->setText(keymap->toString(binding.first));
 	}
 
-	setValueWidths(form);
+	setValueWidths(this->form);
 }
 
 QSize KeyEditor::sizeHint() const
@@ -58,7 +56,7 @@ void KeyEditor::setValueWidths(QFormLayout *layout)
 	layout->setFormAlignment(Qt::AlignRight | Qt::AlignTop);
 	layout->setFieldGrowthPolicy(QFormLayout::FieldsStayAtSizeHint);
 	layout->setLabelAlignment(Qt::AlignRight);
-	for(int i = 0; i < layout->rowCount(); i++) {
+	for (int i = 0; i < layout->rowCount(); i++) {
 		QLayoutItem *item = layout->itemAt(i, QFormLayout::FieldRole);
 		if (item && item->widget())
 			item->widget()->setFixedWidth(UI_FIELD_WIDTH);

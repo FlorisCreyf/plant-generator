@@ -45,4 +45,4 @@ public slots:
 	void change();
 };
 
-#endif /* WIND_EDITOR_H */
+#endif

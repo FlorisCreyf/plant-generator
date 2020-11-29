@@ -17,6 +17,11 @@
 
 #include "axes.h"
 
+Axes::Axes() : scale(1.0f), position(), selection(None), scalable(true)
+{
+
+}
+
 void Axes::setScale(float scale)
 {
 	this->scale = scale;

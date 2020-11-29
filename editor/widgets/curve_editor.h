@@ -59,12 +59,12 @@ class CurveEditor : public QWidget {
 
 protected:
 	QVBoxLayout *layout;
+	QComboBox *degree;
 	PointSelection selection;
 	pg::Spline spline;
 	/* The original spline without restrictions. */
 	pg::Spline originalSpline;
 	Command *command;
-	QComboBox *degree;
 	CurveViewer *viewer;
 	History history;
 
@@ -85,4 +85,4 @@ signals:
 	void editingFinished();
 };
 
-#endif /* CURVE_EDITOR_H */
+#endif

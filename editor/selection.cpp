@@ -27,9 +27,23 @@ using pg::Spline;
 using pg::Stem;
 using pg::Vec3;
 
-Selection::Selection(pg::Plant *plant)
+Selection::Selection(pg::Plant *plant) : plant(plant)
 {
-	this->plant = plant;
+
+}
+
+Selection::Selection(const Selection &original) :
+	plant(original.plant), stems(original.stems), leaves(original.leaves)
+{
+
+}
+
+Selection &Selection::operator=(const Selection &original)
+{
+	this->plant = original.plant;
+	this->stems = original.stems;
+	this->leaves = original.leaves;
+	return *this;
 }
 
 bool Selection::operator==(const Selection &obj) const

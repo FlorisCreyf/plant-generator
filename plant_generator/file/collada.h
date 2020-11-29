@@ -30,4 +30,4 @@ namespace pg {
 	};
 }
 
-#endif /* PG_COLLADA_H */
+#endif

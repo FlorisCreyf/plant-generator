@@ -35,4 +35,4 @@ public:
 	void undo();
 };
 
-#endif /* SAVE_SELECTION_H */
+#endif

@@ -29,10 +29,10 @@ namespace pg {
 	struct Segment {
 		Stem *stem;
 		size_t leafIndex;
-	 	size_t vertexStart;
-	 	size_t indexStart;
-	 	size_t vertexCount;
-	 	size_t indexCount;
+		size_t vertexStart;
+		size_t indexStart;
+		size_t vertexCount;
+		size_t indexCount;
 	};
 
 	class Mesh {
@@ -40,6 +40,9 @@ namespace pg {
 		using LeafID = std::pair<Stem *, size_t>;
 
 		Mesh(Plant *plant);
+		Mesh(const Mesh &original) = delete;
+		Mesh &operator=(const Mesh &original) = delete;
+
 		void generate();
 		std::vector<DVertex> getVertices() const;
 		std::vector<unsigned> getIndices() const;
@@ -118,4 +121,4 @@ namespace pg {
 	};
 }
 
-#endif /* PG_MESH_H */
+#endif

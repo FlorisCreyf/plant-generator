@@ -21,6 +21,11 @@
 using pg::Vec3;
 using pg::Spline;
 
+PointSelection::PointSelection()
+{
+
+}
+
 bool PointSelection::operator==(const PointSelection &obj) const
 {
 	return this->points == obj.points;

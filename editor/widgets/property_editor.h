@@ -27,8 +27,8 @@ class PropertyEditor : public QWidget {
 	Q_OBJECT
 
 public:
-	PropertyEditor(
-		SharedResources *shared, Editor *editor, QWidget *parent);
+	PropertyEditor(SharedResources *shared, Editor *editor,
+		QWidget *parent);
 	QSize sizeHint() const;
 
 public slots:
@@ -57,4 +57,4 @@ private:
 	void setValueWidths(QFormLayout *);
 };
 
-#endif /* PROPERTY_EDITOR_H */
+#endif

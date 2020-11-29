@@ -27,8 +27,8 @@
 #include <memory>
 
 class MoveStem : public Command {
-	Camera camera;
 	Selection *selection;
+	Camera camera;
 	std::map<pg::Stem *, pg::Vec3> stemOffsets;
 	std::map<pg::Stem *, std::vector<pg::Vec3>> leafOffsets;
 	pg::Vec2 cursor;
@@ -53,4 +53,4 @@ public:
 	void redo();
 };
 
-#endif /* MOVE_STEM_H */
+#endif

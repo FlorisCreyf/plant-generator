@@ -25,8 +25,8 @@
 #include "plant_generator/material.h"
 #include <QtWidgets>
 
-class MaterialViewer :
-	public QOpenGLWidget, protected QOpenGLFunctions_4_3_Core {
+class MaterialViewer : public QOpenGLWidget,
+	protected QOpenGLFunctions_4_3_Core {
 	Q_OBJECT
 
 	SharedResources *shared;
@@ -52,4 +52,4 @@ public:
 	void updateMaterial(unsigned materialIndex);
 };
 
-#endif /* MATERIAL_VIEWER_H */
+#endif

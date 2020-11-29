@@ -27,8 +27,8 @@ class AddLeaf : public Command {
 	Selection prevSelection;
 	pg::Leaf leaf;
 	size_t leafIndex;
-	pg::Stem *stem;
 	MoveStem moveStem;
+	pg::Stem *stem;
 
 public:
 	AddLeaf(Selection *selection, const Camera *camera, int x, int y);
@@ -39,4 +39,4 @@ public:
 	void redo();
 };
 
-#endif /* ADD_LEAF_H */
+#endif

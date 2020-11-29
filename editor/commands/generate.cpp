@@ -21,17 +21,16 @@ using pg::Leaf;
 using pg::Stem;
 
 Generate::Generate(Selection *selection) :
+	selection(selection),
 	prevSelection(*selection),
 	removals(selection->getPlant()),
 	remove(&removals),
-	gen(selection->getPlant())
+	generator(selection->getPlant())
 {
-	this->selection = selection;
-	createRemovalSelection(selection, &this->removals);
-	this->remove = RemoveStem(&this->removals);
+	createRemovalSelection(this->selection, &this->removals);
 	this->remove.execute();
 
-	auto instances = selection->getStemInstances();
+	auto instances = this->selection->getStemInstances();
 	for (auto &instance : instances) {
 		pg::ParameterTree tree = instance.first->getParameterTree();
 		this->parameterTrees.push_back(tree);
@@ -61,9 +60,9 @@ void Generate::createRemovalSelection(Selection *selection, Selection *removals)
 	}
 }
 
-void Generate::setGenerator(pg::PseudoGenerator gen)
+void Generate::setGenerator(pg::PseudoGenerator generator)
 {
-	this->gen = gen;
+	this->generator = generator;
 }
 
 void Generate::removeAdditions()
@@ -80,7 +79,7 @@ void Generate::execute()
 	removeAdditions();
 	for (auto instance : this->selection->getStemInstances()) {
 		Stem *stem = instance.first;
-		this->gen.grow(stem);
+		this->generator.grow(stem);
 	}
 }
 
@@ -112,7 +111,7 @@ void Generate::redo()
 	this->remove.undo();
 	this->remove = removeOriginal;
 
-	pg::ParameterTree parameterTree = this->gen.getParameterTree();
+	pg::ParameterTree parameterTree = this->generator.getParameterTree();
 	auto instances = this->selection->getStemInstances();
 	for (auto instance : instances)
 		instance.first->setParameterTree(parameterTree);

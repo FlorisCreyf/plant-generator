@@ -32,9 +32,11 @@ class RemoveSpline : public Command {
 
 public:
 	RemoveSpline(PointSelection *selection, pg::Spline *spline);
+	RemoveSpline(const RemoveSpline &original);
+	RemoveSpline &operator=(const RemoveSpline &original);
 	void setClearable(bool clearable);
 	void execute();
 	void undo();
 };
 
-#endif /* REMOVE_SPLINE_H */
+#endif

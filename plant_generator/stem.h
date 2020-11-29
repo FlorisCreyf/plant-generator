@@ -21,6 +21,7 @@
 #include "math/curve.h"
 #include "path.h"
 #include "joint.h"
+
 #include <vector>
 #include <memory>
 
@@ -62,10 +63,9 @@ namespace pg {
 		ParameterTree parameterTree;
 
 		void updatePositions(Stem *stem);
-		void copy(const Stem &stem);
 		void init(Stem *parent = nullptr);
 
-		#ifdef PG_SERIALIZE
+#ifdef PG_SERIALIZE
 		friend class boost::serialization::access;
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned)
@@ -89,7 +89,7 @@ namespace pg {
 			ar & custom;
 			ar & parameterTree;
 		}
-		#endif /* PG_SERIALIZE */
+#endif
 
 	public:
 		enum Type {Outer, Inner};
@@ -153,4 +153,4 @@ namespace pg {
 	};
 }
 
-#endif /* PG_STEM_H */
+#endif

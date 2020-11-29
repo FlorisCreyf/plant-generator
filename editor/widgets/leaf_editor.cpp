@@ -31,12 +31,9 @@ using std::map;
 
 LeafEditor::LeafEditor(
 	SharedResources *shared, Editor *editor, QWidget *parent) :
-	QWidget(parent)
+	QWidget(parent), shared(shared), editor(editor), saveStem(nullptr)
 {
-	this->shared = shared;
-	this->editor = editor;
-	this->saveStem = nullptr;
-	this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
+	setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
 	createInterface();
 	enable(false);
 }

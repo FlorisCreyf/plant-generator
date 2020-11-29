@@ -29,7 +29,9 @@ namespace pg {
 		Vec4 translation;
 		Vec4 finalTranslation;
 
-		#ifdef PG_SERIALIZE
+		KeyFrame();
+
+#ifdef PG_SERIALIZE
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned)
 		{
@@ -37,23 +39,25 @@ namespace pg {
 			ar & translation;
 			ar & finalTranslation;
 		}
-		#endif /* PG_SERIALIZE */
+#endif
 	};
 
 	struct Animation {
 		int timeStep;
 		std::vector<std::vector<KeyFrame>> frames;
 
+		Animation();
 		std::vector<KeyFrame> getFrame(int ticks, Stem *stem);
 		size_t getFrameCount() const;
 
-		#ifdef PG_SERIALIZE
+#ifdef PG_SERIALIZE
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned)
 		{
+			ar & timeStep;
 			ar & frames;
 		}
-		#endif /* PG_SERIALIZE */
+#endif
 
 	private:
 		std::vector<KeyFrame> mixedFrames;
@@ -62,4 +66,4 @@ namespace pg {
 	};
 }
 
-#endif /* PG_ANIMATION_H */
+#endif

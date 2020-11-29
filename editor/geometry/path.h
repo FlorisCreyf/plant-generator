@@ -68,4 +68,4 @@ private:
 	void colorLine(int point, int index);
 };
 
-#endif /* PATH_H */
+#endif

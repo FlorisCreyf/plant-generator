@@ -36,4 +36,4 @@ public:
 	QSize sizeHint() const;
 };
 
-#endif /* PROCEDURAL_EDITOR_H */
+#endif

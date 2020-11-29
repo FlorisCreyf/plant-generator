@@ -27,8 +27,8 @@ class MaterialEditor : public QWidget {
 	Q_OBJECT
 
 	Editor *editor;
-	MaterialViewer *materialViewer;
 	SharedResources *shared;
+	MaterialViewer *materialViewer;
 
 	enum {
 		Shininess,
@@ -70,4 +70,4 @@ public slots:
 	void removeFile(int index);
 };
 
-#endif /* MATERIAL_EDITOR_H */
+#endif

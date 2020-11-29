@@ -20,6 +20,46 @@ using std::string;
 using std::vector;
 using namespace pg;
 
+const float pi = 3.14159265359f;
+
+StemData::StemData() :
+	densityCurve(0),
+	density(0.0f),
+	start(0.0f),
+	angleVariation(0.5f),
+	length(1.0f),
+	radiusThreshold(0.0f),
+	scale(1.0f),
+	leaf()
+{
+
+}
+
+LeafData::LeafData() :
+	densityCurve(0),
+	scale(1.0f, 1.0f, 1.0f),
+	density(0.0f),
+	distance(2.0f),
+	rotation(pi),
+	minUp(0.0f),
+	maxUp(1.0f),
+	minDirection(0.0f),
+	maxDirection(1.0f),
+	leavesPerNode(1)
+{
+
+}
+
+ParameterNode::ParameterNode() :
+	child(nullptr),
+	parent(nullptr),
+	nextSibling(nullptr),
+	prevSibling(nullptr),
+	data()
+{
+
+}
+
 StemData ParameterNode::getData() const
 {
 	return this->data;
@@ -55,6 +95,11 @@ const ParameterNode *ParameterNode::getParent() const
 	return this->parent;
 }
 
+ParameterRoot::ParameterRoot() : seed(0), node(nullptr)
+{
+
+}
+
 void ParameterRoot::setSeed(int seed)
 {
 	this->seed = seed;
@@ -75,7 +120,7 @@ ParameterTree::ParameterTree() : root(nullptr)
 
 }
 
-ParameterTree::ParameterTree(const ParameterTree &original)
+ParameterTree::ParameterTree(const ParameterTree &original) : root(nullptr)
 {
 	copy(original);
 }
@@ -252,7 +297,9 @@ vector<string> ParameterTree::getNames() const
 }
 
 void ParameterTree::getNames(
-	vector<std::string> &names, string prefix, ParameterNode *node) const
+	vector<std::string> &names,
+	string prefix,
+	ParameterNode *node) const
 {
 	int count = 0;
 	while (node) {
@@ -264,7 +311,9 @@ void ParameterTree::getNames(
 }
 
 ParameterNode *ParameterTree::getNode(
-	const string &name, size_t start, ParameterNode *node) const
+	const string &name,
+	size_t start,
+	ParameterNode *node) const
 {
 	int size = getSize(name, start);
 	for (int i = 0; i < size-1 && node; i++)

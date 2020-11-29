@@ -86,9 +86,6 @@ private:
 	QAction *perspectiveAction;
 	QAction *solidAction;
 	QAction *wireframeAction;
-	QComboBox *projectionBox;
-	QComboBox *shaderBox;
-	QToolBar *toolbar;
 	QTimer *timer;
 
 	struct Segments {
@@ -127,7 +124,7 @@ private:
 	TranslationAxes translationAxes;
 
 	bool perspective;
-	bool rotating = false;
+	bool rotating;
 	int ticks;
 
 	void createDefaultPlant();
@@ -157,4 +154,4 @@ private:
 	bool isAnimating();
 };
 
-#endif /* EDITOR_H */
+#endif

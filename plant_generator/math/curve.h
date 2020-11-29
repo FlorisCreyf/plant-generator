@@ -25,4 +25,4 @@ namespace pg {
 	Vec3 getBezier(float t, const Vec3 *points, int size);
 }
 
-#endif /* PG_MATH_CURVE_H */
+#endif

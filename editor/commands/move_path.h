@@ -26,13 +26,10 @@
 #include "plant_generator/plant.h"
 
 class MovePath : public Command {
-	static char modifiers;
-	static char key;
-
-	const Camera *camera;
-	MoveSpline moveSpline;
-	TranslationAxes *axes;
 	const Selection *selection;
+	const Camera *camera;
+	TranslationAxes *axes;
+	MoveSpline moveSpline;
 	float clickOffset[2];
 	bool undoing;
 
@@ -50,4 +47,4 @@ public:
 	void redo();
 };
 
-#endif /* MOVE_PATH_H */
+#endif

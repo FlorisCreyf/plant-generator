@@ -19,9 +19,9 @@
 #include "definitions.h"
 #include "form.h"
 
-WindEditor::WindEditor(Editor *editor, QWidget *parent) : QWidget(parent)
+WindEditor::WindEditor(Editor *editor, QWidget *parent) :
+	QWidget(parent), editor(editor)
 {
-	this->editor = editor;
 	createInterface();
 }
 

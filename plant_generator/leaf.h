@@ -32,7 +32,7 @@ namespace pg {
 		Vec3 scale;
 		Quat rotation;
 
-		#ifdef PG_SERIALIZE
+#ifdef PG_SERIALIZE
 		friend class boost::serialization::access;
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned)
@@ -44,7 +44,7 @@ namespace pg {
 			ar & rotation;
 			ar & custom;
 		}
-		#endif
+#endif
 
 	public:
 		Leaf();
@@ -66,4 +66,4 @@ namespace pg {
 	};
 }
 
-#endif /* PG_LEAF_H */
+#endif

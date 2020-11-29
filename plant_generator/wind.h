@@ -42,8 +42,8 @@ namespace pg {
 		Vec3 direction;
 		float speed;
 		int timeStep;
-		int seed;
 		int frameCount;
+		int seed;
 		std::mt19937 randomGenerator;
 
 		void setRotation(int, float, float, Vec3, Animation &);
@@ -55,7 +55,7 @@ namespace pg {
 			Stem *, unsigned, Plant *, Vec3, Animation &);
 		int generateJoint(Stem *, int, int, size_t &);
 
-		#ifdef PG_SERIALIZE
+#ifdef PG_SERIALIZE
 		friend class boost::serialization::access;
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned)
@@ -66,8 +66,8 @@ namespace pg {
 			ar & frameCount;
 			ar & seed;
 		}
-		#endif /* PG_SERIALIZE */
+#endif
 	};
 }
 
-#endif /* PG_WIND_GENERATOR_H */
+#endif

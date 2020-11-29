@@ -22,9 +22,25 @@ using namespace pg;
 
 const float pi = 3.14159265359f;
 
-PseudoGenerator::PseudoGenerator(Plant *plant)
+PseudoGenerator::PseudoGenerator(Plant *plant) : plant(plant)
 {
-	this->plant = plant;
+
+}
+
+PseudoGenerator::PseudoGenerator(const PseudoGenerator &original) :
+	plant(original.plant),
+	randomGenerator(original.randomGenerator),
+	parameterTree(original.parameterTree)
+{
+
+}
+
+PseudoGenerator &PseudoGenerator::operator=(const PseudoGenerator &original)
+{
+	this->plant = original.plant;
+	this->randomGenerator = original.randomGenerator;
+	this->parameterTree = original.parameterTree;
+	return *this;
 }
 
 ParameterTree PseudoGenerator::getParameterTree() const

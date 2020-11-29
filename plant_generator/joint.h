@@ -29,7 +29,7 @@ namespace pg {
 		size_t pathIndex;
 		Vec3 location;
 
-		#ifdef PG_SERIALIZE
+#ifdef PG_SERIALIZE
 		friend class boost::serialization::access;
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned)
@@ -39,7 +39,7 @@ namespace pg {
 			ar & pathIndex;
 			ar & location;
 		}
-		#endif
+#endif
 
 	public:
 		/** Each joint is attached to a control point in the path. */

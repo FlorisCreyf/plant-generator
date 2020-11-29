@@ -24,22 +24,24 @@
 #include "plant_generator/pseudo_generator.h"
 
 class Generate : public Command {
+	Selection *selection;
 	Selection prevSelection;
 	Selection removals;
-	Selection *selection;
 	RemoveStem remove;
 	std::vector<pg::ParameterTree> parameterTrees;
-	pg::PseudoGenerator gen;
+	pg::PseudoGenerator generator;
 
 	void createRemovalSelection(Selection *, Selection *);
 	void removeAdditions();
 
 public:
 	Generate(Selection *selection);
+	Generate(const Generate &original) = delete;
+	Generate &operator=(const Generate &original) = delete;
 	void setGenerator(pg::PseudoGenerator gen);
 	void execute();
 	void undo();
 	void redo();
 };
 
-#endif /* GENERATE_H */
+#endif

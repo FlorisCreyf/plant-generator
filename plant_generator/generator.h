@@ -25,12 +25,12 @@
 namespace pg {
 	class Generator {
 		struct Light {
-			Vec3 direction;
-			int rays;
+			Vec3 direction = Vec3(0.0f, 0.0f, 0.0f);
+			int rays = 0;
 		};
 		struct Intersection {
-			Stem *stem;
-			float t;
+			Stem *stem = nullptr;
+			float t = 0.0f;
 		};
 
 		Plant *plant;
@@ -41,7 +41,6 @@ namespace pg {
 		int rayCount;
 		int rayLevels;
 		float width;
-		Vec2 maxSwelling;
 
 		int propagate(Stem *stem);
 		void addStems(Stem *stem);
@@ -57,6 +56,8 @@ namespace pg {
 
 	public:
 		Generator(Plant *plant);
+		Generator(const Generator &original);
+		Generator &operator=(const Generator &original);
 		void grow(int cycles, int nodes);
 		void setPrimaryGrowthRate(float rate);
 		void setSecondaryGrowthRate(float rate);

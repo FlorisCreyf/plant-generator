@@ -22,21 +22,20 @@ using pg::Vec3;
 using pg::Vec4;
 using pg::Quat;
 
-RotateStem::RotateStem(
-	Selection *selection, RotationAxes *axes,
-	const Camera *camera, float x, float y)
+RotateStem::RotateStem(Selection *selection, RotationAxes *axes,
+	const Camera *camera, float x, float y) :
+	selection(selection),
+	camera(camera),
+	axes(axes),
+	firstDirection(0.0f, 0.0f, 0.0f),
+	valid(true)
 {
-	this->selection = selection;
-	this->axes = axes;
-	this->camera = camera;
+	this->axes->setPosition(this->selection->getAveragePositionFP());
+	this->axes->selectCenter();
+	this->axis = this->axes->getSelection();
 
-	axes->setPosition(selection->getAveragePositionFP());
-	axes->selectCenter();
-	this->axis = axes->getSelection();
-
-	this->firstDirection = Vec3(0.0f, 0.0f, 0.0f);
-	pg::Ray ray = camera->getRay(x, y);
-	Vec3 normal = camera->getDirection();
+	pg::Ray ray = this->camera->getRay(x, y);
+	Vec3 normal = this->camera->getDirection();
 	set(ray, normal);
 
 	checkValidity();
@@ -44,7 +43,6 @@ RotateStem::RotateStem(
 
 void RotateStem::checkValidity()
 {
-	this->valid = true;
 	auto instances = this->selection->getStemInstances();
 	for (auto instance : instances) {
 		pg::Stem *stem1 = instance.first;

@@ -34,6 +34,8 @@ class Selector {
 
 public:
 	Selector(const Camera *camera);
+	Selector(const Selector &selector) = delete;
+	Selector &operator=(const Selector &selector) = delete;
 	void select(const QMouseEvent *event, const pg::Mesh *mesh,
 		Selection *selection);
 	int selectPoint(const QMouseEvent *event, const pg::Spline &spline,

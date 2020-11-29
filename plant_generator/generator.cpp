@@ -24,16 +24,15 @@ using std::vector;
 
 const float pi = 3.14159265359f;
 
-Generator::Generator(Plant *plant)
+Generator::Generator(Plant *plant) :
+	plant(plant),
+	primaryGrowthRate(0.1f),
+	secondaryGrowthRate(0.001f),
+	minRadius(0.001f),
+	rayCount(20),
+	rayLevels(10),
+	width(0.0f)
 {
-	this->plant = plant;
-	this->rayCount = 20;
-	this->rayLevels = 10;
-	this->minRadius = 0.001f;
-	this->primaryGrowthRate = 0.1f;
-	this->secondaryGrowthRate = 0.001f;
-	this->maxSwelling = Vec2(1.5f, 1.5f);
-
 	Stem *root = this->plant->createRoot();
 
 	Path path;
@@ -50,6 +49,32 @@ Generator::Generator(Plant *plant)
 	root->setSwelling(Vec2(1.0f, 1.0f));
 
 	updateBoundingBox(Vec3(0.0f, 0.0f, 0.0f));
+}
+
+Generator::Generator(const Generator &original) :
+	plant(original.plant),
+	growth(original.growth),
+	primaryGrowthRate(original.primaryGrowthRate),
+	secondaryGrowthRate(original.secondaryGrowthRate),
+	minRadius(original.minRadius),
+	rayCount(original.rayCount),
+	rayLevels(original.rayLevels),
+	width(original.width)
+{
+
+}
+
+Generator &Generator::operator=(const Generator &original)
+{
+	this->plant = original.plant;
+	this->growth = original.growth;
+	this->primaryGrowthRate = original.primaryGrowthRate;
+	this->secondaryGrowthRate = original.secondaryGrowthRate;
+	this->minRadius = original.minRadius;
+	this->rayCount = original.rayCount;
+	this->rayLevels = original.rayLevels;
+	this->width = original.width;
+	return *this;
 }
 
 void Generator::grow(int cycles, int nodes)
@@ -146,7 +171,7 @@ void Generator::addNode(Stem *stem, Light light, int node)
 	path.setSpline(spline);
 	stem->setPath(path);
 	stem->setMaxRadius(stem->getMaxRadius()+this->secondaryGrowthRate);
-	stem->setSwelling(this->maxSwelling);
+	stem->setSwelling(Vec2(1.5f, 1.5f));
 
 	if (!firstNode)
 		addLeaves(stem, stem->getPath().getLength());
@@ -285,7 +310,7 @@ void Generator::addStems(Stem *stem)
 
 void Generator::addLeaves(Stem *stem, float distance)
 {
-	Quat rotation = {};
+	Quat rotation(0.0f, 0.0f, 0.0f, 0.0f);
 	auto leaves = stem->getLeaves();
 	if (leaves.empty())
 		rotation.w = 1.0f;

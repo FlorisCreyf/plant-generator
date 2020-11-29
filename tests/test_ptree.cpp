@@ -1,7 +1,7 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "../parameter_tree.h"
+#include "../plant_generator/parameter_tree.h"
 #include <algorithm>
 
 using namespace pg;

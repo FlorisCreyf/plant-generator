@@ -51,7 +51,7 @@ void KeyMap::loadFromXMLFile(const char *filename)
 		for (int i = 0; i < list.size(); i++) {
 			QString part = list.at(i);
 			if (part == "CTRL")
-			 	binding.ctrl = true;
+				binding.ctrl = true;
 			else if (part == "ALT")
 				binding.alt = true;
 			else if (part == "SHIFT")

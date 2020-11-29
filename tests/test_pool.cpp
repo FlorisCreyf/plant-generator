@@ -1,22 +1,22 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "../plant.h"
-#include "../stem_pool.h"
+#include "../plant_generator/plant.h"
+#include "../plant_generator/stem_pool.h"
 
 using namespace pg;
 namespace bt = boost::unit_test;
 
-#define NUM_POOLS 3
-
 BOOST_AUTO_TEST_SUITE(path)
+
+constexpr int poolCount = 3;
 
 BOOST_AUTO_TEST_CASE(test_allocate)
 {
 	StemPool pool;
-	Stem *stems[NUM_POOLS][PG_POOL_SIZE];
+	Stem *stems[poolCount][PG_POOL_SIZE];
 
-	for (long j = 1; j <= NUM_POOLS; j++) {
+	for (long j = 1; j <= poolCount; j++) {
 		for (size_t i = 0; i < PG_POOL_SIZE; i++) {
 			Stem *stem = pool.allocate();
 			BOOST_TEST(stem != nullptr);
@@ -29,14 +29,14 @@ BOOST_AUTO_TEST_CASE(test_allocate)
 		}
 	}
 
-	for (long j = NUM_POOLS-1; j >= 0; j--) {
+	for (long j = poolCount-1; j >= 0; j--) {
 		for (size_t i = 0; i < PG_POOL_SIZE; i++) {
 			size_t remaining = pool.deallocate(stems[j][i]);
 			BOOST_TEST(remaining == i + 1);
 		}
 	}
 
-	BOOST_TEST(pool.getPoolCount() == NUM_POOLS);
+	BOOST_TEST(pool.getPoolCount() == poolCount);
 	Stem *stem = pool.allocate();
 	BOOST_TEST(pool.getPoolID(stem) == 1);
 }

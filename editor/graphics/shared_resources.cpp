@@ -210,7 +210,7 @@ GLuint SharedResources::buildShader(
 	GLenum type, const char *filename, const char *line)
 {
 	std::string buffer;
-	if(!openFile(filename, buffer))
+	if (!openFile(filename, buffer))
 		return 0;
 
 	if (line) {

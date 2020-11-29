@@ -1,7 +1,7 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "../path.h"
+#include "../plant_generator/path.h"
 
 using namespace pg;
 namespace bt = boost::unit_test;

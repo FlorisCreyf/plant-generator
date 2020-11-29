@@ -18,11 +18,13 @@
 
 using namespace pg;
 
-Joint::Joint(unsigned id, unsigned parentID, size_t pathIndex)
+Joint::Joint(unsigned id, unsigned parentID, size_t pathIndex) :
+	id(id),
+	parentID(parentID),
+	pathIndex(pathIndex),
+	location(0.0, 0.0, 0.0f)
 {
-	this->id = id;
-	this->parentID = parentID;
-	this->pathIndex = pathIndex;
+
 }
 
 unsigned Joint::getID() const

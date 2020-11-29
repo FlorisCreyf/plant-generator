@@ -87,4 +87,4 @@ private:
 	GLuint buildProgram(GLuint *, int);
 };
 
-#endif /* SHARED_RESOURCES_H */
+#endif

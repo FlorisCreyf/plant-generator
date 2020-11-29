@@ -3,7 +3,6 @@ TEMPLATE = app
 # Object File Name: $(IntDir)%(RelativeDir)
 CONFIG += qt object_parallel_to_source c++11 strict_c++ no_batch warn_on precompile_header
 # win32::CONFIG += console
-DEFINES += GL_GLEXT_PROTOTYPES
 unix::QMAKE_LFLAGS += -no-pie
 TARGET = plant
 QT = core gui opengl xml openglextensions
@@ -77,7 +76,23 @@ editor/graphics/storage_buffer.cpp \
 editor/graphics/vertex_buffer.cpp \
 editor/graphics/shader_params.cpp \
 editor/graphics/shared_resources.cpp \
+editor/widgets/curve_editor.cpp \
+editor/widgets/curve_viewer.cpp \
 editor/widgets/editor.cpp \
+editor/widgets/form.cpp \
+editor/widgets/generator_curve_editor.cpp \
+editor/widgets/generator_editor.cpp \
+editor/widgets/key_editor.cpp \
+editor/widgets/leaf_editor.cpp \
+editor/widgets/material_editor.cpp \
+editor/widgets/material_viewer.cpp \
+editor/widgets/mesh_editor.cpp \
+editor/widgets/mesh_viewer.cpp \
+editor/widgets/procedural_editor.cpp \
+editor/widgets/property_curve_editor.cpp \
+editor/widgets/property_editor.cpp \
+editor/widgets/stem_editor.cpp \
+editor/widgets/wind_editor.cpp \
 editor/widgets/window.cpp \
 editor/camera.cpp \
 editor/history.cpp \
@@ -140,8 +155,25 @@ editor/graphics/storage_buffer.h \
 editor/graphics/vertex_buffer.h \
 editor/graphics/shader_params.h \
 editor/graphics/shared_resources.h \
+editor/widgets/curve_editor.h \
+editor/widgets/curve_viewer.h \
 editor/widgets/definitions.h \
 editor/widgets/editor.h \
+editor/widgets/form.h \
+editor/widgets/generator_curve_editor.h \
+editor/widgets/generator_editor.h \
+editor/widgets/item_delegate.h \
+editor/widgets/key_editor.h \
+editor/widgets/leaf_editor.h \
+editor/widgets/material_editor.h \
+editor/widgets/mesh_editor.h \
+editor/widgets/mesh_viewer.h \
+editor/widgets/procedural_editor.h \
+editor/widgets/property_curve_editor.h \
+editor/widgets/material_viewer.h \
+editor/widgets/property_editor.h \
+editor/widgets/stem_editor.h \
+editor/widgets/wind_editor.h \
 editor/widgets/window.h \
 editor/camera.h \
 editor/history.h \
@@ -149,42 +181,3 @@ editor/keymap.h \
 editor/point_selection.h \
 editor/selection.h \
 editor/selector.h
-
-!contains(DEFINES, VIEWPORT_ONLY) {
-	SOURCES += \
-	editor/widgets/curve_editor.cpp \
-	editor/widgets/curve_viewer.cpp \
-	editor/widgets/form.cpp \
-	editor/widgets/generator_curve_editor.cpp \
-	editor/widgets/generator_editor.cpp \
-	editor/widgets/key_editor.cpp \
-	editor/widgets/leaf_editor.cpp \
-	editor/widgets/material_editor.cpp \
-	editor/widgets/material_viewer.cpp \
-	editor/widgets/mesh_editor.cpp \
-	editor/widgets/mesh_viewer.cpp \
-	editor/widgets/procedural_editor.cpp \
-	editor/widgets/property_curve_editor.cpp \
-	editor/widgets/property_editor.cpp \
-	editor/widgets/stem_editor.cpp \
-	editor/widgets/wind_editor.cpp
-
-	HEADERS += \
-	editor/widgets/curve_editor.h \
-	editor/widgets/curve_viewer.h \
-	editor/widgets/form.h \
-	editor/widgets/generator_curve_editor.h \
-	editor/widgets/generator_editor.h \
-	editor/widgets/item_delegate.h \
-	editor/widgets/key_editor.h \
-	editor/widgets/leaf_editor.h \
-	editor/widgets/material_editor.h \
-	editor/widgets/mesh_editor.h \
-	editor/widgets/mesh_viewer.h \
-	editor/widgets/procedural_editor.h \
-	editor/widgets/property_curve_editor.h \
-	editor/widgets/material_viewer.h \
-	editor/widgets/property_editor.h \
-	editor/widgets/stem_editor.h \
-	editor/widgets/wind_editor.h
-}

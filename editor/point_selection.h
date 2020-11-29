@@ -25,6 +25,7 @@ class PointSelection {
 	std::set<int> points;
 
 public:
+	PointSelection();
 	bool operator==(const PointSelection &obj) const;
 	bool operator!=(const PointSelection &obj) const;
 
@@ -45,4 +46,4 @@ public:
 	void select(int point);
 };
 
-#endif /* POINT_SELECTION_H */
+#endif

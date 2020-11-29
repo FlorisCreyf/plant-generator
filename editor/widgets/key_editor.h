@@ -35,4 +35,4 @@ public:
 	QSize sizeHint() const;
 };
 
-#endif /* KEY_EDITOR_H */
+#endif

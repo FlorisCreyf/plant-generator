@@ -49,4 +49,4 @@ signals:
 	void editingFinished();
 };
 
-#endif /* PROPERTY_CURVE_EDITOR_H */
+#endif

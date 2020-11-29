@@ -31,7 +31,12 @@ namespace pg {
 	class Plant {
 	public:
 		Plant();
+		Plant(const Plant &original) = delete;
+		Plant &operator=(const Plant &original) = delete;
 		~Plant();
+
+		/** Initialize the plant with default objects. */
+		void setDefault();
 		StemPool *getStemPool();
 
 		/** Add a new stem to the plant at a parent stem. */
@@ -39,7 +44,7 @@ namespace pg {
 		/** Remove all stems from the plant and create a new root. */
 		Stem *createRoot();
 		/** Delete a stem. */
-		void deleteStem(Stem *);
+		void deleteStem(Stem *stem);
 		/** Return the root or trunk of the plant. */
 		Stem *getRoot();
 		const Stem *getRoot() const;
@@ -47,9 +52,9 @@ namespace pg {
 		void removeRoot();
 
 		struct Extraction {
-			Stem *address;
-			Stem *parent;
-			Stem value;
+			Stem *address = nullptr;
+			Stem *parent = nullptr;
+			Stem value = Stem();
 		};
 		/* Remove a stem that has no children. */
 		Extraction extractStem(Stem *stem);
@@ -99,7 +104,7 @@ namespace pg {
 		Stem *move(Stem *);
 		void copy(std::vector<Extraction> &, Stem *);
 
-		#ifdef PG_SERIALIZE
+#ifdef PG_SERIALIZE
 		friend class boost::serialization::access;
 		template<class Archive>
 		void save(Archive &ar, const unsigned) const
@@ -119,8 +124,8 @@ namespace pg {
 			ar & curves;
 		}
 		BOOST_SERIALIZATION_SPLIT_MEMBER()
-		#endif
+#endif
 	};
 }
 
-#endif /* PG_PLANT_H */
+#endif

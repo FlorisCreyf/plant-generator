@@ -1,4 +1,5 @@
 #define PG_SERIALIZE
+#define GL_GLEXT_PROTOTYPES
 #ifdef __cplusplus
 #include "plant_generator/math/curve.h"
 #include "plant_generator/math/intersection.h"

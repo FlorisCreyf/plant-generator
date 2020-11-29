@@ -22,18 +22,16 @@ using pg::Vec3;
 using pg::DVertex;
 
 MeshViewer::MeshViewer(SharedResources *shared, QWidget *parent) :
-	QOpenGLWidget(parent)
+	QOpenGLWidget(parent), shared(shared)
 {
-	this->shared = shared;
-
 	setFocusPolicy(Qt::StrongFocus);
 	setMouseTracking(true);
 
-	camera.setTarget(Vec3(0.0f, 0.0f, 0.0f));
-	camera.setOrientation(0.0f, 90.0f);
-	camera.setDistance(2.0f);
-	camera.setPanSpeed(0.004f);
-	camera.setZoom(0.01f, 0.3f, 10.0f);
+	this->camera.setTarget(Vec3(0.0f, 0.0f, 0.0f));
+	this->camera.setOrientation(0.0f, 90.0f);
+	this->camera.setDistance(2.0f);
+	this->camera.setPanSpeed(0.004f);
+	this->camera.setZoom(0.01f, 0.3f, 10.0f);
 }
 
 QSize MeshViewer::sizeHint() const
@@ -52,11 +50,11 @@ void MeshViewer::initializeGL()
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_PRIMITIVE_RESTART);
-	buffer.initialize(GL_DYNAMIC_DRAW);
-	buffer.allocatePointMemory(100);
-	buffer.allocateIndexMemory(100);
+	this->buffer.initialize(GL_DYNAMIC_DRAW);
+	this->buffer.allocatePointMemory(100);
+	this->buffer.allocateIndexMemory(100);
 	glPrimitiveRestartIndex(Geometry::primitiveReset);
-	shared->initialize();
+	this->shared->initialize();
 	updateBuffer();
 }
 
@@ -66,45 +64,45 @@ void MeshViewer::paintGL()
 	glClearDepth(1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	Mat4 vp = camera.updateVP();
-	Vec3 cp = camera.getPosition();
-	buffer.use();
-	glUseProgram(shared->getShader(SharedResources::Solid));
+	Mat4 vp = this->camera.updateVP();
+	Vec3 cp = this->camera.getPosition();
+	this->buffer.use();
+	glUseProgram(this->shared->getShader(SharedResources::Solid));
 	glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
 	glUniform3f(1, cp.x, cp.y, cp.z);
-	glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, 0);
+	glDrawElements(GL_TRIANGLES, this->count, GL_UNSIGNED_INT, 0);
 	glFlush();
 }
 
 void MeshViewer::resizeGL(int width, int height)
 {
 	float ratio = static_cast<float>(width) / static_cast<float>(height);
-	camera.setWindowSize(width, height);
-	camera.setPerspective(45.0f, 0.1f, 200.0f, ratio);
+	this->camera.setWindowSize(width, height);
+	this->camera.setPerspective(45.0f, 0.1f, 200.0f, ratio);
 }
 
 void MeshViewer::mousePressEvent(QMouseEvent *event)
 {
 	QPoint p = event->pos();
 	if (event->button() == Qt::MidButton) {
-		camera.setStartCoordinates(p.x(), p.y());
+		this->camera.setStartCoordinates(p.x(), p.y());
 		if (event->modifiers() & Qt::ControlModifier)
-			camera.setAction(Camera::Zoom);
+			this->camera.setAction(Camera::Zoom);
 		else if (!(event->modifiers() & Qt::ShiftModifier))
-			camera.setAction(Camera::Rotate);
+			this->camera.setAction(Camera::Rotate);
 	}
 }
 
 void MeshViewer::mouseReleaseEvent(QMouseEvent *event)
 {
 	if (event->button() == Qt::MidButton)
-		camera.setAction(Camera::None);
+		this->camera.setAction(Camera::None);
 }
 
 void MeshViewer::mouseMoveEvent(QMouseEvent *event)
 {
 	QPoint pos = event->pos();
-	camera.executeAction(pos.x(), pos.y());
+	this->camera.executeAction(pos.x(), pos.y());
 	update();
 }
 
@@ -114,7 +112,7 @@ void MeshViewer::wheelEvent(QWheelEvent *event)
 	if (!angleDelta.isNull()) {
 		float y = angleDelta.y() / 10.0f;
 		if (y != 0.0f) {
-			camera.zoom(y);
+			this->camera.zoom(y);
 			update();
 		}
 	}
@@ -138,9 +136,8 @@ void MeshViewer::updateBuffer()
 	for (DVertex vertex : mesh.getPoints())
 		points.push_back(vertex);
 	unsigned indexCount = mesh.getIndices().size();
-	buffer.update(
-		points.data(), points.size(),
+	this->buffer.update(points.data(), points.size(),
 		mesh.getIndices().data(), indexCount);
-	count = indexCount;
+	this->count = indexCount;
 	update();
 }

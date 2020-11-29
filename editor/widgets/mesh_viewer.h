@@ -51,4 +51,4 @@ public:
 	void updateMesh(pg::Geometry mesh);
 };
 
-#endif /* MESH_VIEWER_H */
+#endif

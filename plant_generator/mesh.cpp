@@ -24,9 +24,9 @@ using std::vector;
 
 const float pi = 3.14159265359f;
 
-Mesh::Mesh(Plant *plant)
+Mesh::Mesh(Plant *plant) : plant(plant)
 {
-	this->plant = plant;
+
 }
 
 void Mesh::generate()
@@ -162,7 +162,7 @@ void Mesh::addSections(
 }
 
 /** Generate a cross section for a point in the stem's path. Indices are added
-at a latter stage to connect the sections. */
+at a later stage to connect the sections. */
 void Mesh::addSection(State &state, Quat rotation, const CrossSection &section)
 {
 	Stem *stem = state.segment.stem;
@@ -1133,7 +1133,7 @@ void Mesh::initBuffer()
 }
 
 /** Geometry is divided into different groups depending on material.
-Geometry is latter stored in the same vertex buffer but is separated based
+Geometry is later stored in the same vertex buffer but is separated based
 on material to minimize draw calls. This method updates the indices to what
 they should be in the final merged vertex buffer. */
 void Mesh::updateSegments()

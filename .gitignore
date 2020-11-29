@@ -16,8 +16,10 @@
 *.bbl
 *.blg
 plant
+test
+generator
 resources/
 build/
+minimal_build/
 nbproject/
 saved/
-plant_generator/test

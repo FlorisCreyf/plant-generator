@@ -1,7 +1,7 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "../mesh.h"
+#include "../plant_generator/mesh.h"
 
 using namespace pg;
 namespace bt = boost::unit_test;
@@ -11,10 +11,7 @@ BOOST_AUTO_TEST_SUITE(mesh)
 BOOST_AUTO_TEST_CASE(test_index_bounds)
 {
 	Plant plant;
-	Spline radiusCurve;
-	radiusCurve.setDefault(0);
-	plant.addCurve(Curve(radiusCurve));
-	plant.addMaterial(Material());
+	plant.setDefault();
 	Stem *root = plant.createRoot();
 
 	{

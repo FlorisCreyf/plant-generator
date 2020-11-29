@@ -17,15 +17,22 @@
 
 #include "command.h"
 
-Command::Command()
+Command::Command() : done(false)
 {
 	time(&this->timer);
+}
+
+Command::~Command()
+{
+
 }
 
 time_t Command::getTime() const
 {
 	return this->timer;
 }
+
+#ifndef PG_MINIMAL
 
 bool Command::onMouseMove(QMouseEvent *)
 {
@@ -47,6 +54,8 @@ bool Command::onKeyPress(QKeyEvent *)
 	return false;
 }
 
+#endif
+
 void Command::redo()
 {
 	execute();
@@ -54,5 +63,5 @@ void Command::redo()
 
 bool Command::isDone()
 {
-	return done;
+	return this->done;
 }

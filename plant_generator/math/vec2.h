@@ -28,16 +28,14 @@ namespace pg {
 		float x;
 		float y;
 
-		Vec2()
+		Vec2() : x(0.0f), y(0.0f)
 		{
-			this->x = 0.0f;
-			this->y = 0.0f;
+
 		}
 
-		Vec2(float x, float y)
+		Vec2(float x, float y) : x(x), y(y)
 		{
-			this->x = x;
-			this->y = y;
+
 		}
 
 		Vec2 &operator+=(const Vec2 &b)
@@ -61,7 +59,7 @@ namespace pg {
 			return *this;
 		}
 
-		#ifdef PG_SERIALIZE
+#ifdef PG_SERIALIZE
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned int version)
 		{
@@ -69,7 +67,7 @@ namespace pg {
 			ar & x;
 			ar & y;
 		}
-		#endif
+#endif
 	};
 
 	inline bool operator==(const Vec2 &a, const Vec2 &b)

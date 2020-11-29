@@ -31,9 +31,12 @@ using pg::Vec3;
 using pg::Mat4;
 
 CurveEditor::CurveEditor(KeyMap *keymap, QWidget *parent) :
-	QWidget(parent), keymap(keymap), command(nullptr)
+	QWidget(parent),
+	keymap(keymap),
+	layout(new QVBoxLayout(this)),
+	degree(new QComboBox(this)),
+	command(nullptr)
 {
-	this->layout = new QVBoxLayout(this);
 	this->layout->setSizeConstraint(QLayout::SetMinimumSize);
 	this->layout->setSpacing(0);
 	this->layout->setMargin(0);
@@ -41,7 +44,6 @@ CurveEditor::CurveEditor(KeyMap *keymap, QWidget *parent) :
 
 void CurveEditor::createInterface(SharedResources *shared)
 {
-	this->degree = new QComboBox(this);
 	this->degree->addItem(QString("Linear"));
 	this->degree->addItem(QString("Cubic"));
 	this->degree->setFixedHeight(UI_FIELD_HEIGHT);

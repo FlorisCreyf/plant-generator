@@ -28,6 +28,11 @@ using std::cos;
 using std::sin;
 using std::vector;
 
+Geometry::Geometry() : points(), indices()
+{
+	
+}
+
 void Geometry::clear()
 {
 	points.clear();

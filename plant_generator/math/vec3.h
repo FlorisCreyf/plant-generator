@@ -31,18 +31,14 @@ namespace pg {
 		float y;
 		float z;
 
-		Vec3()
+		Vec3() : x(0.0f), y(0.0f), z(0.0f)
 		{
-			this->x = 0.0f;
-			this->y = 0.0f;
-			this->z = 0.0f;
+
 		}
 
-		Vec3(float x, float y, float z)
+		Vec3(float x, float y, float z) : x(x), y(y), z(z)
 		{
-			this->x = x;
-			this->y = y;
-			this->z = z;
+
 		}
 
 		Vec3 &operator+=(const Vec3 &b)
@@ -77,7 +73,7 @@ namespace pg {
 			return *this;
 		}
 
-		#ifdef PG_SERIALIZE
+#ifdef PG_SERIALIZE
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned int version) {
 			(void)version;
@@ -85,7 +81,7 @@ namespace pg {
 			ar & y;
 			ar & z;
 		}
-		#endif
+#endif
 	};
 
 	inline Vec2 toVec2(const Vec3 &vec)

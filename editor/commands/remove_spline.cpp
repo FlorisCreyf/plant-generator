@@ -18,12 +18,33 @@
 #include "remove_spline.h"
 
 RemoveSpline::RemoveSpline(PointSelection *selection, pg::Spline *spline) :
-	prevSelection(*selection)
+	selection(selection),
+	prevSelection(*selection),
+	spline(spline),
+	prevSpline(*spline),
+	clearable(false)
 {
-	this->selection = selection;
-	this->spline = spline;
-	this->prevSpline = *spline;
-	this->clearable = false;
+
+}
+
+RemoveSpline::RemoveSpline(const RemoveSpline &original) :
+	selection(original.selection),
+	prevSelection(original.prevSelection),
+	spline(original.spline),
+	prevSpline(original.prevSpline),
+	clearable(original.clearable)
+{
+
+}
+
+RemoveSpline &RemoveSpline::operator=(const RemoveSpline &original)
+{
+	this->selection = original.selection;
+	this->prevSelection = original.prevSelection;
+	this->spline = original.spline;
+	this->prevSpline = original.prevSpline;
+	this->clearable = original.clearable;
+	return *this;
 }
 
 void RemoveSpline::setClearable(bool clearable)

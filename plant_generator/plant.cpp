@@ -20,15 +20,28 @@ using namespace pg;
 using std::vector;
 using std::pair;
 
-Plant::Plant()
+Plant::Plant() : root(nullptr)
 {
-	this->root = nullptr;
+
 }
 
 Plant::~Plant()
 {
 	if (this->root)
 		deallocateStems(this->root);
+}
+
+void Plant::setDefault()
+{
+	if (this->leafMeshes.empty()) {
+		Geometry geometry;
+		geometry.setPlane();
+		this->addLeafMesh(geometry);
+	}
+	if (this->materials.empty())
+		this->addMaterial(Material());
+	if (this->curves.empty())
+		this->addCurve(Curve(0));
 }
 
 Stem *Plant::move(Stem *value)

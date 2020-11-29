@@ -17,14 +17,15 @@
 
 using namespace pg;
 
-Leaf::Leaf()
+Leaf::Leaf() :
+	custom(false),
+	material(0),
+	mesh(0),
+	position(-1.0f),
+	scale(1.0f, 1.0f, 1.0f),
+	rotation(0.0f, 0.0f, 0.0f, 1.0f)
 {
-	this->position = -1.0f;
-	this->scale = Vec3(1.0f, 1.0f, 1.0f);
-	this->material = 0;
-	this->mesh = 0;
-	this->rotation = Quat(0.0f, 0.0f, 0.0f, 1.0f);
-	this->custom = false;
+
 }
 
 bool Leaf::operator==(const Leaf &leaf) const
@@ -35,8 +36,7 @@ bool Leaf::operator==(const Leaf &leaf) const
 		this->material == leaf.material &&
 		this->rotation == leaf.rotation &&
 		this->mesh == leaf.mesh &&
-		this->custom == leaf.custom
-	);
+		this->custom == leaf.custom);
 }
 
 bool Leaf::operator!=(const Leaf &leaf) const

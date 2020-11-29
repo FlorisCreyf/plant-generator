@@ -31,7 +31,7 @@ class ShaderParams {
 	GLuint loadTexture(QImage image);
 
 public:
- 	ShaderParams();
+	ShaderParams();
 	ShaderParams(pg::Material material);
 	bool isValid() const;
 	void initialize();
@@ -46,4 +46,4 @@ public:
 	void setDefaultTexture(int index, GLuint name);
 };
 
-#endif /* SHADER_PARAMS_H */
+#endif

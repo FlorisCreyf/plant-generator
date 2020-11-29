@@ -25,9 +25,9 @@ using pg::Stem;
 using pg::Vec3;
 using std::pair;
 
-Selector::Selector(const Camera *camera)
+Selector::Selector(const Camera *camera) : camera(camera)
 {
-	this->camera = camera;
+
 }
 
 void Selector::select(

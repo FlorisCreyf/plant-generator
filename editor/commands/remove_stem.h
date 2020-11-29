@@ -40,8 +40,10 @@ class RemoveStem : public Command {
 
 public:
 	RemoveStem(Selection *selection);
+	RemoveStem(const RemoveStem &original);
+	RemoveStem &operator=(const RemoveStem &original);
 	void execute();
 	void undo();
 };
 
-#endif /* REMOVE_STEM_H */
+#endif

@@ -19,9 +19,9 @@ using namespace pg;
 using std::list;
 using std::array;
 
-StemPool::StemPool()
+StemPool::StemPool() : counter(0)
 {
-	this->counter = 0;
+
 }
 
 Stem *StemPool::allocate()

@@ -20,11 +20,11 @@
 
 PropertyEditor::PropertyEditor(
 	SharedResources *shared, Editor *editor, QWidget *parent) :
-	QWidget(parent)
+	QWidget(parent),
+	editor(editor),
+	stemEditor(new StemEditor(shared, editor, this)),
+	leafEditor(new LeafEditor(shared, editor, this))
 {
-	this->editor = editor;
-	this->stemEditor = new StemEditor(shared, editor, this);
-	this->leafEditor = new LeafEditor(shared, editor, this);
 	QVBoxLayout *layout = new QVBoxLayout(this);
 	layout->setSizeConstraint(QLayout::SetMinimumSize);
 	layout->setSpacing(0);

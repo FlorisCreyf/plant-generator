@@ -18,65 +18,57 @@
 #include "move_stem.h"
 #include <limits>
 
+using pg::Leaf;
+using pg::Path;
+using pg::Stem;
 using pg::Vec3;
 
-MoveStem::MoveStem(
-	Selection *selection, const Camera *camera,
-	int x, int y, bool snap)
+MoveStem::MoveStem(Selection *selection, const Camera *camera, int x, int y,
+	bool snap) :
+	selection(selection),
+	camera(*camera),
+	cursor(x, y),
+	originalCursor(x, y),
+	snap(snap)
 {
-	this->selection = selection;
-	this->camera = *camera;
-	this->snap = snap;
-	snap = false;
-	originalCursor.x = x;
-	originalCursor.y = y;
-	cursor = originalCursor;
-
-	Vec3 point;
-	point.x = x;
-	point.y = y;
-	point.z = 0.0f;
-
-	if (!snap) {
-		setStemOffsets(point);
-		setLeafOffsets(point);
-	}
+	setStemOffsets(Vec3(x, y, 0.0f));
+	setLeafOffsets(Vec3(x, y, 0.0f));
 }
 
 void MoveStem::setStemOffsets(Vec3 point)
 {
-	auto stemInstances = selection->getStemInstances();
+	auto stemInstances = this->selection->getStemInstances();
 	for (auto instance : stemInstances) {
-		pg::Stem *stem = instance.first;
-		Vec3 offset = camera.toScreenSpace(stem->getLocation());
+		Stem *stem = instance.first;
+		Vec3 offset = this->camera.toScreenSpace(stem->getLocation());
 		offset.z = 0.0f;
-		stemOffsets.emplace(stem, point - offset);
+		this->stemOffsets.emplace(stem, point - offset);
 	}
 }
 
 void MoveStem::setLeafOffsets(Vec3 point)
 {
-	auto leafInstances = selection->getLeafInstances();
+	auto leafInstances = this->selection->getLeafInstances();
 	for (auto instance : leafInstances) {
 		std::vector<Vec3> offsets;
-		pg::Stem *stem = instance.first;
-		pg::Path path = stem->getPath();
+		Stem *stem = instance.first;
+		const Path &path = stem->getPath();
 
 		for (long id : instance.second) {
 			Vec3 location = stem->getLocation();
-			pg::Leaf *leaf = stem->getLeaf(id);
+			Leaf *leaf = stem->getLeaf(id);
 			float position = leaf->getPosition();
 			if (position >= 0.0f && position < path.getLength())
 				location += path.getIntermediate(position);
 			else
 				location += path.get().back();
 
-			Vec3 offset = camera.toScreenSpace(location);
+			Vec3 offset = this->camera.toScreenSpace(location);
 			offset.z = 0.0f;
 			offsets.push_back(point - offset);
 		}
 
-		leafOffsets.emplace(stem, offsets);
+		this->leafOffsets.emplace(stem, offsets);
 	}
 }
 
@@ -85,9 +77,9 @@ void MoveStem::snapToCursor(bool snap)
 	this->snap = snap;
 }
 
-void MoveStem::getPosition(pg::Stem *parent, size_t &line, float &t, Vec3 point)
+void MoveStem::getPosition(Stem *parent, size_t &line, float &t, Vec3 point)
 {
-	pg::Path path = parent->getPath();
+	const Path &path = parent->getPath();
 
 	/* Convert the parent path to the screen space. */
 	auto points = path.get();
@@ -95,7 +87,7 @@ void MoveStem::getPosition(pg::Stem *parent, size_t &line, float &t, Vec3 point)
 		Vec3 location = parent->getLocation();
 		for (Vec3 &point : points) {
 			point += location;
-			point = camera.toScreenSpace(point);
+			point = this->camera.toScreenSpace(point);
 			point.z = 0.0f;
 		}
 	}
@@ -122,7 +114,7 @@ void MoveStem::getPosition(pg::Stem *parent, size_t &line, float &t, Vec3 point)
 	}
 }
 
-float MoveStem::getLength(pg::Path path, size_t line, float t)
+float MoveStem::getLength(Path path, size_t line, float t)
 {
 	/* Add the distances along each segment until the distance where the
 	intersection occurred. */
@@ -137,43 +129,37 @@ float MoveStem::getLength(pg::Path path, size_t line, float t)
 }
 
 /** Moves a stem along the path of the parent stem. */
-void MoveStem::moveAlongPath(pg::Stem *stem)
+void MoveStem::moveAlongPath(Stem *stem)
 {
-	pg::Path path = stem->getParent()->getPath();
-	Vec3 point;
-	point.x = cursor.x;
-	point.y = cursor.y;
-	point.z = 0.0f;
+	const Path &path = stem->getParent()->getPath();
+	Vec3 point(this->cursor.x, this->cursor.y, 0.0f);
 
-	if (!snap)
-		point -= stemOffsets.at(stem);
+	if (!this->snap)
+		point -= this->stemOffsets.at(stem);
 
 	float t = 0.0f;
- 	size_t line = 0;
+	size_t line = 0;
 	getPosition(stem->getParent(), line, t, point);
 	stem->setDistance(getLength(path, line, t));
 }
 
 void MoveStem::moveLeavesAlongPath()
 {
-	auto instances = selection->getLeafInstances();
+	auto instances = this->selection->getLeafInstances();
 	for (auto &instance : instances) {
-		pg::Stem *stem = instance.first;
-		pg::Path path = stem->getPath();
+		Stem *stem = instance.first;
+		const Path &path = stem->getPath();
 
 		std::vector<Vec3> offsets;
-		if (!snap)
-			offsets = leafOffsets.at(stem);
+		if (!this->snap)
+			offsets = this->leafOffsets.at(stem);
 
 		int l = 0;
 		for (long id : instance.second) {
-			pg::Leaf *leaf = stem->getLeaf(id);
-			Vec3 point;
-			point.x = cursor.x;
-			point.y = cursor.y;
-			point.z = 0.0f;
+			Leaf *leaf = stem->getLeaf(id);
+			Vec3 point(this->cursor.x, this->cursor.y, 0.0f);
 
-			if (!snap)
+			if (!this->snap)
 				point -= offsets.at(l++);
 
 			float t = 0.0f;
@@ -186,9 +172,9 @@ void MoveStem::moveLeavesAlongPath()
 
 void MoveStem::execute()
 {
-	auto stemInstances = selection->getStemInstances();
+	auto stemInstances = this->selection->getStemInstances();
 	for (auto &instance : stemInstances) {
-		pg::Stem *stem = instance.first;
+		Stem *stem = instance.first;
 		if (stem->getParent())
 			moveAlongPath(stem);
 	}
@@ -206,16 +192,16 @@ bool MoveStem::onMouseMove(QMouseEvent *event)
 
 bool MoveStem::onMousePress(QMouseEvent *)
 {
-	done = true;
+	this->done = true;
 	return false;
 }
 
 void MoveStem::undo()
 {
 	pg::Vec2 updatedCursor = cursor;
-	cursor = originalCursor;
+	this->cursor = this->originalCursor;
 	execute();
-	cursor = updatedCursor;
+	this->cursor = updatedCursor;
 }
 
 void MoveStem::redo()

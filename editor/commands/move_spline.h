@@ -25,21 +25,20 @@
 #include "plant_generator/spline.h"
 
 class MoveSpline : public Command {
+	const PointSelection *selection;
+	const Camera *camera;
+	TranslationAxes *axes;
+	pg::Spline *spline;
 	pg::Vec3 direction;
 	pg::Vec3 totalDirection;
-	TranslationAxes *axes;
-	const PointSelection *selection;
-	pg::Spline *spline;
 	pg::Vec3 planeNormal;
 	pg::Ray ray;
 	bool parallel;
-	const Camera *camera;
 	int clickOffset[2];
 	std::vector<pg::Vec3> positions;
 
 public:
-	MoveSpline(
-		const PointSelection *selection, pg::Spline *spline,
+	MoveSpline(const PointSelection *selection, pg::Spline *spline,
 		TranslationAxes *axes, const Camera *camera);
 	void setClickOffset(int x, int y);
 	/** Undo point translations using original points instead of the total
@@ -64,4 +63,4 @@ public:
 	bool onKeyPress(QKeyEvent *event);
 };
 
-#endif /* MOVE_SPLINE_H */
+#endif

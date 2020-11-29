@@ -28,7 +28,7 @@
 namespace pg {
 	class Spline {
 		std::vector<Vec3> controls;
-		int degree = 3;
+		int degree;
 
 		void adjustCubic();
 		void adjustLinear();
@@ -36,7 +36,7 @@ namespace pg {
 		void moveCubic(unsigned, Vec3, bool);
 		void removeCubic(unsigned);
 
-		#ifdef PG_SERIALIZE
+#ifdef PG_SERIALIZE
 		friend class boost::serialization::access;
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned)
@@ -44,9 +44,11 @@ namespace pg {
 			ar & controls;
 			ar & degree;
 		}
-		#endif
+#endif
 
 	public:
+		Spline();
+		Spline(int preset);
 		bool operator==(const Spline &spline) const;
 		bool operator!=(const Spline &spline) const;
 		void setDefault(unsigned type);
@@ -74,4 +76,4 @@ namespace pg {
 	};
 }
 
-#endif /* PG_SPLINE_H */
+#endif

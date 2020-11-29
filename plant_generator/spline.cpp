@@ -19,6 +19,16 @@
 using pg::Spline;
 using pg::Vec3;
 
+Spline::Spline() : degree(3)
+{
+
+}
+
+Spline::Spline(int preset)
+{
+	setDefault(preset);
+}
+
 bool Spline::operator==(const Spline &spline) const
 {
 	return controls == spline.controls && degree == spline.degree;
@@ -294,7 +304,7 @@ void Spline::moveCubic(unsigned index, Vec3 location, bool parallel)
 void Spline::parallelize(unsigned index)
 {
 	if (degree != 3)
-	 	return;
+		return;
 
 	if (index % 3 == 1 && index > 1) {
 		Vec3 diff = controls[index-1] - controls[index-2];

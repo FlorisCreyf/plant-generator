@@ -30,9 +30,9 @@ namespace pg {
 		int subdivisions;
 		float length;
 
- 		void setLength();
+		void setLength();
 
-		#ifdef PG_SERIALIZE
+#ifdef PG_SERIALIZE
 		friend class boost::serialization::access;
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned)
@@ -44,7 +44,7 @@ namespace pg {
 			ar & subdivisions;
 			setLength();
 		}
-		#endif
+#endif
 
 	public:
 		bool operator==(const Path &path) const;
@@ -92,4 +92,4 @@ namespace pg {
 	};
 }
 
-#endif /* PG_PATH_H */
+#endif

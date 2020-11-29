@@ -20,6 +20,11 @@ const float pi = 3.14159265359f;
 
 using namespace pg;
 
+CrossSection::CrossSection() : resolution(0)
+{
+
+}
+
 int CrossSection::getResolution() const
 {
 	return this->resolution;

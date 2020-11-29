@@ -17,15 +17,16 @@
 
 #include "move_path.h"
 
-MovePath::MovePath(
-	const Selection *selection, TranslationAxes *axes,
-	const Camera *camera) : moveSpline(nullptr, nullptr, axes, camera)
+MovePath::MovePath(const Selection *selection, TranslationAxes *axes,
+	const Camera *camera) :
+	selection(selection),
+	camera(camera),
+	axes(axes),
+	moveSpline(nullptr, nullptr, axes, camera),
+	clickOffset{0.0f, 0.0f},
+	undoing(false)
 {
-	this->camera = camera;
-	this->selection = selection;
-	this->axes = axes;
-	this->clickOffset[0] = this->clickOffset[1] = 0.0f;
-	this->undoing = false;
+
 }
 
 void MovePath::setClickOffset(int x, int y)
@@ -82,7 +83,9 @@ bool MovePath::onMouseMove(QMouseEvent *event)
 	float x = point.x() + clickOffset[0];
 	float y = point.y() + clickOffset[1];
 	setParallelTangents(!ctrl);
-	this->moveSpline.set(camera->getRay(x, y), camera->getDirection());
+	this->moveSpline.set(
+		this->camera->getRay(x, y),
+		this->camera->getDirection());
 	execute();
 	return true;
 }

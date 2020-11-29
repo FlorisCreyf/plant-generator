@@ -62,4 +62,4 @@ signals:
 	void mouseMoved(QMouseEvent *event);
 };
 
-#endif /* CURVE_VIEWER_H */
+#endif

@@ -33,4 +33,4 @@ public:
 	void clear();
 };
 
-#endif /* HISTORY_H */
+#endif

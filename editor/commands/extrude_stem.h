@@ -27,13 +27,13 @@ class ExtrudeStem : public Command {
 	Selection prevSelection;
 	Selection newSelection;
 	TranslationAxes *axes;
-	Camera *camera;
+	const Camera *camera;
 	std::map<pg::Stem *, pg::Spline> prevSplines;
 	MovePath movePath;
 
 public:
 	ExtrudeStem(Selection *selection, TranslationAxes *axes,
-		Camera *camera);
+		const Camera *camera);
 	void setClickOffset(int x, int y);
 	bool onMouseMove(QMouseEvent *event);
 	bool onMousePress(QMouseEvent *event);
@@ -43,4 +43,4 @@ public:
 	void redo();
 };
 
-#endif /* EXTRUDE_STEM_H */
+#endif

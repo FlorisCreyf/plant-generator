@@ -1,10 +1,10 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "../math/vec3.h"
-#include "../math/quat.h"
-#include "../math/intersection.h"
-#include "../geometry.h"
+#include "../plant_generator/math/vec3.h"
+#include "../plant_generator/math/quat.h"
+#include "../plant_generator/math/intersection.h"
+#include "../plant_generator/geometry.h"
 
 const float pi = 3.14159265359f;
 const float tolerance = 0.000001f;

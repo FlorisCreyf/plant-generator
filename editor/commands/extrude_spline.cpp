@@ -22,11 +22,13 @@
 ExtrudeSpline::ExtrudeSpline(
 	PointSelection *selection, pg::Spline *spline, TranslationAxes *axes,
 	const Camera *camera) :
-	prevSelection(*selection), newSelection(*selection),
+	selection(selection),
+	prevSelection(*selection),
+	newSelection(*selection),
+	spline(spline),
 	moveSpline(selection, spline, axes, camera)
 {
-	this->selection = selection;
-	this->spline = spline;
+
 }
 
 void ExtrudeSpline::setClickOffset(int x, int y)

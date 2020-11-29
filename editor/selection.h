@@ -35,6 +35,8 @@ class Selection {
 
 public:
 	Selection(pg::Plant *plant);
+	Selection(const Selection &original);
+	Selection &operator=(const Selection &original);
 	bool operator==(const Selection &obj) const;
 	bool operator!=(const Selection &obj) const;
 
@@ -82,4 +84,4 @@ public:
 	pg::Vec3 getAverageDirectionFP() const;
 };
 
-#endif /* STEM_SELECTION_H */
+#endif

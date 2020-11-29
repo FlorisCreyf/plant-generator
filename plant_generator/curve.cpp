@@ -22,22 +22,19 @@ Curve::Curve()
 
 }
 
-Curve::Curve(int type)
+Curve::Curve(int type) : spline(type)
 {
-	Spline spline;
-	spline.setDefault(type);
-	this->spline = spline;
+
 }
 
-Curve::Curve(Spline spline)
+Curve::Curve(Spline spline) : spline(spline)
 {
-	this->spline = spline;
+
 }
 
-Curve::Curve(Spline spline, std::string name)
+Curve::Curve(Spline spline, std::string name) : spline(spline), name(name)
 {
-	this->spline = spline;
-	this->name = name;
+
 }
 
 void Curve::setName(std::string name)

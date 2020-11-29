@@ -21,8 +21,12 @@ using pg::Spline;
 
 GeneratorCurveEditor::GeneratorCurveEditor(
 	SharedResources *shared, KeyMap *keymap, Editor *editor,
-	QWidget *parent) : CurveEditor(keymap, parent), editor(editor),
-	generate(nullptr)
+	QWidget *parent) :
+	CurveEditor(keymap, parent),
+	editor(editor),
+	generate(nullptr),
+	selectionBox(new QComboBox(this)),
+	nodeSelectionBox(new QComboBox(this))
 {
 	createSelectionBar();
 	createInterface(shared);
@@ -34,14 +38,12 @@ GeneratorCurveEditor::GeneratorCurveEditor(
 
 void GeneratorCurveEditor::createSelectionBar()
 {
-	this->nodeSelectionBox = new QComboBox(this);
 	this->nodeSelectionBox->installEventFilter(this);
 	this->layout->addWidget(this->nodeSelectionBox);
 	connect(this->nodeSelectionBox,
 		QOverload<int>::of(&QComboBox::currentIndexChanged),
 		this, &GeneratorCurveEditor::select);
 
-	this->selectionBox = new QComboBox(this);
 	this->selectionBox->addItem("Stem Density");
 	this->selectionBox->addItem("Leaf Density");
 	this->selectionBox->installEventFilter(this);

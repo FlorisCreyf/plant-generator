@@ -27,8 +27,8 @@
 
 class RotateStem : public Command {
 	Selection *selection;
-	RotationAxes *axes;
 	const Camera *camera;
+	RotationAxes *axes;
 	Axes::Axis axis;
 	pg::Vec3 firstDirection;
 	pg::Vec3 lastDirection;
@@ -46,8 +46,7 @@ class RotateStem : public Command {
 	pg::Quat getTransformation(pg::Quat);
 
 public:
-	RotateStem(
-		Selection *selection, RotationAxes *axes,
+	RotateStem(Selection *selection, RotationAxes *axes,
 		const Camera *camera, float x, float y);
 	bool isValid();
 	void set(pg::Ray ray, pg::Vec3 planeNormal);
@@ -57,7 +56,6 @@ public:
 	bool onKeyPress(QKeyEvent *);
 	void execute();
 	void undo();
-
 };
 
-#endif /* ROTATE_STEM_H */
+#endif

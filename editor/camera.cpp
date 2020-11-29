@@ -26,19 +26,21 @@ using pg::Mat4;
 
 const float pi = std::acos(-1.0);
 
-Camera::Camera()
+Camera::Camera() :
+	posDiff(0.0f, 0.0f),
+	pos(180.0f, 0.0f),
+	action(Action::None),
+	target(0.0f, 4.0f, 0.0f),
+	ftarget(target),
+	distance(18.0f),
+	panSpeed(0.002f),
+	zoomSpeed(0.01f),
+	zoomMin(0.1f),
+	zoomMax(100.0f),
+	scroll(0.0f),
+	prevY(0.0f)
 {
-	this->action = Action::None;
-	this->posDiff = Vec2(0.0f, 0.0f);
-	this->pos = Vec2(180.0f, 30.0f);
-	this->ftarget = this->target = Vec3(0.0f, 4.0f, 0.0f);
-	this->distance = 18.0f;
-	this->panSpeed = 0.002f;
-	this->zoomSpeed = 0.01f;
-	this->zoomMin = 0.1f;
-	this->zoomMax = 100.0f;
-	this->scroll = 0.0f;
-	this->prevY = 0.0f;
+
 }
 
 void Camera::setPanSpeed(float speed)

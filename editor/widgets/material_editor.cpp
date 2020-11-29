@@ -24,19 +24,19 @@ using pg::Material;
 
 MaterialEditor::MaterialEditor(
 	SharedResources *shared, Editor *editor, QWidget *parent) :
-	QWidget(parent)
+	QWidget(parent),
+	editor(editor),
+	shared(shared),
+	materialViewer(new MaterialViewer(shared, this)),
+	layout(new QVBoxLayout(this)),
+	selectionBox(new QComboBox(this))
 {
-	this->shared = shared;
-	this->editor = editor;
-
-	this->layout = new QVBoxLayout(this);
 	this->layout->setSizeConstraint(QLayout::SetMinimumSize);
 	this->layout->setSpacing(0);
 	this->layout->setMargin(0);
 
 	createSelectionBar();
 
-	this->materialViewer = new MaterialViewer(shared, this);
 	this->materialViewer->setMinimumHeight(200);
 	this->layout->addWidget(this->materialViewer);
 
@@ -68,7 +68,6 @@ void MaterialEditor::createSelectionBar()
 	removeButton->setFixedHeight(UI_FIELD_HEIGHT);
 	removeButton->setFixedWidth(UI_FIELD_HEIGHT);
 
-	this->selectionBox = new QComboBox(this);
 	this->selectionBox->setEditable(true);
 	this->selectionBox->setInsertPolicy(QComboBox::InsertAtCurrent);
 	this->selectionBox->setItemDelegate(new ItemDelegate());

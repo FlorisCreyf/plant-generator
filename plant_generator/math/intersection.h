@@ -63,4 +63,4 @@ namespace pg {
 	float intersectsLine(pg::Ray2 a, pg::Ray2 b);
 }
 
-#endif /* PG_INTERSECTION_H */
+#endif

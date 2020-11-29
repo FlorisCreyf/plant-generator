@@ -27,4 +27,4 @@ public:
 	pg::Mat4 getTransformation(float distance, pg::Vec3 direction);
 };
 
-#endif /* ROTATION_AXES_H */
+#endif

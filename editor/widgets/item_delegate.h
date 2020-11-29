@@ -24,14 +24,10 @@ class ItemDelegate : public QStyledItemDelegate {
 	Q_OBJECT
 
 public:
-	QSize sizeHint(
-		const QStyleOptionViewItem &option,
-		const QModelIndex &index) const
+	QSize sizeHint(const QStyleOptionViewItem &, const QModelIndex &) const
 	{
-		(void)option;
-		(void)index;
 		return QSize(1, 22);
 	}
 };
 
-#endif /* ITEM_DELEGATE_H */
+#endif

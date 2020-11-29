@@ -21,7 +21,10 @@
 
 PropertyCurveEditor::PropertyCurveEditor(
 	SharedResources *shared, KeyMap *keymap, Editor *editor,
-	QWidget *parent) : CurveEditor(keymap, parent), editor(editor)
+	QWidget *parent) :
+	CurveEditor(keymap, parent),
+	editor(editor),
+	selectionBox(new QComboBox(this))
 {
 	createSelectionBar();
 	createInterface(shared);
@@ -46,7 +49,6 @@ void PropertyCurveEditor::createSelectionBar()
 	connect(removeButton, &QPushButton::clicked,
 		this, &PropertyCurveEditor::remove);
 
-	this->selectionBox = new QComboBox(this);
 	this->selectionBox->setEditable(true);
 	this->selectionBox->setInsertPolicy(QComboBox::InsertAtCurrent);
 	this->selectionBox->setItemDelegate(new ItemDelegate());

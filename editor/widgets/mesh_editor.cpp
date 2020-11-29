@@ -22,18 +22,20 @@
 
 MeshEditor::MeshEditor(
 	SharedResources *shared, Editor *editor, QWidget *parent) :
-	QWidget(parent), shared(shared), editor(editor)
+	QWidget(parent),
+	shared(shared),
+	editor(editor),
+	meshViewer(new MeshViewer(shared, this)),
+	layout(new QVBoxLayout(this))
 {
 	setFocusPolicy(Qt::StrongFocus);
 
-	this->layout = new QVBoxLayout(this);
 	this->layout->setSizeConstraint(QLayout::SetMinimumSize);
 	this->layout->setSpacing(0);
 	this->layout->setMargin(0);
 
 	createSelectionBar();
 
-	this->meshViewer = new MeshViewer(shared, this);
 	this->meshViewer->setMinimumHeight(200);
 	this->layout->addWidget(this->meshViewer);
 
@@ -256,7 +258,7 @@ void MeshEditor::rename()
 
 void MeshEditor::remove()
 {
-	 if (this->selectionBox->count() > 1) {
+	if (this->selectionBox->count() > 1) {
 		unsigned index = this->selectionBox->currentIndex();
 		QString name = this->selectionBox->currentText();
 		pg::Plant *plant = this->editor->getPlant();

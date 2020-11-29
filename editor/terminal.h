@@ -1,6 +1,3 @@
-#ifndef TERMINAL_H
-#define TERMINAL_H
-
 #define RESET       "\033[0m"
 #define BLACK       "\033[30m"
 #define RED         "\033[31m"
@@ -18,6 +15,3 @@
 #define BOLDMAGENTA "\033[1m\033[35m"
 #define BOLDCYAN    "\033[1m\033[36m"
 #define BOLDWHITE   "\033[1m\033[37m"
-
-#endif /* TERMINAL_H */
-

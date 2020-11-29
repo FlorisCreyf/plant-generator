@@ -36,6 +36,8 @@ namespace pg {
 
 	public:
 		PseudoGenerator(Plant *plant);
+		PseudoGenerator(const PseudoGenerator &original);
+		PseudoGenerator &operator=(const PseudoGenerator &original);
 		void grow();
 		void grow(Stem *stem);
 		void reset();
@@ -44,4 +46,4 @@ namespace pg {
 	};
 }
 
-#endif /* PG_PSEUDO_GENERATOR_H */
+#endif

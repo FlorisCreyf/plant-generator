@@ -32,4 +32,4 @@ namespace pg {
 	};
 }
 
-#endif /* PG_WAVEFRONT_H */
+#endif

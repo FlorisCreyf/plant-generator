@@ -35,4 +35,4 @@ public:
 	void undo();
 };
 
-#endif /* SAVE_POINT_SELECTION_H */
+#endif

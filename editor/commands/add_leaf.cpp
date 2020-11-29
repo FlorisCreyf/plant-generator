@@ -18,10 +18,12 @@
 #include "add_leaf.h"
 
 AddLeaf::AddLeaf(Selection *selection, const Camera *camera, int x, int y) :
-	prevSelection(*selection), moveStem(selection, camera, x, y, true)
+	selection(selection),
+	prevSelection(*selection),
+	moveStem(selection, camera, x, y, true),
+	stem(nullptr)
 {
-	this->selection = selection;
-	this->stem = nullptr;
+
 }
 
 void AddLeaf::execute()

@@ -23,11 +23,12 @@ using pg::Plant;
 AddStem::AddStem(
 	Selection *selection, TranslationAxes *axes, const Camera *camera,
 	int x, int y) :
+	selection(selection),
 	prevSelection(*selection),
 	moveStem(selection, camera, x, y, true),
 	movePath(selection, axes, camera)
 {
-	this->selection = selection;
+
 }
 
 void AddStem::create()
@@ -58,7 +59,6 @@ void AddStem::create()
 	pg::Spline spline = path.getSpline();
 	std::vector<pg::Vec3> controls;
 	controls.push_back(pg::Vec3(0.0f, 0.0f, 0.0f));
-	/* Adjust the second point at a latter time. */
 	controls.push_back(pg::Vec3(0.0f, 0.0f, 0.0f));
 	spline.setControls(controls);
 	spline.setDegree(1);

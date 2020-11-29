@@ -20,12 +20,9 @@ using pg::Path;
 using pg::Spline;
 using pg::Vec3;
 
-Path::Path()
+Path::Path() : divisions(0), initialDivisions(0), subdivisions(0), length(0.0f)
 {
-	this->divisions = 0;
-	this->initialDivisions = 0;
-	this->subdivisions = 0;
-	this->length = 0.0f;
+
 }
 
 bool Path::operator==(const Path &path) const
@@ -34,6 +31,7 @@ bool Path::operator==(const Path &path) const
 		this->path == path.path &&
 		this->spline == path.spline &&
 		this->divisions == path.divisions &&
+		this->initialDivisions == path.initialDivisions &&
 		this->subdivisions == path.subdivisions);
 }
 
@@ -47,7 +45,7 @@ void Path::generate()
 	size_t size = this->spline.getControls().size();
 	int curves = this->spline.getCurveCount();
 	if (size <= 1)
-	 	return;
+		return;
 
 	this->path.clear();
 

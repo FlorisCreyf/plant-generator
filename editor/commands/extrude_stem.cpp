@@ -18,28 +18,29 @@
 #include "extrude_stem.h"
 #include "remove_stem.h"
 
-ExtrudeStem::ExtrudeStem(
-	Selection *selection, TranslationAxes *axes, Camera *camera) :
+ExtrudeStem::ExtrudeStem(Selection *selection, TranslationAxes *axes,
+	const Camera *camera) :
+	selection(selection),
 	prevSelection(*selection),
 	newSelection(*selection),
+	axes(axes),
+	camera(camera),
 	movePath(selection, axes, camera)
 {
-	this->selection = selection;
-	this->axes = axes;
-	this->camera = camera;
+
 }
 
 void ExtrudeStem::setClickOffset(int x, int y)
 {
-	pg::Vec3 average = selection->getAveragePosition();
-	pg::Vec3 s = camera->toScreenSpace(average);
-	movePath.setClickOffset(s.x - x, s.y - y);
-	axes->selectCenter();
+	pg::Vec3 average = this->selection->getAveragePosition();
+	pg::Vec3 s = this->camera->toScreenSpace(average);
+	this->movePath.setClickOffset(s.x - x, s.y - y);
+	this->axes->selectCenter();
 }
 
 void ExtrudeStem::execute()
 {
-	auto instances = selection->getStemInstances();
+	auto instances = this->selection->getStemInstances();
 	for (auto &instance : instances) {
 		pg::Stem *stem = instance.first;
 		std::set<int> points = instance.second.getPoints();
@@ -47,66 +48,66 @@ void ExtrudeStem::execute()
 
 		pg::Path path = stem->getPath();
 		pg::Spline spline = path.getSpline();
-		int o = 0;
+		int offset = 0;
 		for (int point : points) {
-			int l = point + o;
-			point = spline.insert(l, spline.getControls()[l]);
+			int i = point + offset;
+			point = spline.insert(i, spline.getControls()[i]);
 			newPoints.insert(point);
-			o += spline.getDegree();
+			offset += spline.getDegree();
 		}
 
 		path.setSpline(spline);
 		stem->setPath(path);
 		instance.second.setPoints(newPoints);
 	}
-	selection->setInstances(instances);
+	this->selection->setInstances(instances);
 }
 
 void ExtrudeStem::undo()
 {
-	newSelection = *selection;
-	prevSplines.clear();
-	auto instances = selection->getStemInstances();
+	this->newSelection = *this->selection;
+	this->prevSplines.clear();
+	auto instances = this->selection->getStemInstances();
 	for (auto &instance : instances) {
 		pg::Stem *stem = instance.first;
 		pg::Path path = stem->getPath();
 		pg::Spline spline = path.getSpline();
-		prevSplines.emplace(stem, spline);
+		this->prevSplines.emplace(stem, spline);
 	}
 
-	RemoveStem remove(selection);
+	RemoveStem remove(this->selection);
 	remove.execute();
-	*selection = prevSelection;
+	*this->selection = this->prevSelection;
 }
 
 void ExtrudeStem::redo()
 {
-	for (auto item : prevSplines) {
+	for (auto item : this->prevSplines) {
 		pg::Stem *stem = item.first;
 		auto path = stem->getPath();
 		path.setSpline(item.second);
 		stem->setPath(path);
 	}
-	*selection = newSelection;
+	*this->selection = this->newSelection;
 }
 
 bool ExtrudeStem::onMouseMove(QMouseEvent *event)
 {
-	bool update = movePath.onMouseMove(event);
-	done = movePath.isDone();
+	bool update = this->movePath.onMouseMove(event);
+	this->done = this->movePath.isDone();
 	return update;
 }
 
 bool ExtrudeStem::onMousePress(QMouseEvent *event)
 {
-	bool update = movePath.onMousePress(event);
-	done = movePath.isDone();
+	bool update = this->movePath.onMousePress(event);
+	this->done = this->movePath.isDone();
 	return update;
 }
 
 bool ExtrudeStem::onMouseRelease(QMouseEvent *event)
 {
-	bool update = movePath.onMouseRelease(event);
-	done = movePath.isDone();
+	bool update = this->movePath.onMouseRelease(event);
+	this->done = this->movePath.isDone();
 	return update;
 }

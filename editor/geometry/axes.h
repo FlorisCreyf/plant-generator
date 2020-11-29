@@ -26,6 +26,7 @@ class Axes {
 public:
 	enum Axis {None, XAxis, YAxis, ZAxis, Center};
 
+	Axes();
 	/** The size for the axes needs to remain constant. This method is used
 	to set what that size should be. */
 	void setScale(float scale);
@@ -40,10 +41,10 @@ public:
 	void setScalable(bool scalable);
 
 protected:
-	float scale = 1.0f;
-	pg::Vec3 position = {0.0f, 0.0f, 0.0f};
-	Axis selection = None;
-	bool scalable = true;
+	float scale;
+	pg::Vec3 position;
+	Axis selection;
+	bool scalable;
 };
 
-#endif /* AXES_H */
+#endif

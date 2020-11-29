@@ -93,4 +93,4 @@ private:
 	void initOrthographic(pg::Vec3 near, pg::Vec3 far);
 };
 
-#endif /* CAMERA_H */
+#endif

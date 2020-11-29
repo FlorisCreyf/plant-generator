@@ -29,7 +29,7 @@ namespace pg {
 		Animation animation;
 		Wind wind;
 
-		#ifdef PG_SERIALIZE
+#ifdef PG_SERIALIZE
 		friend class boost::serialization::access;
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned)
@@ -38,8 +38,8 @@ namespace pg {
 			ar & animation;
 			ar & wind;
 		}
-		#endif /* PG_SERIALIZE */
+#endif
 	};
 }
 
-#endif /* PG_SCENE_H */
+#endif

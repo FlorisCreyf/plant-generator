@@ -37,4 +37,4 @@ private:
 	const float coneLength[2] = {0.5f, 1.5f};
 };
 
-#endif /* TRANSLATION_AXES_H */
+#endif

@@ -31,7 +31,9 @@ using std::string;
 const float pi = 3.14159265359f;
 
 GeneratorEditor::GeneratorEditor(Editor *editor, QWidget *parent) :
-	QWidget(parent), editor(editor), generate(nullptr)
+	QWidget(parent),
+	editor(editor),
+	generate(nullptr)
 {
 	createInterface();
 	enable(false);

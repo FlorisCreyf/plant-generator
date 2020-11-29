@@ -18,27 +18,34 @@
 #ifndef COMMAND_H
 #define COMMAND_H
 
+#include <ctime>
+#ifndef PG_MINIMAL
 #include <QMouseEvent>
 #include <QKeyEvent>
-#include <ctime>
+#endif
 
 class Command {
 	time_t timer;
 
 protected:
-	bool done = false;
+	bool done;
 
 public:
 	Command();
+	Command(const Command &original) = delete;
+	virtual ~Command();
+
 	virtual void execute() = 0;
 	virtual void undo() = 0;
 	virtual void redo();
 	virtual bool isDone();
+#ifndef PG_MINIMAL
 	virtual bool onMouseMove(QMouseEvent *);
 	virtual bool onMousePress(QMouseEvent *);
 	virtual bool onMouseRelease(QMouseEvent *);
 	virtual bool onKeyPress(QKeyEvent *);
+#endif
 	time_t getTime() const;
 };
 
-#endif /* COMMAND_H */
+#endif

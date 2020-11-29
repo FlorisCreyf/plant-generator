@@ -18,32 +18,32 @@
 #include "save_point_selection.h"
 
 SavePointSelection::SavePointSelection(PointSelection *selection) :
-	after(*selection), before(*selection)
+	selection(selection), after(*selection), before(*selection)
 {
-	this->selection = selection;
+
 }
 
 bool SavePointSelection::hasChanged() const
 {
-	return *selection != before;
+	return *this->selection != this->before;
 }
 
 void SavePointSelection::setBefore()
 {
-	before = *selection;
+	this->before = *this->selection;
 }
 
 void SavePointSelection::setAfter()
 {
-	after = *selection;
+	this->after = *this->selection;
 }
 
 void SavePointSelection::execute()
 {
-	*selection = after;
+	*this->selection = this->after;
 }
 
 void SavePointSelection::undo()
 {
-	*selection = before;
+	*this->selection = this->before;
 }

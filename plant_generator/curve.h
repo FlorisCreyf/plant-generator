@@ -28,7 +28,7 @@ namespace pg {
 		Spline spline;
 		std::string name;
 
-		#ifdef PG_SERIALIZE
+#ifdef PG_SERIALIZE
 		friend class boost::serialization::access;
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned)
@@ -36,7 +36,7 @@ namespace pg {
 			ar & spline;
 			ar & name;
 		}
-		#endif /* PG_SERIALIZE */
+#endif
 
 	public:
 		Curve();
@@ -50,4 +50,4 @@ namespace pg {
 	};
 }
 
-#endif /* PG_CURVE_H */
+#endif

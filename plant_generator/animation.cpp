@@ -17,6 +17,19 @@
 
 using namespace pg;
 
+KeyFrame::KeyFrame() :
+	rotation(0.0f, 0.0f, 0.0f, 1.0f),
+	translation(0.0f, 0.0f, 0.0f, 1.0f),
+	finalTranslation(0.0f, 0.0f, 0.0f, 1.0f)
+{
+
+}
+
+Animation::Animation() : timeStep(1)
+{
+
+}
+
 std::vector<KeyFrame> Animation::getFrame(int ticks, Stem *stem)
 {
 	this->mixedFrames.resize(this->frames.size());

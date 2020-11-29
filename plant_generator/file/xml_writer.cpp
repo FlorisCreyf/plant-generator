@@ -17,10 +17,10 @@
 
 using std::string;
 
-XMLWriter::XMLWriter(const char *filename)
+XMLWriter::XMLWriter(const char *filename) :
+	file(filename, std::ios::out), depth(0)
 {
-	this->depth = 0;
-	this->file.open(filename, std::ios::out);
+
 }
 
 XMLWriter::~XMLWriter()
@@ -30,17 +30,17 @@ XMLWriter::~XMLWriter()
 
 void XMLWriter::operator>>(string tag)
 {
-	this->file << string(this->depth*2, ' ') << tag << std::endl;
+	this->file << string(this->depth * 2, ' ') << tag << std::endl;
 	this->depth++;
 }
 
 void XMLWriter::operator<<(string tag)
 {
 	this->depth--;
-	this->file << string(this->depth*2, ' ') << tag << std::endl;
+	this->file << string(this->depth * 2, ' ') << tag << std::endl;
 }
 
 void XMLWriter::operator+=(string tag)
 {
-	this->file << string(this->depth*2, ' ') << tag << std::endl;
+	this->file << string(this->depth * 2, ' ') << tag << std::endl;
 }

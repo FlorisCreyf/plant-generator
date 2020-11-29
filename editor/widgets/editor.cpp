@@ -30,9 +30,7 @@
 #include <cmath>
 #include <fstream>
 #include <iterator>
-
 #include <QtWidgets>
-
 #include <boost/archive/text_iarchive.hpp>
 
 using pg::Mat4;
@@ -43,17 +41,18 @@ const float pi = 3.14159265359f;
 
 Editor::Editor(SharedResources *shared, KeyMap *keymap, QWidget *parent) :
 	QOpenGLWidget(parent),
+	timer(new QTimer(this)),
+	command(nullptr),
+	keymap(keymap),
+	shared(shared),
+	shader(SharedResources::Solid),
 	generator(&scene.plant),
 	mesh(&scene.plant),
-	selection(&scene.plant)
+	selection(&scene.plant),
+	perspective(true),
+	rotating(false),
+	ticks(-1)
 {
-	this->shared = shared;
-	this->keymap = keymap;
-	this->command = nullptr;
-	this->perspective = true;
-	this->shader = SharedResources::Solid;
-	this->ticks = -1;
-
 	Vec3 color1(0.102f, 0.212f, 0.6f);
 	Vec3 color2(0.102f, 0.212f, 0.6f);
 	Vec3 color3(0.1f, 1.0f, 0.4f);
@@ -63,7 +62,6 @@ Editor::Editor(SharedResources *shared, KeyMap *keymap, QWidget *parent) :
 
 	createToolBar();
 
-	this->timer = new QTimer(this);
 	this->timer->setInterval(33);
 	connect(this->timer, &QTimer::timeout, this, &Editor::animate);
 }

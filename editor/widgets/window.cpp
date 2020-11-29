@@ -19,8 +19,9 @@
 #include "definitions.h"
 #include "plant_generator/file/collada.h"
 #include "plant_generator/file/wavefront.h"
-#include <boost/archive/text_iarchive.hpp>
+
 #include <fstream>
+#include <boost/archive/text_iarchive.hpp>
 #include <QFileDialog>
 
 Window::Window(int argc, char **argv)
@@ -28,6 +29,7 @@ Window::Window(int argc, char **argv)
 	this->keymap.loadFromXMLFile("keymap.xml");
 	if (argc > 1)
 		this->filename = QString(argv[1]);
+
 	this->objectLabel = new QLabel(this);
 	this->fileLabel = new QLabel(this);
 	statusBar()->addWidget(this->fileLabel, 1);
@@ -36,27 +38,21 @@ Window::Window(int argc, char **argv)
 
 	this->editor = new Editor(&this->shared, &this->keymap, this);
 	setCentralWidget(this->editor);
-#ifndef VIEWPORT_ONLY
 	createEditors();
-#endif
 	initEditor();
 	this->widget.setupUi(this);
 
-#ifndef VIEWPORT_ONLY
 	QMenu *menu = createPopupMenu();
 	menu->setTitle("Window");
 	menuBar()->insertMenu(this->widget.menuHelp->menuAction(), menu);
-#endif
 
 	connect(this->editor, &Editor::changed, this, &Window::updateStatus);
 	connect(this->widget.actionReportIssue, &QAction::triggered,
 		this, &Window::reportIssue);
 }
 
-#ifndef VIEWPORT_ONLY
-
-QDockWidget *Window::createDockWidget(const char *name, QWidget *widget,
-	bool scrollbar)
+QDockWidget *Window::createDockWidget(
+	const char *name, QWidget *widget, bool scrollbar)
 {
 	QDockWidget *dw = new QDockWidget(name, this);
 	dw->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
@@ -136,24 +132,17 @@ void Window::createEditors()
 	tabifyDockWidget(dw[4], dw[2]);
 }
 
-#endif /* VIEWPORT_ONLY */
-
 void Window::initEditor()
 {
 	if (this->filename.isEmpty())
 		newFile();
 	else {
-#ifdef VIEWPORT_ONLY
-		this->editor->load(this->filename.toLatin1());
-		this->editor->reset();
-#else
 		this->propertyEditor->clearOptions();
 		this->editor->load(this->filename.toLatin1());
 		this->pCurveEditor->reset();
 		this->meshEditor->reset();
 		this->materialEditor->reset();
 		this->editor->reset();
-#endif
 	}
 }
 
@@ -171,7 +160,7 @@ void Window::updateStatus()
 	this->objectLabel->setText(QString::fromStdString(value));
 }
 
-void Window::Window::keyPressEvent(QKeyEvent *event)
+void Window::keyPressEvent(QKeyEvent *event)
 {
 	if (event->key() == Qt::Key_Z) {
 		if (event->modifiers() & Qt::ControlModifier) {
@@ -211,14 +200,12 @@ void Window::setFilename(QString filename)
 
 void Window::newFile()
 {
-#ifndef VIEWPORT_ONLY
 	this->pCurveEditor->clear();
 	this->pCurveEditor->add();
 	this->materialEditor->clear();
 	this->materialEditor->addEmpty();
 	this->meshEditor->clear();
 	this->meshEditor->addEmpty();
-#endif
 	this->editor->load(nullptr);
 	this->editor->reset();
 	setFilename("");
@@ -230,17 +217,12 @@ void Window::openDialogBox()
 		this, "Open File", "", "Plant (*.plant)");
 
 	if (!filename.isNull() || !filename.isEmpty()) {
-#ifdef VIEWPORT_ONLY
-		this->editor->load(filename.toLatin1());
-		this->editor->reset();
-#else
 		this->propertyEditor->clearOptions();
 		this->editor->load(filename.toLatin1());
 		this->pCurveEditor->reset();
 		this->meshEditor->reset();
 		this->materialEditor->reset();
 		this->editor->reset();
-#endif
 		setFilename(filename);
 	}
 }

@@ -53,4 +53,4 @@ inline bool operator<(const KeyMap::Binding &a, const KeyMap::Binding &b) {
 		return false;
 }
 
-#endif /* KEY_MAP_H */
+#endif

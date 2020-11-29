@@ -19,10 +19,10 @@
 #include "definitions.h"
 
 ProceduralEditor::ProceduralEditor(Editor *editor, QWidget *parent) :
-	QWidget(parent)
+	QWidget(parent),
+	genEditor(new GeneratorEditor(editor, this)),
+	windEditor(new WindEditor(editor, this))
 {
-	this->genEditor = new GeneratorEditor(editor, this);
-	this->windEditor = new WindEditor(editor, this);
 	QVBoxLayout *layout = new QVBoxLayout(this);
 	layout->setSizeConstraint(QLayout::SetMinimumSize);
 	layout->setSpacing(0);

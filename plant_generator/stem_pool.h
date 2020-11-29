@@ -25,13 +25,13 @@
 namespace pg {
 	class StemPool {
 		struct Pool {
-			long id;
-			size_t remaining;
-			Stem *firstAvailable;
-			std::array<Stem, PG_POOL_SIZE> stems;
+			long id = 0;
+			size_t remaining = 0;
+			Stem *firstAvailable = nullptr;
+			std::array<Stem, PG_POOL_SIZE> stems = {};
 		};
-		long counter;
 		std::list<Pool> pools;
+		long counter;
 
 		Pool &addPool();
 		std::list<Pool>::iterator getPool(Stem *stem);
@@ -53,4 +53,4 @@ namespace pg {
 	};
 }
 
-#endif /* PG_STEM_POOL_H */
+#endif

@@ -25,13 +25,34 @@ using pg::Spline;
 using pg::Stem;
 using std::pair;
 
-RemoveStem::RemoveStem(Selection *selection) : prevSelection(*selection)
+RemoveStem::RemoveStem(Selection *selection) :
+	selection(selection), prevSelection(*selection)
 {
-	this->selection = selection;
+
 }
 
-/** Should be called after stems are removed. Leaves do not need to be removed
-from the plant if their stem is removed. */
+RemoveStem::RemoveStem(const RemoveStem &original) :
+	selection(original.selection),
+	prevSelection(original.prevSelection),
+	leaves(original.leaves),
+	splines(original.splines),
+	stems(original.stems)
+{
+
+}
+
+RemoveStem &RemoveStem::operator=(const RemoveStem &original)
+{
+	this->selection = original.selection;
+	this->prevSelection = original.prevSelection;
+	this->leaves = original.leaves;
+	this->splines = original.splines;
+	this->stems = original.stems;
+	return *this;
+}
+
+/** This should be called after stems are removed. Leaves do not need to be
+removed from the plant if their stem is removed. */
 void RemoveStem::removeLeaves()
 {
 	auto instances = this->selection->getLeafInstances();
@@ -40,9 +61,9 @@ void RemoveStem::removeLeaves()
 		std::set<size_t> &indices = instance.second;
 		for (auto it = indices.rbegin(); it != indices.rend(); it++) {
 			LeafState state;
-			state.stem = stem;
 			state.index = *it;
 			state.leaf = *(stem->getLeaf(state.index));
+			state.stem = stem;
 			this->leaves.push_back(state);
 			stem->removeLeaf(state.index);
 		}
@@ -93,7 +114,6 @@ void RemoveStem::removeStems()
 
 void RemoveStem::execute()
 {
-	/* Remove leaves first to avoid checking for deleted stems. */
 	removeLeaves();
 	removeStems();
 }
@@ -105,7 +125,7 @@ void RemoveStem::undo()
 
 	for (auto &pair : this->splines) {
 		Stem *stem = pair.first;
-		auto path = stem->getPath();
+		Path path = stem->getPath();
 		path.setSpline(pair.second);
 		stem->setPath(path);
 	}

@@ -32,7 +32,7 @@ namespace pg {
 		std::vector<unsigned> indices;
 		std::string name;
 
-		#ifdef PG_SERIALIZE
+#ifdef PG_SERIALIZE
 		friend class boost::serialization::access;
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned)
@@ -41,7 +41,7 @@ namespace pg {
 			ar & points;
 			ar & indices;
 		}
-		#endif
+#endif
 
 	public:
 		std::string getName() const;
@@ -59,4 +59,4 @@ namespace pg {
 	};
 }
 
-#endif /* PG_GEOMETRY_H */
+#endif

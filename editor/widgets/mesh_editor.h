@@ -65,4 +65,4 @@ signals:
 	void meshRemoved(unsigned index);
 };
 
-#endif /* MESH_EDITOR_H */
+#endif

@@ -24,7 +24,7 @@
 #include <vector>
 
 class Geometry {
- 	std::vector<pg::DVertex> points;
+	std::vector<pg::DVertex> points;
 	std::vector<unsigned> indices;
 
 public:
@@ -36,6 +36,7 @@ public:
 		size_t icount;
 	};
 
+	Geometry();
 	void clear();
 	void addIndex(unsigned index);
 	void addPoint(pg::Vec3 point, pg::Vec3 color);
@@ -56,4 +57,4 @@ public:
 	const std::vector<unsigned> *getIndices() const;
 };
 
-#endif /* GEOMETRY_H */
+#endif

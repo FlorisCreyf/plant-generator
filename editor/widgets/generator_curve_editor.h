@@ -26,9 +26,9 @@ class GeneratorCurveEditor : public CurveEditor {
 	Q_OBJECT
 
 	Editor *editor;
+	Generate *generate;
 	QComboBox *selectionBox;
 	QComboBox *nodeSelectionBox;
-	Generate *generate;
 
 	void createSelectionBar();
 	void change(bool curveChanged);
@@ -47,4 +47,4 @@ public:
 	void clear();
 };
 
-#endif /* GENERATOR_CURVE_EDITOR_H */
+#endif

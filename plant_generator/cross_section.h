@@ -30,6 +30,7 @@ namespace pg {
 		void generateSpline();
 
 	public:
+		CrossSection();
 		int getResolution() const;
 		void setSpline(Spline spline);
 		void generate(int resolution);
@@ -39,4 +40,4 @@ namespace pg {
 	};
 }
 
-#endif /* PG_CROSS_SECTION_H */
+#endif

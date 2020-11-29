@@ -31,20 +31,15 @@ namespace pg {
 		float z;
 		float w;
 
-		Quat()
+		Quat() : x(0.0f), y(0.0f), z(0.0f), w(0.0f)
 		{
-			this->x = 0.0f;
-			this->y = 0.0f;
-			this->z = 0.0f;
-			this->w = 0.0f;
+
 		}
 
-		Quat(float x, float y, float z, float w)
+		Quat(float x, float y, float z, float w) :
+			x(x), y(y), z(z), w(w)
 		{
-			this->x = x;
-			this->y = y;
-			this->z = z;
-			this->w = w;
+
 		}
 
 		Quat &operator+=(const Quat &b)
@@ -69,7 +64,7 @@ namespace pg {
 			return *this;
 		}
 
-		#ifdef PG_SERIALIZE
+#ifdef PG_SERIALIZE
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned int version)
 		{
@@ -79,7 +74,7 @@ namespace pg {
 			ar & z;
 			ar & w;
 		}
-		#endif
+#endif
 	};
 
 	inline Quat toQuat(const Vec4 &vec)

@@ -19,9 +19,24 @@
 
 using namespace pg;
 
-Stem::Stem(Stem *parent)
+Stem::Stem(Stem *parent) :
+	nextSibling(nullptr),
+	prevSibling(nullptr),
+	child(nullptr),
+	parent(parent),
+	depth(0),
+	sectionDivisions(4),
+	radiusCurve(0),
+	material{0, 0},
+	distance(0.0f),
+	minRadius(0.0f),
+	maxRadius(0.0f),
+	swelling(1.0f, 1.0f),
+	location(0.0f, 0.0f, 0.0f),
+	custom(false)
 {
-	init(parent);
+	if (parent)
+		this->depth = parent->depth + 1;
 }
 
 Stem::~Stem()
@@ -29,13 +44,64 @@ Stem::~Stem()
 
 }
 
-Stem::Stem(const Stem &original)
+Stem::Stem(const Stem &original) :
+	nextSibling(nullptr),
+	prevSibling(nullptr),
+	child(nullptr),
+	parent(nullptr),
+	leaves(original.leaves),
+	joints(original.joints),
+	depth(original.depth),
+	sectionDivisions(original.sectionDivisions),
+	radiusCurve(original.radiusCurve),
+	material{original.material[0], original.material[1]},
+	distance(original.distance),
+	minRadius(original.minRadius),
+	maxRadius(original.maxRadius),
+	swelling(original.swelling),
+	location(original.location),
+	path(original.path),
+	custom(original.custom),
+	parameterTree(original.parameterTree)
 {
-	copy(original);
-	this->parent = nullptr;
-	this->nextSibling = nullptr;
-	this->prevSibling = nullptr;
-	this->child = nullptr;
+
+}
+
+Stem &Stem::operator=(const Stem &stem)
+{
+	this->depth = stem.depth;
+	this->maxRadius = stem.maxRadius;
+	this->minRadius = stem.minRadius;
+	this->radiusCurve = stem.radiusCurve;
+	this->path = stem.path;
+	this->sectionDivisions = stem.sectionDivisions;
+	this->distance = stem.distance;
+	this->location = stem.location;
+	this->material[0] = stem.material[0];
+	this->material[1] = stem.material[1];
+	this->leaves = stem.leaves;
+	this->swelling = stem.swelling;
+	this->custom = stem.custom;
+	this->parameterTree = stem.parameterTree;
+	return *this;
+}
+
+bool Stem::operator==(const Stem &stem) const
+{
+	return (
+		this->depth == stem.depth &&
+		this->radiusCurve == stem.radiusCurve &&
+		this->minRadius == stem.minRadius &&
+		this->maxRadius == stem.maxRadius &&
+		this->path == stem.path &&
+		this->sectionDivisions == stem.sectionDivisions &&
+		this->distance == stem.distance &&
+		this->location == stem.location &&
+		this->material[0] == stem.material[0] &&
+		this->material[1] == stem.material[1] &&
+		this->swelling == stem.swelling &&
+		this->leaves == stem.leaves &&
+		this->custom == stem.custom);
 }
 
 void Stem::init(Stem *parent)
@@ -55,55 +121,12 @@ void Stem::init(Stem *parent)
 	this->prevSibling = nullptr;
 	this->child = nullptr;
 	this->parent = parent;
-	if (parent == nullptr) {
+	this->distance = 0.0f;
+	this->location = Vec3(0.0f, 0.0f, 0.0f);
+	if (parent == nullptr)
 		this->depth = 0;
-		this->distance = 0.0f;
-		this->location = Vec3(0.0f, 0.0f, 0.0f);
-	} else
+	else
 		this->depth = parent->depth + 1;
-}
-
-Stem &Stem::operator=(const Stem &stem)
-{
-	copy(stem);
-	return *this;
-}
-
-void Stem::copy(const Stem &stem)
-{
-	this->depth = stem.depth;
-	this->maxRadius = stem.maxRadius;
-	this->minRadius = stem.minRadius;
-	this->radiusCurve = stem.radiusCurve;
-	this->path = stem.path;
-	this->sectionDivisions = stem.sectionDivisions;
-	this->distance = stem.distance;
-	this->location = stem.location;
-	this->material[0] = stem.material[0];
-	this->material[1] = stem.material[1];
-	this->leaves = stem.leaves;
-	this->swelling = stem.swelling;
-	this->custom = stem.custom;
-	this->parameterTree = stem.parameterTree;
-}
-
-bool Stem::operator==(const Stem &stem) const
-{
-	return (
-		this->depth == stem.depth &&
-		this->radiusCurve == stem.radiusCurve &&
-		this->minRadius == stem.minRadius &&
-		this->maxRadius == stem.maxRadius &&
-		this->path == stem.path &&
-		this->sectionDivisions == stem.sectionDivisions &&
-		this->distance == stem.distance &&
-		this->location == stem.location &&
-		this->material[0] == stem.material[0] &&
-		this->material[1] == stem.material[1] &&
-		this->swelling == stem.swelling &&
-		this->leaves == stem.leaves &&
-		this->custom == stem.custom
-	);
 }
 
 bool Stem::operator!=(const Stem &stem) const

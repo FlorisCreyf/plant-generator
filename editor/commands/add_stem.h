@@ -37,7 +37,6 @@ class AddStem : public Command {
 public:
 	AddStem(Selection *selection, TranslationAxes *axes,
 		const Camera *camera, int x, int y);
-	~AddStem();
 	bool onMouseMove(QMouseEvent *event);
 	bool onMousePress(QMouseEvent *event);
 	bool onMouseRelease(QMouseEvent *event);
@@ -46,4 +45,4 @@ public:
 	void redo();
 };
 
-#endif /* ADD_STEM_H */
+#endif

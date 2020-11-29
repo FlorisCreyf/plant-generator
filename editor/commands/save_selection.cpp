@@ -18,32 +18,32 @@
 #include "save_selection.h"
 
 SaveSelection::SaveSelection(Selection *selection) :
-	after(*selection), before(*selection)
+	selection(selection), after(*selection), before(*selection)
 {
-	this->selection = selection;
+
 }
 
 bool SaveSelection::hasChanged() const
 {
-	return *selection != before;
+	return *this->selection != this->before;
 }
 
 void SaveSelection::setBefore()
 {
-	before = *selection;
+	this->before = *this->selection;
 }
 
 void SaveSelection::setAfter()
 {
-	after = *selection;
+	this->after = *this->selection;
 }
 
 void SaveSelection::execute()
 {
-	*selection = after;
+	*this->selection = this->after;
 }
 
 void SaveSelection::undo()
 {
-	*selection = before;
+	*this->selection = this->before;
 }

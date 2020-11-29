@@ -27,18 +27,20 @@
 namespace pg {
 	struct LeafData {
 		Spline densityCurve;
-		Vec3 scale = Vec3(1.0f, 1.0f, 1.0f);
-		float density = 0.0f;
-		float distance = 2.0f;
-		float rotation = 3.14159265359f;
-		float minUp = 0.0f;
-		float maxUp = 1.0f;
-		float minDirection = 0.0f;
-		float maxDirection = 1.0f;
-		int leavesPerNode = 1;
+		Vec3 scale;
+		float density;
+		float distance;
+		float rotation;
+		float minUp;
+		float maxUp;
+		float minDirection;
+		float maxDirection;
+		int leavesPerNode;
+
+		LeafData();
 
 	private:
-		#ifdef PG_SERIALIZE
+#ifdef PG_SERIALIZE
 		friend class boost::serialization::access;
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned)
@@ -54,21 +56,23 @@ namespace pg {
 			ar & maxDirection;
 			ar & leavesPerNode;
 		}
-		#endif /* PG_SERIALIZE */
+#endif
 	};
 
 	struct StemData {
 		Spline densityCurve;
-		float density = 0.0f;
-		float start = 0.0f;
-		float angleVariation = 0.5f;
-		float length = 1.0f;
-		float radiusThreshold = 0.0f;
-		float scale = 1.0f;
+		float density;
+		float start;
+		float angleVariation;
+		float length;
+		float radiusThreshold;
+		float scale;
 		LeafData leaf;
 
+		StemData();
+
 	private:
-		#ifdef PG_SERIALIZE
+#ifdef PG_SERIALIZE
 		friend class boost::serialization::access;
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned)
@@ -82,19 +86,23 @@ namespace pg {
 			ar & angleVariation;
 			ar & scale;
 		}
-		#endif /* PG_SERIALIZE */
+#endif
 	};
 
 	class ParameterNode {
 		friend class ParameterTree;
 
-		ParameterNode *child = nullptr;
-		ParameterNode *parent = nullptr;
-		ParameterNode *nextSibling = nullptr;
-		ParameterNode *prevSibling = nullptr;
+		ParameterNode *child;
+		ParameterNode *parent;
+		ParameterNode *nextSibling;
+		ParameterNode *prevSibling;
 		StemData data;
 
-		#ifdef PG_SERIALIZE
+		ParameterNode();
+		ParameterNode(const ParameterNode &) = delete;
+		ParameterNode &operator=(const ParameterNode &) = delete;
+
+#ifdef PG_SERIALIZE
 		friend class boost::serialization::access;
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned)
@@ -105,8 +113,7 @@ namespace pg {
 			ar & prevSibling;
 			ar & data;
 		}
-		#endif /* PG_SERIALIZE */
-
+#endif
 	public:
 		StemData getData() const;
 		void setData(StemData data);
@@ -120,10 +127,10 @@ namespace pg {
 	class ParameterRoot {
 		friend class ParameterTree;
 
-		unsigned seed = 0;
-		ParameterNode *node = nullptr;
+		unsigned seed;
+		ParameterNode *node;
 
-		#ifdef PG_SERIALIZE
+#ifdef PG_SERIALIZE
 		friend class boost::serialization::access;
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned)
@@ -131,9 +138,10 @@ namespace pg {
 			ar & seed;
 			ar & node;
 		}
-		#endif /* PG_SERIALIZE */
+#endif
 
 	public:
+		ParameterRoot();
 		void setSeed(int seed);
 		int getSeed() const;
 		ParameterNode *getNode() const;
@@ -151,14 +159,14 @@ namespace pg {
 			ParameterNode *) const;
 		int getSize(const std::string &, size_t &) const;
 
-		#ifdef PG_SERIALIZE
+#ifdef PG_SERIALIZE
 		friend class boost::serialization::access;
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned)
 		{
 			ar & root;
 		}
-		#endif /* PG_SERIALIZE */
+#endif
 
 	public:
 		ParameterTree();
@@ -176,4 +184,4 @@ namespace pg {
 	};
 }
 
-#endif /* PG_PARAMETER_TREE_H */
+#endif

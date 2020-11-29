@@ -41,4 +41,4 @@ public:
 	void redo();
 };
 
-#endif /* SAVE_STEM_H */
+#endif

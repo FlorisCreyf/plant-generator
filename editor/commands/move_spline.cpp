@@ -21,15 +21,16 @@ using pg::Vec3;
 
 MoveSpline::MoveSpline(
 	const PointSelection *selection, pg::Spline *spline,
-	TranslationAxes *axes, const Camera *camera)
+	TranslationAxes *axes, const Camera *camera) :
+	selection(selection),
+	camera(camera),
+	axes(axes),
+	spline(spline),
+	totalDirection(0.0f, 0.0f, 0.0f),
+	parallel(true),
+	clickOffset{0, 0}
 {
-	this->parallel = true;
-	this->clickOffset[0] = this->clickOffset[1] = 0.0f;
-	this->totalDirection = Vec3(0.0f, 0.0f, 0.0f);
-	this->selection = selection;
-	this->spline = spline;
-	this->axes = axes;
-	this->camera = camera;
+
 }
 
 void MoveSpline::preservePositions()
