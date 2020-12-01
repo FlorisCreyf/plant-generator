@@ -45,10 +45,10 @@ Stem::~Stem()
 }
 
 Stem::Stem(const Stem &original) :
-	nextSibling(nullptr),
-	prevSibling(nullptr),
-	child(nullptr),
-	parent(nullptr),
+	nextSibling(original.nextSibling),
+	prevSibling(original.prevSibling),
+	child(original.child),
+	parent(original.parent),
 	leaves(original.leaves),
 	joints(original.joints),
 	depth(original.depth),
@@ -69,6 +69,10 @@ Stem::Stem(const Stem &original) :
 
 Stem &Stem::operator=(const Stem &stem)
 {
+	this->parent = stem.parent;
+	this->child = stem.child;
+	this->nextSibling = stem.nextSibling;
+	this->prevSibling = stem.prevSibling;
 	this->depth = stem.depth;
 	this->maxRadius = stem.maxRadius;
 	this->minRadius = stem.minRadius;
@@ -123,6 +127,8 @@ void Stem::init(Stem *parent)
 	this->parent = parent;
 	this->distance = 0.0f;
 	this->location = Vec3(0.0f, 0.0f, 0.0f);
+	this->path.setInitialDivisions(0);
+	this->path.setDivisions(0);
 	if (parent == nullptr)
 		this->depth = 0;
 	else

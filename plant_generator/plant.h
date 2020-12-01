@@ -51,19 +51,14 @@ namespace pg {
 		/** Remove all stems in the plant. */
 		void removeRoot();
 
-		struct Extraction {
-			Stem *address = nullptr;
-			Stem *parent = nullptr;
-			Stem value = Stem();
-		};
 		/* Remove a stem that has no children. */
-		Extraction extractStem(Stem *stem);
+		Stem extractStem(Stem *stem);
 		/** Remove a stem and its descendants from the plant. */
-		void extractStems(Stem *stem, std::vector<Extraction> &stems);
+		void extractStems(Stem *stem, std::vector<Stem> &stems);
 		/** Reinsert a single extracted stem. */
-		void reinsertStem(Extraction &stem);
+		void reinsertStem(Stem &stem);
 		/** Reinsert extracted stems. */
-		void reinsertStems(std::vector<Extraction> &stem);
+		void reinsertStems(std::vector<Stem> &stem);
 
 		float getRadius(Stem *stem, unsigned index) const;
 		float getIntermediateRadius(Stem *stem, float t) const;
@@ -99,10 +94,14 @@ namespace pg {
 		void removeLeafMesh(Stem *, unsigned);
 
 		void deallocateStems(Stem *);
-		void insertStem(Stem *, Stem *);
+		void insertStem(Stem *, Stem *, Stem *);
+		void insertStemAfterSibling(Stem *, Stem *, Stem *);
+		void insertStemBeforeSibling(Stem *, Stem *, Stem *);
+		void insertStemAtBeginning(Stem *, Stem *);
+		Stem *getLastSibling(Stem *);
 		void decouple(Stem *);
 		Stem *move(Stem *);
-		void copy(std::vector<Extraction> &, Stem *);
+		void copy(std::vector<Stem> &, Stem *);
 
 #ifdef PG_SERIALIZE
 		friend class boost::serialization::access;

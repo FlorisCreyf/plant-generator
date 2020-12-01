@@ -81,8 +81,10 @@ bool shouldRemoveStem(PointSelection &pointSelection, int degree)
 void RemoveStem::removeStems()
 {
 	Plant *plant = this->selection->getPlant();
+
 	Selection selection = *this->selection;
 	this->selection->clear();
+
 	selection.reduceToAncestors();
 	auto instances = selection.getStemInstances();
 	for (auto it = instances.begin(); it != instances.end(); it++) {
@@ -90,6 +92,7 @@ void RemoveStem::removeStems()
 		Path path = stem->getPath();
 		Spline spline = path.getSpline();
 		PointSelection &pointSelection = it->second;
+
 		if (shouldRemoveStem(pointSelection, spline.getDegree())) {
 			/* Remove the whole stem. */
 			plant->extractStems(stem, this->stems);

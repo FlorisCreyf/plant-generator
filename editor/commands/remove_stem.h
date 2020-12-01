@@ -33,7 +33,7 @@ class RemoveStem : public Command {
 	Selection prevSelection;
 	std::vector<LeafState> leaves;
 	std::vector<std::pair<pg::Stem *, pg::Spline>> splines;
-	std::vector<pg::Plant::Extraction> stems;
+	std::vector<pg::Stem> stems;
 
 	void removeLeaves();
 	void removeStems();

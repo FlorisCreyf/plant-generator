@@ -19,6 +19,7 @@
 
 using pg::Leaf;
 using pg::Stem;
+using pg::Plant;
 
 Generate::Generate(Selection *selection) :
 	selection(selection),
@@ -67,17 +68,31 @@ void Generate::setGenerator(pg::PseudoGenerator generator)
 
 void Generate::removeAdditions()
 {
-	Selection additions(this->selection->getPlant());
-	createRemovalSelection(this->selection, &additions);
-	RemoveStem removeStem(&additions);
-	removeStem.execute();
+	Plant *plant = selection->getPlant();
+	auto instances = this->selection->getStemInstances();
+	for (auto it = instances.rbegin(); it != instances.rend(); it++) {
+		Stem *stem = it->first;
+
+		for (int i = stem->getLeafCount() - 1; i >= 0; i--)
+			if (!stem->getLeaf(i)->isCustom())
+				stem->removeLeaf(i);
+
+		Stem *child = stem->getChild();
+		while (child) {
+			Stem *sibling = child->getSibling();
+			if (!child->isCustom())
+				plant->deleteStem(child);
+			child = sibling;
+		}
+	}
 }
 
 void Generate::execute()
 {
 	this->selection->reduceToAncestors();
 	removeAdditions();
-	for (auto instance : this->selection->getStemInstances()) {
+	auto instances = this->selection->getStemInstances();
+	for (auto instance : instances) {
 		Stem *stem = instance.first;
 		this->generator.grow(stem);
 	}
@@ -92,27 +107,20 @@ void Generate::undo()
 		instance.first->setParameterTree(tree);
 	}
 
-	createRemovalSelection(this->selection, &this->removals);
-	RemoveStem removeGenerated(&this->removals);
-	removeGenerated.execute();
-	this->removals.clear();
+	removeAdditions();
 	this->remove.undo();
-	this->remove = removeGenerated;
-
 	*this->selection = this->prevSelection;
 }
 
 void Generate::redo()
 {
-	createRemovalSelection(selection, &this->removals);
-	RemoveStem removeOriginal(&this->removals);
-	removeOriginal.execute();
-	this->removals.clear();
-	this->remove.undo();
-	this->remove = removeOriginal;
+	createRemovalSelection(this->selection, &this->removals);
+	this->remove.execute();
 
 	pg::ParameterTree parameterTree = this->generator.getParameterTree();
 	auto instances = this->selection->getStemInstances();
 	for (auto instance : instances)
 		instance.first->setParameterTree(parameterTree);
+
+	execute();
 }

@@ -25,12 +25,12 @@
 namespace pg {
 	class StemPool {
 		struct Pool {
-			long id = 0;
-			size_t remaining = 0;
-			Stem *firstAvailable = nullptr;
-			std::array<Stem, PG_POOL_SIZE> stems = {};
+			long id;
+			size_t remaining;
+			std::array<Stem, PG_POOL_SIZE> stems;
 		};
 		std::list<Pool> pools;
+		Stem *firstAvailable;
 		long counter;
 
 		Pool &addPool();
@@ -40,9 +40,6 @@ namespace pg {
 		StemPool();
 		StemPool(const StemPool &) = delete;
 		Stem *allocate();
-		/** Try to allocate memory at a specific address. */
-		bool allocateAt(Stem *stem);
-		/** Remove a stem and return the number of remaining stems. */
 		size_t deallocate(Stem *stem);
 		long getPoolID(const Stem *stem) const;
 		size_t getRemaining(long id) const;

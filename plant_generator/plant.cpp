@@ -56,7 +56,7 @@ Stem *Plant::move(Stem *value)
 	while (childValue) {
 		Stem *siblingValue = childValue->nextSibling;
 		Stem *child = move(childValue);
-		insertStem(child, stem);
+		insertStem(child, stem, nullptr);
 		childValue = siblingValue;
 	}
 	delete value;
@@ -120,15 +120,63 @@ const Stem *Plant::getRoot() const
 	return this->root;
 }
 
-void Plant::insertStem(Stem *stem, Stem *parent)
+Stem *Plant::getLastSibling(Stem *stem)
+{
+	if (!stem)
+		return nullptr;
+	while (stem->nextSibling)
+		stem = stem->nextSibling;
+	return stem;
+}
+
+void Plant::insertStem(Stem *stem, Stem *parent, Stem *sibling)
+{
+	if (!sibling) {
+		assert(parent);
+		sibling = getLastSibling(parent->child);
+		if (!sibling)
+			insertStemAtBeginning(stem, parent);
+		else
+			insertStemAfterSibling(stem, parent, sibling);
+	} else {
+		assert(sibling->parent == parent);
+		insertStemBeforeSibling(stem, parent, sibling);
+	}
+}
+
+void Plant::insertStemAfterSibling(Stem *stem, Stem *parent, Stem *sibling)
+{
+	Stem *nextSibling = sibling->nextSibling;
+	sibling->nextSibling = stem;
+	stem->prevSibling = sibling;
+	stem->nextSibling = nextSibling;
+	stem->parent = parent;
+	if (nextSibling)
+		nextSibling->prevSibling = stem;
+}
+
+void Plant::insertStemBeforeSibling(Stem *stem, Stem *parent, Stem *sibling)
+{
+	Stem *prevSibling = sibling->prevSibling;
+	sibling->prevSibling = stem;
+	stem->prevSibling = prevSibling;
+	stem->nextSibling = sibling;
+	stem->parent = parent;
+	if (prevSibling)
+		prevSibling->nextSibling = stem;
+	else
+		parent->child = stem;
+}
+
+void Plant::insertStemAtBeginning(Stem *stem, Stem *parent)
 {
 	Stem *firstChild = parent->child;
 	parent->child = stem;
+	stem->nextSibling = firstChild;
+	stem->prevSibling = nullptr;
 	stem->parent = parent;
 	if (firstChild)
 		firstChild->prevSibling = stem;
-	stem->nextSibling = firstChild;
-	stem->prevSibling = nullptr;
 }
 
 void Plant::removeRoot()
@@ -156,55 +204,63 @@ void Plant::deleteStem(Stem *stem)
 	deallocateStems(stem);
 }
 
-void Plant::copy(vector<Plant::Extraction> &stems, Stem *stem)
+void Plant::copy(vector<Stem> &stems, Stem *stem)
 {
-	Extraction extraction;
-	extraction.address = stem;
-	extraction.value = *stem;
-	extraction.parent = stem->parent;
-	stems.push_back(extraction);
 	Stem *child = stem->child;
 	while (child) {
 		copy(stems, child);
 		child = child->nextSibling;
 	}
+	Stem extraction;
+	extraction = *stem;
+	extraction.nextSibling = stem->nextSibling;
+	extraction.prevSibling = stem->prevSibling;
+	extraction.parent = stem->parent;
+	extraction.child = stem;
+	stems.push_back(extraction);
 }
 
-Plant::Extraction Plant::extractStem(Stem *stem)
+Stem Plant::extractStem(Stem *stem)
 {
-	Extraction extraction;
-	extraction.address = stem;
-	extraction.value = *stem;
+	Stem extraction;
+	extraction = *stem;
+	extraction.nextSibling = stem->nextSibling;
+	extraction.prevSibling = stem->prevSibling;
 	extraction.parent = stem->parent;
+	extraction.child = stem;
 	deleteStem(stem);
 	return extraction;
 }
 
-void Plant::extractStems(Stem *stem, vector<Plant::Extraction> &stems)
+void Plant::extractStems(Stem *stem, vector<Stem> &stems)
 {
 	copy(stems, stem);
 	deleteStem(stem);
 }
 
-void Plant::reinsertStem(Extraction &extraction)
+void Plant::reinsertStem(Stem &extraction)
 {
-	this->stemPool.allocateAt(extraction.address);
-	*extraction.address = extraction.value;
-	extraction.address->child = nullptr;
-	extraction.address->parent = nullptr;
-	extraction.address->nextSibling = nullptr;
-	extraction.address->prevSibling = nullptr;
-	/* Assume that the parent stem is already inserted. */
+	Stem *stem = this->stemPool.allocate();
+	assert(extraction.child == stem);
+
+	*stem = extraction;
+	stem->child = nullptr;
+	stem->parent = nullptr;
+	stem->nextSibling = nullptr;
+	stem->prevSibling = nullptr;
+
 	if (extraction.parent)
-		insertStem(extraction.address, extraction.parent);
+		insertStem(stem, extraction.parent, extraction.nextSibling);
 	else if (!extraction.parent && !this->root)
-		this->root = extraction.address;
+		this->root = stem;
 }
 
-void Plant::reinsertStems(vector<Plant::Extraction> &extractions)
+void Plant::reinsertStems(vector<Stem> &extractions)
 {
-	for (Extraction &extraction : extractions)
-		reinsertStem(extraction);
+	auto it = extractions.rbegin();
+	auto end = extractions.rend();
+	for (; it != end; it++)
+		reinsertStem(*it);
 }
 
 float Plant::getRadius(Stem *stem, unsigned index) const
