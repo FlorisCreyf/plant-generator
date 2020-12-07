@@ -31,7 +31,7 @@ Stem::Stem(Stem *parent) :
 	distance(0.0f),
 	minRadius(0.0f),
 	maxRadius(0.0f),
-	swelling(1.0f, 1.0f),
+	swelling(1.5f, 3.0f),
 	location(0.0f, 0.0f, 0.0f),
 	custom(false)
 {

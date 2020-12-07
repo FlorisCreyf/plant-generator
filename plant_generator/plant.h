@@ -67,20 +67,20 @@ namespace pg {
 		void updateCurve(Curve curve, unsigned index);
 		void removeCurve(unsigned index);
 		Curve getCurve(unsigned index) const;
-		std::vector<Curve> getCurves() const;
+		const std::vector<Curve> &getCurves() const;
 
 		void addMaterial(Material material);
 		void updateMaterial(Material material, unsigned index);
 		void removeMaterial(unsigned index);
 		Material getMaterial(unsigned index) const;
-		std::vector<Material> getMaterials() const;
+		const std::vector<Material> &getMaterials() const;
 
 		void addLeafMesh(Geometry mesh);
 		void updateLeafMesh(Geometry mesh, unsigned index);
 		void removeLeafMesh(unsigned index);
 		void removeLeafMeshes();
 		Geometry getLeafMesh(unsigned index) const;
-		std::vector<Geometry> getLeafMeshes() const;
+		const std::vector<Geometry> &getLeafMeshes() const;
 
 	private:
 		Stem *root;

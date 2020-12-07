@@ -29,8 +29,8 @@ PseudoGenerator::PseudoGenerator(Plant *plant) : plant(plant)
 
 PseudoGenerator::PseudoGenerator(const PseudoGenerator &original) :
 	plant(original.plant),
-	randomGenerator(original.randomGenerator),
-	parameterTree(original.parameterTree)
+	parameterTree(original.parameterTree),
+	randomGenerator(original.randomGenerator)
 {
 
 }
@@ -69,30 +69,22 @@ void PseudoGenerator::grow()
 	stem->setMinRadius(0.01f);
 	stem->setSwelling(Vec2(1.3f, 1.3f));
 
-	const ParameterRoot *root = this->parameterTree.getRoot();
-	if (!root)
-		return;
-	const ParameterNode *node = root->getNode();
-	if (!node)
-		return;
-
-	setPath(stem, Vec3(0.0f, 1.0f, 0.0f), node->getData());
-	reset();
-	addStems(stem, node);
+	const ParameterNode *node = this->parameterTree.getNode();
+	if (node) {
+		setPath(stem, Vec3(0.0f, 1.0f, 0.0f), node->getData());
+		reset();
+		addStems(stem, node);
+	}
 }
 
 void PseudoGenerator::grow(Stem *stem)
 {
 	this->parameterTree = stem->getParameterTree();
-	const ParameterRoot *root = this->parameterTree.getRoot();
-	if (!root)
-		return;
-	const ParameterNode *node = root->getNode();
-	if (!node)
-		return;
-
-	reset();
-	addStems(stem, node);
+	const ParameterNode *node = this->parameterTree.getNode();
+	if (node) {
+		reset();
+		addStems(stem, node);
+	}
 }
 
 void PseudoGenerator::addStems(Stem *stem, const ParameterNode *node)
@@ -128,19 +120,21 @@ void PseudoGenerator::addLateralStem(
 	Stem *parent, float position, const ParameterNode *node, int index)
 {
 	StemData data = node->getData();
-	Vec2 swelling(1.5f, 3.0f);
+	Vec2 collar(1.5f, 3.0f);
+
 	float radius = this->plant->getIntermediateRadius(parent, position);
-	radius = radius / swelling.x * data.scale;
-	if (radius < node->getData().radiusThreshold)
+	radius = radius / collar.x * data.scale;
+	if (radius < data.radiusThreshold)
 		return;
 
 	Stem *stem = plant->addStem(parent);
 	stem->setMaxRadius(radius);
-	stem->setMinRadius(getMinRadius(radius));
-	stem->setSwelling(swelling);
+	stem->setSwelling(collar);
 	stem->setDistance(position);
 	if (parent->getSectionDivisions() > 4)
 		stem->setSectionDivisions(parent->getSectionDivisions()-2);
+	else
+		stem->setSectionDivisions(parent->getSectionDivisions());
 	Vec3 direction = getStemDirection(stem, data, index);
 	setPath(stem, direction, data);
 
@@ -232,16 +226,6 @@ void PseudoGenerator::setPath(Stem *stem, Vec3 direction, StemData data)
 	stem->setPath(path);
 }
 
-float PseudoGenerator::getMinRadius(float radius)
-{
-	float minRadius = radius / 5.0f;
-	if (minRadius < 0.001f)
-		minRadius = 0.001f;
-	else if (minRadius > 0.01f)
-		minRadius = 0.01f;
-	return minRadius;
-}
-
 void PseudoGenerator::addLeaves(Stem *stem, LeafData data)
 {
 	if (data.density <= 0.0f || data.leavesPerNode < 1)
@@ -310,7 +294,7 @@ void PseudoGenerator::addLeaves(Stem *stem, LeafData data)
 }
 
 void PseudoGenerator::addLeaf(
-	Stem *stem, LeafData data, float position, Quat rotation)
+	Stem *stem, LeafData &data, float position, Quat rotation)
 {
 	Leaf leaf;
 	leaf.setPosition(position);

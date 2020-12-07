@@ -25,8 +25,8 @@ GeneratorCurveEditor::GeneratorCurveEditor(
 	CurveEditor(keymap, parent),
 	editor(editor),
 	generate(nullptr),
-	selectionBox(new QComboBox(this)),
-	nodeSelectionBox(new QComboBox(this))
+	selectionBox(new ComboBox(this)),
+	nodeSelectionBox(new ComboBox(this))
 {
 	createSelectionBar();
 	createInterface(shared);
@@ -41,7 +41,7 @@ void GeneratorCurveEditor::createSelectionBar()
 	this->nodeSelectionBox->installEventFilter(this);
 	this->layout->addWidget(this->nodeSelectionBox);
 	connect(this->nodeSelectionBox,
-		QOverload<int>::of(&QComboBox::currentIndexChanged),
+		QOverload<int>::of(&ComboBox::currentIndexChanged),
 		this, &GeneratorCurveEditor::select);
 
 	this->selectionBox->addItem("Stem Density");
@@ -50,7 +50,7 @@ void GeneratorCurveEditor::createSelectionBar()
 	this->selectionBox->view()->installEventFilter(this);
 	this->layout->addWidget(this->selectionBox);
 	connect(this->selectionBox,
-		QOverload<int>::of(&QComboBox::currentIndexChanged),
+		QOverload<int>::of(&ComboBox::currentIndexChanged),
 		this, &GeneratorCurveEditor::select);
 }
 
@@ -59,7 +59,7 @@ void GeneratorCurveEditor::setFields()
 	auto instances = this->editor->getSelection()->getStemInstances();
 	if (instances.empty()) {
 		clear();
-		enable(false);
+		setEnabled(false);
 		return;
 	}
 
@@ -103,10 +103,10 @@ void GeneratorCurveEditor::select()
 	this->degree->blockSignals(true);
 	this->degree->setCurrentIndex(this->spline.getDegree() == 3 ? 1 : 0);
 	this->degree->blockSignals(false);
-	enable(true);
+	setEnabled(true);
 }
 
-void GeneratorCurveEditor::enable(bool enable)
+void GeneratorCurveEditor::setEnabled(bool enable)
 {
 	this->degree->setEnabled(enable);
 	this->nodeSelectionBox->setEnabled(enable);
@@ -125,8 +125,11 @@ void GeneratorCurveEditor::change(bool curveChanged)
 	Selection *selection = this->editor->getSelection();
 	auto instances = selection->getStemInstances();
 	if (curveChanged && !instances.empty()) {
-		if (!this->generate)
-			this->generate = new Generate(selection);
+		if (!this->generate) {
+			pg::Scene *scene = this->editor->getScene();
+			pg::PseudoGenerator *generator = &scene->generator;
+			this->generate = new Generate(selection, generator);
+		}
 		updateParameterTree();
 		this->generate->execute();
 		this->editor->change();
@@ -142,7 +145,6 @@ void GeneratorCurveEditor::updateParameterTree()
 		int index = this->selectionBox->currentIndex();
 		pg::Stem *stem = instance.first;
 		pg::ParameterTree tree = stem->getParameterTree();
-
 		if (!tree.getRoot())
 			continue;
 
@@ -167,7 +169,7 @@ bool GeneratorCurveEditor::eventFilter(QObject *object, QEvent *event)
 	if (event->type() == QEvent::FocusOut) {
 		bool focused = isDescendant(QApplication::focusWidget());
 		if (!focused && this->generate) {
-			this->editor->add(this->generate);
+			this->editor->getHistory()->add(this->generate);
 			this->generate = nullptr;
 		}
 	}

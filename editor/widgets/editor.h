@@ -36,14 +36,6 @@
 #include "plant_generator/scene.h"
 #include "plant_generator/wind.h"
 
-#include <QOpenGLFunctions_4_3_Core>
-#include <QOpenGLWidget>
-#include <QToolBar>
-#include <QToolButton>
-#include <QWidgetAction>
-#include <QComboBox>
-#include <QTimer>
-
 class Editor : public QOpenGLWidget, protected QOpenGLFunctions_4_3_Core {
 	Q_OBJECT
 
@@ -66,8 +58,8 @@ public:
 	pg::Plant *getPlant();
 	pg::Scene *getScene();
 	Selection *getSelection();
+	History *getHistory();
 	const pg::Mesh *getMesh();
-	void add(Command *command);
 	void undo();
 	void redo();
 
@@ -112,7 +104,6 @@ private:
 	GLuint silhouetteMap;
 
 	std::vector<pg::Segment> selections;
-	pg::PseudoGenerator generator;
 	pg::Scene scene;
 	pg::Mesh mesh;
 	Path path;

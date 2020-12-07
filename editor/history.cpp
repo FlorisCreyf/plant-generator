@@ -17,43 +17,56 @@
 
 #include "history.h"
 
+History::History() : limit(20)
+{
+
+}
+
 void History::add(Command *command)
 {
-	future.clear();
+	this->future.clear();
+	if (this->past.size() >= limit)
+		this->past.erase(this->past.begin());
 
 	/* The ordering of signals and events might cause commands to be out
 	of order. For example, a click event changes the selection and then
 	an editingFinished signal adds an earlier command. */
-	if (!past.empty() && command->getTime() < past.back()->getTime()) {
-		auto it = past.end();
+	bool empty = this->past.empty();
+	if (!empty && command->getTime() < this->past.back()->getTime()) {
+		auto it = this->past.end();
 		std::unique_ptr<Command> cmd(command);
-		past.insert(--it, std::move(cmd));
+		this->past.insert(--it, std::move(cmd));
 	} else {
 		std::unique_ptr<Command> cmd(command);
-		past.push_back(std::move(cmd));
+		this->past.push_back(std::move(cmd));
 	}
 }
 
 void History::undo()
 {
-	if (!past.empty()) {
-		past.back()->undo();
-		future.push_back(std::move(past.back()));
-		past.pop_back();
+	if (!this->past.empty()) {
+		this->past.back()->undo();
+		this->future.push_back(std::move(this->past.back()));
+		this->past.pop_back();
 	}
 }
 
 void History::redo()
 {
-	if (!future.empty()) {
-		future.back()->redo();
-		past.push_back(std::move(future.back()));
-		future.pop_back();
+	if (!this->future.empty()) {
+		this->future.back()->redo();
+		this->past.push_back(std::move(this->future.back()));
+		this->future.pop_back();
 	}
 }
 
 void History::clear()
 {
-	future.clear();
-	past.clear();
+	this->future.clear();
+	this->past.clear();
+}
+
+void History::setLimit(unsigned limit)
+{
+	this->limit = limit;
 }

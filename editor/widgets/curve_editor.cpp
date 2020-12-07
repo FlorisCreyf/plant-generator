@@ -16,7 +16,7 @@
  */
 
 #include "curve_editor.h"
-#include "definitions.h"
+#include "form.h"
 #include "editor/selector.h"
 #include "editor/commands/extrude_spline.h"
 #include "editor/commands/remove_spline.h"
@@ -34,7 +34,7 @@ CurveEditor::CurveEditor(KeyMap *keymap, QWidget *parent) :
 	QWidget(parent),
 	keymap(keymap),
 	layout(new QVBoxLayout(this)),
-	degree(new QComboBox(this)),
+	degree(new ComboBox(this)),
 	command(nullptr)
 {
 	this->layout->setSizeConstraint(QLayout::SetMinimumSize);
@@ -49,7 +49,7 @@ void CurveEditor::createInterface(SharedResources *shared)
 	this->degree->setFixedHeight(UI_FIELD_HEIGHT);
 	this->layout->addWidget(this->degree);
 	connect(this->degree,
-		QOverload<int>::of(&QComboBox::currentIndexChanged),
+		QOverload<int>::of(&ComboBox::currentIndexChanged),
 		this, &CurveEditor::setDegree);
 
 	this->viewer = new CurveViewer(shared, this);

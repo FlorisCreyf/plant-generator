@@ -19,12 +19,67 @@
 #define PROPERTY_EDITOR_H
 
 #include "editor.h"
-#include "stem_editor.h"
-#include "leaf_editor.h"
-#include <QtWidgets>
+#include "widgets.h"
+#include "../commands/save_stem.h"
 
 class PropertyEditor : public QWidget {
 	Q_OBJECT
+
+	Editor *editor;
+	SharedResources *shared;
+	SaveStem *saveStem;
+	bool sameAsCurrent;
+
+	enum {SectionDivisions, PathDivisions, CollarDivisions, ISize};
+	enum {Radius, MinRadius, CollarX, CollarY, ScaleX, ScaleY, ScaleZ,
+		DSize};
+	enum {RadiusCurve, Degree, StemMaterial, CapMaterial, LeafMaterial,
+		Mesh, CSize};
+	enum {CustomStem, CustomLeaf, BSize};
+
+	QGroupBox *stemGroup;
+	QGroupBox *leafGroup;
+	SpinBox *iv[ISize];
+	QLabel *il[ISize];
+	DoubleSpinBox *dv[DSize];
+	QLabel *dl[DSize];
+	ComboBox *cv[CSize];
+	QLabel *cl[CSize];
+	QCheckBox *bv[BSize];
+	QLabel *bl[BSize];
+
+	void blockSignals(bool);
+	void createInterface();
+	void createStemInterface(QBoxLayout *);
+	void createLeafInterface(QBoxLayout *);
+	void setStemFields(const std::map<pg::Stem *, PointSelection> &);
+	void setStemValues(const pg::Stem *stem);
+	void setLeafFields(const std::map<pg::Stem *, std::set<size_t>> &);
+	void setLeafValues(const pg::Leaf *leaf);
+	void enableStemFields(bool);
+	void enableLeafFields(bool);
+	void beginChanging(QLabel *);
+
+	template<class T, class U>
+	void changeLeaf(const T &func, U value, QLabel *label)
+	{
+		beginChanging(label);
+		auto a = this->editor->getSelection()->getLeafInstances();
+		for (auto &b : a)
+			for (size_t index : b.second)
+				func(b.first->getLeaf(index), value);
+		this->editor->change();
+	}
+
+	template<class T, class U>
+	void changeStem(const T &func, U value, QLabel *label)
+	{
+		beginChanging(label);
+		auto a = this->editor->getSelection()->getStemInstances();
+		for (auto &b : a)
+			func(b.first, value);
+		this->editor->change();
+	}
 
 public:
 	PropertyEditor(SharedResources *shared, Editor *editor,
@@ -33,28 +88,18 @@ public:
 
 public slots:
 	void setFields();
+	void clearOptions();
+	void finishChanging();
+
 	void addCurve(pg::Curve curve);
-	void updateCurve(pg::Curve curve, unsigned index);
-	void removeCurve(unsigned index);
+	void updateCurve(pg::Curve curve, int index);
+	void removeCurve(int index);
 	void addMaterial(ShaderParams params);
 	void updateMaterials();
-	void removeMaterial(unsigned index);
+	void removeMaterial(int index);
 	void addMesh(pg::Geometry geom);
-	void updateMesh(pg::Geometry geom, unsigned index);
-	void removeMesh(unsigned index);
-	void clearOptions();
-
-signals:
-	void isEnabled(bool enabled);
-	void radiusCurveChanged(std::vector<pg::Vec3>);
-
-private:
-	Editor *editor;
-	StemEditor *stemEditor;
-	LeafEditor *leafEditor;
-
-	void initProperties();
-	void setValueWidths(QFormLayout *);
+	void updateMesh(pg::Geometry geom, int index);
+	void removeMesh(int index);
 };
 
 #endif

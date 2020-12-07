@@ -15,12 +15,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define UI_FIELD_HEIGHT 20
+#define UI_FIELD_WIDTH 200
+#define UI_WIDGET_WIDTH 350
+#define UI_WIDGET_HEIGHT 200
+#define UI_FORM_MARGIN 5
+#define UI_FORM_SPACING 2
+
 #ifndef FORM_H
 #define FORM_H
 
 #include <QtWidgets>
 
-void setValueWidths(QFormLayout *layout);
+void setFormLayout(QFormLayout *layout);
 void indicateDifferences(QWidget *widget);
 void indicateSimilarities(QWidget *widget);
 

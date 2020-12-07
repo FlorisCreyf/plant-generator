@@ -16,13 +16,12 @@
  */
 
 #include "window.h"
-#include "definitions.h"
+#include "form.h"
 #include "plant_generator/file/collada.h"
 #include "plant_generator/file/wavefront.h"
-
 #include <fstream>
-#include <boost/archive/text_iarchive.hpp>
 #include <QFileDialog>
+#include <boost/archive/text_iarchive.hpp>
 
 Window::Window(int argc, char **argv)
 {
@@ -106,10 +105,6 @@ void Window::createEditors()
 	this->meshEditor = new MeshEditor(&this->shared, this->editor, this);
 	dw[4] = createDockWidget("Meshes", this->meshEditor, true);
 	addDockWidget(static_cast<Qt::DockWidgetArea>(1), dw[4]);
-
-	this->procEditor = new ProceduralEditor(this->editor, this);
-	dw[5] = createDockWidget("Generator", this->procEditor, true);
-	addDockWidget(static_cast<Qt::DockWidgetArea>(1), dw[5]);
 	connect(this->meshEditor, &MeshEditor::meshAdded,
 		this->propertyEditor, &PropertyEditor::addMesh);
 	connect(this->meshEditor, &MeshEditor::meshModified,
@@ -117,12 +112,14 @@ void Window::createEditors()
 	connect(this->meshEditor, &MeshEditor::meshRemoved,
 		this->propertyEditor, &PropertyEditor::removeMesh);
 
+	dw[5] = createDockWidget("Generator", createGeneratorEditor(), true);
+	addDockWidget(static_cast<Qt::DockWidgetArea>(1), dw[5]);
+
 	this->gCurveEditor = new GeneratorCurveEditor(
 		&this->shared, &this->keymap, this->editor, this);
 	dw[6] = createDockWidget("Generator Curves", this->gCurveEditor, false);
 	addDockWidget(static_cast<Qt::DockWidgetArea>(1), dw[6]);
-	connect(this->procEditor->getGeneratorEditor(),
-		&GeneratorEditor::parameterTreeModified,
+	connect(this->generatorEditor, &GeneratorEditor::parameterTreeModified,
 		this->gCurveEditor, &GeneratorCurveEditor::setFields);
 
 	tabifyDockWidget(dw[1], dw[5]);
@@ -130,6 +127,21 @@ void Window::createEditors()
 	tabifyDockWidget(dw[4], dw[3]);
 	tabifyDockWidget(dw[4], dw[6]);
 	tabifyDockWidget(dw[4], dw[2]);
+}
+
+QWidget *Window::createGeneratorEditor()
+{
+	this->generatorEditor = new GeneratorEditor(this->editor, this);
+	this->windEditor = new WindEditor(this->editor, this);
+	QWidget *widget = new QWidget();
+	QVBoxLayout *layout = new QVBoxLayout(widget);
+	layout->setSizeConstraint(QLayout::SetMinimumSize);
+	layout->setSpacing(0);
+	layout->setMargin(0);
+	layout->addWidget(this->generatorEditor);
+	layout->addWidget(this->windEditor);
+	layout->addStretch(1);
+	return widget;
 }
 
 void Window::initEditor()
@@ -152,7 +164,6 @@ void Window::updateStatus()
 	unsigned vertices = mesh->getVertexCount();
 	unsigned triangles = mesh->getIndexCount() / 3;
 	unsigned materials = mesh->getMeshCount();
-
 	std::string value;
 	value += "Vertices: " + std::to_string(vertices);
 	value += " | Triangles: " + std::to_string(triangles);
@@ -164,14 +175,19 @@ void Window::keyPressEvent(QKeyEvent *event)
 {
 	if (event->key() == Qt::Key_Z) {
 		if (event->modifiers() & Qt::ControlModifier) {
-			if (event->modifiers() & Qt::ShiftModifier)
+			if (event->modifiers() & Qt::ShiftModifier) {
 				this->editor->redo();
-			else
+				this->pCurveEditor->select();
+			} else {
 				this->editor->undo();
+				this->pCurveEditor->select();
+			}
 		}
 	} else if (event->key() == Qt::Key_Y) {
-		if (event->modifiers() & Qt::ControlModifier)
+		if (event->modifiers() & Qt::ControlModifier) {
 			this->editor->redo();
+			this->pCurveEditor->select();
+		}
 	}
 
 	QWidget::keyPressEvent(event);
@@ -184,7 +200,6 @@ void Window::setFilename(QString filename)
 	QString name = fileInfo.fileName();
 	QString title = name;
 	QString message = name;
-
 	if (!name.isEmpty()) {
 		title.prepend("Plant Generator — ");
 		QDateTime time(QDateTime::currentDateTime());
@@ -200,6 +215,7 @@ void Window::setFilename(QString filename)
 
 void Window::newFile()
 {
+	this->propertyEditor->clearOptions();
 	this->pCurveEditor->clear();
 	this->pCurveEditor->add();
 	this->materialEditor->clear();
@@ -207,6 +223,7 @@ void Window::newFile()
 	this->meshEditor->clear();
 	this->meshEditor->addEmpty();
 	this->editor->load(nullptr);
+	this->windEditor->setFields();
 	this->editor->reset();
 	setFilename("");
 }
@@ -219,6 +236,7 @@ void Window::openDialogBox()
 	if (!filename.isNull() || !filename.isEmpty()) {
 		this->propertyEditor->clearOptions();
 		this->editor->load(filename.toLatin1());
+		this->windEditor->setFields();
 		this->pCurveEditor->reset();
 		this->meshEditor->reset();
 		this->materialEditor->reset();
@@ -260,7 +278,6 @@ void Window::exportWavefrontDialogBox()
 {
 	const pg::Mesh *mesh = this->editor->getMesh();
 	const pg::Plant *plant = this->editor->getPlant();
-
 	QString filename = QFileDialog::getSaveFileName(
 		this, "Export File", "saved/plant.obj",
 		"Wavefront (*.obj);;All Files (*)");
@@ -277,7 +294,6 @@ void Window::exportColladaDialogBox()
 	this->editor->changeWind();
 	const pg::Mesh *mesh = this->editor->getMesh();
 	const pg::Scene *scene = this->editor->getScene();
-
 	QString filename = QFileDialog::getSaveFileName(
 		this, "Export File", "saved/plant.dae",
 		"Collada (*.dae);;All Files (*)");

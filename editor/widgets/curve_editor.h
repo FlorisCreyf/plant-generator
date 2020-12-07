@@ -20,13 +20,13 @@
 
 #include "curve_viewer.h"
 #include "editor.h"
+#include "widgets.h"
 #include "editor/history.h"
 #include "editor/keymap.h"
 #include "editor/commands/move_spline.h"
 #include "editor/geometry/translation_axes.h"
 #include "plant_generator/curve.h"
 #include <vector>
-#include <QtWidgets>
 
 class CurveEditor : public QWidget {
 	Q_OBJECT
@@ -59,7 +59,7 @@ class CurveEditor : public QWidget {
 
 protected:
 	QVBoxLayout *layout;
-	QComboBox *degree;
+	ComboBox *degree;
 	PointSelection selection;
 	pg::Spline spline;
 	/* The original spline without restrictions. */

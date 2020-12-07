@@ -20,8 +20,7 @@
 using pg::Leaf;
 using pg::Stem;
 
-SaveStem::SaveStem(Selection *selection) :
-	selection(selection), before(*selection), after(*selection)
+SaveStem::SaveStem(Selection *selection) : selection(selection)
 {
 
 }
@@ -47,14 +46,8 @@ bool SaveStem::isSameAsCurrent()
 	return true;
 }
 
-void SaveStem::setNewSelection()
-{
-	this->after = *this->selection;
-}
-
 void SaveStem::execute()
 {
-	this->before = *this->selection;
 	auto stemInstances = this->selection->getStemInstances();
 	auto leafInstances = this->selection->getLeafInstances();
 	for (auto &instance : stemInstances)
@@ -66,13 +59,11 @@ void SaveStem::execute()
 void SaveStem::undo()
 {
 	swap();
-	*this->selection = this->before;
 }
 
 void SaveStem::redo()
 {
 	swap();
-	*this->selection = this->after;
 }
 
 void SaveStem::swap()

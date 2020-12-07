@@ -25,12 +25,15 @@
 class History {
 	std::vector<std::unique_ptr<Command>> past;
 	std::vector<std::unique_ptr<Command>> future;
+	unsigned limit;
 
 public:
+	History();
 	void add(Command *command);
 	void undo();
 	void redo();
 	void clear();
+	void setLimit(unsigned limit);
 };
 
 #endif

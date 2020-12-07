@@ -29,13 +29,16 @@ namespace pg {
 	public:
 		Wind();
 		void setSeed(int seed);
+		int getSeed() const;
 		void setFrameCount(int count);
 		int getFrameCount() const;
 		void setTimeStep(int step);
 		int getTimeStep() const;
 		int getDuration() const;
 		void setSpeed(float speed);
+		float getSpeed() const;
 		void setDirection(Vec3 direction);
+		Vec3 getDirection() const;
 		Animation generate(Plant *plant);
 
 	private:

@@ -24,18 +24,13 @@
 
 class SaveStem : public Command {
 	Selection *selection;
-	Selection before;
-	Selection after;
 	std::map<pg::Stem *, pg::Stem> stems;
 
 	void swap();
 
 public:
 	SaveStem(Selection *selection);
-	/** Determine if the saved stems are the same as the stems in the
-	current selection. */
 	bool isSameAsCurrent();
-	void setNewSelection();
 	void execute();
 	void undo();
 	void redo();

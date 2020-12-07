@@ -36,6 +36,11 @@ void Wind::setSeed(int seed)
 	this->seed = seed;
 }
 
+int Wind::getSeed() const
+{
+	return this->seed;
+}
+
 void Wind::setFrameCount(int count)
 {
 	this->frameCount = count;
@@ -66,9 +71,19 @@ void Wind::setSpeed(float speed)
 	this->speed = speed;
 }
 
+float Wind::getSpeed() const
+{
+	return this->speed;
+}
+
 void Wind::setDirection(Vec3 direction)
 {
 	this->direction = direction;
+}
+
+Vec3 Wind::getDirection() const
+{
+	return this->direction;
 }
 
 Animation Wind::generate(Plant *plant)

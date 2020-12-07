@@ -31,6 +31,7 @@ void AddLeaf::execute()
 	auto instances = this->selection->getStemInstances();
 	if (instances.size() == 1) {
 		this->leaf = pg::Leaf();
+		this->leaf.setCustom(true);
 		this->stem = (*instances.begin()).first;
 		this->leafIndex = this->stem->addLeaf(this->leaf);
 		this->selection->clear();

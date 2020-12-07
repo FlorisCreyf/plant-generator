@@ -19,9 +19,8 @@
 #define MESH_EDITOR_H
 
 #include "mesh_viewer.h"
-#include "item_delegate.h"
+#include "widgets.h"
 #include "editor.h"
-#include <QtWidgets>
 
 class MeshEditor : public QWidget {
 	Q_OBJECT
@@ -35,7 +34,7 @@ class MeshEditor : public QWidget {
 	QPushButton *meshList;
 	QMenu *meshMenu;
 	QVBoxLayout *layout;
-	QComboBox *selectionBox;
+	ComboBox *selectionBox;
 
 	void createSelectionBar();
 	void createFields(QVBoxLayout *form);

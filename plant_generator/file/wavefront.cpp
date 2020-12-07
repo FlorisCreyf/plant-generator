@@ -33,7 +33,7 @@ string Wavefront::exportMaterials(string filename, const Plant &plant)
 	if (file.fail())
 		return "";
 
-	for (Material &material : plant.getMaterials()) {
+	for (const Material &material : plant.getMaterials()) {
 		file << "newmtl " << material.getName() << "\n";
 
 		Vec3 ka = material.getAmbient();

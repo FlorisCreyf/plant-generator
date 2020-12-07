@@ -16,9 +16,8 @@
  */
 
 #include "material_editor.h"
-#include "definitions.h"
 #include "form.h"
-#include "item_delegate.h"
+#include "widgets.h"
 
 using pg::Material;
 
@@ -29,7 +28,7 @@ MaterialEditor::MaterialEditor(
 	shared(shared),
 	materialViewer(new MaterialViewer(shared, this)),
 	layout(new QVBoxLayout(this)),
-	selectionBox(new QComboBox(this))
+	selectionBox(new ComboBox(this))
 {
 	this->layout->setSizeConstraint(QLayout::SetMinimumSize);
 	this->layout->setSpacing(0);
@@ -69,7 +68,7 @@ void MaterialEditor::createSelectionBar()
 	removeButton->setFixedWidth(UI_FIELD_HEIGHT);
 
 	this->selectionBox->setEditable(true);
-	this->selectionBox->setInsertPolicy(QComboBox::InsertAtCurrent);
+	this->selectionBox->setInsertPolicy(ComboBox::InsertAtCurrent);
 	this->selectionBox->setItemDelegate(new ItemDelegate());
 
 	row->addWidget(this->selectionBox);
@@ -79,7 +78,7 @@ void MaterialEditor::createSelectionBar()
 	this->layout->addLayout(row);
 
 	connect(this->selectionBox,
-		QOverload<int>::of(&QComboBox::currentIndexChanged),
+		QOverload<int>::of(&ComboBox::currentIndexChanged),
 		this, &MaterialEditor::select);
 	connect(this->selectionBox->lineEdit(), &QLineEdit::editingFinished,
 		this, &MaterialEditor::rename);
@@ -122,7 +121,7 @@ void MaterialEditor::initFields(QFormLayout *form)
 	form->addRow("Specular", fileFields[Material::Specular]);
 
 	for (int i = 0; i < FieldQuantity; i++) {
-		this->fields[i] = new QDoubleSpinBox(this);
+		this->fields[i] = new DoubleSpinBox(this);
 		this->fields[i]->setSingleStep(0.001);
 		this->fields[i]->setDecimals(3);
 
@@ -137,7 +136,7 @@ void MaterialEditor::initFields(QFormLayout *form)
 	form->addRow("Ambient.G", this->fields[AmbientG]);
 	form->addRow("Ambient.B", this->fields[AmbientB]);
 
-	setValueWidths(form);
+	setFormLayout(form);
 }
 
 const MaterialViewer *MaterialEditor::getViewer() const

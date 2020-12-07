@@ -16,9 +16,8 @@
  */
 
 #include "form.h"
-#include "definitions.h"
 
-void setValueWidths(QFormLayout *layout)
+void setFormLayout(QFormLayout *layout)
 {
 	layout->setFormAlignment(Qt::AlignRight | Qt::AlignTop);
 	layout->setFieldGrowthPolicy(QFormLayout::FieldsStayAtSizeHint);

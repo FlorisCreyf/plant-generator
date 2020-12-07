@@ -16,15 +16,15 @@
  */
 
 #include "property_curve_editor.h"
-#include "definitions.h"
-#include "item_delegate.h"
+#include "form.h"
+#include "widgets.h"
 
 PropertyCurveEditor::PropertyCurveEditor(
 	SharedResources *shared, KeyMap *keymap, Editor *editor,
 	QWidget *parent) :
 	CurveEditor(keymap, parent),
 	editor(editor),
-	selectionBox(new QComboBox(this))
+	selectionBox(new ComboBox(this))
 {
 	createSelectionBar();
 	createInterface(shared);
@@ -50,10 +50,10 @@ void PropertyCurveEditor::createSelectionBar()
 		this, &PropertyCurveEditor::remove);
 
 	this->selectionBox->setEditable(true);
-	this->selectionBox->setInsertPolicy(QComboBox::InsertAtCurrent);
+	this->selectionBox->setInsertPolicy(ComboBox::InsertAtCurrent);
 	this->selectionBox->setItemDelegate(new ItemDelegate());
 	connect(this->selectionBox,
-		QOverload<int>::of(&QComboBox::currentIndexChanged),
+		QOverload<int>::of(&ComboBox::currentIndexChanged),
 		this, &PropertyCurveEditor::select);
 	connect(this->selectionBox->lineEdit(), &QLineEdit::editingFinished,
 		this, &PropertyCurveEditor::rename);
@@ -68,9 +68,6 @@ void PropertyCurveEditor::createSelectionBar()
 void PropertyCurveEditor::reset()
 {
 	this->selectionBox->clear();
-	this->selection.clear();
-	this->history.clear();
-
 	this->selectionBox->blockSignals(true);
 	auto curves = this->editor->getPlant()->getCurves();
 	for (pg::Curve curve : curves) {
@@ -79,7 +76,6 @@ void PropertyCurveEditor::reset()
 		emit curveAdded(curve);
 	}
 	this->selectionBox->blockSignals(false);
-
 	select();
 }
 
@@ -105,8 +101,6 @@ void PropertyCurveEditor::add()
 
 void PropertyCurveEditor::add(pg::Curve curve)
 {
-	this->selection.clear();
-	this->history.clear();
 	pg::Plant *plant = this->editor->getPlant();
 	plant->addCurve(curve);
 
@@ -122,6 +116,9 @@ void PropertyCurveEditor::add(pg::Curve curve)
 
 void PropertyCurveEditor::select()
 {
+	this->selection.clear();
+	this->history.clear();
+
 	if (this->selectionBox->count()) {
 		pg::Plant *plant = editor->getPlant();
 		unsigned index = this->selectionBox->currentIndex();

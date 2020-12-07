@@ -19,8 +19,8 @@
 #define GENERATOR_EDITOR_H
 
 #include "editor.h"
+#include "widgets.h"
 #include "../commands/generate.h"
-#include <QtWidgets>
 #include <string>
 
 class GeneratorEditor : public QWidget {
@@ -33,55 +33,27 @@ class GeneratorEditor : public QWidget {
 	QGroupBox *rootGroup;
 	QGroupBox *stemGroup;
 	QGroupBox *leafGroup;
-	QComboBox *nodeValue;
-	QSpinBox *seedValue;
+	ComboBox *nodeValue;
+	SpinBox *seedValue;
 	QPushButton *childButton;
 	QPushButton *siblingButton;
 	QPushButton *removeButton;
 
-	enum {
-		StemDensity,
-		StemStart,
-		StemLength,
-		StemScale,
-		StemAngleVariation,
-		RadiusThreshold,
-		DSSize
-	};
-	enum {
-		LeafDensity,
-		LeafDistance,
-		LeafScaleX,
-		LeafScaleY,
-		LeafScaleZ,
-		LeafRotation,
-		MinUp,
-		MaxUp,
-		MinDirection,
-		MaxDirection,
-		DLSize
-	};
-	enum  {
-		LeavesPerNode,
-		ILSize
-	};
+	enum {StemDensity, StemStart, Length, Scale, AngleVariation,
+		RadiusThreshold, LeafDensity, LeafDistance, LeafRotation,
+		MinUp, MaxUp, MinDirection, MaxDirection, ScaleX, ScaleY,
+		ScaleZ, DSize};
+	enum {LeavesPerNode, ISize};
 
-	QDoubleSpinBox *dsv[DSSize];
-	QLabel *dsl[DSSize];
-	QDoubleSpinBox *dlv[DLSize];
-	QLabel *dll[DLSize];
-	QSpinBox *ilv[ILSize];
-	QLabel *ill[ILSize];
+	DoubleSpinBox *dv[DSize];
+	SpinBox *iv[ISize];
 
 	void createInterface();
 	void createNodeGroup(QBoxLayout *);
 	void createRootGroup(QBoxLayout *);
-	void createStemGroup(QBoxLayout *);
-	void createLeafGroup(QBoxLayout *);
-	QFormLayout *createForm(QGroupBox *);
 	void removeCurrent();
 	void blockSignals(bool);
-	void enable(bool);
+	void setEnabled(bool);
 	void beginChanging();
 	void setFields(const pg::ParameterTree &, std::string);
 	void setStemData(pg::StemData);

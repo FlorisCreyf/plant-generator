@@ -21,7 +21,6 @@
 #include "command.h"
 #include "editor/point_selection.h"
 #include "plant_generator/spline.h"
-#include <memory>
 
 class RemoveSpline : public Command {
 	PointSelection *selection;

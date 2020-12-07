@@ -94,7 +94,7 @@ BOOST_AUTO_TEST_CASE(test_generate)
 	Selection selection(&plant);
 	selection.addStem(plant.getRoot());
 
-	Generate generate(&selection);
+	Generate generate(&selection, &generator);
 	generate.execute();
 	generate.execute();
 	generate.undo();

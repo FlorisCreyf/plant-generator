@@ -46,7 +46,6 @@ Editor::Editor(SharedResources *shared, KeyMap *keymap, QWidget *parent) :
 	keymap(keymap),
 	shared(shared),
 	shader(SharedResources::Solid),
-	generator(&scene.plant),
 	mesh(&scene.plant),
 	selection(&scene.plant),
 	perspective(true),
@@ -871,7 +870,7 @@ void Editor::endAnimation()
 
 void Editor::createDefaultPlant()
 {
-	pg::ParameterTree tree = this->generator.getParameterTree();
+	pg::ParameterTree tree = this->scene.generator.getParameterTree();
 	pg::ParameterRoot *root = tree.createRoot();
 	std::random_device rd;
 	root->setSeed(rd());
@@ -883,7 +882,6 @@ void Editor::createDefaultPlant()
 	data.scale = 0.8f;
 	data.length = 50.0f;
 	data.radiusThreshold = 0.02f;
-	data.leaf.scale = Vec3(1.0f, 1.0f, 1.0f);
 	data.leaf.density = 3.0f;
 	data.leaf.densityCurve.setDefault(1);
 	data.leaf.distance = 3.0f;
@@ -897,23 +895,22 @@ void Editor::createDefaultPlant()
 	pg::ParameterNode *node3 = tree.addChild("1.1");
 	data.density = 0.0f;
 	node3->setData(data);
-	this->generator.setParameterTree(tree);
-	this->generator.grow();
+	this->scene.generator.setParameterTree(tree);
+	this->scene.generator.grow();
 	this->scene.wind.setSpeed(0.5f);
 	this->scene.wind.setDirection(Vec3(0.0f, 0.0f, 1.0f));
 }
 
 void Editor::load(const char *filename)
 {
-	this->scene.plant.removeRoot();
-	if (filename == nullptr)
-		createDefaultPlant();
-	else {
+	this->scene.reset();
+	if (filename) {
 		std::ifstream stream(filename);
 		boost::archive::text_iarchive ia(stream);
 		ia >> this->scene;
 		stream.close();
-	}
+	} else
+		createDefaultPlant();
 }
 
 void Editor::reset()
@@ -978,14 +975,14 @@ Selection *Editor::getSelection()
 	return &this->selection;
 }
 
+History *Editor::getHistory()
+{
+	return &this->history;
+}
+
 const pg::Mesh *Editor::getMesh()
 {
 	return &this->mesh;
-}
-
-void Editor::add(Command *cmd)
-{
-	this->history.add(cmd);
 }
 
 void Editor::undo()

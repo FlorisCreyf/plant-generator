@@ -19,27 +19,28 @@
 #define WIND_EDITOR_H
 
 #include "editor.h"
+#include "widgets.h"
 #include "plant_generator/wind.h"
-#include <QtWidgets>
 
 class WindEditor : public QWidget {
 	Q_OBJECT
 
 	Editor *editor;
 
+	enum {DirectionX, DirectionY, DirectionZ, DSize};
+	enum {TimeStep, FrameCount, Seed, ISize};
+
 	QGroupBox *group;
-	QDoubleSpinBox *directionXValue;
-	QDoubleSpinBox *directionYValue;
-	QDoubleSpinBox *directionZValue;
-	QSpinBox *timeStepValue;
-	QSpinBox *frameCountValue;
-	QSpinBox *seedValue;
+	DoubleSpinBox *dv[DSize];
+	SpinBox *iv[ISize];
 
 	void createInterface();
+	void blockSignals(bool);
 
 public:
 	WindEditor(Editor *editor, QWidget *parent);
 	QSize sizeHint() const;
+	void setFields();
 
 public slots:
 	void change();

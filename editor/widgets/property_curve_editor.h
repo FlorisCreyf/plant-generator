@@ -19,12 +19,13 @@
 #define PROPERTY_CURVE_EDITOR_H
 
 #include "curve_editor.h"
+#include "widgets.h"
 
 class PropertyCurveEditor : public CurveEditor {
 	Q_OBJECT
 
 	Editor *editor;
-	QComboBox *selectionBox;
+	ComboBox *selectionBox;
 
 	void change(bool curveChanged);
 	void createSelectionBar();

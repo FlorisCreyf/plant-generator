@@ -28,17 +28,19 @@ class Generate : public Command {
 	Selection prevSelection;
 	Selection removals;
 	RemoveStem remove;
+	std::vector<pg::Spline> splines;
 	std::vector<pg::ParameterTree> parameterTrees;
-	pg::PseudoGenerator generator;
+	pg::ParameterTree parameterTree;
+	pg::PseudoGenerator *generator;
 
 	void createRemovalSelection(Selection *, Selection *);
 	void removeAdditions();
+	void overwriteCurve(pg::Plant *, pg::Stem *, unsigned);
 
 public:
-	Generate(Selection *selection);
+	Generate(Selection *selection, pg::PseudoGenerator *generator);
 	Generate(const Generate &original) = delete;
 	Generate &operator=(const Generate &original) = delete;
-	void setGenerator(pg::PseudoGenerator gen);
 	void execute();
 	void undo();
 	void redo();

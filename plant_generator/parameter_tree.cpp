@@ -26,11 +26,10 @@ StemData::StemData() :
 	densityCurve(0),
 	density(0.0f),
 	start(0.0f),
-	angleVariation(0.5f),
 	length(1.0f),
+	angleVariation(0.5f),
 	radiusThreshold(0.0f),
-	scale(1.0f),
-	leaf()
+	scale(1.0f)
 {
 
 }
@@ -204,6 +203,11 @@ ParameterRoot *ParameterTree::createRoot()
 	return this->root;
 }
 
+ParameterNode *ParameterTree::getNode() const
+{
+	return this->root ? this->root->node : nullptr;
+}
+
 ParameterNode *ParameterTree::addChild(string name)
 {
 	if (!this->root)
@@ -270,18 +274,14 @@ bool ParameterTree::remove(string name)
 	if (!node)
 		return false;
 
-	if (node == this->root->node) {
-		assert(node->prevSibling == nullptr);
+	if (node == this->root->node)
 		this->root->node = node->nextSibling;
-	}
 	if (node->prevSibling)
 		node->prevSibling->nextSibling = node->nextSibling;
 	if (node->nextSibling)
 		node->nextSibling->prevSibling = node->prevSibling;
-	if (node->parent && node->parent->child == node) {
-		assert(node->prevSibling == nullptr);
+	if (node->parent && node->parent->child == node)
 		node->parent->child = node->nextSibling;
-	}
 
 	removeChildNode(node->child);
 	delete node;
@@ -297,9 +297,7 @@ vector<string> ParameterTree::getNames() const
 }
 
 void ParameterTree::getNames(
-	vector<std::string> &names,
-	string prefix,
-	ParameterNode *node) const
+	vector<string> &names, string prefix, ParameterNode *node) const
 {
 	int count = 0;
 	while (node) {
@@ -311,9 +309,7 @@ void ParameterTree::getNames(
 }
 
 ParameterNode *ParameterTree::getNode(
-	const string &name,
-	size_t start,
-	ParameterNode *node) const
+	const string &name, size_t start, ParameterNode *node) const
 {
 	int size = getSize(name, start);
 	for (int i = 0; i < size-1 && node; i++)

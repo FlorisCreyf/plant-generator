@@ -223,7 +223,9 @@ void Spline::removeCubic(unsigned index)
 
 void Spline::adjust(int degree)
 {
-	if (degree == 1)
+	if (this->degree == degree)
+		return;
+	else if (degree == 1)
 		adjustLinear();
 	else if (degree == 3)
 		adjustCubic();

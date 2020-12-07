@@ -46,7 +46,6 @@ namespace pg {
 		void serialize(Archive &ar, const unsigned)
 		{
 			ar & densityCurve;
-			ar & scale;
 			ar & density;
 			ar & distance;
 			ar & rotation;
@@ -55,6 +54,7 @@ namespace pg {
 			ar & minDirection;
 			ar & maxDirection;
 			ar & leavesPerNode;
+			ar & scale;
 		}
 #endif
 	};
@@ -63,8 +63,8 @@ namespace pg {
 		Spline densityCurve;
 		float density;
 		float start;
-		float angleVariation;
 		float length;
+		float angleVariation;
 		float radiusThreshold;
 		float scale;
 		LeafData leaf;
@@ -77,7 +77,6 @@ namespace pg {
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned)
 		{
-			ar & leaf;
 			ar & densityCurve;
 			ar & density;
 			ar & start;
@@ -85,6 +84,7 @@ namespace pg {
 			ar & radiusThreshold;
 			ar & angleVariation;
 			ar & scale;
+			ar & leaf;
 		}
 #endif
 	};
@@ -176,6 +176,7 @@ namespace pg {
 		void reset();
 		ParameterRoot *getRoot() const;
 		ParameterRoot *createRoot();
+		ParameterNode *getNode() const;
 		ParameterNode *addChild(std::string name);
 		ParameterNode *addSibling(std::string name);
 		ParameterNode *get(std::string name) const;

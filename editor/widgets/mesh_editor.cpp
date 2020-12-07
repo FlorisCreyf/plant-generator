@@ -16,8 +16,8 @@
  */
 
 #include "mesh_editor.h"
-#include "definitions.h"
-#include "item_delegate.h"
+#include "form.h"
+#include "widgets.h"
 #include "plant_generator/file/wavefront.h"
 
 MeshEditor::MeshEditor(
@@ -69,12 +69,12 @@ void MeshEditor::createSelectionBar()
 	removeButton->setFixedWidth(UI_FIELD_HEIGHT);
 	connect(removeButton, &QPushButton::clicked, this, &MeshEditor::remove);
 
-	this->selectionBox = new QComboBox(this);
+	this->selectionBox = new ComboBox(this);
 	this->selectionBox->setEditable(true);
-	this->selectionBox->setInsertPolicy(QComboBox::InsertAtCurrent);
+	this->selectionBox->setInsertPolicy(ComboBox::InsertAtCurrent);
 	this->selectionBox->setItemDelegate(new ItemDelegate());
 	connect(this->selectionBox,
-		QOverload<int>::of(&QComboBox::currentIndexChanged),
+		QOverload<int>::of(&ComboBox::currentIndexChanged),
 		this, &MeshEditor::select);
 	connect(this->selectionBox->lineEdit(), &QLineEdit::editingFinished,
 		this, &MeshEditor::rename);
@@ -148,15 +148,12 @@ void MeshEditor::addEmpty()
 {
 	pg::Geometry geom;
 	std::string name;
-	QString qname;
-
 	for (int i = 1; true; i++) {
 		name = "Mesh " + std::to_string(i);
-		qname = QString::fromStdString(name);
+		QString qname = QString::fromStdString(name);
 		if (this->selectionBox->findText(qname) == -1)
 			break;
 	}
-
 	geom.setName(name);
 	geom.setPlane();
 	add(geom);

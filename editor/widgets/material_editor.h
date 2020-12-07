@@ -19,9 +19,9 @@
 #define MATERIAL_EDITOR_H
 
 #include "editor.h"
+#include "widgets.h"
 #include "material_viewer.h"
 #include <vector>
-#include <QtWidgets>
 
 class MaterialEditor : public QWidget {
 	Q_OBJECT
@@ -30,20 +30,14 @@ class MaterialEditor : public QWidget {
 	SharedResources *shared;
 	MaterialViewer *materialViewer;
 
-	enum {
-		Shininess,
-		AmbientR,
-		AmbientG,
-		AmbientB,
-		FieldQuantity
-	};
+	enum {Shininess, AmbientR, AmbientG, AmbientB, FieldQuantity};
 
 	QVBoxLayout *layout;
-	QComboBox *selectionBox;
+	ComboBox *selectionBox;
 	QLineEdit *fileField[pg::Material::MapQuantity];
 	QPushButton *addButton[pg::Material::MapQuantity];
 	QPushButton *removeButton[pg::Material::MapQuantity];
-	QDoubleSpinBox *fields[FieldQuantity];
+	DoubleSpinBox *fields[FieldQuantity];
 
 	void initFields(QFormLayout *form);
 	void createSelectionBar();

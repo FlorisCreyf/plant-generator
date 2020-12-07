@@ -64,6 +64,7 @@ void AddStem::create()
 	path.setDivisions(pathDivisions);
 	this->addition->setPath(path);
 	this->addition->setDistance(0.0f);
+	this->addition->setCustom(true);
 
 	this->selection->clear();
 	this->selection->addStem(this->addition);

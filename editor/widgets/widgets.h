@@ -15,19 +15,48 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ITEM_DELEGATE_H
-#define ITEM_DELEGATE_H
+#ifndef WIDGETS_H
+#define WIDGETS_H
 
 #include <QtWidgets>
+
+class ComboBox : public QComboBox {
+	Q_OBJECT
+
+public:
+	ComboBox(QWidget *parent = 0);
+
+protected:
+	virtual void wheelEvent(QWheelEvent *event);
+
+};
+
+class SpinBox : public QSpinBox {
+	Q_OBJECT
+
+public:
+	SpinBox(QWidget *parent = 0);
+
+protected:
+	virtual void wheelEvent(QWheelEvent *event);
+
+};
+
+class DoubleSpinBox : public QDoubleSpinBox {
+	Q_OBJECT
+
+public:
+	DoubleSpinBox(QWidget *parent = 0);
+
+protected:
+	virtual void wheelEvent(QWheelEvent *event);
+};
 
 class ItemDelegate : public QStyledItemDelegate {
 	Q_OBJECT
 
 public:
-	QSize sizeHint(const QStyleOptionViewItem &, const QModelIndex &) const
-	{
-		return QSize(1, 22);
-	}
+	QSize sizeHint(const QStyleOptionViewItem &, const QModelIndex &) const;
 };
 
 #endif

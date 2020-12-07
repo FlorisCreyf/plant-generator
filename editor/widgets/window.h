@@ -18,11 +18,12 @@
 #ifndef WINDOW_H
 #define WINDOW_H
 
+#include "generator_editor.h"
 #include "generator_curve_editor.h"
 #include "property_curve_editor.h"
-#include "procedural_editor.h"
 #include "material_editor.h"
 #include "mesh_editor.h"
+#include "wind_editor.h"
 #include "key_editor.h"
 #include "property_editor.h"
 #include "editor.h"
@@ -62,7 +63,8 @@ private:
 	PropertyEditor *propertyEditor;
 	GeneratorCurveEditor *gCurveEditor;
 	PropertyCurveEditor *pCurveEditor;
-	ProceduralEditor *procEditor;
+	GeneratorEditor *generatorEditor;
+	WindEditor *windEditor;
 	MaterialEditor *materialEditor;
 	MeshEditor *meshEditor;
 	KeyEditor *keyEditor;
@@ -70,6 +72,7 @@ private:
 	void keyPressEvent(QKeyEvent *event);
 	void createPropertyBox();
 	void createEditors();
+	QWidget *createGeneratorEditor();
 	QDockWidget *createDockWidget(const char *, QWidget *, bool);
 	void setFilename(QString filename);
 };

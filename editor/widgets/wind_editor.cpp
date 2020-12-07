@@ -16,7 +16,6 @@
  */
 
 #include "wind_editor.h"
-#include "definitions.h"
 #include "form.h"
 
 WindEditor::WindEditor(Editor *editor, QWidget *parent) :
@@ -25,11 +24,16 @@ WindEditor::WindEditor(Editor *editor, QWidget *parent) :
 	createInterface();
 }
 
+inline QGroupBox *createGroup(const char *name)
+{
+	QGroupBox *group = new QGroupBox(name);
+	group->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
+	return group;
+}
+
 void WindEditor::createInterface()
 {
-	this->group = new QGroupBox("Wind", this);
-	this->group->setSizePolicy(
-		QSizePolicy::Expanding, QSizePolicy::Minimum);
+	this->group = createGroup("Wind");
 	QBoxLayout *layout = new QBoxLayout(QBoxLayout::TopToBottom, this);
 	layout->setMargin(0);
 	layout->setSpacing(0);
@@ -38,83 +42,79 @@ void WindEditor::createInterface()
 	form->setSpacing(UI_FORM_SPACING);
 	form->setMargin(UI_FORM_MARGIN);
 
-	this->seedValue = new QSpinBox(this);
-	this->seedValue->setRange(
+	for (int i = 0; i < DSize; i++) {
+		this->dv[i] = new DoubleSpinBox(this);
+		this->dv[i]->setDecimals(3);
+		this->dv[i]->setSingleStep(0.01);
+		this->dv[i]->setRange(
+			std::numeric_limits<float>::lowest(),
+			std::numeric_limits<float>::max());
+		connect(this->dv[i],
+			QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+			this, &WindEditor::change);
+	}
+	for (int i = 0; i < ISize; i++) {
+		this->iv[i] = new SpinBox(this);
+		connect(this->iv[i],
+			QOverload<int>::of(&QSpinBox::valueChanged),
+			this, &WindEditor::change);
+	}
+
+	form->addRow("Seed", this->iv[Seed]);
+	this->iv[Seed]->setRange(
 		std::numeric_limits<int>::min(),
 		std::numeric_limits<int>::max());
-	this->seedValue->setSingleStep(1);
-	form->addRow("Seed", this->seedValue);
-	connect(this->seedValue, QOverload<int>::of(&QSpinBox::valueChanged),
-		this, &WindEditor::change);
+	this->iv[Seed]->setSingleStep(1);
+	form->addRow("Direction.X", this->dv[DirectionX]);
+	form->addRow("Direction.Y", this->dv[DirectionY]);
+	form->addRow("Direction.Z", this->dv[DirectionZ]);
+	form->addRow("Time Step", this->iv[TimeStep]);
+	this->iv[TimeStep]->setValue(30);
+	form->addRow("Frames", this->iv[FrameCount]);
+	this->iv[FrameCount]->setValue(21);
 
-	this->directionXValue = new QDoubleSpinBox(this);
-	this->directionXValue->setSingleStep(0.01);
-	this->directionXValue->setDecimals(3);
-	this->directionXValue->setRange(
-		std::numeric_limits<float>::lowest(),
-		std::numeric_limits<float>::max());
-	form->addRow("Direction.X", this->directionXValue);
-	connect(this->directionXValue,
-		QOverload<double>::of(&QDoubleSpinBox::valueChanged),
-		this, &WindEditor::change);
-
-	this->directionYValue = new QDoubleSpinBox(this);
-	this->directionYValue->setSingleStep(0.01);
-	this->directionYValue->setDecimals(3);
-	this->directionYValue->setRange(
-		std::numeric_limits<float>::lowest(),
-		std::numeric_limits<float>::max());
-	form->addRow("Direction.Y", this->directionYValue);
-	connect(this->directionYValue,
-		QOverload<double>::of(&QDoubleSpinBox::valueChanged),
-		this, &WindEditor::change);
-
-	this->directionZValue = new QDoubleSpinBox(this);
-	this->directionZValue->setSingleStep(0.01);
-	this->directionZValue->setDecimals(3);
-	this->directionZValue->setValue(1.0);
-	this->directionZValue->setRange(
-		std::numeric_limits<float>::lowest(),
-		std::numeric_limits<float>::max());
-	form->addRow("Direction.Z", this->directionZValue);
-	connect(this->directionZValue,
-		QOverload<double>::of(&QDoubleSpinBox::valueChanged),
-		this, &WindEditor::change);
-
-	this->timeStepValue = new QSpinBox(this);
-	this->timeStepValue->setValue(30);
-	form->addRow("Time Step", this->timeStepValue);
-	connect(this->timeStepValue,
-		QOverload<int>::of(&QSpinBox::valueChanged),
-		this, &WindEditor::change);
-
-	this->frameCountValue = new QSpinBox(this);
-	this->frameCountValue->setValue(21);
-	form->addRow("Frames", this->frameCountValue);
-	connect(this->frameCountValue,
-		QOverload<int>::of(&QSpinBox::valueChanged),
-		this, &WindEditor::change);
-
-	setValueWidths(form);
+	setFormLayout(form);
+	layout->addWidget(group);
 }
 
 void WindEditor::change()
 {
 	pg::Wind *wind = &this->editor->getScene()->wind;
 	pg::Vec3 direction;
-	direction.x = this->directionXValue->value();
-	direction.y = this->directionYValue->value();
-	direction.z = this->directionZValue->value();
+	direction.x = this->dv[DirectionX]->value();
+	direction.y = this->dv[DirectionY]->value();
+	direction.z = this->dv[DirectionZ]->value();
 	float speed = pg::magnitude(direction);
 	if (speed > 0.0f)
 		direction /= speed;
 
-	wind->setSeed(this->seedValue->value());
+	wind->setSeed(this->iv[Seed]->value());
 	wind->setDirection(direction);
 	wind->setSpeed(speed);
-	wind->setFrameCount(this->frameCountValue->value());
-	wind->setTimeStep(this->timeStepValue->value());
+	wind->setFrameCount(this->iv[FrameCount]->value());
+	wind->setTimeStep(this->iv[TimeStep]->value());
 	this->editor->changeWind();
+}
+
+void WindEditor::setFields()
+{
+	blockSignals(true);
+	const pg::Wind *wind = &this->editor->getScene()->wind;
+	this->dv[DirectionX]->setValue(wind->getDirection().x);
+	this->dv[DirectionY]->setValue(wind->getDirection().y);
+	this->dv[DirectionZ]->setValue(wind->getDirection().z);
+	this->iv[Seed]->setValue(wind->getSeed());
+	this->iv[FrameCount]->setValue(wind->getFrameCount());
+	this->iv[TimeStep]->setValue(wind->getTimeStep());
+	blockSignals(false);
+}
+
+void WindEditor::blockSignals(bool block)
+{
+	for (int i = 0; i < DSize; i++)
+		this->dv[i]->blockSignals(block);
+	for (int i = 0; i < ISize; i++)
+		this->iv[i]->blockSignals(block);
 }
 
 QSize WindEditor::sizeHint() const

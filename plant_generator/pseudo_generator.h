@@ -22,17 +22,16 @@
 namespace pg {
 	class PseudoGenerator {
 		Plant *plant;
-		std::mt19937 randomGenerator;
 		ParameterTree parameterTree;
+		std::mt19937 randomGenerator;
 
 		Vec3 getStemDirection(Stem *, StemData, int);
-		float getMinRadius(float);
 		void setPath(Stem *, Vec3, StemData);
-		void addStems(Stem *stem, const ParameterNode *);
+		void addStems(Stem *, const ParameterNode *);
 		void addLateralStems(Stem *, const ParameterNode *);
 		void addLateralStem(Stem *, float, const ParameterNode *, int);
 		void addLeaves(Stem *, LeafData);
-		void addLeaf(Stem *, LeafData, float, Quat);
+		void addLeaf(Stem *, LeafData &, float, Quat);
 
 	public:
 		PseudoGenerator(Plant *plant);

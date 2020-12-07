@@ -316,7 +316,7 @@ Curve Plant::getCurve(unsigned index) const
 	return this->curves.at(index);
 }
 
-std::vector<Curve> Plant::getCurves() const
+const std::vector<Curve> &Plant::getCurves() const
 {
 	return this->curves;
 }
@@ -372,7 +372,7 @@ Material Plant::getMaterial(unsigned index) const
 	return this->materials.at(index);
 }
 
-std::vector<Material> Plant::getMaterials() const
+const std::vector<Material> &Plant::getMaterials() const
 {
 	return this->materials;
 }
@@ -422,7 +422,7 @@ Geometry Plant::getLeafMesh(unsigned index) const
 	return this->leafMeshes.at(index);
 }
 
-std::vector<Geometry> Plant::getLeafMeshes() const
+const std::vector<Geometry> &Plant::getLeafMeshes() const
 {
 	return this->leafMeshes;
 }

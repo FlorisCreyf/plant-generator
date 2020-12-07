@@ -16,7 +16,7 @@
  */
 
 #include "key_editor.h"
-#include "definitions.h"
+#include "form.h"
 
 KeyEditor::KeyEditor(KeyMap *keymap, QWidget *parent) :
 	QWidget(parent), form(new QFormLayout(this)), keymap(keymap)
@@ -32,7 +32,7 @@ KeyEditor::KeyEditor(KeyMap *keymap, QWidget *parent) :
 		button->setText(keymap->toString(binding.first));
 	}
 
-	setValueWidths(this->form);
+	setFormLayout(this->form);
 }
 
 QSize KeyEditor::sizeHint() const
@@ -51,7 +51,7 @@ void KeyEditor::initField(QPushButton **widget, QString name)
 	form->addRow(name, layout);
 }
 
-void KeyEditor::setValueWidths(QFormLayout *layout)
+void KeyEditor::setFormLayout(QFormLayout *layout)
 {
 	layout->setFormAlignment(Qt::AlignRight | Qt::AlignTop);
 	layout->setFieldGrowthPolicy(QFormLayout::FieldsStayAtSizeHint);

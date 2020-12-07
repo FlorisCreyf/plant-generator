@@ -13,39 +13,17 @@
  * limitations under the License.
  */
 
-#ifndef PG_SCENE_H
-#define PG_SCENE_H
+#include "scene.h"
 
-#include "plant.h"
-#include "pseudo_generator.h"
-#include "wind.h"
+pg::Scene::Scene() : generator(&plant)
+{
 
-#ifdef PG_SERIALIZE
-#include <boost/archive/text_oarchive.hpp>
-#endif
-
-namespace pg {
-	struct Scene {
-		Plant plant;
-		PseudoGenerator generator;
-		Animation animation;
-		Wind wind;
-
-		Scene();
-		void reset();
-
-	private:
-#ifdef PG_SERIALIZE
-		friend class boost::serialization::access;
-		template<class Archive>
-		void serialize(Archive &ar, const unsigned)
-		{
-			ar & plant;
-			ar & animation;
-			ar & wind;
-		}
-#endif
-	};
 }
 
-#endif
+void pg::Scene::reset()
+{
+	this->plant.removeRoot();
+	this->wind = Wind();
+	this->animation = Animation();
+	this->generator = PseudoGenerator(&this->plant);
+}

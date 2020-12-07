@@ -28,7 +28,7 @@ class KeyEditor : public QWidget {
 	KeyMap *keymap;
 
 	void initField(QPushButton **widget, QString name);
-	void setValueWidths(QFormLayout *layout);
+	void setFormLayout(QFormLayout *layout);
 
 public:
 	KeyEditor(KeyMap *keyMap, QWidget *parent);

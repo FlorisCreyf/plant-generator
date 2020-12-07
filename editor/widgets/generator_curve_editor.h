@@ -19,7 +19,8 @@
 #define GENERATOR_CURVE_EDITOR_H
 
 #include "curve_editor.h"
-#include "definitions.h"
+#include "widgets.h"
+#include "form.h"
 #include "../commands/generate.h"
 
 class GeneratorCurveEditor : public CurveEditor {
@@ -27,12 +28,12 @@ class GeneratorCurveEditor : public CurveEditor {
 
 	Editor *editor;
 	Generate *generate;
-	QComboBox *selectionBox;
-	QComboBox *nodeSelectionBox;
+	ComboBox *selectionBox;
+	ComboBox *nodeSelectionBox;
 
 	void createSelectionBar();
 	void change(bool curveChanged);
-	void enable(bool enable);
+	void setEnabled(bool enable);
 	bool eventFilter(QObject *object, QEvent *event);
 	bool isDescendant(QWidget *);
 	void updateParameterTree();
