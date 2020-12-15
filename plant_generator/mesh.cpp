@@ -114,8 +114,8 @@ size_t getSectionCount(Stem *stem, bool hasFork)
 	return sections;
 }
 
-void Mesh::addSections(
-	State &state, Segment parentSegment, bool isFork, bool hasFork)
+void Mesh::addSections(State &state, Segment parentSegment, bool isFork,
+	bool hasFork)
 {
 	Stem *stem = state.segment.stem;
 	state.prevIndex = this->vertices[state.mesh].size();
@@ -466,11 +466,8 @@ void Mesh::createFork(Stem *stem, State &state)
 	addSection(state, rotation, this->crossSection);
 	state.section = section;
 	state.texOffset += getTextureLength(stem, 0, section - 1);
-	addTriangleRing(
-		state.prevIndex,
-		this->vertices[state.mesh].size(),
-		stem->getSectionDivisions(),
-		state.mesh);
+	addTriangleRing(state.prevIndex, this->vertices[state.mesh].size(),
+		stem->getSectionDivisions(), state.mesh);
 }
 
 /** Return the point index that is between the dividing line of the section. */
@@ -568,11 +565,9 @@ void Mesh::createBranchCollar(State &state, Segment parentSegment)
 	state.section = connectCollar(state.segment, parentSegment, start);
 	size_t sections = stem->getPath().getSize();
 	if (state.section > 0 && state.section < sections)
-		addTriangleRing(
-			state.prevIndex,
+		addTriangleRing(state.prevIndex,
 			this->vertices[state.mesh].size(),
-			stem->getSectionDivisions(),
-			state.mesh);
+			stem->getSectionDivisions(), state.mesh);
 	else if (state.section == 0)
 		state = originalState;
 }
@@ -624,6 +619,19 @@ Mat4 Mesh::getBranchCollarScale(Stem *child, Stem *parent)
 	return axes * scale * transpose(axes);
 }
 
+Vec3 getSurfaceNormal(Vec3 p1, Vec3 p2, Vec3 p3, Vec3 n1, Vec3 n2, Vec3 n3,
+	Vec3 intersection)
+{
+	Vec3 edge1 = p2 - p1;
+	Vec3 edge2 = p3 - p1;
+	float m1 = 1.0f / magnitude(edge1);
+	float m2 = 1.0f / magnitude(edge2);
+	intersection -= p1;
+	n1 = lerp(n1, n2, project(intersection, m1*edge1) * m1);
+	n2 = lerp(n1, n3, project(intersection, m2*edge2) * m2);
+	return 0.5f * (normalize(n1) + normalize(n2));
+}
+
 /** Project a point from a cross section on its parent's surface. */
 DVertex Mesh::moveToSurface(DVertex vertex, Ray ray, Segment parent,
 	size_t firstIndex)
@@ -641,7 +649,10 @@ DVertex Mesh::moveToSurface(DVertex vertex, Ray ray, Segment parent,
 		return vertex;
 	}
 
-	const unsigned mesh = parent.stem->getMaterial(Stem::Outer);
+	unsigned mesh = parent.stem->getMaterial(Stem::Outer);
+	DVertex *vertices = &this->vertices[mesh][0];
+	unsigned *indices = &this->indices[mesh][0];
+
 	float t = std::numeric_limits<float>::max();
 	size_t offset = 0;
 	size_t halfLength = parent.indexCount / 2;
@@ -653,32 +664,36 @@ DVertex Mesh::moveToSurface(DVertex vertex, Ray ray, Segment parent,
 		offset += 3;
 
 		if (i < lastIndex) {
-			size_t index;
-			index = this->indices[mesh][i];
-			Vec3 p1 = this->vertices[mesh][index].position;
-			index = this->indices[mesh][i+1];
-			Vec3 p2 = this->vertices[mesh][index].position;
-			index = this->indices[mesh][i+2];
-			Vec3 p3 = this->vertices[mesh][index].position;
-			float s = intersectsFrontTriangle(ray, p1, p2, p3);
-			if (s != 0) {
-				t = s;
-				vertex.normal = cross(p2-p1, p3-p1);
+			size_t i1 = indices[i];
+			Vec3 p1 = vertices[i1].position;
+			size_t i2 = indices[i+1];
+			Vec3 p2 = vertices[i2].position;
+			size_t i3 = indices[i+2];
+			Vec3 p3 = vertices[i3].position;
+			t = intersectsFrontTriangle(ray, p1, p2, p3);
+			if (t != 0.0f) {
+				vertex.normal = getSurfaceNormal(p1, p2, p3,
+					vertices[i1].normal,
+					vertices[i2].normal,
+					vertices[i3].normal,
+					t*ray.direction + ray.origin);
 				break;
 			}
 		}
 		if (j >= parent.indexStart && offset <= firstIndex) {
-			size_t index;
-			index = this->indices[mesh][j];
-			Vec3 p1 = this->vertices[mesh][index].position;
-			index = this->indices[mesh][j+1];
-			Vec3 p2 = this->vertices[mesh][index].position;
-			index = this->indices[mesh][j+2];
-			Vec3 p3 = this->vertices[mesh][index].position;
-			float s = intersectsFrontTriangle(ray, p1, p2, p3);
-			if (s != 0) {
-				t = s;
-				vertex.normal = cross(p2-p1, p3-p1);
+			size_t j1 = indices[j];
+			Vec3 p1 = vertices[j1].position;
+			size_t j2 = indices[j+1];
+			Vec3 p2 = vertices[j2].position;
+			size_t j3 = indices[j+2];
+			Vec3 p3 = vertices[j3].position;
+			t = intersectsFrontTriangle(ray, p1, p2, p3);
+			if (t != 0.0f) {
+				vertex.normal = getSurfaceNormal(p1, p2, p3,
+					vertices[j1].normal,
+					vertices[j2].normal,
+					vertices[j3].normal,
+					t*ray.direction + ray.origin);
 				break;
 			}
 		}
@@ -718,8 +733,8 @@ size_t Mesh::connectCollar(Segment child, Segment parent, size_t vertexStart)
 {
 	const unsigned mesh = child.stem->getMaterial(Stem::Outer);
 	const Path &path = child.stem->getPath();
-	const int sectionDivisions = child.stem->getSectionDivisions();
-	const int collarDivisions = path.getInitialDivisions();
+	const int sDivisions = child.stem->getSectionDivisions();
+	const int cDivisions = path.getInitialDivisions();
 	size_t collarSize = getBranchCollarSize(child.stem);
 	Mat4 scale = getBranchCollarScale(child.stem, parent.stem);
 	size_t triangleOffset = getTriangleOffset(parent, child);
@@ -733,37 +748,34 @@ size_t Mesh::connectCollar(Segment child, Segment parent, size_t vertexStart)
 		direction = controls[3] - controls[2];
 	}
 
-	for (int i = 0; i <= sectionDivisions; i++) {
+	for (int i = 0; i <= sDivisions; i++) {
 		size_t index = child.vertexStart + i;
-		size_t nextIndex = index + collarSize + sectionDivisions + 1;
+		size_t nextIndex = index + collarSize + sDivisions + 1;
 
 		Ray ray;
-		Vec3 location = child.stem->getLocation();
-		DVertex initPoint = this->vertices[mesh][index];
-		DVertex scaledPoint;
-		scaledPoint.normal = initPoint.normal;
-		scaledPoint.tangent = initPoint.tangent;
-		scaledPoint.tangentScale = initPoint.tangentScale;
-		scaledPoint.position = initPoint.position - location;
-		scaledPoint.position = scale.apply(scaledPoint.position, 1.0f);
-		scaledPoint.position += location;
+		DVertex p1 = this->vertices[mesh][index];
+		DVertex p2;
+		p2.normal = p1.normal;
+		p2.tangent = p1.tangent;
+		p2.tangentScale = p1.tangentScale;
+		p2.position = p1.position - child.stem->getLocation();
+		p2.position = scale.apply(p2.position, 1.0f);
+		p2.position += child.stem->getLocation();
 		ray.origin = this->vertices[mesh][nextIndex].position;
-		ray.direction = scaledPoint.position - ray.origin;
-		scaledPoint = moveToSurface(
-			scaledPoint, ray, parent, triangleOffset);
-		if (std::isinf(scaledPoint.position.x)) {
+		ray.direction = p2.position - ray.origin;
+		p2 = moveToSurface(p2, ray, parent, triangleOffset);
+		if (std::isinf(p2.position.x)) {
 			this->vertices[mesh].resize(child.vertexStart);
 			this->indices[mesh].resize(child.indexStart);
 			return 0;
 		}
-		scaledPoint.weights = this->vertices[mesh][index].weights;
-		scaledPoint.indices = this->vertices[mesh][index].indices;
-		this->vertices[mesh][index] = scaledPoint;
+		p2.weights = this->vertices[mesh][index].weights;
+		p2.indices = this->vertices[mesh][index].indices;
+		this->vertices[mesh][index] = p2;
 
-		ray.direction = initPoint.position - ray.origin;
-		initPoint = moveToSurface(
-			initPoint, ray, parent, triangleOffset);
-		if (std::isinf(initPoint.position.x)) {
+		ray.direction = p1.position - ray.origin;
+		p1 = moveToSurface(p1, ray, parent, triangleOffset);
+		if (std::isinf(p1.position.x)) {
 			this->vertices[mesh].resize(child.vertexStart);
 			this->indices[mesh].resize(child.indexStart);
 			return 0;
@@ -771,8 +783,8 @@ size_t Mesh::connectCollar(Segment child, Segment parent, size_t vertexStart)
 
 		spline.clear();
 		spline.setDegree(3);
-		spline.addControl(scaledPoint.position);
-		spline.addControl(initPoint.position);
+		spline.addControl(p2.position);
+		spline.addControl(p1.position);
 		Vec3 point = this->vertices[mesh][nextIndex].position;
 		if (degree == 3)
 			spline.addControl(point - direction);
@@ -780,44 +792,41 @@ size_t Mesh::connectCollar(Segment child, Segment parent, size_t vertexStart)
 			spline.addControl(point);
 		spline.addControl(point);
 
-		float delta = 1.0f/(collarDivisions+1);
+		float delta = 1.0f / (cDivisions + 1);
 		float t = delta;
 		index = vertexStart + i;
-		for (int j = 0; j < collarDivisions; j++, t += delta) {
+		for (int j = 0; j < cDivisions; j++, t += delta) {
 			DVertex vertex;
 			vertex.position = spline.getPoint(0, t);
-			vertex.normal = scaledPoint.normal;
-			vertex.tangent = scaledPoint.tangent;
-			vertex.tangentScale = scaledPoint.tangentScale;
-			vertex.indices = scaledPoint.indices;
-			vertex.weights = scaledPoint.weights;
-			size_t offset = index + (sectionDivisions + 1) * j;
+			vertex.normal = p2.normal;
+			vertex.tangent = p2.tangent;
+			vertex.tangentScale = p2.tangentScale;
+			vertex.indices = p2.indices;
+			vertex.weights = p2.weights;
+			size_t offset = index + (sDivisions + 1) * j;
 			this->vertices[mesh][offset] = vertex;
 		}
 	}
 
 	size_t index1 = child.vertexStart;
-	size_t index2 = child.vertexStart + sectionDivisions + 1;
-	for (int i = 0; i <= collarDivisions; i++) {
-		addTriangleRing(index1, index2, sectionDivisions, mesh);
+	size_t index2 = child.vertexStart + sDivisions + 1;
+	for (int i = 0; i <= cDivisions; i++) {
+		addTriangleRing(index1, index2, sDivisions, mesh);
 		index1 = index2;
-		index2 += sectionDivisions + 1;
+		index2 += sDivisions + 1;
 	}
 
 	index1 = child.vertexStart;
 	index2 = vertexStart + collarSize;
-	setBranchCollarNormals(
-		index1, index2, mesh, sectionDivisions, collarDivisions);
-	setBranchCollarUVs(
-		index2, child.stem, mesh, sectionDivisions, collarDivisions);
-
-	return collarDivisions + 2;
+	setBranchCollarNormals(index1, index2, mesh, sDivisions, cDivisions);
+	setBranchCollarUVs(index2, child.stem, mesh, sDivisions, cDivisions);
+	return cDivisions + 2;
 }
 
 /** Interpolate normals from the first cross section of the stem with normals
 from the first cross section after the branch collar. */
-void Mesh::setBranchCollarNormals(
-	size_t index1, size_t index2, int mesh, int resolution, int divisions)
+void Mesh::setBranchCollarNormals(size_t index1, size_t index2, int mesh,
+	int resolution, int divisions)
 {
 	for (int i = 0; i <= resolution; i++) {
 		Vec3 normal1 = this->vertices[mesh][index1].normal;
@@ -827,6 +836,10 @@ void Mesh::setBranchCollarNormals(
 
 		for (int j = 1; j <= divisions; j++) {
 			float t = j/static_cast<float>(divisions);
+			float a = 2.0f*t*t;
+			float b = -2.0f*t*t + 4.0f*t - 1.0f;
+			t = a * (t <= 0.5f) + b * (t > 0.5f);
+
 			Vec3 normal = lerp(normal1, normal2, t);
 			normal = normalize(normal);
 			Vec3 tangent = lerp(tangent1, tangent2, t);
@@ -845,8 +858,8 @@ void Mesh::setBranchCollarNormals(
 /** Normally UV coordinates are generated starting at the first cross section.
 The UV coordinates for branch collars are generated backwards because splines
 are not guaranteed to be the same length. */
-void Mesh::setBranchCollarUVs(
-	size_t lastIndex, Stem *stem, int mesh, int resolution, int divisions)
+void Mesh::setBranchCollarUVs(size_t lastIndex, Stem *stem, int mesh,
+	int resolution, int divisions)
 {
 	size_t size = resolution + 1;
 	float radius = this->plant->getRadius(stem, 1);
