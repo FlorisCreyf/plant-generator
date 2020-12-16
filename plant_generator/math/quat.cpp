@@ -100,3 +100,25 @@ Quat pg::rotateIntoVecQ(Vec3 normal, Vec3 direction)
 	Vec3 vec = (1.0f / e) * cross(normal, direction);
 	return Quat(vec.x, vec.y, vec.z, e / 2.0f);
 }
+
+Quat pg::toBasis(Vec3 i, Vec3 j, Vec3 k)
+{
+	float trace = i.x + j.y + k.z;
+	if (trace > 0.0f) {
+		float a = std::sqrt(1.0f + trace);
+		float b = 0.5f / a;
+		return Quat((j.z-k.y)*b, (k.x-i.z)*b, (i.y-j.x)*b, 0.5f*a);
+	} else if (i.x > j.y && i.x > k.z) {
+		float a = std::sqrt(1.0f + i.x - j.y - k.z);
+		float b = 0.5f / a;
+		return Quat(0.5f*a, (j.x+i.y)*b, (k.x+i.z)*b, (j.z-k.y)*b);
+	} else if (j.y > k.z) {
+		float a = std::sqrt(1.0f + j.y - i.x - k.z);
+		float b = 0.5f / a;
+		return Quat((j.x+i.y)*b, 0.5f*a, (k.y+j.z)*b, (k.x-i.z)*b);
+	} else {
+		float a = std::sqrt(1.0f + k.z - i.x - j.y);
+		float b = 0.5f / a;
+		return Quat((k.x+i.z)*b, (k.y+j.z)*b, 0.5f*a, (i.y-j.x)*b);
+	}
+}

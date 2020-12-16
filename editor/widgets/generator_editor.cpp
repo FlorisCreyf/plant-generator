@@ -91,20 +91,23 @@ void GeneratorEditor::createInterface()
 			this, &GeneratorEditor::finishChanging);
 	}
 
+	const float min = std::numeric_limits<float>::lowest();
+	const float max = std::numeric_limits<float>::max();
+
 	this->stemGroup = createGroup("Stems");
 	form = createForm(this->stemGroup);
 	form->addRow("Stems/Unit", this->dv[StemDensity]);
+	form->addRow("Length", this->dv[Length]);
+	this->dv[Length]->setSingleStep(1.0f);
+	this->dv[Length]->setRange(0, std::numeric_limits<float>::max());
 	form->addRow("Start", this->dv[StemStart]);
-	form->addRow("Scale", this->dv[Scale]);
-	this->dv[Scale]->setSingleStep(0.001);
-	this->dv[Scale]->setDecimals(3);
 	form->addRow("Angle Variation", this->dv[AngleVariation]);
 	form->addRow("Radius Threshold", this->dv[RadiusThreshold]);
 	this->dv[RadiusThreshold]->setSingleStep(0.001);
 	this->dv[RadiusThreshold]->setDecimals(3);
-	form->addRow("Length", this->dv[Length]);
-	this->dv[Length]->setSingleStep(1.0f);
-	this->dv[Length]->setRange(0, std::numeric_limits<float>::max());
+	form->addRow("Radius Scale", this->dv[Scale]);
+	this->dv[Scale]->setSingleStep(0.001);
+	this->dv[Scale]->setDecimals(3);
 	setFormLayout(form);
 	layout->addWidget(this->stemGroup);
 
@@ -113,13 +116,21 @@ void GeneratorEditor::createInterface()
 	form->addRow("Nodes/Unit", this->dv[LeafDensity]);
 	form->addRow("Distance", this->dv[LeafDistance]);
 	form->addRow("Rotation", this->dv[LeafRotation]);
-	this->dv[LeafRotation]->setRange(
-		std::numeric_limits<float>::min(),
-		std::numeric_limits<float>::max());
+	this->dv[LeafRotation]->setRange(min, max);
 	form->addRow("Min Up", this->dv[MinUp]);
+	this->dv[MinUp]->setRange(min, max);
 	form->addRow("Max Up", this->dv[MaxUp]);
-	form->addRow("Min Direction", this->dv[MinDirection]);
-	form->addRow("Max Direction", this->dv[MaxDirection]);
+	this->dv[MaxUp]->setRange(min, max);
+	form->addRow("Local Up", this->dv[LocalUp]);
+	this->dv[LocalUp]->setRange(min, max);
+	form->addRow("Global Up", this->dv[GlobalUp]);
+	this->dv[GlobalUp]->setRange(min, max);
+	form->addRow("Min Forward", this->dv[MinForward]);
+	this->dv[MinForward]->setRange(min, max);
+	form->addRow("Max Forward", this->dv[MaxForward]);
+	this->dv[MaxForward]->setRange(min, max);
+	form->addRow("Vertical Pull", this->dv[Pull]);
+	this->dv[Pull]->setRange(min, max);
 	form->addRow("Leaves/Node", this->iv[LeavesPerNode]);
 	form->addRow("Scale.X", this->dv[ScaleX]);
 	form->addRow("Scale.Y", this->dv[ScaleY]);
@@ -233,8 +244,11 @@ void GeneratorEditor::setLeafData(pg::LeafData data)
 	this->dv[LeafRotation]->setValue(data.rotation/pi*180.0f);
 	this->dv[MinUp]->setValue(data.minUp);
 	this->dv[MaxUp]->setValue(data.maxUp);
-	this->dv[MinDirection]->setValue(data.minDirection);
-	this->dv[MaxDirection]->setValue(data.maxDirection);
+	this->dv[LocalUp]->setValue(data.localUp);
+	this->dv[GlobalUp]->setValue(data.globalUp);
+	this->dv[MinForward]->setValue(data.minForward);
+	this->dv[MaxForward]->setValue(data.maxForward);
+	this->dv[Pull]->setValue(data.verticalPull);
 	this->dv[ScaleX]->setValue(data.scale.x);
 	this->dv[ScaleY]->setValue(data.scale.y);
 	this->dv[ScaleZ]->setValue(data.scale.z);
@@ -314,8 +328,11 @@ pg::LeafData GeneratorEditor::getLeafData(LeafData data)
 	data.rotation = this->dv[LeafRotation]->value()/180.0f*pi;
 	data.minUp = this->dv[MinUp]->value();
 	data.maxUp = this->dv[MaxUp]->value();
-	data.minDirection = this->dv[MinDirection]->value();
-	data.maxDirection = this->dv[MaxDirection]->value();
+	data.localUp = this->dv[LocalUp]->value();
+	data.globalUp = this->dv[GlobalUp]->value();
+	data.minForward = this->dv[MinForward]->value();
+	data.maxForward = this->dv[MaxForward]->value();
+	data.verticalPull = this->dv[Pull]->value();
 	data.scale.x = this->dv[ScaleX]->value();
 	data.scale.y = this->dv[ScaleY]->value();
 	data.scale.z = this->dv[ScaleZ]->value();

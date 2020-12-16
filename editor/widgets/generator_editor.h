@@ -41,8 +41,8 @@ class GeneratorEditor : public QWidget {
 
 	enum {StemDensity, StemStart, Length, Scale, AngleVariation,
 		RadiusThreshold, LeafDensity, LeafDistance, LeafRotation,
-		MinUp, MaxUp, MinDirection, MaxDirection, ScaleX, ScaleY,
-		ScaleZ, DSize};
+		MinUp, MaxUp, LocalUp, GlobalUp, MinForward, MaxForward, Pull,
+		ScaleX, ScaleY, ScaleZ, DSize};
 	enum {LeavesPerNode, ISize};
 
 	DoubleSpinBox *dv[DSize];

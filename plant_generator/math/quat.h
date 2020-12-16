@@ -164,6 +164,7 @@ namespace pg {
 	Quat rotateIntoVecQ(Vec3 normal, Vec3 direction);
 	Quat nlerp(Quat a, Quat b, float t);
 	Quat slerp(Quat a, Quat b, float t);
+	Quat toBasis(Vec3 i, Vec3 j, Vec3 k);
 }
 
 #endif

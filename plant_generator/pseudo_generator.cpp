@@ -116,8 +116,8 @@ void PseudoGenerator::addLateralStems(Stem *parent, const ParameterNode *node)
 	}
 }
 
-void PseudoGenerator::addLateralStem(
-	Stem *parent, float position, const ParameterNode *node, int index)
+void PseudoGenerator::addLateralStem(Stem *parent, float position,
+	const ParameterNode *node, int index)
 {
 	StemData data = node->getData();
 	Vec2 collar(1.5f, 3.0f);
@@ -147,7 +147,7 @@ Vec3 PseudoGenerator::getStemDirection(Stem *stem, StemData data, int index)
 	float variation = data.angleVariation*pi;
 	std::uniform_real_distribution<float> dis(-variation, variation);
 	float distance = stem->getDistance();
-	Path path = stem->getParent()->getPath();
+	const Path &path = stem->getParent()->getPath();
 	Vec3 parentDirection = path.getIntermediateDirection(distance);
 	float ratio = distance / path.getLength();
 	float angle = data.leaf.rotation*index + dis(this->randomGenerator);
@@ -172,7 +172,7 @@ float getCollarLength(Stem *stem, Vec3 direction, Plant *plant)
 	if (stem->getParent()) {
 		Stem *parent = stem->getParent();
 		float distance = stem->getDistance();
-		Path path = parent->getPath();
+		const Path &path = parent->getPath();
 		Vec3 parentDirection = path.getIntermediateDirection(distance);
 		float difference = std::abs(dot(direction, parentDirection));
 		float radius = plant->getIntermediateRadius(parent, distance);
@@ -231,70 +231,61 @@ void PseudoGenerator::addLeaves(Stem *stem, LeafData data)
 	if (data.density <= 0.0f || data.leavesPerNode < 1)
 		return;
 
-	Path path = stem->getPath();
-	float length = path.getLength();
-	float start = length - data.distance;
-	float distance = 1.0f / data.density;
+	const Path &path = stem->getPath();
+	const float length = path.getLength();
+	const float distance = 1.0f / data.density;
 	float position = length;
-
+	float start = length - data.distance;
 	if (start < 0.0f)
 		start = 0.0f;
 
-	Vec3 zaxis(0.0f, 0.0f, 1.0f);
-	Vec3 yaxis(0.0f, 1.0f, 0.0f);
-	Vec3 xaxis(1.0f, 0.0f, 0.0f);
+	const Vec3 z(0.0f, 0.0f, 1.0f);
+	const Vec3 y(0.0f, 1.0f, 0.0f);
 
 	for (int i = 0, j = 1; position > start; i++, j++) {
-		Quat rotation(0.0f, 0.0f, 0.0f, 1.0f);
-		Vec3 stemDirection = path.getIntermediateDirection(position);
+		const Vec3 direction = path.getIntermediateDirection(position);
+		const Vec3 a = direction == y ? z : direction;
+		const Vec3 c = normalize(cross(a, y));
+		const Vec3 b = normalize(cross(c, a));
+		Quat rotation = toBasis(-1.0f*b, a, c);
+
+		/* Rotate the leaf around the stem. */
+		rotation = fromAxisAngle(a, data.rotation*i) * rotation;
+
+		/* Rotate the leaf surface upward. */
+		Vec3 u = lerp(b, a, data.localUp);
+		rotation = rotateIntoVecQ(a, u) * rotation;
+		Vec3 v = rotate(rotation, y);
+		Vec3 w = lerp(b, y, data.globalUp);
 		float ratio = (length - position) / (length - start);
-		Vec3 normal;
-		Vec3 normal1;
-		Vec3 normal2;
-		float mix;
+		float mix = data.maxUp - (data.maxUp + data.minUp) * ratio;
+		rotation = rotateIntoVecQ(u, lerp(v, w, mix)) * rotation;
 
-		/* Rotate the leaf into the stem side. */
-		if (stemDirection == yaxis)
-			normal = zaxis;
-		else
-			normal = normalize(cross(yaxis, stemDirection));
-		Quat angle = fromAxisAngle(stemDirection, data.rotation*i);
-		rotation = rotateIntoVecQ(zaxis, normal);
-		rotation = angle * rotation;
+		/* Rotate the leaf into the stem direction. */
+		v = rotate(rotation, z);
+		mix = data.maxForward;
+		mix -= (data.maxForward + data.minForward) * ratio;
+		rotation = rotateIntoVecQ(v, lerp(v, a, mix)) * rotation;
 
-		/* Rotate the leaf normal into the stem direction. */
-		normal = rotate(rotation, yaxis);
-		rotation = rotateIntoVecQ(normal, stemDirection) * rotation;
+		/* Pull the leaf downward or upward. */
+		v = rotate(rotation, z);
+		mix = data.verticalPull;
+		rotation = rotateIntoVecQ(v, lerp(v, y, mix)) * rotation;
 
-		/* Rotate the leaf normal into the up vector. */
-		mix = data.minUp + (data.maxUp - data.minUp) * ratio;
-		normal1 = rotate(rotation, yaxis);
-		normal2 = normalize(lerp(yaxis, stemDirection, mix));
-		rotation = rotateIntoVecQ(normal1, normal2) * rotation;
-
-		/* Rotate the leaf direction into the stem. */
-		mix = data.minDirection;
-		mix += (data.maxDirection - data.minDirection) * ratio;
-		normal1 = rotate(rotation, zaxis);
-		normal2 = normalize(lerp(stemDirection, normal1, mix));
-		rotation = rotateIntoVecQ(normal1, normal2) * rotation;
-
-		float t = position / length;
-		float percentage = data.densityCurve.getPoint(t).z;
-		if (percentage == 0.0f)
+		float t = data.densityCurve.getPoint(position/length).z;
+		if (t == 0.0f)
 			break;
 
 		addLeaf(stem, data, position, normalize(rotation));
-
 		if (j == data.leavesPerNode) {
-			position -= distance * (1.0f/percentage);
+			position -= distance / t;
 			j = 0;
 		}
 	}
 }
 
-void PseudoGenerator::addLeaf(
-	Stem *stem, LeafData &data, float position, Quat rotation)
+void PseudoGenerator::addLeaf(Stem *stem, LeafData &data, float position,
+	Quat rotation)
 {
 	Leaf leaf;
 	leaf.setPosition(position);

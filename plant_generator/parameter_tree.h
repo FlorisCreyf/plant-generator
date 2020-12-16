@@ -33,8 +33,11 @@ namespace pg {
 		float rotation;
 		float minUp;
 		float maxUp;
-		float minDirection;
-		float maxDirection;
+		float localUp;
+		float globalUp;
+		float minForward;
+		float maxForward;
+		float verticalPull;
 		int leavesPerNode;
 
 		LeafData();
@@ -51,8 +54,11 @@ namespace pg {
 			ar & rotation;
 			ar & minUp;
 			ar & maxUp;
-			ar & minDirection;
-			ar & maxDirection;
+			ar & localUp;
+			ar & globalUp;
+			ar & minForward;
+			ar & maxForward;
+			ar & verticalPull;
 			ar & leavesPerNode;
 			ar & scale;
 		}

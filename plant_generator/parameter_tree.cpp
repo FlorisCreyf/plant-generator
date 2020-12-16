@@ -26,9 +26,9 @@ StemData::StemData() :
 	densityCurve(0),
 	density(0.0f),
 	start(0.0f),
-	length(1.0f),
+	length(50.0f),
 	angleVariation(0.5f),
-	radiusThreshold(0.0f),
+	radiusThreshold(0.01f),
 	scale(1.0f)
 {
 
@@ -42,8 +42,11 @@ LeafData::LeafData() :
 	rotation(pi),
 	minUp(0.0f),
 	maxUp(1.0f),
-	minDirection(0.0f),
-	maxDirection(1.0f),
+	localUp(1.0f),
+	globalUp(1.0f),
+	minForward(0.0f),
+	maxForward(1.0f),
+	verticalPull(0.0f),
 	leavesPerNode(1)
 {
 
