@@ -105,7 +105,8 @@ void CurveEditor::keyPressEvent(QKeyEvent *event)
 			selectionCopy->setAfter();
 			this->history.add(selectionCopy);
 			change(false);
-		}
+		} else
+			delete selectionCopy;
 	} else if (command == "Select Previous Points") {
 		SavePointSelection *selectionCopy =
 			new SavePointSelection(&this->selection);
@@ -114,7 +115,8 @@ void CurveEditor::keyPressEvent(QKeyEvent *event)
 			selectionCopy->setAfter();
 			this->history.add(selectionCopy);
 			change(false);
-		}
+		} else
+			delete selectionCopy;
 	} else if (command == "Select Points") {
 		SavePointSelection *selectionCopy =
 			new SavePointSelection(&this->selection);
@@ -123,7 +125,8 @@ void CurveEditor::keyPressEvent(QKeyEvent *event)
 			selectionCopy->setAfter();
 			this->history.add(selectionCopy);
 			change(false);
-		}
+		} else
+			delete selectionCopy;
 	} else if (command == "Extrude") {
 		extrude();
 	} else if (command == "Remove") {

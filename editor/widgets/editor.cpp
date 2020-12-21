@@ -200,6 +200,7 @@ void Editor::keyPressEvent(QKeyEvent *event)
 		return;
 	}
 
+	Stem *root = this->scene.plant.getRoot();
 	QPoint pos = mapFromGlobal(QCursor::pos());
 	float x = pos.x();
 	float y = pos.y();
@@ -220,7 +221,6 @@ void Editor::keyPressEvent(QKeyEvent *event)
 		}
 	} else if (commandName == "Add Stem") {
 		size_t stemCount = this->selection.getStemInstances().size();
-		Stem *root = this->scene.plant.getRoot();
 		if (stemCount == 1 || !root) {
 			this->command = new AddStem(
 				&this->selection,
@@ -254,7 +254,6 @@ void Editor::keyPressEvent(QKeyEvent *event)
 			this->command = movePath;
 		}
 	} else if (commandName == "Move Stem") {
-		Stem *root = this->scene.plant.getRoot();
 		bool hasStems = this->selection.hasStems();
 		bool hasLeaves = this->selection.hasLeaves();
 		bool containsRoot = this->selection.contains(root);
@@ -316,7 +315,7 @@ void Editor::keyPressEvent(QKeyEvent *event)
 		SaveSelection *copy = new SaveSelection(&this->selection);
 		this->selection.selectSiblings();
 		addSelectionToHistory(copy);
-	} else if (commandName == "Select Stems") {
+	} else if (commandName == "Select Stems" && root) {
 		SaveSelection *copy = new SaveSelection(&this->selection);
 		this->selection.selectStems();
 		addSelectionToHistory(copy);
@@ -350,7 +349,8 @@ void Editor::addSelectionToHistory(SaveSelection *selection)
 		emit selectionChanged();
 		updateSelection();
 		update();
-	}
+	} else
+		delete selection;
 }
 
 void Editor::wheelEvent(QWheelEvent *event)
