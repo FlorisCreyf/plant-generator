@@ -18,9 +18,11 @@
 #include "rotate_stem.h"
 #include <complex>
 
+using pg::Leaf;
+using pg::Stem;
+using pg::Quat;
 using pg::Vec3;
 using pg::Vec4;
-using pg::Quat;
 
 RotateStem::RotateStem(Selection *selection, RotationAxes *axes,
 	const Camera *camera, float x, float y) :
@@ -45,9 +47,9 @@ void RotateStem::checkValidity()
 {
 	auto instances = this->selection->getStemInstances();
 	for (auto instance : instances) {
-		pg::Stem *stem1 = instance.first;
+		Stem *stem1 = instance.first;
 		for (auto instance : instances) {
-			pg::Stem *stem2 = instance.first;
+			Stem *stem2 = instance.first;
 			if (stem1->isDescendantOf(stem2)) {
 				this->valid = false;
 				return;
@@ -81,9 +83,11 @@ Vec3 RotateStem::getDirection()
 	return direction;
 }
 
-Quat RotateStem::getTransformation(Quat q)
+Quat RotateStem::getTransformation()
 {
+	Quat q(0.0f, 0.0f, 0.0f, 1.0f);
 	Vec3 normal;
+
 	if (this->axis == Axes::XAxis) {
 		normal = Vec3(1.0f, 0.0f, 0.0f);
 		Vec3 v = pg::rotate(q, normal);
@@ -108,7 +112,7 @@ Quat RotateStem::getTransformation(Quat q)
 	return pg::rotateIntoVecQ(b, a);
 }
 
-void RotateStem::rotateChild(pg::Stem *stem, Quat t, float distance)
+void RotateStem::rotateChild(Stem *stem, Quat t, float distance)
 {
 	while (stem) {
 		if (stem->getDistance() >= distance) {
@@ -123,29 +127,27 @@ void RotateStem::rotateChild(pg::Stem *stem, Quat t, float distance)
 			path.setSpline(spline);
 			stem->setPath(path);
 			rotateChild(stem->getChild(), t, 0.0f);
+			rotateChildLeaves(stem, t, 0.0f);
 		}
-		rotateChildLeaves(stem, t, distance);
 		stem = stem->getSibling();
 	}
 }
 
-void RotateStem::rotateChildLeaves(pg::Stem *stem, Quat t, float distance)
+void RotateStem::rotateChildLeaves(Stem *stem, Quat t, float distance)
 {
 	for (size_t i = 0; i < stem->getLeafCount(); i++) {
-		pg::Leaf *leaf = stem->getLeaf(i);
+		Leaf *leaf = stem->getLeaf(i);
 		if (leaf->getPosition() >= distance)
 			leaf->setRotation(t * leaf->getRotation());
 	}
 }
 
-/** Rotate selected stems. */
 void RotateStem::rotateStems()
 {
-	Quat q(0.0f, 0.0f, 0.0f, 1.0f);
-	Quat t = getTransformation(q);
+	Quat t = getTransformation();
 	auto stemInstances = this->selection->getStemInstances();
 	for (auto &instance : stemInstances) {
-		pg::Stem *stem = instance.first;
+		Stem *stem = instance.first;
 		PointSelection &ps = instance.second;
 		int point = ps.hasPoints() ? *ps.getPoints().begin() : 0;
 		pg::Path path = stem->getPath();
@@ -177,15 +179,14 @@ void RotateStem::rotateStems()
 	}
 }
 
-/** Rotate selected leaves. */
 void RotateStem::rotateLeaves()
 {
 	auto leafInstances = this->selection->getLeafInstances();
 	for (auto &instance : leafInstances) {
-		pg::Stem *stem = instance.first;
+		Stem *stem = instance.first;
 		for (auto id : instance.second) {
-			pg::Leaf *leaf = stem->getLeaf(id);
-			Quat t = getTransformation(leaf->getRotation());
+			Leaf *leaf = stem->getLeaf(id);
+			Quat t = getTransformation();
 			leaf->setRotation(t * leaf->getRotation());
 		}
 	}

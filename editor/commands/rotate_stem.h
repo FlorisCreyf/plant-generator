@@ -43,7 +43,7 @@ class RotateStem : public Command {
 	void rotateStems();
 	void rotateLeaves();
 	void resetRotation();
-	pg::Quat getTransformation(pg::Quat);
+	pg::Quat getTransformation();
 
 public:
 	RotateStem(Selection *selection, RotationAxes *axes,
