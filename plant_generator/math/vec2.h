@@ -61,9 +61,8 @@ namespace pg {
 
 #ifdef PG_SERIALIZE
 		template<class Archive>
-		void serialize(Archive &ar, const unsigned int version)
+		void serialize(Archive &ar, const unsigned)
 		{
-			(void)version;
 			ar & x;
 			ar & y;
 		}
@@ -105,6 +104,11 @@ namespace pg {
 		Vec2 vec = b;
 		vec *= a;
 		return vec;
+	}
+
+	inline Vec2 lerp(Vec2 a, Vec2 b, float t)
+	{
+		return (1.0f - t) * a + t * b;
 	}
 
 	float dot(Vec2 a, Vec2 b);

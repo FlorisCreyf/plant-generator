@@ -84,9 +84,8 @@ namespace pg {
 
 #ifdef PG_SERIALIZE
 		template<class Archive>
-		void serialize(Archive &ar, const unsigned int version)
+		void serialize(Archive &ar, const unsigned)
 		{
-			(void)version;
 			ar & x;
 			ar & y;
 			ar & z;

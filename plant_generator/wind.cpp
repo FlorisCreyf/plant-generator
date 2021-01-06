@@ -231,5 +231,14 @@ int Wind::generateJoint(Stem *stem, int id, int parentID, size_t &count)
 			child = child->getSibling();
 		}
 	}
+
+	Stem *child = stem->getChild();
+	while (child) {
+		bool needsJoints = child->getJoints().empty();
+		if (needsJoints)
+			id = generateJoint(child, id, parentID, count);
+		child = child->getSibling();
+	}
+
 	return id;
 }

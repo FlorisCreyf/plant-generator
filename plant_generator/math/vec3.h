@@ -75,8 +75,7 @@ namespace pg {
 
 #ifdef PG_SERIALIZE
 		template<class Archive>
-		void serialize(Archive &ar, const unsigned int version) {
-			(void)version;
+		void serialize(Archive &ar, const unsigned) {
 			ar & x;
 			ar & y;
 			ar & z;
@@ -121,6 +120,15 @@ namespace pg {
 	{
 		Vec3 vec = a;
 		vec -= b;
+		return vec;
+	}
+
+	inline Vec3 operator-(const Vec3 &a)
+	{
+		Vec3 vec;
+		vec.x = -a.x;
+		vec.y = -a.y;
+		vec.z = -a.z;
 		return vec;
 	}
 

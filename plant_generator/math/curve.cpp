@@ -18,7 +18,6 @@
 #include <cmath>
 
 using pg::Vec3;
-using pg::Mat4;
 
 int factorial(int n)
 {
@@ -35,35 +34,51 @@ float getBernsteinTerm(float t, int i, int n)
 	return a * b;
 }
 
-Vec3 pg::getBezier(float t, const Vec3 *points, int size)
+Vec3 getOtherBezier(float t, const Vec3 *points, int size)
 {
 	Vec3 b(0.0f, 0.0f, 0.0f);
-
 	for (int i = 0; i < size; i++) {
 		float basis = getBernsteinTerm(t, i, size-1);
-		Vec3 a = basis * points[i];
-		b = a + b;
+		b += basis * points[i];
 	}
-
 	return b;
 }
 
-Vec3 pg::getBezierPath(float t, const Vec3 *points, int size)
+Vec3 pg::getBezier(float t, const Vec3 *p, int size)
 {
-	int curves = (size - 1) / 3;
-	int curve = 0;
+	if (size == 4)
+		return getCubicBezier(t, p[0], p[1], p[2], p[3]);
+	if (size == 2)
+		return getLinearBezier(t, p[0], p[1]);
+	else
+		return getOtherBezier(t, p, size);
+}
 
-	for (int i = 3; curve < curves; i += 3, curve++)
-		if (points[i].x > t) {
-			t -= points[i-3].x;
-			t *= 1.0f/(points[i].x - points[i-3].x);
-			break;
-		}
+Vec3 pg::getLinearBezier(float t, Vec3 x, Vec3 y)
+{
+	Vec3 b(0.0f, 0.0f, 0.0f);
+	b += (1.0f-t) * x;
+	b += t * y;
+	return b;
+}
 
-	if (curve == curves)
-		curve = curves - 1;
-	if (t > 1.0f)
-		t = 1.0f;
+Vec3 pg::getQuadraticBezier(float t, Vec3 x, Vec3 y, Vec3 z)
+{
+	Vec3 b(0.0f, 0.0f, 0.0f);
+	float s = 1.0f-t;
+	b += (s*s) * x;
+	b += (2.0f*t*s) * y;
+	b += (t*t) * z;
+	return b;
+}
 
-	return getBezier(t, &points[curve*4], 4);
+Vec3 pg::getCubicBezier(float t, Vec3 x, Vec3 y, Vec3 z, Vec3 w)
+{
+	Vec3 b(0.0f, 0.0f, 0.0f);
+	float s = 1.0f-t;
+	b += (s*s*s) * x;
+	b += (3.0f*t*s*s) * y;
+	b += (3.0f*t*t*s) * z;
+	b += (t*t*t) * w;
+	return b;
 }

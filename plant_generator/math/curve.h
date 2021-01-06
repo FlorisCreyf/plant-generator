@@ -21,8 +21,10 @@
 #include <cstddef>
 
 namespace pg {
-	Vec3 getBezierPath(float t, const Vec3 *points, int size);
 	Vec3 getBezier(float t, const Vec3 *points, int size);
+	Vec3 getLinearBezier(float t, Vec3 x, Vec3 y);
+	Vec3 getQuadraticBezier(float t, Vec3 x, Vec3 y, Vec3 z);
+	Vec3 getCubicBezier(float t, Vec3 x, Vec3 y, Vec3 z, Vec3 w);
 }
 
 #endif

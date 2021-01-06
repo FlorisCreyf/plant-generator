@@ -81,29 +81,31 @@ namespace pg {
 		std::vector<std::map<Stem *, Segment>> stemSegments;
 		std::vector<std::map<LeafID, Segment>> leafSegments;
 
-		void addSections(State &state, Segment, bool, bool);
+		void addSections(State &state, Segment, bool, Stem *);
 		void addSection(State &, Quat, const CrossSection &);
 		float getTextureLength(Stem *, size_t);
 		float getTextureLength(Stem *, size_t, size_t);
 		void setInitialRotation(Stem *, State &);
 		Quat rotateSection(State &);
-		void addTriangleRing(size_t, size_t, int, int);
 		void capStem(Stem *, int, size_t);
-		Segment addStem(Stem *, State, State, bool);
+		Segment addStem(Stem *, State &, State, bool);
+		void addChildStems(Stem *, Stem *[2], State &);
 
 		bool addForks(Stem * [2], State);
 		void createFork(Stem *, State &);
-		int getForkMidpoint(int, Quat, Vec3, Vec3, Vec3);
-		void getForkStart(Stem * [2], size_t [2]);
+		void reserveForkSpace(const Stem *stem, int mesh);
+		int getForkMidpoint(int, Vec3, Vec3, Vec3, Quat);
+		void addForkTriangles(const State &, const State [2],
+			Stem * [2], const Segment [2]);
 
 		void createBranchCollar(State &, Segment);
-		size_t connectCollar(Segment, Segment, size_t);
+		size_t insertCollar(Segment, Segment, size_t);
 		void reserveBranchCollarSpace(Stem *, int);
-		size_t getBranchCollarSize(Stem *);
 		Mat4 getBranchCollarScale(Stem *, Stem *);
 		DVertex moveToSurface(DVertex, Ray, Segment, size_t);
 		void setBranchCollarNormals(size_t, size_t, int, int, int);
 		void setBranchCollarUVs(size_t, Stem *, int, int, int);
+		void connectCollar(const State &, bool);
 
 		void addLeaves(Stem *, const State &);
 		void addLeaf(Stem *stem, unsigned, const State &);
@@ -115,6 +117,8 @@ namespace pg {
 		void updateJointState(State &, Vec2 &, Vec2 &);
 		void setJointInfo(const Stem *, float, size_t, Vec2 &, Vec2 &);
 
+		size_t insertTriangleRing(size_t, size_t, int, unsigned *);
+		void addTriangleRing(size_t, size_t, int, int);
 		void addTriangle(int, int, int, int);
 		void initBuffer();
 		void updateSegments();
