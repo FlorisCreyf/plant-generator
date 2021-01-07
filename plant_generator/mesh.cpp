@@ -46,16 +46,31 @@ void Mesh::generate()
 bool isValidFork(Stem *stem, Stem *fork[2])
 {
 	if (fork[0] || fork[1]) {
-		int a = stem->getSectionDivisions();
-		int b = fork[0]->getSectionDivisions();
-		int c = fork[1]->getSectionDivisions();
-		int i = fork[0]->getMaterial(Stem::Outer);
-		int j = fork[1]->getMaterial(Stem::Outer);
-		int x = fork[0]->getPath().getInitialDivisions();
-		int y = fork[1]->getPath().getInitialDivisions();
-		if (b != c || a != b || b % 2 != 0 || i != j || x != y) {
-			fork[0] = nullptr;
-			fork[1] = nullptr;
+		const Path &p0 = stem->getPath();
+		const Path &p1 = fork[0]->getPath();
+		const Path &p2 = fork[1]->getPath();
+		if (p1.getSize() < 2 || p2.getSize() < 2 || p0.getSize() < 3) {
+			fork[0] = fork[1] = nullptr;
+			return fork[0] && fork[1];
+		}
+		if (p1.get(0) == p1.get(1) || p2.get(0) == p2.get(1)) {
+			fork[0] = fork[1] = nullptr;
+			return fork[0] && fork[1];
+		}
+		int d1 = stem->getSectionDivisions();
+		int d2 = fork[0]->getSectionDivisions();
+		int d3 = fork[1]->getSectionDivisions();
+		if (d2 != d3 || d1 != d2 || d2 % 2 != 0) {
+			fork[0] = fork[1] = nullptr;
+			return fork[0] && fork[1];
+		}
+		int m1 = fork[0]->getMaterial(Stem::Outer);
+		int m2 = fork[1]->getMaterial(Stem::Outer);
+		int i1 = fork[0]->getPath().getInitialDivisions();
+		int i2 = fork[1]->getPath().getInitialDivisions();
+		if (m1 != m2 || i1 != i2) {
+			fork[0] = fork[1] = nullptr;
+			return fork[0] && fork[1];
 		}
 	}
 	return fork[0] && fork[1];
