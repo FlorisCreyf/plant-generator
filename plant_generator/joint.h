@@ -24,8 +24,8 @@
 
 namespace pg {
 	class Joint {
-		unsigned id;
-		unsigned parentID;
+		int id;
+		int pid;
 		size_t pathIndex;
 		Vec3 location;
 
@@ -35,7 +35,7 @@ namespace pg {
 		void serialize(Archive &ar, const unsigned)
 		{
 			ar & id;
-			ar & parentID;
+			ar & pid;
 			ar & pathIndex;
 			ar & location;
 		}
@@ -43,11 +43,11 @@ namespace pg {
 
 	public:
 		/** Each joint is attached to a control point in the path. */
-		Joint(unsigned id=0, unsigned parentID=0, size_t pathIndex=0);
+		Joint(int id = 0, int pid = 0, size_t pathIndex = 0);
 		/** Update the location if the path changes. */
 		void updateLocation(Vec3 location);
-		unsigned getID() const;
-		unsigned getParentID() const;
+		int getID() const;
+		int getParentID() const;
 		size_t getPathIndex() const;
 		Vec3 getLocation() const;
 	};

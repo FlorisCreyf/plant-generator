@@ -27,7 +27,7 @@ class WindEditor : public QWidget {
 
 	Editor *editor;
 
-	enum {DirectionX, DirectionY, DirectionZ, DSize};
+	enum {DirectionX, DirectionY, DirectionZ, Threshold, Resistance, DSize};
 	enum {TimeStep, FrameCount, Seed, ISize};
 
 	QGroupBox *group;

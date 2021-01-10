@@ -68,6 +68,8 @@ void WindEditor::createInterface()
 	form->addRow("Direction.X", this->dv[DirectionX]);
 	form->addRow("Direction.Y", this->dv[DirectionY]);
 	form->addRow("Direction.Z", this->dv[DirectionZ]);
+	form->addRow("Radius Threshold", this->dv[Threshold]);
+	form->addRow("Resistance", this->dv[Resistance]);
 	form->addRow("Time Step", this->iv[TimeStep]);
 	this->iv[TimeStep]->setValue(30);
 	form->addRow("Frames", this->iv[FrameCount]);
@@ -84,13 +86,10 @@ void WindEditor::change()
 	direction.x = this->dv[DirectionX]->value();
 	direction.y = this->dv[DirectionY]->value();
 	direction.z = this->dv[DirectionZ]->value();
-	float speed = pg::magnitude(direction);
-	if (speed > 0.0f)
-		direction /= speed;
-
-	wind->setSeed(this->iv[Seed]->value());
 	wind->setDirection(direction);
-	wind->setSpeed(speed);
+	wind->setSeed(this->iv[Seed]->value());
+	wind->setResistance(this->dv[Resistance]->value());
+	wind->setThreshold(this->dv[Threshold]->value());
 	wind->setFrameCount(this->iv[FrameCount]->value());
 	wind->setTimeStep(this->iv[TimeStep]->value());
 	this->editor->changeWind();
@@ -103,6 +102,8 @@ void WindEditor::setFields()
 	this->dv[DirectionX]->setValue(wind->getDirection().x);
 	this->dv[DirectionY]->setValue(wind->getDirection().y);
 	this->dv[DirectionZ]->setValue(wind->getDirection().z);
+	this->dv[Threshold]->setValue(wind->getThreshold());
+	this->dv[Resistance]->setValue(wind->getResistance());
 	this->iv[Seed]->setValue(wind->getSeed());
 	this->iv[FrameCount]->setValue(wind->getFrameCount());
 	this->iv[TimeStep]->setValue(wind->getTimeStep());

@@ -543,7 +543,7 @@ void addJoints(XMLWriter &xml, const Stem *stem, Vec3 prevLocation)
 {
 	std::vector<Joint> joints = stem->getJoints();
 	for (Joint joint : joints) {
-		unsigned id = joint.getID();
+		int id = joint.getID();
 		xml >> ("<node type='JOINT' "
 			"id='plant-armature-joint" + toString(id) + "' "
 			"name='joint" + toString(id) + "' "

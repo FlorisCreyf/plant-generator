@@ -897,8 +897,7 @@ void Editor::createDefaultPlant()
 	node3->setData(data);
 	this->scene.generator.setParameterTree(tree);
 	this->scene.generator.grow();
-	this->scene.wind.setSpeed(0.5f);
-	this->scene.wind.setDirection(Vec3(0.0f, 0.0f, 1.0f));
+	this->scene.wind.setDirection(Vec3(0.5f, 0.5f, 0.5f));
 }
 
 void Editor::load(const char *filename)
