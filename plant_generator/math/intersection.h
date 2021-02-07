@@ -24,17 +24,23 @@ namespace pg {
 	struct Ray2 {
 		Vec2 origin;
 		Vec2 direction;
+		Ray2() {}
+		Ray2(Vec2 o, Vec2 d) : origin(o), direction(d) {}
 	};
 
 	struct Ray {
 		Vec3 origin;
 		Vec3 direction;
+		Ray() {}
+		Ray(Vec3 o, Vec3 d) : origin(o), direction(d) {}
 	};
 
 	/* Axis aligned bounding box (AABB) */
 	struct Aabb {
 		Vec3 a;
 		Vec3 b;
+		Aabb() {}
+		Aabb(Vec3 a, Vec3 b) : a(a), b(b) {}
 	};
 
 	/* Oriented bounding box (OBB) */
@@ -57,8 +63,7 @@ namespace pg {
 	float intersectsPlane(Ray &ray, Plane &plane);
 	float intersectsRectangle(Ray ray, Vec3 a, Vec3 b, Vec3 d);
 	float intersectsSphere(Ray &ray, Vec3 position, float radius);
-	float intersectsTaperedCylinder(
-		Ray ray, Vec3 start, Vec3 direction,
+	float intersectsTaperedCylinder(Ray ray, Vec3 start, Vec3 direction,
 		float height, float r1, float r2);
 	float intersectsLine(pg::Ray2 a, pg::Ray2 b);
 }

@@ -17,7 +17,7 @@
 *.blg
 plant
 test
-generator
+gen
 resources/
 build/
 minimal_build/

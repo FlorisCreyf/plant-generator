@@ -16,6 +16,8 @@
 #ifndef PG_LEAF_H
 #define PG_LEAF_H
 
+#include "path.h"
+#include "parameter_tree.h"
 #include "math/vec3.h"
 #include "math/quat.h"
 
@@ -55,6 +57,8 @@ namespace pg {
 		bool isCustom() const;
 		void setPosition(float position);
 		float getPosition() const;
+		void setRotation(const LeafData &data, float position,
+			const Path &path, int index);
 		void setRotation(Quat rotation);
 		Quat getRotation() const;
 		void setScale(Vec3 scale);

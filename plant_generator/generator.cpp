@@ -46,35 +46,9 @@ Generator::Generator(Plant *plant) :
 	root->setSectionDivisions(6);
 	root->setMinRadius(this->minRadius);
 	root->setMaxRadius(this->minRadius);
-	root->setSwelling(Vec2(1.0f, 1.0f));
+	root->setSwelling(Vec2(1.5f, 1.5f));
 
 	updateBoundingBox(Vec3(0.0f, 0.0f, 0.0f));
-}
-
-Generator::Generator(const Generator &original) :
-	plant(original.plant),
-	growth(original.growth),
-	primaryGrowthRate(original.primaryGrowthRate),
-	secondaryGrowthRate(original.secondaryGrowthRate),
-	minRadius(original.minRadius),
-	rayCount(original.rayCount),
-	rayLevels(original.rayLevels),
-	width(original.width)
-{
-
-}
-
-Generator &Generator::operator=(const Generator &original)
-{
-	this->plant = original.plant;
-	this->growth = original.growth;
-	this->primaryGrowthRate = original.primaryGrowthRate;
-	this->secondaryGrowthRate = original.secondaryGrowthRate;
-	this->minRadius = original.minRadius;
-	this->rayCount = original.rayCount;
-	this->rayLevels = original.rayLevels;
-	this->width = original.width;
-	return *this;
 }
 
 void Generator::grow(int cycles, int nodes)
@@ -100,14 +74,14 @@ void Generator::addNodes(int node)
 /** Rays are used to estimate how much light each leaf receives. */
 void Generator::castRays()
 {
+	int offset = 0.0f;
 	for (int i = 1; i <= this->rayLevels; i++) {
 		float angle = i / (float)this->rayLevels * pi * 0.5f;
 		int rayCount = (this->rayCount-1) * std::cos(angle) + 1;
 		float y = std::sin(angle) * this->width;
 		float radius = this->width * std::cos(angle);
-
 		for (int j = 0; j < rayCount; j++) {
-			float angle = j*(2.0f*pi/rayCount);
+			float angle = offset + j*(2.0f*pi/rayCount);
 			float x = std::cos(angle) * radius;
 			float z = std::sin(angle) * radius;
 			Vec3 origin(-x, 0.0f, -z);
@@ -116,6 +90,7 @@ void Generator::castRays()
 			ray.direction = normalize(origin-ray.origin);
 			updateGrowth(ray);
 		}
+		offset += std::sqrt(2);
 	}
 }
 
@@ -135,6 +110,14 @@ void Generator::updateGrowth(Ray ray)
 
 void Generator::addNode(Stem *stem, Light light, int node)
 {
+	if (stem->getParent()) {
+		Stem *parent = stem->getParent();
+		float distance = stem->getDistance();
+		float r = this->plant->getIntermediateRadius(parent, distance);
+		if (r < stem->getSwelling().x * stem->getMaxRadius())
+			return;
+	}
+
 	light.direction /= light.rays;
 	light.direction = normalize(light.direction);
 
@@ -144,17 +127,14 @@ void Generator::addNode(Stem *stem, Light light, int node)
 
 	Vec3 point = controls.back();
 	Vec3 direction = -1.0f * light.direction;
-	size_t pathSize = path.getSize();
 
-	if (pathSize > 1) {
+	if (path.getSize() > 1) {
 		Vec3 lastDirection = path.getDirection(path.getSize()-1);
 		float max = std::sqrt(2.0f) / 2.0f;
 		direction = clamp(direction, lastDirection, max);
 	}
 
-	/* The first node already has a leaf in order to determine the initial
-	direction of the stem. */
-	bool firstNode = stem->getParent() && pathSize == 2 && node == 0;
+	bool firstNode = stem->getParent() && path.getSize() == 2 && node == 0;
 	if (firstNode) {
 		Vec3 initDirection = path.getDirection(path.getSize()-1);
 		Vec3 normal = cross(initDirection, direction);
@@ -171,10 +151,9 @@ void Generator::addNode(Stem *stem, Light light, int node)
 	path.setSpline(spline);
 	stem->setPath(path);
 	stem->setMaxRadius(stem->getMaxRadius()+this->secondaryGrowthRate);
-	stem->setSwelling(Vec2(1.5f, 1.5f));
 
 	if (!firstNode)
-		addLeaves(stem, stem->getPath().getLength());
+		addLeaves(stem, node);
 }
 
 Generator::Intersection Generator::intersect(Stem *stem, Ray ray)
@@ -192,7 +171,7 @@ Generator::Intersection Generator::intersect(Stem *stem, Ray ray)
 		child = child->getSibling();
 	}
 	for (const Leaf &leaf : stem->getLeaves()) {
-		float radius = leaf.getScale().x * 0.5f;
+		float radius = leaf.getScale().x * 2.0f;
 		float distance = leaf.getPosition();
 		Vec3 location = stem->getLocation();
 		Vec3 direction(0.0f, 0.0f, 1.0f);
@@ -257,18 +236,9 @@ int Generator::propagate(Stem *stem)
 	return accumulatedLight;
 }
 
-Vec3 getInitialDirection(Stem *stem, Leaf leaf)
+Vec3 getInitialDirection(Leaf leaf)
 {
-	Path path = stem->getPath();
-	float distance = leaf.getPosition();
-	Vec3 direction = path.getIntermediateDirection(distance);
-	if (direction == Vec3(0.0f, 1.0f, 0.0f))
-		direction = Vec3(0.0f, 0.0f, 1.0f);
-	else {
-		direction = cross(Vec3(0.0f, 1.0f, 0.0f), direction);
-		direction = normalize(direction);
-	}
-	return rotate(leaf.getRotation(), direction);
+	return rotate(leaf.getRotation(), Vec3(0.0f, 0.0f, 1.0f));
 }
 
 void Generator::addStems(Stem *stem)
@@ -279,19 +249,16 @@ void Generator::addStems(Stem *stem)
 		child = child->getSibling();
 	}
 
-	std::vector<Leaf> leaves = stem->getLeaves();
-	for (auto it = leaves.begin(); it != leaves.end(); it++) {
-		Leaf leaf = *it;
+	for (size_t i = 0; i < stem->getLeaves().size(); i++) {
+		Leaf leaf = *stem->getLeaf(i);
+		stem->removeLeaf(i--);
 
-		/* TODO: Not all leaves should be removed. */
-		stem->removeLeaf(0);
-
-		Vec3 direction = getInitialDirection(stem, leaf);
+		Vec3 direction = getInitialDirection(leaf);
 		Vec3 point = this->primaryGrowthRate * direction;
 
 		Stem *child = this->plant->addStem(stem);
 		child->setDistance(leaf.getPosition());
-		child->setSwelling(Vec2(1.0f, 1.0f));
+		child->setSwelling(Vec2(1.5f, 3.0f));
 		Path path;
 		Spline spline = path.getSpline();
 		spline.addControl(Vec3(0.0f, 0.0f, 0.0f));
@@ -308,29 +275,28 @@ void Generator::addStems(Stem *stem)
 	}
 }
 
-void Generator::addLeaves(Stem *stem, float distance)
+void Generator::addLeaves(Stem *stem, int node)
 {
-	Quat rotation(0.0f, 0.0f, 0.0f, 0.0f);
-	auto leaves = stem->getLeaves();
-	if (leaves.empty())
-		rotation.w = 1.0f;
-	else {
-		Leaf prevLeaf = *leaves.rbegin();
-		if (prevLeaf.getRotation().w == 1.0f)
-			rotation.y = 1.0f;
-		else
-			rotation.w = 1.0f;
-	}
-	Leaf leaf = createLeaf();
+	LeafData data;
+	data.maxForward = 0.0f;
+	data.minForward = 0.0f;
+	data.localUp = 0.0f;
+	data.globalUp = 0.0f;
+	const Path &path = stem->getPath();
+	float distance = path.getLength();
+
+	Leaf leaf;
+	leaf.setMesh(0);
+	leaf.setScale(Vec3(0.2f, 0.2f, 0.2f));
 	leaf.setPosition(distance);
-	leaf.setRotation(rotation);
+	leaf.setRotation(data, distance, path, node);
 	stem->addLeaf(leaf);
 }
 
 Leaf Generator::createLeaf()
 {
 	Leaf leaf;
-	leaf.setScale(Vec3(0.04f, 0.04f, 0.04f));
+	leaf.setScale(Vec3(0.2f, 0.2f, 0.2f));
 	leaf.setMesh(0);
 	return leaf;
 }

@@ -18,6 +18,7 @@
 
 #include "plant.h"
 #include "mesh.h"
+#include "volume.h"
 #include "math/intersection.h"
 #include <vector>
 #include <map>
@@ -46,7 +47,7 @@ namespace pg {
 		void addStems(Stem *stem);
 		void addNodes(int);
 		void addNode(Stem *, Light, int);
-		void addLeaves(Stem *, float);
+		void addLeaves(Stem *, int);
 		Leaf createLeaf();
 
 		Intersection intersect(Stem *, Ray);
@@ -56,8 +57,6 @@ namespace pg {
 
 	public:
 		Generator(Plant *plant);
-		Generator(const Generator &original);
-		Generator &operator=(const Generator &original);
 		void grow(int cycles, int nodes);
 		void setPrimaryGrowthRate(float rate);
 		void setSecondaryGrowthRate(float rate);

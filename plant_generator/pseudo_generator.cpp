@@ -235,61 +235,23 @@ void PseudoGenerator::addLeaves(Stem *stem, LeafData data)
 	const float length = path.getLength();
 	const float distance = 1.0f / data.density;
 	float position = length;
-	float start = length - data.distance;
-	if (start < 0.0f)
-		start = 0.0f;
-
-	const Vec3 z(0.0f, 0.0f, 1.0f);
-	const Vec3 y(0.0f, 1.0f, 0.0f);
+	float start = (length - data.distance);
+	start *= (start >= 0.0f);
 
 	for (int i = 0, j = 1; position > start; i++, j++) {
-		const Vec3 direction = path.getIntermediateDirection(position);
-		const Vec3 a = direction == y ? z : direction;
-		const Vec3 c = normalize(cross(a, y));
-		const Vec3 b = normalize(cross(c, a));
-		Quat rotation = toBasis(-1.0f*b, a, c);
-
-		/* Rotate the leaf around the stem. */
-		rotation = fromAxisAngle(a, data.rotation*i) * rotation;
-
-		/* Rotate the leaf surface upward. */
-		Vec3 u = lerp(b, a, data.localUp);
-		rotation = rotateIntoVecQ(a, u) * rotation;
-		Vec3 v = rotate(rotation, y);
-		Vec3 w = lerp(b, y, data.globalUp);
-		float ratio = (length - position) / (length - start);
-		float mix = data.maxUp - (data.maxUp + data.minUp) * ratio;
-		rotation = rotateIntoVecQ(u, lerp(v, w, mix)) * rotation;
-
-		/* Rotate the leaf into the stem direction. */
-		v = rotate(rotation, z);
-		mix = data.maxForward;
-		mix -= (data.maxForward + data.minForward) * ratio;
-		rotation = rotateIntoVecQ(v, lerp(v, a, mix)) * rotation;
-
-		/* Pull the leaf downward or upward. */
-		v = rotate(rotation, z);
-		mix = data.verticalPull;
-		rotation = rotateIntoVecQ(v, lerp(v, y, mix)) * rotation;
-
 		float t = data.densityCurve.getPoint(position/length).z;
 		if (t == 0.0f)
 			break;
 
-		addLeaf(stem, data, position, normalize(rotation));
-		if (j == data.leavesPerNode) {
+		Leaf leaf;
+		leaf.setPosition(position);
+		leaf.setScale(data.scale);
+		leaf.setRotation(data, position, path, i);
+		stem->addLeaf(leaf);
+
+		if (j >= data.leavesPerNode) {
 			position -= distance / t;
 			j = 0;
 		}
 	}
-}
-
-void PseudoGenerator::addLeaf(Stem *stem, LeafData &data, float position,
-	Quat rotation)
-{
-	Leaf leaf;
-	leaf.setPosition(position);
-	leaf.setScale(data.scale);
-	leaf.setRotation(rotation);
-	stem->addLeaf(leaf);
 }

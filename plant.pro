@@ -6,7 +6,7 @@ CONFIG += qt object_parallel_to_source c++11 strict_c++ no_batch warn_on precomp
 unix::QMAKE_LFLAGS += -no-pie
 TARGET = plant
 QT = core gui opengl xml openglextensions
-unix::LIBS += /usr/lib/x86_64-linux-gnu/libboost_serialization.a
+unix::LIBS += -lboost_serialization
 # Change the path name to reflect the Boost version.
 win32::LIBS += "C:\Program Files\boost\boost_1_73_0\stage\lib\libboost_serialization-vc142-mt-x64-1_73.lib"
 win32::LIBS += opengl32.lib
@@ -52,6 +52,7 @@ plant_generator/scene.cpp \
 plant_generator/spline.cpp \
 plant_generator/stem.cpp \
 plant_generator/stem_pool.cpp \
+plant_generator/volume.cpp \
 plant_generator/wind.cpp \
 editor/commands/add_stem.cpp \
 editor/commands/add_leaf.cpp \
@@ -129,6 +130,7 @@ plant_generator/scene.h \
 plant_generator/spline.h \
 plant_generator/stem.h \
 plant_generator/stem_pool.h \
+plant_generator/volume.h \
 plant_generator/wind.h \
 editor/commands/add_stem.h \
 editor/commands/add_leaf.h \

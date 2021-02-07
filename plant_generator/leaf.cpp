@@ -64,6 +64,47 @@ float Leaf::getPosition() const
 	return this->position;
 }
 
+void Leaf::setRotation(const LeafData &data, float position, const Path &path,
+	int index)
+{
+	const Vec3 direction = path.getIntermediateDirection(position);
+	const float length = path.getLength();
+	float start = (length - data.distance);
+	start *=  (start >= 0.0f);
+
+	const Vec3 z(0.0f, 0.0f, 1.0f);
+	const Vec3 y(0.0f, 1.0f, 0.0f);
+	const Vec3 a = direction == y ? z : direction;
+	const Vec3 c = normalize(cross(a, y));
+	const Vec3 b = normalize(cross(c, a));
+	Quat rotation = toBasis(-1.0f*b, a, c);
+
+	/* Rotate the leaf around the stem. */
+	rotation = fromAxisAngle(a, data.rotation*index) * rotation;
+
+	/* Rotate the leaf surface upward. */
+	Vec3 u = lerp(b, a, data.localUp);
+	rotation = rotateIntoVecQ(a, u) * rotation;
+	Vec3 v = rotate(rotation, y);
+	Vec3 w = lerp(b, y, data.globalUp);
+	float ratio = (length - position) / (length - start);
+	float mix = data.maxUp - (data.maxUp + data.minUp) * ratio;
+	rotation = rotateIntoVecQ(u, lerp(v, w, mix)) * rotation;
+
+	/* Rotate the leaf into the stem direction. */
+	v = rotate(rotation, z);
+	mix = data.maxForward;
+	mix -= (data.maxForward + data.minForward) * ratio;
+	rotation = rotateIntoVecQ(v, lerp(v, a, mix)) * rotation;
+
+	/* Pull the leaf downward or upward. */
+	v = rotate(rotation, z);
+	mix = data.verticalPull;
+	rotation = rotateIntoVecQ(v, lerp(v, y, mix)) * rotation;
+
+	this->rotation = normalize(rotation);
+}
+
 void Leaf::setRotation(Quat rotation)
 {
 	this->rotation = rotation;

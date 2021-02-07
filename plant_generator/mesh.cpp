@@ -224,19 +224,19 @@ void Mesh::setInitialRotation(Stem *stem, State &state)
 {
 	float position = stem->getDistance();
 	const Path &parentPath = stem->getParent()->getPath();
-	Vec3 parentDirection;
-	parentDirection = parentPath.getIntermediateDirection(position);
+	Vec3 parentDirection = parentPath.getIntermediateDirection(position);
 	const Path &path = stem->getPath();
 	Vec3 stemDirection = path.getDirection(0);
+
 	Vec3 up(0.0f, 1.0f, 0.0f);
 	state.prevRotation = rotateIntoVecQ(up, stemDirection);
 	state.prevDirection = stemDirection;
 
 	Vec3 sideways(1.0f, 0.0f, 0.0f);
-	sideways = rotate(state.prevRotation, sideways);
-	sideways = normalize(sideways);
+	sideways = normalize(rotate(state.prevRotation, sideways));
 	up = projectOntoPlane(parentDirection, stemDirection);
-	up = normalize(up);
+	up = normalize(dot(up, sideways) * up);
+
 	Quat rotation = rotateIntoVecQ(sideways, up);
 	state.prevRotation = rotation * state.prevRotation;
 }
@@ -736,7 +736,7 @@ void Mesh::addForkTriangles(const State &state, const State fs[2],
 
 /** Return the point index that is between the dividing line of the section. */
 int Mesh::getForkMidpoint(int divisions, Vec3 direction1, Vec3 direction2,
-	 Vec3 direction, Quat rotation)
+	Vec3 direction, Quat rotation)
 {
 	/* Average all vectors and select one of three frames of reference.
 	Nothing is swapped if the child stems point in the same direction as

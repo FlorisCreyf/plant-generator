@@ -31,7 +31,6 @@ namespace pg {
 		void addLateralStems(Stem *, const ParameterNode *);
 		void addLateralStem(Stem *, float, const ParameterNode *, int);
 		void addLeaves(Stem *, LeafData);
-		void addLeaf(Stem *, LeafData &, float, Quat);
 
 	public:
 		PseudoGenerator(Plant *plant);

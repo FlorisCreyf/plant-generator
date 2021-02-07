@@ -29,10 +29,7 @@ using pg::Plane;
 
 Aabb pg::createAABB(const pg::DVertex *buffer, size_t size)
 {
-	Aabb aabb;
-	aabb.a = buffer[0].position;
-	aabb.b = buffer[0].position;
-
+	Aabb aabb(buffer[0].position, buffer[0].position);
 	for (size_t i = 0; i < size; i += 6) {
 		Vec3 position = buffer[i].position;
 		if (aabb.a.x > position.x)
@@ -48,7 +45,6 @@ Aabb pg::createAABB(const pg::DVertex *buffer, size_t size)
 		if (aabb.b.z < position.z)
 			aabb.b.z = position.z;
 	}
-
 	return aabb;
 }
 
@@ -163,7 +159,7 @@ float pg::intersectsFrontTriangle(Ray &ray, Vec3 p1, Vec3 p2, Vec3 p3)
 float pg::intersectsPlane(Ray &ray, Plane &plane)
 {
 	float a = dot(plane.normal, ray.direction);
-	if (a > 0.0f)
+	if (a != 0.0f)
 		return dot(plane.point - ray.origin, plane.normal) / a;
 	else
 		return 0.0f;
@@ -221,8 +217,8 @@ bool findRoots(float a, float b, float c, float (&roots)[2])
 		return false;
 }
 
-float pg::intersectsTaperedCylinder(
-	Ray ray, Vec3 start, Vec3 direction, float height, float r1, float r2)
+float pg::intersectsTaperedCylinder(Ray ray, Vec3 start, Vec3 direction,
+	float height, float r1, float r2)
 {
 	float rr1 = 1.0f / r1;
 	Vec3 s(rr1, (1.0f-r2*rr1)/height, rr1);

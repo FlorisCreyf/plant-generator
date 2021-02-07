@@ -13,12 +13,13 @@
  * limitations under the License.
  */
 
-#include "plant.h"
 #include "generator.h"
 #include "pseudo_generator.h"
 #include "mesh.h"
+#include "scene.h"
 #include "file/wavefront.h"
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <boost/program_options.hpp>
 
@@ -26,13 +27,13 @@ namespace po = boost::program_options;
 
 int main(int argc, char **argv)
 {
-	int cycles = 1;
-	int nodes = 1;
-	int rays = 0;
-	int divisions = 0;
-	float pgr = 0.0f;
-	float sgr = 0.0f;
-	std::string filename = "plant.obj";
+	int cycles = 3;
+	int nodes = 4;
+	int rays = 100;
+	int divisions = 100;
+	float pgr = 0.5f;
+	float sgr = 0.005f;
+	std::string filename = "saved/default";
 
 	po::options_description desc("Options");
 	desc.add_options()
@@ -80,17 +81,17 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	pg::Plant plant;
-	plant.setDefault();
+	pg::Scene scene;
+	scene.plant.setDefault();
 
 #ifndef PSEUDO_GENERATOR
-	pg::Generator generator(&plant);
+	pg::Generator generator(&scene.plant);
 	generator.setPrimaryGrowthRate(pgr);
 	generator.setSecondaryGrowthRate(sgr);
 	generator.setRayDensity(rays, divisions);
 	generator.grow(cycles, nodes);
 #else
-	pg::PseudoGenerator generator(&plant);
+	pg::PseudoGenerator generator(&scene.plant);
 	pg::ParameterTree tree = generator.getParameterTree();
 	pg::ParameterRoot *root = tree.createRoot();
 	std::random_device rd;
@@ -121,14 +122,20 @@ int main(int argc, char **argv)
 	generator.grow();
 #endif
 
-	pg::Mesh mesh(&plant);
+	pg::Mesh mesh(&scene.plant);
 	mesh.generate();
 
 	pg::Wavefront obj;
-	if (argc == 2)
-		obj.exportFile(argv[1], mesh, plant);
-	else
-		obj.exportFile(filename.c_str(), mesh, plant);
+	obj.exportFile((filename + ".obj").c_str(), mesh, scene.plant);
+
+#ifdef PG_SERIALIZE
+	std::ofstream stream(filename + ".plant");
+	if (stream.good()) {
+		boost::archive::text_oarchive oa(stream);
+		oa << scene;
+	}
+	stream.close();
+#endif
 
 	return 0;
 }
