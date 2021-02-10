@@ -55,7 +55,7 @@ void SharedResources::initialize()
 				param.setDefaultTexture(Material::Normal,
 					this->textures[BlueTexture]);
 				param.setDefaultTexture(Material::Specular,
-					this->textures[WhiteTexture]);
+					this->textures[BlackTexture]);
 				param.initialize();
 			}
 
@@ -132,8 +132,8 @@ void SharedResources::createPrograms()
 	this->programs[Shader::Point] = buildProgram(shaders, 2);
 }
 
-GLuint SharedResources::addTexture(
-	const QImage &image, GLenum baseformat, GLenum sizeformat)
+GLuint SharedResources::addTexture(const QImage &image, GLenum baseformat,
+	GLenum sizeformat)
 {
 	GLuint name;
 	GLsizei width = image.width();
@@ -145,8 +145,7 @@ GLuint SharedResources::addTexture(
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexStorage2D(GL_TEXTURE_2D, 1, sizeformat, width, height);
-	glTexSubImage2D(
-		GL_TEXTURE_2D, 0, 0, 0, width, height, baseformat,
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, baseformat,
 		GL_UNSIGNED_BYTE, image.bits());
 	return name;
 }
@@ -159,8 +158,7 @@ GLuint SharedResources::addDefaultTexture(const unsigned char color[3])
 	glGenTextures(1, &name);
 	glBindTexture(GL_TEXTURE_2D, name);
 	glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGB8, width, height);
-	glTexSubImage2D(
-		GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGB,
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGB,
 		GL_UNSIGNED_BYTE, color);
 	return name;
 }
@@ -206,8 +204,8 @@ bool SharedResources::openFile(const char *filename, std::string &buffer)
 	return true;
 }
 
-GLuint SharedResources::buildShader(
-	GLenum type, const char *filename, const char *line)
+GLuint SharedResources::buildShader(GLenum type, const char *filename,
+	const char *line)
 {
 	std::string buffer;
 	if (!openFile(filename, buffer))
@@ -244,14 +242,14 @@ GLuint SharedResources::buildProgram(GLuint *shaders, int size)
 
 unsigned SharedResources::addMaterial(ShaderParams params)
 {
-	params.setDefaultTexture(
-		Material::Albedo, this->textures[BlackTexture]);
-	params.setDefaultTexture(
-		Material::Opacity, this->textures[WhiteTexture]);
-	params.setDefaultTexture(
-		Material::Normal, this->textures[BlueTexture]);
-	params.setDefaultTexture(
-		Material::Specular, this->textures[WhiteTexture]);
+	params.setDefaultTexture(Material::Albedo,
+		this->textures[BlackTexture]);
+	params.setDefaultTexture(Material::Opacity,
+		this->textures[WhiteTexture]);
+	params.setDefaultTexture(Material::Normal,
+		this->textures[BlueTexture]);
+	params.setDefaultTexture(Material::Specular,
+		this->textures[BlackTexture]);
 	this->materials.push_back(params);
 	emit materialAdded(params);
 	return this->materials.size()-1;

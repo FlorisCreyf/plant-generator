@@ -30,8 +30,8 @@ Selector::Selector(const Camera *camera) : camera(camera)
 
 }
 
-void Selector::select(
-	const QMouseEvent *event, const Mesh *mesh, Selection *selection)
+void Selector::select(const QMouseEvent *event, const Mesh *mesh,
+	Selection *selection)
 {
 	if (!selectPoint(event, selection))
 		selectMesh(event, mesh, selection);
@@ -59,8 +59,8 @@ bool Selector::selectPoint(const QMouseEvent *event, Selection *selection)
 	return point >= 0;
 }
 
-void Selector::selectMesh(
-	const QMouseEvent *event, const Mesh *mesh, Selection *selection)
+void Selector::selectMesh(const QMouseEvent *event, const Mesh *mesh,
+	Selection *selection)
 {
 	bool ctrl = event->modifiers() & Qt::ControlModifier;
 	QPoint point = event->pos();
@@ -183,7 +183,7 @@ int Selector::selectPoint(const QMouseEvent *event, const Spline &spline,
 		float sy = std::pow(point.y - event->pos().y(), 2);
 
 		if (degree == 3 && i % 3 == 0) {
-			if (std::sqrt(sx + sy) < 5) {
+			if (std::sqrt(sx + sy) < 8) {
 				selectedPoint = i;
 				break;
 			}
@@ -202,8 +202,7 @@ int Selector::selectPoint(const QMouseEvent *event, const Spline &spline,
 		selection->clear();
 
 	if (selectedPoint >= 0) {
-		/* Remove the point from the selection if it is already
-		selected. */
+		/* Remove the point if it is already selected. */
 		if (!selection->removePoint(selectedPoint))
 			selection->addPoint(selectedPoint);
 	} else if (!ctrl)

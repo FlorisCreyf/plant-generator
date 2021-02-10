@@ -46,21 +46,25 @@ QWidget {
 	spacing:0;
 	background-color:#333;
 } QMenu::indicator:non-exclusive:unchecked {
-	image: none;
+	width:8px;
+	height:8px;
 	margin-left:10px;
+	image:none;
 } QMenu::indicator:non-exclusive:unchecked:selected {
-	image: none;
+	width:8px;
+	height:8px;
 	margin-left:10px;
+	image:none;
 } QMenu::indicator:non-exclusive:checked {
 	width:8px;
 	height:8px;
 	margin-left:10px;
-	image: url(&quot;resources/check.png&quot;);
+	image:url(&quot;resources/check.png&quot;);
 } QMenu::indicator:non-exclusive:checked:selected {
 	width:8px;
 	height:8px;
 	margin-left:10px;
-	image: url(&quot;resources/check.png&quot;);
+	image:url(&quot;resources/check.png&quot;);
 } QMenuBar::item {
 	color:#eee;
 	spacing:0;
@@ -292,6 +296,10 @@ QWidget {
 	padding:0;
 	margin:0;
 	spacing:0;
+} QToolBarExtension {
+	background-color:#ccc;
+	qproperty-icon:none;
+	image:none;
 } QToolButton {
 	color:#ccc;
 	padding:4px;
@@ -361,7 +369,7 @@ QWidget {
 } QLabel {
 	padding-right:4px;
 }
-</string>
+   </string>
   </property>
   <property name="documentMode">
    <bool>false</bool>

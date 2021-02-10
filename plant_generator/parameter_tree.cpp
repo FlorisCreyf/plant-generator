@@ -299,8 +299,8 @@ vector<string> ParameterTree::getNames() const
 	return names;
 }
 
-void ParameterTree::getNames(
-	vector<string> &names, string prefix, ParameterNode *node) const
+void ParameterTree::getNames(vector<string> &names, string prefix,
+	ParameterNode *node) const
 {
 	int count = 0;
 	while (node) {
@@ -311,8 +311,8 @@ void ParameterTree::getNames(
 	}
 }
 
-ParameterNode *ParameterTree::getNode(
-	const string &name, size_t start, ParameterNode *node) const
+ParameterNode *ParameterTree::getNode(const string &name, size_t start,
+	ParameterNode *node) const
 {
 	int size = getSize(name, start);
 	for (int i = 0; i < size-1 && node; i++)

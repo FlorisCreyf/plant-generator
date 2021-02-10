@@ -43,8 +43,8 @@ class MoveStem : public Command {
 	void setLeafOffsets(pg::Vec3 point);
 
 public:
-	MoveStem(Selection *selection, const Camera *camera,
-		int x, int y, bool snap = false);
+	MoveStem(Selection *selection, const Camera *camera, int x, int y,
+		bool snap = false);
 	void snapToCursor(bool snap);
 	bool onMouseMove(QMouseEvent *event);
 	bool onMousePress(QMouseEvent *event);

@@ -29,6 +29,20 @@ public:
 		bool ctrl;
 		bool shift;
 		bool alt;
+
+		bool operator<(const KeyMap::Binding &a) const
+		{
+			if (a.key != this->key)
+				return a.key < this->key;
+			else if (a.ctrl != this->ctrl)
+				return a.ctrl;
+			else if (a.shift != this->shift)
+				return a.shift;
+			else if (a.alt != this->alt)
+				return a.alt;
+			else
+				return false;
+		}
 	};
 
 	void loadFromXMLFile(const char *filename);
@@ -39,18 +53,5 @@ public:
 private:
 	std::map<Binding, QString> bindings;
 };
-
-inline bool operator<(const KeyMap::Binding &a, const KeyMap::Binding &b) {
-	if (a.key != b.key)
-		return a.key < b.key;
-	else if (a.ctrl != b.ctrl)
-		return a.ctrl;
-	else if (a.shift != b.shift)
-		return a.shift;
-	else if (a.alt != b.alt)
-		return b.alt;
-	else
-		return false;
-}
 
 #endif

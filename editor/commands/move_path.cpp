@@ -83,9 +83,9 @@ bool MovePath::onMouseMove(QMouseEvent *event)
 	float x = point.x() + clickOffset[0];
 	float y = point.y() + clickOffset[1];
 	setParallelTangents(!ctrl);
-	this->moveSpline.set(
-		this->camera->getRay(x, y),
-		this->camera->getDirection());
+	pg::Ray ray = this->camera->getRay(x, y);
+	pg::Vec3 direction = this->camera->getDirection();
+	this->moveSpline.set(ray, direction);
 	execute();
 	return true;
 }

@@ -120,14 +120,14 @@ void Editor::createFramebuffers()
 	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, this->msSilhouetteMap);
 	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, msaa, GL_RGB,
 		width(), height(), GL_TRUE);
-	glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE,
-		GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE,
-		GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE,
-		GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE,
-		GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_WRAP_S,
+		GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_WRAP_T,
+		GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MAG_FILTER,
+		GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MIN_FILTER,
+		GL_NEAREST);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
 		GL_TEXTURE_2D_MULTISAMPLE, this->msSilhouetteMap, 0);
 
@@ -214,7 +214,8 @@ void Editor::keyPressEvent(QKeyEvent *event)
 		size_t stemCount = this->selection.getStemInstances().size();
 		if (stemCount == 1) {
 			this->command = new AddLeaf(
-				&this->selection, &this->camera, x, y);
+				&this->selection,
+				&this->camera, x, y);
 			this->command->execute();
 			change();
 			emit selectionChanged();
@@ -259,7 +260,8 @@ void Editor::keyPressEvent(QKeyEvent *event)
 		bool containsRoot = this->selection.contains(root);
 		if ((hasStems || hasLeaves) && !containsRoot)
 			this->command = new MoveStem(
-				&this->selection, &this->camera, x, y);
+				&this->selection,
+				&this->camera, x, y);
 	} else if (commandName == "Reduce To Ancestors") {
 		if (this->selection.hasStems()) {
 			SaveSelection *copy;
@@ -497,8 +499,8 @@ void Editor::paintGL()
 	this->staticBuffer.use();
 	glUseProgram(this->shared->getShader(SharedResources::Flat));
 	glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
-	glDrawArrays(GL_LINES,
-		this->segments.grid.pstart, this->segments.grid.pcount);
+	glDrawArrays(GL_LINES, this->segments.grid.pstart,
+		this->segments.grid.pcount);
 
 	/* Paint the plant. */
 	this->plantBuffer.use();

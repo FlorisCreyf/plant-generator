@@ -28,8 +28,8 @@ class Selector {
 
 	bool selectPoint(const QMouseEvent *, Selection *);
 	void selectMesh(const QMouseEvent *, const pg::Mesh *, Selection *);
-	std::pair<float, pg::Stem *> getStem(
-		pg::Ray &, pg::Stem *, pg::Plant *);
+	std::pair<float, pg::Stem *> getStem(pg::Ray &, pg::Stem *,
+		pg::Plant *);
 	std::pair<float, pg::Segment> getLeaf(pg::Ray, const pg::Mesh *);
 
 public:

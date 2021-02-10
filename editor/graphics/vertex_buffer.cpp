@@ -53,8 +53,7 @@ void VertexBuffer::load(const Geometry &geometry)
 	load(p->data(), p->size(), i->data(), i->size());
 }
 
-void VertexBuffer::load(
-	const DVertex *points, size_t psize,
+void VertexBuffer::load(const DVertex *points, size_t psize,
 	const unsigned *indices, size_t isize)
 {
 	size[Points] = capacity[Points] = psize;
@@ -78,8 +77,7 @@ void VertexBuffer::update(const Geometry &geometry)
 	update(p->data(), p->size(), i->data(), i->size());
 }
 
-void VertexBuffer::update(
-	const DVertex *points, size_t psize,
+void VertexBuffer::update(const DVertex *points, size_t psize,
 	const unsigned *indices, size_t isize)
 {
 	use();
@@ -96,7 +94,7 @@ void VertexBuffer::update(
 
 	glBufferSubData(GL_ARRAY_BUFFER, 0, psize, points);
 
-	if (indices != nullptr) {
+	if (indices) {
 		if (isize > capacity[Indices])
 			allocateIndexMemory(isize * 2);
 		else

@@ -55,8 +55,8 @@ public:
 	void initialize();
 	GLuint getShader(Shader shader);
 	GLuint getTexture(Texture texture);
-	GLuint addTexture(
-		const QImage &image, GLenum baseformat, GLenum sizeformat);
+	GLuint addTexture(const QImage &image, GLenum baseformat,
+		GLenum sizeformat);
 	GLuint addDefaultTexture(const unsigned char color[3]);
 	void removeTexture(GLuint texture);
 

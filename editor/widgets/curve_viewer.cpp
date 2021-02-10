@@ -81,7 +81,7 @@ void CurveViewer::appendInterface(Geometry &geometry)
 	Vec3 center(0.0f, 0.2f, 0.0f);
 	Vec3 color(0.34f, 0.34f, 0.34f);
 	plane.addPlane(a, b, center, color, Vec3(0.0f, 0.0f, 0.0f));
-	this->planeSegment = geometry.append(plane);
+	this->plane = geometry.append(plane);
 
 	Geometry grid;
 	Vec3 colors[2];
@@ -95,7 +95,7 @@ void CurveViewer::appendInterface(Geometry &geometry)
 	grid.addGrid(100, colors, colors[0]);
 	Geometry::Segment segment = grid.getSegment();
 	grid.transform(segment.pstart, segment.pcount, t);
-	this->gridSegment = geometry.append(grid);
+	this->grid = geometry.append(grid);
 }
 
 void CurveViewer::change(const Spline &spline, const PointSelection &selection)
@@ -168,10 +168,11 @@ void CurveViewer::mouseReleaseEvent(QMouseEvent *event)
 
 void CurveViewer::resizeGL(int width, int height)
 {
-	float ratio = static_cast<float>(width) / static_cast<float>(height);
-	this->camera.setWindowSize(width, height);
-	this->camera.setOrthographic(
-		Vec3(-ratio, -1.0f, 0.0f), Vec3(ratio, 1.0f, 100.0f));
+	float ratio = 1.0f;
+	this->camera.setWindowSize(width, height*ratio);
+	Vec3 near(-ratio, -1.0f, 0.0f);
+	Vec3 far(ratio, 1.0f, 100.0f);
+	this->camera.setOrthographic(near, far);
 }
 
 void CurveViewer::paintGL()
@@ -190,32 +191,29 @@ void CurveViewer::paintGL()
 
 	{
 		auto size = sizeof(unsigned);
-		GLvoid *start = (GLvoid *)(this->planeSegment.istart * size);
-		GLsizei count = this->planeSegment.icount;
+		GLvoid *start = (GLvoid *)(this->plane.istart * size);
+		GLsizei count = this->plane.icount;
 		glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, start);
 	}
 
-	glDrawArrays(GL_LINES,
-		this->gridSegment.pstart,
-		this->gridSegment.pcount);
+	glDrawArrays(GL_LINES, this->grid.pstart, this->grid.pcount);
 
 	if (this->path.getLineSegment().pcount) {
 		glUseProgram(this->shared->getShader(SharedResources::Line));
 		glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
 		glUniform2f(1, QWidget::width(), QWidget::height());
 
-		Geometry::Segment segment = this->path.getLineSegment();
-		GLvoid *start = (GLvoid *)(segment.istart * sizeof(unsigned));
-		glDrawElements(
-			GL_LINE_STRIP, segment.icount, GL_UNSIGNED_INT, start);
+		Geometry::Segment s = this->path.getLineSegment();
+		GLvoid *start = (GLvoid *)(s.istart * sizeof(unsigned));
+		glDrawElements(GL_LINE_STRIP, s.icount, GL_UNSIGNED_INT, start);
 
-		segment = this->path.getPointSegment();
-		GLuint texture =
-			this->shared->getTexture(SharedResources::DotTexture);
+		s = this->path.getPointSegment();
+		GLuint texture = this->shared->getTexture(
+			SharedResources::DotTexture);
 		glBindTexture(GL_TEXTURE_2D, texture);
 		glUseProgram(this->shared->getShader(SharedResources::Point));
 		glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
-		glDrawArrays(GL_POINTS, segment.pstart, segment.pcount);
+		glDrawArrays(GL_POINTS, s.pstart, s.pcount);
 	}
 
 	glFlush();

@@ -62,7 +62,8 @@ void ExtrudeSpline::undo()
 	*this->selection = this->prevSelection;
 }
 
-void ExtrudeSpline::redo() {
+void ExtrudeSpline::redo()
+{
 	*this->spline = this->prevSpline;
 	*this->selection = this->newSelection;
 }

@@ -34,13 +34,11 @@ public:
 	IMPORTANT: Call initialize() or use() before calling load(...). The
 	buffer can't be changed until the VAO is bound. */
 	void load(const Geometry &geometry);
-	void load(
-		const pg::DVertex *points, size_t psize,
+	void load(const pg::DVertex *points, size_t psize,
 		const unsigned *indices, size_t isize);
 	/** Reduces reallocations and should be used for dynamic meshes. */
 	void update(const Geometry &geometry);
-	void update(
-		const pg::DVertex *points, size_t psize,
+	void update(const pg::DVertex *points, size_t psize,
 		const unsigned *indices, size_t isize);
 	/** The buffer should be bound prior to calling update. The method
 	returns false if the buffer is too small. */

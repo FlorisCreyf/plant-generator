@@ -51,7 +51,6 @@ void CurveEditor::createInterface(SharedResources *shared)
 	connect(this->degree,
 		QOverload<int>::of(&ComboBox::currentIndexChanged),
 		this, &CurveEditor::setDegree);
-
 	this->viewer = new CurveViewer(shared, this);
 	this->viewer->installEventFilter(this);
 	this->layout->addWidget(this->viewer);
@@ -98,8 +97,8 @@ void CurveEditor::keyPressEvent(QKeyEvent *event)
 	QString command = this->keymap->getBinding(key, ctrl, shift, alt);
 
 	if (command == "Select Next Points") {
-		SavePointSelection *selectionCopy =
-			new SavePointSelection(&this->selection);
+		SavePointSelection *selectionCopy = new SavePointSelection(
+			&this->selection);
 		this->selection.selectNext(this->spline.getSize());
 		if (selectionCopy->hasChanged()) {
 			selectionCopy->setAfter();
@@ -108,8 +107,8 @@ void CurveEditor::keyPressEvent(QKeyEvent *event)
 		} else
 			delete selectionCopy;
 	} else if (command == "Select Previous Points") {
-		SavePointSelection *selectionCopy =
-			new SavePointSelection(&this->selection);
+		SavePointSelection *selectionCopy = new SavePointSelection(
+			&this->selection);
 		this->selection.selectPrevious();
 		if (selectionCopy->hasChanged()) {
 			selectionCopy->setAfter();
@@ -118,8 +117,8 @@ void CurveEditor::keyPressEvent(QKeyEvent *event)
 		} else
 			delete selectionCopy;
 	} else if (command == "Select Points") {
-		SavePointSelection *selectionCopy =
-			new SavePointSelection(&this->selection);
+		SavePointSelection *selectionCopy = new SavePointSelection(
+			&this->selection);
 		this->selection.selectAll(this->spline.getSize());
 		if (selectionCopy->hasChanged()) {
 			selectionCopy->setAfter();
@@ -140,9 +139,8 @@ void CurveEditor::keyPressEvent(QKeyEvent *event)
 			points.erase(1);
 		}
 		this->selection.setPoints(points);
-
-		RemoveSpline *removeSpline = new RemoveSpline(
-			&this->selection, &this->originalSpline);
+		RemoveSpline *removeSpline = new RemoveSpline(&this->selection,
+			&this->originalSpline);
 		removeSpline->execute();
 		this->spline = this->originalSpline;
 		change(true);
@@ -189,8 +187,8 @@ void CurveEditor::extrude()
 
 	this->originalSpline = this->spline;
 	const Camera *camera = this->viewer->getCamera();
-	ExtrudeSpline *extrude = new ExtrudeSpline(
-		&this->selection, &this->originalSpline, &this->axes, camera);
+	ExtrudeSpline *extrude = new ExtrudeSpline(&this->selection,
+		&this->originalSpline, &this->axes, camera);
 	pg::Vec3 s = camera->toScreenSpace(avg);
 	QPoint pos = this->viewer->mapFromGlobal(QCursor::pos());
 	extrude->setClickOffset(s.x - pos.x(), s.y - pos.y());
@@ -211,13 +209,12 @@ void CurveEditor::mousePressed(QMouseEvent *event)
 	if (this->command)
 		exitCommand(this->command->onMousePress(event));
 	else if (event->button() == Qt::RightButton) {
-		SavePointSelection *selectionCopy =
-			new SavePointSelection(&this->selection);
+		SavePointSelection *selectionCopy = new SavePointSelection(
+			&this->selection);
 
 		Selector selector(camera);
-		selector.selectPoint(
-			event, this->spline, Vec3(0.0, 0.0f, 0.0f),
-			&this->selection);
+		selector.selectPoint(event, this->spline,
+			Vec3(0.0, 0.0f, 0.0f), &this->selection);
 
 		if (selectionCopy->hasChanged()) {
 			selectionCopy->setAfter();
@@ -297,9 +294,8 @@ void CurveEditor::restrictLinearControls()
 {
 	auto points = this->selection.getPoints();
 	auto controls = this->spline.getControls();
-
+	controls[controls.size()-1].x = 1.0f;
 	controls[0].x = 0.0f;
-	controls[controls.size() - 1].x = 1.0f;
 
 	if (this->moveLeft)
 		for (auto it = points.begin(); it != points.end(); ++it)

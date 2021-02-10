@@ -34,10 +34,8 @@ class CurveViewer : public QOpenGLWidget, protected QOpenGLFunctions_4_3_Core {
 	Path path;
 	Geometry geometry;
 
-	Geometry::Segment gridSegment;
-	Geometry::Segment planeSegment;
-	Geometry::Segment controlSegment;
-	Geometry::Segment curveSegment;
+	Geometry::Segment grid;
+	Geometry::Segment plane;
 
 	void appendInterface(Geometry &geometry);
 

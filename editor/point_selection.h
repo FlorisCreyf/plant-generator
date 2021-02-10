@@ -35,8 +35,8 @@ public:
 	bool hasPoints() const;
 	bool contains(int point) const;
 
-	pg::Vec3 getAveragePosition(
-		const pg::Spline &spline, pg::Vec3 location) const;
+	pg::Vec3 getAveragePosition(const pg::Spline &spline,
+		pg::Vec3 location) const;
 
 	void clear();
 	bool removePoint(int point);

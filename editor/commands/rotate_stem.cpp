@@ -235,7 +235,6 @@ bool RotateStem::onMouseMove(QMouseEvent *event)
 
 	set(this->camera->getRay(x, y), this->camera->getDirection());
 	execute();
-
 	return true;
 }
 
