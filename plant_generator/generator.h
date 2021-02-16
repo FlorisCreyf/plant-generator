@@ -25,17 +25,7 @@
 
 namespace pg {
 	class Generator {
-		struct Light {
-			Vec3 direction = Vec3(0.0f, 0.0f, 0.0f);
-			int rays = 0;
-		};
-		struct Intersection {
-			Stem *stem = nullptr;
-			float t = 0.0f;
-		};
-
 		Plant *plant;
-		std::map<Stem *, Light> growth;
 		float primaryGrowthRate;
 		float secondaryGrowthRate;
 		float minRadius;
@@ -43,17 +33,21 @@ namespace pg {
 		int rayLevels;
 		float width;
 
-		int propagate(Stem *stem);
-		void addStems(Stem *stem);
-		void addNodes(int);
-		void addNode(Stem *, Light, int);
+		void initRoot();
+		void addToVolume(Volume *, Stem *);
+		void castRays(Volume *);
+		void updateRadiantEnergy(Volume *, Ray);
+		void generalizeDensity(Volume::Node *);
+		void generalizeFlux(Volume::Node *);
+		float evaluateEfficiency(Volume *, Stem *);
+		void addNodes(Volume *, Stem *, int);
+		void addNode(Volume *, Stem *, int);
+		void updateRadius(Stem *);
+		void addStems(Stem *, Volume *);
+		void addStem(Stem *, Volume *);
 		void addLeaves(Stem *, int);
 		Leaf createLeaf();
-
-		Intersection intersect(Stem *, Ray);
-		void castRays();
-		void updateGrowth(Ray);
-		void updateBoundingBox(Vec3 point);
+		void updateBoundingBox(Vec3);
 
 	public:
 		Generator(Plant *plant);

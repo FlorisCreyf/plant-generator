@@ -29,6 +29,16 @@ Volume::Volume(float size, int depth) :
 
 }
 
+void Volume::clear(float size, int depth)
+{
+	if (this->root.getNode(0)) {
+		this->root.clear();
+		this->root = Node(Vec3(0.0f, size*0.5f, 0.0f), 0.5f*size);
+		this->size = size;
+		this->depth = depth;
+	}
+}
+
 Node *Volume::addNode(Vec3 point)
 {
 	Node *node = &this->root;
@@ -46,110 +56,121 @@ void Volume::addLine(Vec3 a, Vec3 b, float weight)
 	Ray ray(a, normalize(b-a));
 	Node *node = addNode(a);
 	Node *lastNode = addNode(b);
-	node->setWeight(weight);
+	node->setDensity(weight);
 	while (node != lastNode) {
-		Node *nextNode = node->getAdjacentNode(node, ray);
-		if (nextNode == node)
+		Node *nextNode = node->getAdjacentNode(ray);
+		if (!nextNode || nextNode == node)
 			break;
 		node = nextNode;
 
 		Vec3 center = node->getCenter();
 		while (node->getDepth() < this->depth) {
 			node->divide();
-			node = node->getChildNode(node, center);
+			node = node->getChildNode(center);
 		}
-		node->setWeight(weight);
+		node->setDensity(weight);
 	}
 }
 
-Node *Node::getAdjacentNode(Volume::Node *node, Ray ray)
+Node *Node::getAdjacentNode(Ray ray)
 {
 	Vec3 d;
 	Plane plane;
-	plane.point = node->getCenter();
+	plane.point = this->center;
 	if (ray.direction.x < 0.0f) {
-		plane.point.x -= node->getSize();
+		plane.point.x -= this->size;
 		d.x = -1.0f;
 	} else {
-		plane.point.x += node->getSize();
+		plane.point.x += this->size;
 		d.x = 1.0f;
 	}
 	if (ray.direction.y < 0.0f) {
-		plane.point.y -= node->getSize();
+		plane.point.y -= this->size;
 		d.y = -1.0f;
 	} else {
-		plane.point.y += node->getSize();
+		plane.point.y += this->size;
 		d.y = 1.0f;
 	}
 	if (ray.direction.z < 0.0f) {
-		plane.point.z -= node->getSize();
+		plane.point.z -= this->size;
 		d.z = -1.0f;
 	} else {
-		plane.point.z += node->getSize();
+		plane.point.z += this->size;
 		d.z = 1.0f;
 	}
 
+	Node *node = this;
+	Vec3 p;
+	float t;
+
 	plane.normal = Vec3(d.x, 0.0f, 0.0f);
-	float t = intersectsPlane(ray, plane);
-	Vec3 p = t*ray.direction + ray.origin;
+	t = intersectsPlane(ray, plane);
+	p = t*ray.direction + ray.origin;
 	if (t && d.y*p.y <= d.y*plane.point.y && d.z*p.z <= d.z*plane.point.z)
-		node = getAdjacentNode(node, 1, p, d.x > 0.0f);
+		node = node->getAdjacentNode(1, p, d.x > 0.0f);
 
 	plane.normal = Vec3(0.0f, d.y, 0.0f);
 	t = intersectsPlane(ray, plane);
 	p = t*ray.direction + ray.origin;
 	if (t && d.x*p.x <= d.x*plane.point.x && d.z*p.z <= d.z*plane.point.z)
-		node = getAdjacentNode(node, 2, p, d.y > 0.0f);
+		node = node->getAdjacentNode(2, p, d.y > 0.0f);
 
 	plane.normal = Vec3(0.0f, 0.0f, d.z);
 	t = intersectsPlane(ray, plane);
 	p = t*ray.direction + ray.origin;
 	if (t && d.y*p.y <= d.y*plane.point.y && d.x*p.x <= d.x*plane.point.x)
-		node = getAdjacentNode(node, 4, p, d.z > 0.0f);
+		node = node->getAdjacentNode(4, p, d.z > 0.0f);
 
 	return node;
 }
 
-Node *Node::getAdjacentNode(Node *node, int axis, Vec3 point, bool positive)
+Node *Node::getAdjacentNode(int axis, Vec3 point, bool positive)
 {
-	if (!node->getParent())
-		return node;
+	if (!getParent())
+		return this;
 	else if (positive)
-		return getNextNode(node, axis, point);
+		return getNextNode(axis, point);
 	else
-		return getPreviousNode(node, axis, point);
+		return getPreviousNode(axis, point);
 }
 
-Node *Node::getNextNode(Node *node, int axis, Vec3 point)
+Node *Node::getNextNode(int axis, Vec3 point)
 {
+	Node *node = this;
 	Node *pnode = node->getParent();
+	if (!pnode)
+		return nullptr;
 	/* A set bit is in the positive direction, and an unset bit is in the
 	negative direction (x=1, y=2, z=4). */
 	int index = node - pnode->getNode(0);
 	if ((index & axis) == axis)
-		node = getNextNode(pnode, axis, point);
+		node = pnode->getNextNode(axis, point);
 	else
 		node = pnode->getNode(index + axis);
-	if (node->getNode(0))
-		node = getChildNode(node, point);
-	return node;
+	if (node && node->getNode(0))
+		node = node->getChildNode(point);
+	return node ? node : this;
 }
 
-Node *Node::getPreviousNode(Node *node, int axis, Vec3 point)
+Node *Node::getPreviousNode(int axis, Vec3 point)
 {
+	Node *node = this;
 	Node *pnode = node->getParent();
+	if (!pnode)
+		return nullptr;
 	int index = node - pnode->getNode(0);
 	if ((index & axis) == 0)
-		node = getPreviousNode(pnode, axis, point);
+		node = pnode->getPreviousNode(axis, point);
 	else
 		node = pnode->getNode(index - axis);
-	if (node->getNode(0))
-		node = getChildNode(node, point);
-	return node;
+	if (node && node->getNode(0))
+		node = node->getChildNode(point);
+	return node ? node : this;
 }
 
-Node *Node::getChildNode(Node *pnode, Vec3 point)
+Node *Node::getChildNode(Vec3 point)
 {
+	Node *pnode = this;
 	Node *node = nullptr;
 	float t = std::numeric_limits<float>::max();
 	for (int i = 0; i < 8; i++) {
@@ -162,7 +183,7 @@ Node *Node::getChildNode(Node *pnode, Vec3 point)
 		}
 	}
 	if (node->getNode(0))
-		return getChildNode(node, point);
+		return node->getChildNode(point);
 	else
 		return node;
 }
@@ -194,15 +215,21 @@ Node *Volume::getNode(Vec3 point, Node *node)
 Node::Node(Vec3 center, float size) :
 	nodes(nullptr),
 	parent(nullptr),
+	depth(0),
 	center(center),
 	size(size),
-	weight(1.0f),
-	depth(0)
+	density(0.0f),
+	flux(0.0f, 0.0f, 0.0f)
 {
 
 }
 
-Node::Node() : nodes(nullptr), parent(nullptr), weight(1.0f), depth(0)
+Node::Node() :
+	nodes(nullptr),
+	parent(nullptr),
+	depth(0),
+	density(0.0f),
+	flux(0.0f, 0.0f, 0.0f)
 {
 
 }
@@ -213,14 +240,12 @@ Node::~Node()
 		delete[] this->nodes;
 }
 
-void Node::setWeight(float weight)
+void Node::clear()
 {
-	this->weight = weight;
-}
-
-float Node::getWeight() const
-{
-	return this->weight;
+	if (this->nodes) {
+		delete[] this->nodes;
+		this->nodes = nullptr;
+	}
 }
 
 Vec3 Node::getCenter() const
@@ -275,4 +300,24 @@ void Node::divide()
 		this->nodes[i].parent = this;
 		this->nodes[i].nodes = nullptr;
 	}
+}
+
+void Node::setDensity(float density)
+{
+	this->density = density;
+}
+
+float Node::getDensity() const
+{
+	return this->density;
+}
+
+void Node::setFlux(Vec3 flux)
+{
+	this->flux = flux;
+}
+
+Vec3 Node::getFlux() const
+{
+	return this->flux;
 }

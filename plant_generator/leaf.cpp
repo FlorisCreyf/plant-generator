@@ -67,6 +67,9 @@ float Leaf::getPosition() const
 void Leaf::setRotation(const LeafData &data, float position, const Path &path,
 	int index)
 {
+	if (path.getSize() < 2)
+		return;
+
 	const Vec3 direction = path.getIntermediateDirection(position);
 	const float length = path.getLength();
 	float start = (length - data.distance);

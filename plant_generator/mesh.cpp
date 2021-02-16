@@ -1220,15 +1220,11 @@ Geometry Mesh::transformLeaf(const Leaf *leaf, const Stem *stem)
 	const Path path = stem->getPath();
 	Vec3 location = stem->getLocation();
 	float position = leaf->getPosition();
-	Vec3 direction;
 
-	if (position >= 0.0f && position < path.getLength()) {
-		direction = path.getIntermediateDirection(position);
+	if (position >= 0.0f && position < path.getLength())
 		location += path.getIntermediate(position);
-	} else {
-		direction = path.getDirection(path.getSize() - 1);
+	else
 		location += path.get().back();
-	}
 
 	Geometry geom = this->plant->getLeafMesh(leaf->getMesh());
 	geom.transform(leaf->getRotation(), leaf->getScale(), location);

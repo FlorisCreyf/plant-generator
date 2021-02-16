@@ -25,40 +25,47 @@ namespace pg {
 		class Node {
 			Node *nodes;
 			Node *parent;
+			int depth;
 			Vec3 center;
 			float size;
-			float weight;
-			int depth;
+
+			float density;
+			Vec3 flux;
 
 			Node();
-			Node *getAdjacentNode(Node *, int, Vec3, bool);
+			Node *getAdjacentNode(int, Vec3, bool);
 
 		public:
 			~Node();
 			Node(Vec3 center, float size);
 			Node *getParent();
 			Node *getNode(int index);
-			Node *getNextNode(Node *, int, Vec3);
-			Node *getPreviousNode(Node *, int, Vec3);
-			Node *getChildNode(Node *, Vec3);
-			Node *getAdjacentNode(Node *node, Ray ray);
-			void divide();
-			void setWeight(float weight);
-			float getWeight() const;
+			Node *getNextNode(int axis, Vec3 point);
+			Node *getPreviousNode(int axis, Vec3 point);
+			Node *getChildNode(Vec3 point);
+			Node *getAdjacentNode(Ray ray);
 			Vec3 getCenter() const;
 			float getSize() const;
 			int getDepth() const;
+			void divide();
+			void clear();
+
+			void setDensity(float density);
+			float getDensity() const;
+			void setFlux(Vec3 flux);
+			Vec3 getFlux() const;
 		};
 
 		Volume(float size, int depth);
+		void clear(float size, int depth);
 		Node *addNode(Vec3 point);
 		void addLine(Vec3 a, Vec3 b, float weight);
 		Node *getNode(Vec3 point);
 		Node *getRoot();
 
 	private:
-		const float size;
-		const int depth;
+		float size;
+		int depth;
 		Node root;
 
 		Node *getNode(Vec3 point, Node *node);

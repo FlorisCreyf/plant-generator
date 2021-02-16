@@ -6,6 +6,8 @@
 \usepackage{calc}
 \usepackage{float}
 \usepackage{amsmath}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.16}
 \usepackage{fancyhdr}
 \pagestyle{fancy}
 \fancyhf{}
@@ -84,7 +86,7 @@ A plant is grown over a certain number of growth cycles. A bounding box is gener
 
 Each stem develops buds at the beginning of each iteration. Leaves form along the dormant nodes in the current iteration, and stems grow from the nodes in the following iteration. As stems grow older, a branch collar (swelling) forms at the base to secure the stem to the parent stem. Additionally, growth of lateral stems is suppressed by some factor depending on the distance to the apex of the parent stem. This suppression factor is intended to approximate the effects of auxin hormones that control the apical dominance of the plant.
 
-\subsubsection{Volume Luminosity}
+\subsubsection{Irradiance}
 The space the plant grows is partitioned using an octree. By recording how to the space is utilized, by the plant itself and surrounding objects, stems can be distributed more evenly throughout the space. Additionally, ray tracing volumes in the octree provides more information to the plant so that it can direct stems towards well illuminated volumes.
 
 \begin{figure}[H]
@@ -97,14 +99,44 @@ The space the plant grows is partitioned using an octree. By recording how to th
  \begin{minipage}[t]{0.48\textwidth}
   \centering
   \includesvg{resources/diagrams/octree.svg} \\
-  \caption{The plant is first stored in an octree and then the luminosity is calculated for each volume by casting rays through the space.}
+  \caption{The plant is first stored in an octree and then the radiant flux through each volume is calculated by casting rays through the space.}
  \end{minipage}
 \end{figure}
 
-\subsubsection{Hormone Concentrations/Flow}
+\begin{figure}[H]
+\begin{minipage}[t]{0.48\textwidth}
+\begin{tikzpicture}
+\begin{axis}[height=6cm, width=6.5cm, xmin=0, xmax=1000, ymin=0, ymax=1000, xtick={0, 200, 400, 600, 800, 1000}, ytick={0, 200, 400, 600, 800, 1000}, grid=both, legend pos=north west, xlabel={Radiant Flux ($ W $)}, ylabel={Radiant Flux ($ W $)}]
+\addplot [domain=0:1000, samples=2, style=dashed]{x/(1)};
+\addlegendentry{$ r = 0 $}
+\addplot [domain=0:1000, samples=2]{x/(1+1)};
+\addlegendentry{$ r = 1 $}
+\addplot [domain=0:1000, samples=2]{x/(1+2)};
+\addlegendentry{$ r = 2 $}
+\addplot [domain=0:1000, samples=2]{x/(1+4)};
+\addlegendentry{$ r = 4 $}
+\end{axis}
+\end{tikzpicture}
+\caption{The densisty ($ r $) of each volume in the octree reduces the radiant flux within the canopy.}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.48\textwidth}
+\begin{tikzpicture}
+\begin{axis}[height=6cm, width=7.5cm, xmin=0, xmax=1000, ymin=0, ymax=1, grid=both, legend pos=south east, xlabel={Irradiance ($ W/m^2 $)}, ylabel={Rate of Photosynthesis (\%)}]
+\addplot [domain=0:1000, samples=100]{x/(x+50)};
+\addlegendentry{$x/(x+c)$}
+\addplot [domain=0:1000, samples=2, style=dashed]{0.5};
+\addlegendentry{threshold}
+\end{axis}
+\end{tikzpicture}
+\caption{The photosynthesis-irradiance curve shows how irradiance influences the rate of photosynthesis. A threshold denotes the minimum efficiency.}
+\end{minipage}
+\end{figure}
+
+\subsubsection{Hormones}
 The rate of stem growth is determined by hormone concentrations. Some hormones, such as auxins, are produced in the apical nodes of stems. Other hormones, such as strigolactones and some cytokinins, are produced in the roots of the plant. Therefore, rates of growth are determined by both bottom-up and top-down processes.
 
-The top-down process enables the plant to bend towards light and reduces internal competition to facilitate vertical growth. Assume that each apical node produces a fixed amount of hormones. Also assume that each stem can only transport chemicals up to some threshold and that this threshold is proportional to the radius of its stem. Let $ R $ be the radius function, $ l $ be the length of a stem, and $ h $ be the quantity of some hormone.
+Assume that each apical node produces a fixed amount of hormones. Also assume that each stem can only transport chemicals up to some threshold and that this threshold is proportional to the radius of the stem. Let $ R $ be the radius function, $ l $ be the length of a stem, and $ h $ be the quantity of some hormone.
 
 \[ R(x) = 1 - \frac{x}{l} \]
 \[ V(x) = \int \pi R(x)^2 dx = \frac{-\pi l}{3} \left( 1 - \frac{x}{l} \right)^3 + c \]
@@ -202,7 +234,7 @@ This method stops working reliably when a vector points in the opposite directio
  \end{minipage}
 \end{figure}
 
-\item Cross sections are projected onto three planes so that each pair of points overlap. Cross sections can also be connected with B\'{e}zier curves if the projected points are used as tangent points.
+\item Cross sections are projected onto three planes so that pairs of points overlap. Cross sections can also be connected with B\'{e}zier curves if the projected points are used as tangent points.
 \end{enumerate}
 
 \subsection{Leaves}

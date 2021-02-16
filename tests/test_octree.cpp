@@ -38,13 +38,13 @@ BOOST_AUTO_TEST_CASE(test_add_line)
 	Volume::Node *node2 = volume.getNode(b);
 	BOOST_TEST(node1->getDepth() == 3);
 	BOOST_TEST(node2->getDepth() == 3);
-	BOOST_TEST(node1->getWeight() == weight);
-	BOOST_TEST(node2->getWeight() == weight);
+	BOOST_TEST(node1->getDensity() == weight);
+	BOOST_TEST(node2->getDensity() == weight);
 
 	volume.addLine(a, c, weight);
 	Volume::Node *node3 = volume.getNode(c);
 	BOOST_TEST(node3->getDepth() == 3);
-	BOOST_TEST(node3->getWeight() == weight);
+	BOOST_TEST(node3->getDensity() == weight);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
