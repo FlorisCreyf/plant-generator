@@ -33,10 +33,9 @@ Generate::Generate(Selection *selection, pg::PseudoGenerator *generator) :
 
 	Plant *plant = this->selection->getPlant();
 	auto instances = this->selection->getStemInstances();
+	for (const pg::Curve &curve : plant->getCurves())
+		this->splines.push_back(curve.getSpline());
 	for (auto &instance : instances) {
-		unsigned index = instance.first->getRadiusCurve();
-		this->splines.push_back(plant->getCurve(index).getSpline());
-
 		pg::ParameterTree tree = instance.first->getParameterTree();
 		this->parameterTrees.push_back(tree);
 	}
@@ -86,24 +85,24 @@ void Generate::removeAdditions()
 	}
 }
 
-void Generate::overwriteCurve(Plant *plant, Stem *stem, unsigned index)
+void Generate::overwriteCurves(Plant *plant)
 {
-	pg::Curve curve = plant->getCurve(stem->getRadiusCurve());
-	curve.setSpline(this->splines[index]);
-	plant->updateCurve(curve, index);
+	for (size_t i = 0; i < this->splines.size(); i++) {
+		pg::Curve curve = plant->getCurve(i);
+		curve.setSpline(this->splines[i]);
+		plant->updateCurve(curve, i);
+	}
 }
 
 void Generate::execute()
 {
 	this->selection->reduceToAncestors();
 	removeAdditions();
-	size_t i = 0;
 	Plant *plant = this->selection->getPlant();
 	auto instances = this->selection->getStemInstances();
-	for (auto instance : instances) {
-		overwriteCurve(plant, instance.first, i++);
+	overwriteCurves(plant);
+	for (auto instance : instances)
 		this->generator->grow(instance.first);
-	}
 }
 
 void Generate::undo()
@@ -115,7 +114,6 @@ void Generate::undo()
 		pg::ParameterTree tree = this->parameterTrees[index++];
 		instance.first->setParameterTree(tree);
 	}
-
 	removeAdditions();
 	this->remove.undo();
 	*this->selection = this->prevSelection;
@@ -125,10 +123,8 @@ void Generate::redo()
 {
 	createRemovalSelection(this->selection, &this->removals);
 	this->remove.execute();
-
 	auto instances = this->selection->getStemInstances();
 	for (auto instance : instances)
 		instance.first->setParameterTree(this->parameterTree);
-
 	execute();
 }

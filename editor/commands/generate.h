@@ -35,7 +35,7 @@ class Generate : public Command {
 
 	void createRemovalSelection(Selection *, Selection *);
 	void removeAdditions();
-	void overwriteCurve(pg::Plant *, pg::Stem *, unsigned);
+	void overwriteCurves(pg::Plant *);
 
 public:
 	Generate(Selection *selection, pg::PseudoGenerator *generator);
