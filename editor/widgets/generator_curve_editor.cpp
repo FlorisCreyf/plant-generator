@@ -127,7 +127,7 @@ void GeneratorCurveEditor::change(bool curveChanged)
 	if (curveChanged && !instances.empty()) {
 		if (!this->generate) {
 			pg::Scene *scene = this->editor->getScene();
-			pg::PseudoGenerator *generator = &scene->generator;
+			pg::PatternGenerator *generator = &scene->generator;
 			this->generate = new Generate(selection, generator);
 		}
 		updateParameterTree();

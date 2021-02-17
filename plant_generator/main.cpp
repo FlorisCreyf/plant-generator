@@ -14,7 +14,7 @@
  */
 
 #include "generator.h"
-#include "pseudo_generator.h"
+#include "pattern_generator.h"
 #include "mesh.h"
 #include "scene.h"
 #include "file/wavefront.h"
@@ -84,14 +84,14 @@ int main(int argc, char **argv)
 	pg::Scene scene;
 	scene.plant.setDefault();
 
-#ifndef PSEUDO_GENERATOR
+#ifndef PATTERN_GENERATOR
 	pg::Generator generator(&scene.plant);
 	generator.setPrimaryGrowthRate(pgr);
 	generator.setSecondaryGrowthRate(sgr);
 	generator.setRayDensity(rays, divisions);
 	generator.grow(cycles, nodes);
 #else
-	pg::PseudoGenerator generator(&scene.plant);
+	pg::PatternGenerator generator(&scene.plant);
 	pg::ParameterTree tree = generator.getParameterTree();
 	pg::ParameterRoot *root = tree.createRoot();
 	std::random_device rd;

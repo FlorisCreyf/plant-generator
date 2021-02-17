@@ -47,7 +47,7 @@ plant_generator/mesh.cpp \
 plant_generator/parameter_tree.cpp \
 plant_generator/path.cpp \
 plant_generator/plant.cpp \
-plant_generator/pseudo_generator.cpp \
+plant_generator/pattern_generator.cpp \
 plant_generator/scene.cpp \
 plant_generator/spline.cpp \
 plant_generator/stem.cpp \
@@ -125,7 +125,7 @@ plant_generator/mesh.h \
 plant_generator/parameter_tree.h \
 plant_generator/path.h \
 plant_generator/plant.h \
-plant_generator/pseudo_generator.h \
+plant_generator/pattern_generator.h \
 plant_generator/scene.h \
 plant_generator/spline.h \
 plant_generator/stem.h \

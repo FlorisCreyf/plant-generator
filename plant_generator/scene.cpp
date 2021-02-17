@@ -25,5 +25,5 @@ void pg::Scene::reset()
 	this->plant.removeRoot();
 	this->wind = Wind();
 	this->animation = Animation();
-	this->generator = PseudoGenerator(&this->plant);
+	this->generator = PatternGenerator(&this->plant);
 }

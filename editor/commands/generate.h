@@ -21,7 +21,7 @@
 #include "command.h"
 #include "remove_stem.h"
 #include "editor/selection.h"
-#include "plant_generator/pseudo_generator.h"
+#include "plant_generator/pattern_generator.h"
 
 class Generate : public Command {
 	Selection *selection;
@@ -31,14 +31,14 @@ class Generate : public Command {
 	std::vector<pg::Spline> splines;
 	std::vector<pg::ParameterTree> parameterTrees;
 	pg::ParameterTree parameterTree;
-	pg::PseudoGenerator *generator;
+	pg::PatternGenerator *generator;
 
 	void createRemovalSelection(Selection *, Selection *);
 	void removeAdditions();
 	void overwriteCurves(pg::Plant *);
 
 public:
-	Generate(Selection *selection, pg::PseudoGenerator *generator);
+	Generate(Selection *selection, pg::PatternGenerator *generator);
 	Generate(const Generate &original) = delete;
 	Generate &operator=(const Generate &original) = delete;
 	void execute();

@@ -32,7 +32,7 @@
 
 #include "plant_generator/plant.h"
 #include "plant_generator/mesh.h"
-#include "plant_generator/pseudo_generator.h"
+#include "plant_generator/pattern_generator.h"
 #include "plant_generator/scene.h"
 #include "plant_generator/wind.h"
 

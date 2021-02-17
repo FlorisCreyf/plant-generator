@@ -14,7 +14,7 @@
  */
 
 #include "plant.h"
-#include "pseudo_generator.h"
+#include "pattern_generator.h"
 #include <cstdlib>
 #include <cmath>
 
@@ -22,45 +22,29 @@ using namespace pg;
 
 const float pi = 3.14159265359f;
 
-PseudoGenerator::PseudoGenerator(Plant *plant) : plant(plant)
+PatternGenerator::PatternGenerator(Plant *plant) : plant(plant)
 {
 
 }
 
-PseudoGenerator::PseudoGenerator(const PseudoGenerator &original) :
-	plant(original.plant),
-	parameterTree(original.parameterTree),
-	randomGenerator(original.randomGenerator)
-{
-
-}
-
-PseudoGenerator &PseudoGenerator::operator=(const PseudoGenerator &original)
-{
-	this->plant = original.plant;
-	this->randomGenerator = original.randomGenerator;
-	this->parameterTree = original.parameterTree;
-	return *this;
-}
-
-ParameterTree PseudoGenerator::getParameterTree() const
+ParameterTree PatternGenerator::getParameterTree() const
 {
 	return this->parameterTree;
 }
 
-void PseudoGenerator::setParameterTree(ParameterTree parameterTree)
+void PatternGenerator::setParameterTree(ParameterTree parameterTree)
 {
 	this->parameterTree = parameterTree;
 }
 
-void PseudoGenerator::reset()
+void PatternGenerator::reset()
 {
 	ParameterRoot *root = this->parameterTree.getRoot();
 	if (root)
 		this->randomGenerator.seed(root->getSeed());
 }
 
-void PseudoGenerator::grow()
+void PatternGenerator::grow()
 {
 	Stem *stem = this->plant->createRoot();
 	stem->setParameterTree(this->parameterTree);
@@ -77,7 +61,7 @@ void PseudoGenerator::grow()
 	}
 }
 
-void PseudoGenerator::grow(Stem *stem)
+void PatternGenerator::grow(Stem *stem)
 {
 	this->parameterTree = stem->getParameterTree();
 	const ParameterNode *node = this->parameterTree.getNode();
@@ -87,7 +71,7 @@ void PseudoGenerator::grow(Stem *stem)
 	}
 }
 
-void PseudoGenerator::addStems(Stem *stem, const ParameterNode *node)
+void PatternGenerator::addStems(Stem *stem, const ParameterNode *node)
 {
 	while (node) {
 		addLateralStems(stem, node);
@@ -96,7 +80,7 @@ void PseudoGenerator::addStems(Stem *stem, const ParameterNode *node)
 	}
 }
 
-void PseudoGenerator::addLateralStems(Stem *parent, const ParameterNode *node)
+void PatternGenerator::addLateralStems(Stem *parent, const ParameterNode *node)
 {
 	StemData stemData = node->getData();
 	if (stemData.density == 0.0f)
@@ -116,7 +100,7 @@ void PseudoGenerator::addLateralStems(Stem *parent, const ParameterNode *node)
 	}
 }
 
-void PseudoGenerator::addLateralStem(Stem *parent, float position,
+void PatternGenerator::addLateralStem(Stem *parent, float position,
 	const ParameterNode *node, int index)
 {
 	StemData data = node->getData();
@@ -142,7 +126,7 @@ void PseudoGenerator::addLateralStem(Stem *parent, float position,
 		addStems(stem, node->getChild());
 }
 
-Vec3 PseudoGenerator::getStemDirection(Stem *stem, StemData data, int index)
+Vec3 PatternGenerator::getStemDirection(Stem *stem, StemData data, int index)
 {
 	float variation = data.angleVariation*pi;
 	std::uniform_real_distribution<float> dis(-variation, variation);
@@ -181,7 +165,7 @@ float getCollarLength(Stem *stem, Vec3 direction, Plant *plant)
 	return scale;
 }
 
-void PseudoGenerator::setPath(Stem *stem, Vec3 direction, StemData data)
+void PatternGenerator::setPath(Stem *stem, Vec3 direction, StemData data)
 {
 	float radius = stem->getMaxRadius();
 	float length = radius * data.length;
@@ -226,7 +210,7 @@ void PseudoGenerator::setPath(Stem *stem, Vec3 direction, StemData data)
 	stem->setPath(path);
 }
 
-void PseudoGenerator::addLeaves(Stem *stem, LeafData data)
+void PatternGenerator::addLeaves(Stem *stem, LeafData data)
 {
 	if (data.density <= 0.0f || data.leavesPerNode < 1)
 		return;

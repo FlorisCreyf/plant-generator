@@ -20,7 +20,7 @@
 
 using pg::Leaf;
 using pg::Plant;
-using pg::PseudoGenerator;
+using pg::PatternGenerator;
 using pg::Stem;
 using pg::Vec2;
 using pg::Vec3;

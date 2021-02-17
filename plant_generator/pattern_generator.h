@@ -13,14 +13,14 @@
  * limitations under the License.
  */
 
-#ifndef PG_PSEUDO_GENERATOR_H
-#define PG_PSEUDO_GENERATOR_H
+#ifndef PG_PATTERN_GENERATOR_H
+#define PG_PATTERN_GENERATOR_H
 
 #include "plant.h"
 #include <random>
 
 namespace pg {
-	class PseudoGenerator {
+	class PatternGenerator {
 		Plant *plant;
 		ParameterTree parameterTree;
 		std::mt19937 randomGenerator;
@@ -33,9 +33,7 @@ namespace pg {
 		void addLeaves(Stem *, LeafData);
 
 	public:
-		PseudoGenerator(Plant *plant);
-		PseudoGenerator(const PseudoGenerator &original);
-		PseudoGenerator &operator=(const PseudoGenerator &original);
+		PatternGenerator(Plant *plant);
 		void grow();
 		void grow(Stem *stem);
 		void reset();

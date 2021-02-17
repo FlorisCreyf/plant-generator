@@ -39,7 +39,7 @@ material.cpp \
 mesh.cpp \
 path.cpp \
 plant.cpp \
-pseudo_generator.cpp \
+pattern_generator.cpp \
 scene.cpp \
 spline.cpp \
 stem.cpp \

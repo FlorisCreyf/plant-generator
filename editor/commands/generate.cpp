@@ -21,7 +21,7 @@ using pg::Leaf;
 using pg::Stem;
 using pg::Plant;
 
-Generate::Generate(Selection *selection, pg::PseudoGenerator *generator) :
+Generate::Generate(Selection *selection, pg::PatternGenerator *generator) :
 	selection(selection),
 	prevSelection(*selection),
 	removals(selection->getPlant()),

@@ -17,7 +17,7 @@
 #define PG_SCENE_H
 
 #include "plant.h"
-#include "pseudo_generator.h"
+#include "pattern_generator.h"
 #include "wind.h"
 
 #ifdef PG_SERIALIZE
@@ -27,7 +27,7 @@
 namespace pg {
 	struct Scene {
 		Plant plant;
-		PseudoGenerator generator;
+		PatternGenerator generator;
 		Animation animation;
 		Wind wind;
 

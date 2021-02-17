@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE(test_remove)
 	plant.setDefault();
 	ParameterTree ptree;
 	initializeParameterTree(ptree);
-	PseudoGenerator generator(&plant);
+	PatternGenerator generator(&plant);
 	generator.setParameterTree(ptree);
 	generator.grow();
 
@@ -84,7 +84,7 @@ BOOST_AUTO_TEST_CASE(test_generate)
 	ParameterTree ptree;
 	initializeParameterTree(ptree);
 
-	PseudoGenerator generator(&plant);
+	PatternGenerator generator(&plant);
 	generator.setParameterTree(ptree);
 	generator.grow();
 
