@@ -68,11 +68,15 @@ namespace pg {
 	struct StemData {
 		Spline densityCurve;
 		float density;
-		float start;
+		float distance;
 		float length;
 		float angleVariation;
 		float radiusThreshold;
 		float scale;
+		float fork;
+		float forkAngle;
+		float noise;
+		unsigned seed;
 		LeafData leaf;
 
 		StemData();
@@ -85,11 +89,15 @@ namespace pg {
 		{
 			ar & densityCurve;
 			ar & density;
-			ar & start;
+			ar & distance;
 			ar & length;
 			ar & radiusThreshold;
 			ar & angleVariation;
 			ar & scale;
+			ar & fork;
+			ar & forkAngle;
+			ar & noise;
+			ar & seed;
 			ar & leaf;
 		}
 #endif
@@ -130,40 +138,17 @@ namespace pg {
 		const ParameterNode *getParent() const;
 	};
 
-	class ParameterRoot {
-		friend class ParameterTree;
-
-		unsigned seed;
-		ParameterNode *node;
-
-#ifdef PG_SERIALIZE
-		friend class boost::serialization::access;
-		template<class Archive>
-		void serialize(Archive &ar, const unsigned)
-		{
-			ar & seed;
-			ar & node;
-		}
-#endif
-
-	public:
-		ParameterRoot();
-		void setSeed(int seed);
-		int getSeed() const;
-		ParameterNode *getNode() const;
-	};
-
 	class ParameterTree {
-		ParameterRoot *root;
+		ParameterNode *root;
 
 		void copy(const ParameterTree &);
 		void removeChildNode(ParameterNode *);
 		void copyNode(const ParameterNode *, ParameterNode *);
+		int getSize(const std::string &, size_t &) const;
 		void getNames(std::vector<std::string> &, std::string,
 			ParameterNode *) const;
 		ParameterNode *getNode(const std::string &, size_t,
 			ParameterNode *) const;
-		int getSize(const std::string &, size_t &) const;
 
 #ifdef PG_SERIALIZE
 		friend class boost::serialization::access;
@@ -180,8 +165,8 @@ namespace pg {
 		ParameterTree(const ParameterTree &original);
 		ParameterTree &operator=(const ParameterTree &derivation);
 		void reset();
-		ParameterRoot *getRoot() const;
-		ParameterRoot *createRoot();
+		ParameterNode *getRoot() const;
+		ParameterNode *createRoot();
 		ParameterNode *getNode() const;
 		ParameterNode *addChild(std::string name);
 		ParameterNode *addSibling(std::string name);

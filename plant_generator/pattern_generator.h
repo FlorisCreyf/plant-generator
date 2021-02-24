@@ -23,14 +23,15 @@ namespace pg {
 	class PatternGenerator {
 		Plant *plant;
 		ParameterTree parameterTree;
-		std::mt19937 randomGenerator;
+		std::mt19937 mt;
 
-		Vec3 getStemDirection(Stem *, StemData, int);
-		void setPath(Stem *, Vec3, StemData);
-		void addStems(Stem *, const ParameterNode *);
-		void addLateralStems(Stem *, const ParameterNode *);
+		Vec3 getForkDirection(Stem *, const StemData &, int);
+		Vec3 getStemDirection(Stem *, const StemData &, int);
+		void addLateralStems(Stem *, float, const ParameterNode *);
 		void addLateralStem(Stem *, float, const ParameterNode *, int);
-		void addLeaves(Stem *, LeafData);
+		float addStems(Stem *, Vec3, float, const ParameterNode *);
+		float setPath(Stem *, Vec3, float, const StemData &);
+		void addLeaves(Stem *, LeafData, float);
 
 	public:
 		PatternGenerator(Plant *plant);

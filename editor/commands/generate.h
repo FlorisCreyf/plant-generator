@@ -28,6 +28,7 @@ class Generate : public Command {
 	Selection prevSelection;
 	Selection removals;
 	RemoveStem remove;
+	std::vector<pg::Stem> stems;
 	std::vector<pg::Spline> splines;
 	std::vector<pg::ParameterTree> parameterTrees;
 	pg::ParameterTree parameterTree;

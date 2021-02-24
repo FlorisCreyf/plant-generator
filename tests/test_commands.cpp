@@ -44,7 +44,7 @@ void initializeParameterTree(ParameterTree &ptree)
 	ptree.createRoot();
 	StemData stemData;
 	stemData.density = 1.0f;
-	stemData.start = 0.5f;
+	stemData.distance = 4.0f;
 	stemData.length = 50.0f;
 	stemData.leaf.density = 0.5f;
 	ParameterNode *pnode;

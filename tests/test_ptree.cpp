@@ -116,7 +116,7 @@ BOOST_AUTO_TEST_CASE(test_remove_second_sibling)
 	tree.addChild("1");
 	tree.addSibling("1.1");
 	BOOST_TEST(tree.remove("1.2"));
-	ParameterNode *node = tree.getRoot()->getNode();
+	const ParameterNode *node = tree.getRoot()->getChild();
 	BOOST_TEST(node);
 	BOOST_TEST(node->getChild());
 	BOOST_TEST(node->getChild()->getParent() == node);
@@ -133,7 +133,7 @@ BOOST_AUTO_TEST_CASE(test_remove_first_sibling)
 	tree.addChild("1");
 	tree.addSibling("1.1");
 	BOOST_TEST(tree.remove("1.1"));
-	ParameterNode *node = tree.getRoot()->getNode();
+	const ParameterNode *node = tree.getRoot()->getChild();
 	BOOST_TEST(node);
 	BOOST_TEST(node->getChild());
 	BOOST_TEST(node->getChild()->getParent() == node);

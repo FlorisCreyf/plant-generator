@@ -21,7 +21,6 @@
 
 using pg::ParameterTree;
 using pg::ParameterNode;
-using pg::ParameterRoot;
 using pg::LeafData;
 using pg::StemData;
 using pg::Stem;
@@ -96,11 +95,20 @@ void GeneratorEditor::createInterface()
 
 	this->stemGroup = createGroup("Stems");
 	form = createForm(this->stemGroup);
-	form->addRow("Stems/Unit", this->dv[StemDensity]);
+	form->addRow("Stem Density", this->dv[StemDensity]);
 	form->addRow("Length", this->dv[Length]);
-	this->dv[Length]->setSingleStep(1.0f);
-	this->dv[Length]->setRange(0, std::numeric_limits<float>::max());
-	form->addRow("Start", this->dv[StemStart]);
+	this->dv[Length]->setSingleStep(1.0);
+	this->dv[Length]->setRange(0.0, std::numeric_limits<float>::max());
+	form->addRow("Distance", this->dv[StemDistance]);
+	form->addRow("Noise", this->dv[Noise]);
+	this->dv[Noise]->setSingleStep(0.001);
+	this->dv[Noise]->setDecimals(3);
+	form->addRow("Bifurcation", this->dv[Fork]);
+	this->dv[Fork]->setSingleStep(0.001);
+	this->dv[Fork]->setDecimals(3);
+	form->addRow("Bifurcation Angle", this->dv[ForkAngle]);
+	this->dv[ForkAngle]->setSingleStep(0.001);
+	this->dv[ForkAngle]->setDecimals(3);
 	form->addRow("Angle Variation", this->dv[AngleVariation]);
 	form->addRow("Radius Threshold", this->dv[RadiusThreshold]);
 	this->dv[RadiusThreshold]->setSingleStep(0.001);
@@ -113,7 +121,7 @@ void GeneratorEditor::createInterface()
 
 	this->leafGroup = createGroup("Leaves");
 	form = createForm(this->leafGroup);
-	form->addRow("Nodes/Unit", this->dv[LeafDensity]);
+	form->addRow("Node Density", this->dv[LeafDensity]);
 	form->addRow("Distance", this->dv[LeafDistance]);
 	form->addRow("Rotation", this->dv[LeafRotation]);
 	this->dv[LeafRotation]->setRange(min, max);
@@ -172,17 +180,43 @@ void GeneratorEditor::createRootGroup(QBoxLayout *layout)
 	this->rootGroup = createGroup("Root");
 	QFormLayout *form = createForm(this->rootGroup);
 
-	this->seedValue = new SpinBox(this);
-	this->seedValue->setRange(
-		std::numeric_limits<int>::min(),
-		std::numeric_limits<int>::max());
-	form->addRow("Seed", this->seedValue);
+	for (int i = 0; i < DRSize; i++) {
+		this->drv[i] = new DoubleSpinBox(this);
+		this->drv[i]->setFocusPolicy(Qt::StrongFocus);
+		this->drv[i]->setSingleStep(0.1);
+		connect(this->drv[i],
+			QOverload<double>::of(&DoubleSpinBox::valueChanged),
+			this, &GeneratorEditor::change);
+		connect(this->drv[i], &DoubleSpinBox::editingFinished,
+			this, &GeneratorEditor::finishChanging);
+	}
+	for (int i = 0; i < IRSize; i++) {
+		this->irv[i] = new SpinBox(this);
+		this->irv[i]->setFocusPolicy(Qt::StrongFocus);
+		this->irv[i]->setSingleStep(1);
+		connect(this->irv[i],
+			QOverload<int>::of(&SpinBox::valueChanged),
+			this, &GeneratorEditor::change);
+		connect(this->irv[i], &SpinBox::editingFinished,
+			this, &GeneratorEditor::finishChanging);
+	}
 
-	connect(this->seedValue,
-		QOverload<int>::of(&SpinBox::valueChanged),
-		this, &GeneratorEditor::change);
-	connect(this->seedValue, &SpinBox::editingFinished,
-		this, &GeneratorEditor::finishChanging);
+	const int min = std::numeric_limits<int>::min();
+	const int max = std::numeric_limits<int>::max();
+
+	this->irv[Seed]->setRange(min, max);
+	form->addRow("Seed", this->irv[Seed]);
+	form->addRow("Length", this->drv[RootLength]);
+	form->addRow("Radius Threshold", this->drv[RootThreshold]);
+	form->addRow("Noise", this->drv[RootNoise]);
+	this->drv[RootNoise]->setSingleStep(0.001);
+	this->drv[RootNoise]->setDecimals(3);
+	form->addRow("Bifurcation", this->drv[RootFork]);
+	this->drv[RootFork]->setSingleStep(0.001);
+	this->drv[RootFork]->setDecimals(3);
+	form->addRow("Bifurcation Angle", this->drv[RootForkAngle]);
+	this->drv[RootForkAngle]->setSingleStep(0.001);
+	this->drv[RootForkAngle]->setDecimals(3);
 
 	setFormLayout(form);
 	layout->addWidget(this->rootGroup);
@@ -195,8 +229,8 @@ void GeneratorEditor::setFields()
 	if (!instances.empty()) {
 		ParameterTree tree;
 		tree = instances.begin()->first->getParameterTree();
-		ParameterRoot *root = tree.getRoot();
-		if (root && root->getNode())
+		ParameterNode *root = tree.getRoot();
+		if (root && root->getChild())
 			setFields(tree, "1");
 		else
 			setFields(tree, "");
@@ -214,10 +248,20 @@ void GeneratorEditor::setFields(const ParameterTree &tree, string name)
 		std::vector<string> names = tree.getNames();
 		for (string name : names)
 			this->nodeValue->addItem(QString::fromStdString(name));
-		this->seedValue->setValue(tree.getRoot()->getSeed());
-	} else
-		this->seedValue->setValue(0);
 
+		StemData data = tree.getRoot()->getData();
+		this->irv[Seed]->setValue(data.seed);
+		this->drv[RootLength]->setValue(data.length);
+		this->drv[RootFork]->setValue(data.fork);
+		this->drv[RootForkAngle]->setValue(data.forkAngle);
+		this->drv[RootNoise]->setValue(data.noise);
+		this->drv[RootThreshold]->setValue(data.radiusThreshold);
+	} else {
+		for (int i = 0; i < DRSize; i++)
+			this->drv[i]->setValue(0);
+		for (int i = 0; i < IRSize; i++)
+			this->irv[i]->setValue(0.0);
+	}
 	if (node) {
 		this->nodeValue->setCurrentText(QString::fromStdString(name));
 		setStemData(node->getData());
@@ -229,8 +273,11 @@ void GeneratorEditor::setFields(const ParameterTree &tree, string name)
 void GeneratorEditor::setStemData(pg::StemData data)
 {
 	this->dv[StemDensity]->setValue(data.density);
-	this->dv[StemStart]->setValue(data.start);
+	this->dv[StemDistance]->setValue(data.distance);
 	this->dv[Length]->setValue(data.length);
+	this->dv[Fork]->setValue(data.fork);
+	this->dv[ForkAngle]->setValue(data.forkAngle);
+	this->dv[Noise]->setValue(data.noise);
 	this->dv[Scale]->setValue(data.scale);
 	this->dv[AngleVariation]->setValue(data.angleVariation);
 	this->dv[RadiusThreshold]->setValue(data.radiusThreshold);
@@ -257,15 +304,16 @@ void GeneratorEditor::setLeafData(pg::LeafData data)
 
 void GeneratorEditor::setEnabled(bool enable)
 {
-	this->seedValue->setEnabled(enable);
 	this->nodeValue->setEnabled(enable);
 	this->childButton->setEnabled(enable);
 	this->siblingButton->setEnabled(enable);
 	this->removeButton->setEnabled(enable);
-
+	for (int i = 0; i < DRSize; i++)
+		this->drv[i]->setEnabled(enable);
+	for (int i = 0; i < IRSize; i++)
+		this->irv[i]->setEnabled(enable);
 	if (this->nodeValue->currentIndex() == 0)
 		enable = false;
-
 	for (int i = 0; i < DSize; i++)
 		this->dv[i]->setEnabled(enable);
 	for (int i = 0; i < ISize; i++)
@@ -274,8 +322,11 @@ void GeneratorEditor::setEnabled(bool enable)
 
 void GeneratorEditor::blockSignals(bool block)
 {
-	this->seedValue->blockSignals(block);
 	this->nodeValue->blockSignals(block);
+	for (int i = 0; i < DRSize; i++)
+		this->drv[i]->blockSignals(block);
+	for (int i = 0; i < IRSize; i++)
+		this->irv[i]->blockSignals(block);
 	for (int i = 0; i < DSize; i++)
 		this->dv[i]->blockSignals(block);
 	for (int i = 0; i < ISize; i++)
@@ -294,11 +345,13 @@ void GeneratorEditor::change()
 	if (!tree.getRoot())
 		tree.createRoot();
 
-	tree.getRoot()->setSeed(this->seedValue->value());
+	StemData data = getRootData(tree.getRoot()->getData());
+	tree.getRoot()->setData(data);
+
 	if (this->nodeValue->currentIndex() > 0) {
 		std::string name = this->nodeValue->currentText().toStdString();
 		ParameterNode *node = tree.get(name);
-		StemData data = getStemData(node->getData());
+		data = getStemData(node->getData());
 		node->setData(data);
 	}
 
@@ -309,11 +362,25 @@ void GeneratorEditor::change()
 	this->editor->change();
 }
 
-pg::StemData GeneratorEditor::getStemData(StemData data)
+StemData GeneratorEditor::getRootData(StemData data)
+{
+	data.seed = this->irv[Seed]->value();
+	data.length = this->drv[RootLength]->value();
+	data.fork = this->drv[RootFork]->value();
+	data.forkAngle = this->drv[RootForkAngle]->value();
+	data.radiusThreshold = this->drv[RootThreshold]->value();
+	data.noise = this->drv[RootNoise]->value();
+	return data;
+}
+
+StemData GeneratorEditor::getStemData(StemData data)
 {
 	data.density = this->dv[StemDensity]->value();
-	data.start = this->dv[StemStart]->value();
+	data.distance = this->dv[StemDistance]->value();
 	data.length = this->dv[Length]->value();
+	data.fork = this->dv[Fork]->value();
+	data.forkAngle = this->dv[ForkAngle]->value();
+	data.noise = this->dv[Noise]->value();
 	data.scale = this->dv[Scale]->value();
 	data.angleVariation = this->dv[AngleVariation]->value();
 	data.radiusThreshold = this->dv[RadiusThreshold]->value();
@@ -321,7 +388,7 @@ pg::StemData GeneratorEditor::getStemData(StemData data)
 	return data;
 }
 
-pg::LeafData GeneratorEditor::getLeafData(LeafData data)
+LeafData GeneratorEditor::getLeafData(LeafData data)
 {
 	data.density = this->dv[LeafDensity]->value();
 	data.distance = this->dv[LeafDistance]->value();

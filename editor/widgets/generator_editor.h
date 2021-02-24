@@ -34,17 +34,20 @@ class GeneratorEditor : public QWidget {
 	QGroupBox *stemGroup;
 	QGroupBox *leafGroup;
 	ComboBox *nodeValue;
-	SpinBox *seedValue;
 	QPushButton *childButton;
 	QPushButton *siblingButton;
 	QPushButton *removeButton;
 
-	enum {StemDensity, StemStart, Length, Scale, AngleVariation,
-		RadiusThreshold, LeafDensity, LeafDistance, LeafRotation,
-		MinUp, MaxUp, LocalUp, GlobalUp, MinForward, MaxForward, Pull,
-		ScaleX, ScaleY, ScaleZ, DSize};
+	enum {RootLength, RootFork, RootForkAngle, RootThreshold, RootNoise,
+		DRSize};
+	enum {Seed, IRSize};
+	SpinBox *irv[IRSize];
+	DoubleSpinBox *drv[DRSize];
+	enum {StemDensity, StemDistance, Length, Scale, AngleVariation, Noise,
+		RadiusThreshold, Fork, ForkAngle, LeafDensity, LeafDistance,
+		LeafRotation, MinUp, MaxUp, LocalUp, GlobalUp, MinForward,
+		MaxForward, Pull, ScaleX, ScaleY, ScaleZ, DSize};
 	enum {LeavesPerNode, ISize};
-
 	DoubleSpinBox *dv[DSize];
 	SpinBox *iv[ISize];
 
@@ -58,6 +61,7 @@ class GeneratorEditor : public QWidget {
 	void setFields(const pg::ParameterTree &, std::string);
 	void setStemData(pg::StemData);
 	void setLeafData(pg::LeafData);
+	pg::StemData getRootData(pg::StemData);
 	pg::StemData getStemData(pg::StemData);
 	pg::LeafData getLeafData(pg::LeafData);
 

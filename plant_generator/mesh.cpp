@@ -150,20 +150,16 @@ void Mesh::addSections(State &state, Segment parentSegment,
 		state.prevIndex = this->vertices[state.mesh].size();
 		addSection(state, rotation, this->crossSection);
 		if (state.section+1 < sections)
-			addTriangleRing(
-				state.prevIndex,
+			addTriangleRing(state.prevIndex,
 				this->vertices[state.mesh].size(),
-				stem->getSectionDivisions(),
-				state.mesh);
+				stem->getSectionDivisions(), state.mesh);
 	}
 
 	if (fork) {
 		if (fork->getPath().getInitialDivisions() == 0)
-			addTriangleRing(
-				state.prevIndex,
+			addTriangleRing(state.prevIndex,
 				this->vertices[state.mesh].size(),
-				stem->getSectionDivisions(),
-				state.mesh);
+				stem->getSectionDivisions(), state.mesh);
 		else
 			reserveForkSpace(fork, state.mesh);
 
@@ -343,7 +339,7 @@ inline void addExtraTriangles(vector<unsigned> &indices, int edge1, int edge2,
 	indices.push_back(start1 + edge2);
 }
 
-void insertCurve(int sectionDivisions, int collarDivisions, int size,
+void insertCurve(int sectionDivisions, int collarDivisions,
 	DVertex *v1, DVertex *v2)
 {
 	Vec3 curve[2];
@@ -352,13 +348,12 @@ void insertCurve(int sectionDivisions, int collarDivisions, int size,
 	Vec2 weight[2];
 	Vec2 joints[2];
 	{
-		int a = -size+collarDivisions*sectionDivisions;
-		int b = size+sectionDivisions;
-		curve[0] = v2[a].position;
+		int b = sectionDivisions*collarDivisions;
+		curve[0] = v2[0].position;
 		curve[1] = v1[b].position;
-		normal[0] = v2[a].normal;
+		normal[0] = v2[0].normal;
 		normal[1] = v1[b].normal;
-		tangent[0] = v2[a].tangent;
+		tangent[0] = v2[0].tangent;
 		tangent[1] = v1[b].tangent;
 		weight[0] = v1[b].weights;
 		weight[1] = v1[b].weights;
@@ -645,11 +640,8 @@ bool Mesh::addForks(Stem *fork[2], State state)
 			&v1[k1], &v2[k2]);
 	}
 	if (offset == 1 && cDivisions > 1) {
-		insertCurve(sDivisions+1, cDivisions, size,
-			&v2[edge2], &v0[edge2]);
-		insertCurve(sDivisions+1, cDivisions, size,
-			&v2[edge1], &v0[edge1]);
-
+		insertCurve(sDivisions+1, cDivisions, &v2[edge2], &v0[edge2]);
+		insertCurve(sDivisions+1, cDivisions, &v2[edge1], &v0[edge1]);
 	}
 	for (int i = 0; i < cDivisions || i == 0; i++) {
 		size_t a = i*(sDivisions+1);

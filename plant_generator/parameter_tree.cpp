@@ -25,11 +25,14 @@ const float pi = 3.14159265359f;
 StemData::StemData() :
 	densityCurve(0),
 	density(0.0f),
-	start(0.0f),
-	length(50.0f),
+	distance(0.0f),
+	length(60.0f),
 	angleVariation(0.5f),
 	radiusThreshold(0.01f),
-	scale(1.0f)
+	scale(1.0f),
+	fork(0.0f),
+	forkAngle(0.5f),
+	noise(0.05f)
 {
 
 }
@@ -97,26 +100,6 @@ const ParameterNode *ParameterNode::getParent() const
 	return this->parent;
 }
 
-ParameterRoot::ParameterRoot() : seed(0), node(nullptr)
-{
-
-}
-
-void ParameterRoot::setSeed(int seed)
-{
-	this->seed = seed;
-}
-
-int ParameterRoot::getSeed() const
-{
-	return this->seed;
-}
-
-ParameterNode *ParameterRoot::getNode() const
-{
-	return this->node;
-}
-
 ParameterTree::ParameterTree() : root(nullptr)
 {
 
@@ -130,7 +113,7 @@ ParameterTree::ParameterTree(const ParameterTree &original) : root(nullptr)
 ParameterTree::~ParameterTree()
 {
 	if (this->root) {
-		removeChildNode(this->root->node);
+		removeChildNode(this->root->child);
 		delete this->root;
 	}
 }
@@ -151,8 +134,8 @@ ParameterTree &ParameterTree::operator=(const ParameterTree &tree)
 	return *this;
 }
 
-void ParameterTree::copyNode(
-	const ParameterNode *originalNode, ParameterNode *node)
+void ParameterTree::copyNode(const ParameterNode *originalNode,
+	ParameterNode *node)
 {
 	if (!originalNode)
 		return;
@@ -174,12 +157,12 @@ void ParameterTree::copyNode(
 void ParameterTree::copy(const ParameterTree &tree)
 {
 	if (tree.root) {
-		this->root = new ParameterRoot();
-		this->root->seed = tree.root->seed;
-		if (tree.root->node) {
-			this->root->node = new ParameterNode();
-			this->root->node->data = tree.root->node->data;
-			copyNode(tree.root->node, this->root->node);
+		this->root = new ParameterNode();
+		this->root->data = tree.root->data;
+		if (tree.root->child) {
+			this->root->child = new ParameterNode();
+			this->root->child->data = tree.root->child->data;
+			copyNode(tree.root->child, this->root->child);
 		}
 	} else
 		this->root = nullptr;
@@ -188,27 +171,27 @@ void ParameterTree::copy(const ParameterTree &tree)
 void ParameterTree::reset()
 {
 	if (this->root) {
-		removeChildNode(this->root->node);
+		removeChildNode(this->root->child);
 		delete this->root;
 		this->root = nullptr;
 	}
 }
 
-ParameterRoot *ParameterTree::getRoot() const
+ParameterNode *ParameterTree::getRoot() const
 {
 	return this->root;
 }
 
-ParameterRoot *ParameterTree::createRoot()
+ParameterNode *ParameterTree::createRoot()
 {
 	reset();
-	this->root = new ParameterRoot();
+	this->root = new ParameterNode();
 	return this->root;
 }
 
 ParameterNode *ParameterTree::getNode() const
 {
-	return this->root ? this->root->node : nullptr;
+	return this->root ? this->root->child : nullptr;
 }
 
 ParameterNode *ParameterTree::addChild(string name)
@@ -216,15 +199,15 @@ ParameterNode *ParameterTree::addChild(string name)
 	if (!this->root)
 		return nullptr;
 	else if (name.empty()) {
-		ParameterNode *child = this->root->node;
-		this->root->node = new ParameterNode();
-		this->root->node->data.densityCurve.setDefault(1);
-		this->root->node->data.leaf.densityCurve.setDefault(1);
+		ParameterNode *child = this->root->child;
+		this->root->child = new ParameterNode();
+		this->root->child->data.densityCurve.setDefault(1);
+		this->root->child->data.leaf.densityCurve.setDefault(1);
 		if (child)
-			this->root->node->prevSibling = child;
-		return this->root->node;
+			this->root->child->prevSibling = child;
+		return this->root->child;
 	} else {
-		ParameterNode *node = getNode(name, 0, this->root->node);
+		ParameterNode *node = getNode(name, 0, this->root->child);
 		if (!node)
 			return nullptr;
 		ParameterNode *child = node->child;
@@ -243,7 +226,7 @@ ParameterNode *ParameterTree::addSibling(string name)
 {
 	if (!this->root)
 		return nullptr;
-	ParameterNode *node = getNode(name, 0, this->root->node);
+	ParameterNode *node = getNode(name, 0, this->root->child);
 	if (!node)
 		return nullptr;
 	ParameterNode *sibling = node->nextSibling;
@@ -261,7 +244,7 @@ ParameterNode *ParameterTree::get(string name) const
 	if (name.empty() || !this->root)
 		return nullptr;
 	else
-		return getNode(name, 0, this->root->node);
+		return getNode(name, 0, this->root->child);
 }
 
 bool ParameterTree::remove(string name)
@@ -273,12 +256,12 @@ bool ParameterTree::remove(string name)
 		return true;
 	}
 
-	ParameterNode *node = getNode(name, 0, this->root->node);
+	ParameterNode *node = getNode(name, 0, this->root->child);
 	if (!node)
 		return false;
 
-	if (node == this->root->node)
-		this->root->node = node->nextSibling;
+	if (node == this->root->child)
+		this->root->child = node->nextSibling;
 	if (node->prevSibling)
 		node->prevSibling->nextSibling = node->nextSibling;
 	if (node->nextSibling)
@@ -295,7 +278,7 @@ vector<string> ParameterTree::getNames() const
 {
 	vector<string> names;
 	if (this->root)
-		getNames(names, "", this->root->node);
+		getNames(names, "", this->root->child);
 	return names;
 }
 

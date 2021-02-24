@@ -39,9 +39,11 @@ void PatternGenerator::setParameterTree(ParameterTree parameterTree)
 
 void PatternGenerator::reset()
 {
-	ParameterRoot *root = this->parameterTree.getRoot();
-	if (root)
-		this->randomGenerator.seed(root->getSeed());
+	ParameterNode *root = this->parameterTree.getRoot();
+	if (root) {
+		this->mt.seed(root->getData().seed);
+		this->mt.discard(100);
+	}
 }
 
 void PatternGenerator::grow()
@@ -52,51 +54,96 @@ void PatternGenerator::grow()
 	stem->setMaxRadius(0.2f);
 	stem->setMinRadius(0.01f);
 	stem->setSwelling(Vec2(1.3f, 1.3f));
-
-	const ParameterNode *node = this->parameterTree.getNode();
-	if (node) {
-		setPath(stem, Vec3(0.0f, 1.0f, 0.0f), node->getData());
+	const ParameterNode *root = this->parameterTree.getRoot();
+	if (root) {
 		reset();
-		addStems(stem, node);
+		addStems(stem, Vec3(0.0f, 1.0f, 0.0f), 1.0f, root);
 	}
 }
 
 void PatternGenerator::grow(Stem *stem)
 {
 	this->parameterTree = stem->getParameterTree();
-	const ParameterNode *node = this->parameterTree.getNode();
+	ParameterNode *node = this->parameterTree.getRoot();
 	if (node) {
 		reset();
-		addStems(stem, node);
+		const Path &path = stem->getPath();
+		addStems(stem, path.getDirection(0), 1.0f, node);
 	}
 }
 
-void PatternGenerator::addStems(Stem *stem, const ParameterNode *node)
+float getBifurcationLength(Stem *stem)
 {
+	Stem *fork[2];
+	stem->getFork(fork);
+	if (fork[0] && fork[1]) {
+		float l = stem->getPath().getLength();
+		return l + getBifurcationLength(fork[1]);
+	} else
+		return stem->getPath().getLength();
+}
+
+float PatternGenerator::addStems(Stem *stem, Vec3 direction, float ratio,
+	const ParameterNode *node)
+{
+	const StemData &data = node->getData();
+	if (!stem->isCustom())
+		ratio = setPath(stem, direction, ratio, data);
+	float length = stem->getPath().getLength();
+
+	bool customFork = false;
+	if (stem->isCustom()) {
+		Stem *fork[2];
+		stem->getFork(fork);
+		customFork = fork[0] && fork[1];
+		if (customFork)
+			length += getBifurcationLength(fork[1]);
+	}
+
+	if (!stem->isCustom() && ratio <= 0.0f)
+		stem->setMinRadius(0.0f);
+	else if (!customFork) {
+		float l = 0.0f;
+		for (int i = 0; i < 2; i++) {
+			Stem *fork = plant->addStem(stem);
+			fork->setMaxRadius(stem->getMinRadius());
+			fork->setDistance(std::numeric_limits<float>::max());
+			fork->setSectionDivisions(stem->getSectionDivisions());
+			Vec3 direction = getForkDirection(fork, data, i);
+			l = addStems(fork, direction, ratio, node);
+		}
+		length += l;
+	}
+
+	node = node->getChild();
 	while (node) {
-		addLateralStems(stem, node);
-		addLeaves(stem, node->getData().leaf);
+		addLateralStems(stem, length, node);
+		addLeaves(stem, node->getData().leaf, length);
 		node = node->getSibling();
 	}
+	return length;
 }
 
-void PatternGenerator::addLateralStems(Stem *parent, const ParameterNode *node)
+void PatternGenerator::addLateralStems(Stem *parent, float length,
+	const ParameterNode *node)
 {
 	StemData stemData = node->getData();
 	if (stemData.density == 0.0f)
 		return;
 
-	float length = parent->getPath().getLength();
 	float distance = 1.0f / stemData.density;
-	float position = stemData.start;
+	float position = parent->getPath().getLength() - distance;
+	float end = (length - stemData.distance);
+	if (end <= distance)
+		end = distance;
 
-	for (int i = 0; position < length; i++) {
+	for (int i = 0; position > end; i++) {
 		float t = position / length;
-		float percentage = stemData.densityCurve.getPoint(t).z;
-		if (percentage == 0.0f)
+		float r = stemData.densityCurve.getPoint(t).z;
+		if (r == 0.0f)
 			break;
 		addLateralStem(parent, position, node, i);
-		position += distance * (1.0f/percentage);
+		position -= distance * (1.0f/r);
 	}
 }
 
@@ -105,7 +152,6 @@ void PatternGenerator::addLateralStem(Stem *parent, float position,
 {
 	StemData data = node->getData();
 	Vec2 collar(1.5f, 3.0f);
-
 	float radius = this->plant->getIntermediateRadius(parent, position);
 	radius = radius / collar.x * data.scale;
 	if (radius < data.radiusThreshold)
@@ -119,22 +165,43 @@ void PatternGenerator::addLateralStem(Stem *parent, float position,
 		stem->setSectionDivisions(parent->getSectionDivisions()-2);
 	else
 		stem->setSectionDivisions(parent->getSectionDivisions());
-	Vec3 direction = getStemDirection(stem, data, index);
-	setPath(stem, direction, data);
 
-	if (node->getChild())
-		addStems(stem, node->getChild());
+	Vec3 direction = getStemDirection(stem, data, index);
+	addStems(stem, direction, 1.0f, node);
 }
 
-Vec3 PatternGenerator::getStemDirection(Stem *stem, StemData data, int index)
+Vec3 PatternGenerator::getForkDirection(Stem *stem, const StemData &data, int i)
 {
-	float variation = data.angleVariation*pi;
+	float minAngle = 0.1f;
+	float maxAngle = data.forkAngle;
+	if (data.forkAngle < minAngle)
+		maxAngle = minAngle;
+
+	std::uniform_real_distribution<float> dis(minAngle, maxAngle);
+	const Path &path = stem->getParent()->getPath();
+	Vec3 parentDirection = path.getDirection(path.getSize()-1);
+	Vec3 normal(0.0f, 0.0f, 1.0f);
+	Vec3 up(0.0f, 1.0f, 0.0f);
+	if (parentDirection != up)
+		normal = normalize(cross(parentDirection, up));
+	normal = normalize(cross(normal, parentDirection));
+	float angle = dis(this->mt);
+
+	if (i == 0)
+		return rotateAroundAxis(parentDirection, normal, angle);
+	else
+		return rotateAroundAxis(parentDirection, normal, -angle);
+}
+
+Vec3 PatternGenerator::getStemDirection(Stem *stem, const StemData &data, int i)
+{
+	float variation = data.angleVariation * pi;
 	std::uniform_real_distribution<float> dis(-variation, variation);
 	float distance = stem->getDistance();
 	const Path &path = stem->getParent()->getPath();
 	Vec3 parentDirection = path.getIntermediateDirection(distance);
 	float ratio = distance / path.getLength();
-	float angle = data.leaf.rotation*index + dis(this->randomGenerator);
+	float angle = data.leaf.rotation*i + dis(this->mt);
 	Quat rotation = fromAxisAngle(parentDirection, angle);
 
 	Vec3 direction;
@@ -146,8 +213,7 @@ Vec3 PatternGenerator::getStemDirection(Stem *stem, StemData data, int index)
 	direction = rotate(rotation, direction);
 
 	dis = std::uniform_real_distribution<float>(ratio*0.5f, ratio);
-	float t = dis(this->randomGenerator) - 0.1f;
-	return normalize(lerp(direction, parentDirection, t));
+	return normalize(lerp(direction, parentDirection, dis(this->mt)-0.1f));
 }
 
 float getCollarLength(Stem *stem, Vec3 direction, Plant *plant)
@@ -165,16 +231,18 @@ float getCollarLength(Stem *stem, Vec3 direction, Plant *plant)
 	return scale;
 }
 
-void PatternGenerator::setPath(Stem *stem, Vec3 direction, StemData data)
+float PatternGenerator::setPath(Stem *stem, Vec3 direction, float ratio,
+	const StemData &data)
 {
 	float radius = stem->getMaxRadius();
-	float length = radius * data.length;
+	float length = data.length * radius;
 	int points = static_cast<int>(length) + 1;
 	float increment = length / points;
+	ratio = 1.0f;
 
 	Path path;
 	std::vector<Vec3> controls;
-	std::uniform_real_distribution<float> dis(-0.05f, 0.05f);
+	std::uniform_real_distribution<float> dis(-1.0f, 1.0f);
 
 	Vec3 control(0.0f, 0.0f, 0.0f);
 	controls.push_back(control);
@@ -183,23 +251,39 @@ void PatternGenerator::setPath(Stem *stem, Vec3 direction, StemData data)
 
 	for (int i = 0; i < points; i++) {
 		control = control + increment * direction;
-		control.x += dis(this->randomGenerator);
-		control.y += dis(this->randomGenerator);
-		control.z += dis(this->randomGenerator);
+		control.x += dis(this->mt) * data.noise;
+		control.y += dis(this->mt) * data.noise;
+		control.z += dis(this->mt) * data.noise;
+		length += magnitude(controls.back() - control);
 		controls.push_back(control);
 
+		const float p = dis(this->mt) - (1.0f-data.fork*2.0f);
+		if (i < points-1 && p > 0.0f) {
+			float radius = stem->getMaxRadius();
+			unsigned c = stem->getRadiusCurve();
+			Spline spline = this->plant->getCurve(c).getSpline();
+			float t = static_cast<float>(i+1);
+			t /= static_cast<float>(points);
+			radius *= spline.getPoint(t).z;
+			if (radius > data.radiusThreshold) {
+				ratio = t;
+				stem->setMinRadius(radius);
+				break;
+			}
+		}
+
 		float divergence = 1.0f;
-		if (dis(this->randomGenerator) > 0.0f) {
+		if (dis(this->mt) > 0.0f) {
 			float influence = radius;
 			if (influence < 0.1f)
 				influence = 0.1f;
-			divergence = dis(this->randomGenerator);
+			divergence = dis(this->mt) * 0.05f;
 			divergence /= influence * influence;
 		}
 		Vec3 change;
-		change.x = dis(this->randomGenerator) * divergence;
-		change.y = dis(this->randomGenerator) * divergence;
-		change.z = dis(this->randomGenerator) * divergence;
+		change.x = dis(this->mt) * 0.05f * divergence;
+		change.y = dis(this->mt) * 0.05f * divergence;
+		change.z = dis(this->mt) * 0.05f * divergence;
 		direction = normalize(direction + change);
 	}
 
@@ -208,21 +292,21 @@ void PatternGenerator::setPath(Stem *stem, Vec3 direction, StemData data)
 	spline.setControls(controls);
 	path.setSpline(spline);
 	stem->setPath(path);
+	return 1.0f - ratio;
 }
 
-void PatternGenerator::addLeaves(Stem *stem, LeafData data)
+void PatternGenerator::addLeaves(Stem *stem, LeafData data, float length)
 {
 	if (data.density <= 0.0f || data.leavesPerNode < 1)
 		return;
 
 	const Path &path = stem->getPath();
-	const float length = path.getLength();
 	const float distance = 1.0f / data.density;
-	float position = length;
-	float start = (length - data.distance);
-	start *= (start >= 0.0f);
+	float position = path.getLength();
+	float end = (length - data.distance);
+	end *= (end >= 0.0f);
 
-	for (int i = 0, j = 1; position > start; i++, j++) {
+	for (int i = 0, j = 1; position > end; i++, j++) {
 		float t = data.densityCurve.getPoint(position/length).z;
 		if (t == 0.0f)
 			break;

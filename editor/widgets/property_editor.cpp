@@ -371,6 +371,8 @@ void PropertyEditor::beginChanging(QLabel *label)
 
 void PropertyEditor::finishChanging()
 {
+	if (this->saveStem)
+		this->sameAsCurrent = this->saveStem->isSameAsCurrent();
 	if (this->saveStem && !this->sameAsCurrent)
 		this->editor->getHistory()->add(this->saveStem);
 	else if (this->saveStem)

@@ -36,8 +36,9 @@ Generate::Generate(Selection *selection, pg::PatternGenerator *generator) :
 	for (const pg::Curve &curve : plant->getCurves())
 		this->splines.push_back(curve.getSpline());
 	for (auto &instance : instances) {
-		pg::ParameterTree tree = instance.first->getParameterTree();
-		this->parameterTrees.push_back(tree);
+		Stem *stem = instance.first;
+		this->parameterTrees.push_back(stem->getParameterTree());
+		this->stems.push_back(*stem);
 	}
 }
 
@@ -111,8 +112,12 @@ void Generate::undo()
 	auto instances = this->selection->getStemInstances();
 	this->parameterTree = instances.begin()->first->getParameterTree();
 	for (auto instance : instances) {
-		pg::ParameterTree tree = this->parameterTrees[index++];
-		instance.first->setParameterTree(tree);
+		Stem *stem = instance.first;
+		instance.first->setParameterTree(this->parameterTrees[index]);
+		stem->setMinRadius(this->stems[index].getMinRadius());
+		pg::Path path = this->stems[index].getPath();
+		stem->setPath(path);
+		index++;
 	}
 	removeAdditions();
 	this->remove.undo();

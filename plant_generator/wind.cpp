@@ -183,7 +183,7 @@ int Wind::generateChildJoints(Stem *stem, int id, int pid, size_t &count,
 	Stem *child = stem->getChild();
 	while (child) {
 		bool needsJoints = child->getJoints().empty();
-		if (child->getDistance() < distance && needsJoints)
+		if (child->getDistance() <= distance && needsJoints)
 			id = generateJoint(child, id, pid, count);
 		child = child->getSibling();
 	}

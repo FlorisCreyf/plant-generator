@@ -86,15 +86,15 @@ void Window::createEditors()
 	dw[1] = createDockWidget("Key Map", this->keyEditor, true);
 	addDockWidget(static_cast<Qt::DockWidgetArea>(1), dw[1]);
 
-	this->pCurveEditor = new PropertyCurveEditor(
+	this->pcEditor = new PropertyCurveEditor(
 		&this->shared, &this->keymap, this->editor, this);
-	dw[2] = createDockWidget("Curves", this->pCurveEditor, false);
+	dw[2] = createDockWidget("Curves", this->pcEditor, false);
 	addDockWidget(static_cast<Qt::DockWidgetArea>(1), dw[2]);
-	connect(this->pCurveEditor, &PropertyCurveEditor::curveAdded,
+	connect(this->pcEditor, &PropertyCurveEditor::curveAdded,
 		this->propertyEditor, &PropertyEditor::addCurve);
-	connect(this->pCurveEditor, &PropertyCurveEditor::curveModified,
+	connect(this->pcEditor, &PropertyCurveEditor::curveModified,
 		this->propertyEditor, &PropertyEditor::updateCurve);
-	connect(this->pCurveEditor, &PropertyCurveEditor::curveRemoved,
+	connect(this->pcEditor, &PropertyCurveEditor::curveRemoved,
 		this->propertyEditor, &PropertyEditor::removeCurve);
 
 	this->materialEditor = new MaterialEditor(
@@ -115,12 +115,12 @@ void Window::createEditors()
 	dw[5] = createDockWidget("Generator", createGeneratorEditor(), true);
 	addDockWidget(static_cast<Qt::DockWidgetArea>(1), dw[5]);
 
-	this->gCurveEditor = new GeneratorCurveEditor(
+	this->gcEditor = new GeneratorCurveEditor(
 		&this->shared, &this->keymap, this->editor, this);
-	dw[6] = createDockWidget("Generator Curves", this->gCurveEditor, false);
+	dw[6] = createDockWidget("Curves (Generator)", this->gcEditor, false);
 	addDockWidget(static_cast<Qt::DockWidgetArea>(1), dw[6]);
 	connect(this->generatorEditor, &GeneratorEditor::parameterTreeModified,
-		this->gCurveEditor, &GeneratorCurveEditor::setFields);
+		this->gcEditor, &GeneratorCurveEditor::setFields);
 
 	tabifyDockWidget(dw[1], dw[5]);
 	tabifyDockWidget(dw[1], dw[0]);
@@ -151,7 +151,7 @@ void Window::initEditor()
 	else {
 		this->propertyEditor->clearOptions();
 		this->editor->load(this->filename.toLatin1());
-		this->pCurveEditor->reset();
+		this->pcEditor->reset();
 		this->meshEditor->reset();
 		this->materialEditor->reset();
 		this->editor->reset();
@@ -177,16 +177,16 @@ void Window::keyPressEvent(QKeyEvent *event)
 		if (event->modifiers() & Qt::ControlModifier) {
 			if (event->modifiers() & Qt::ShiftModifier) {
 				this->editor->redo();
-				this->pCurveEditor->select();
+				this->pcEditor->select();
 			} else {
 				this->editor->undo();
-				this->pCurveEditor->select();
+				this->pcEditor->select();
 			}
 		}
 	} else if (event->key() == Qt::Key_Y) {
 		if (event->modifiers() & Qt::ControlModifier) {
 			this->editor->redo();
-			this->pCurveEditor->select();
+			this->pcEditor->select();
 		}
 	}
 
@@ -216,8 +216,8 @@ void Window::setFilename(QString filename)
 void Window::newFile()
 {
 	this->propertyEditor->clearOptions();
-	this->pCurveEditor->clear();
-	this->pCurveEditor->add();
+	this->pcEditor->clear();
+	this->pcEditor->add();
 	this->materialEditor->clear();
 	this->materialEditor->addEmpty();
 	this->meshEditor->clear();
@@ -237,7 +237,7 @@ void Window::openDialogBox()
 		this->propertyEditor->clearOptions();
 		this->editor->load(filename.toLatin1());
 		this->windEditor->setFields();
-		this->pCurveEditor->reset();
+		this->pcEditor->reset();
 		this->meshEditor->reset();
 		this->materialEditor->reset();
 		this->editor->reset();

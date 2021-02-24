@@ -93,7 +93,7 @@ int main(int argc, char **argv)
 #else
 	pg::PatternGenerator generator(&scene.plant);
 	pg::ParameterTree tree = generator.getParameterTree();
-	pg::ParameterRoot *root = tree.createRoot();
+	pg::ParameterNode *root = tree.createRoot();
 	std::random_device rd;
 	root->setSeed(rd());
 	pg::ParameterNode *node1 = tree.addChild("");

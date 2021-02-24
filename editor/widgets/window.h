@@ -61,8 +61,8 @@ private:
 	QLabel *fileLabel;
 
 	PropertyEditor *propertyEditor;
-	GeneratorCurveEditor *gCurveEditor;
-	PropertyCurveEditor *pCurveEditor;
+	GeneratorCurveEditor *gcEditor;
+	PropertyCurveEditor *pcEditor;
 	GeneratorEditor *generatorEditor;
 	WindEditor *windEditor;
 	MaterialEditor *materialEditor;
