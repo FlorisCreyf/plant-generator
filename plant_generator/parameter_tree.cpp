@@ -22,6 +22,12 @@ using namespace pg;
 
 const float pi = 3.14159265359f;
 
+
+GeneratorState::GeneratorState() : concentration(0.0f), node(0)
+{
+
+}
+
 StemData::StemData() :
 	densityCurve(0),
 	density(0.0f),

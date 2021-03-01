@@ -61,6 +61,7 @@ namespace pg {
 
 		bool custom;
 		ParameterTree parameterTree;
+		GeneratorState state;
 
 		void updatePositions(Stem *stem);
 		void init(Stem *parent = nullptr);
@@ -106,6 +107,7 @@ namespace pg {
 		bool isCustom() const;
 		void setParameterTree(ParameterTree parameterTree);
 		ParameterTree getParameterTree() const;
+		GeneratorState *getState();
 
 		size_t addLeaf(const Leaf &leaf);
 		void insertLeaf(const Leaf &leaf, size_t index);

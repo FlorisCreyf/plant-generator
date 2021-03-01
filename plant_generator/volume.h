@@ -30,7 +30,8 @@ namespace pg {
 			float size;
 
 			float density;
-			Vec3 flux;
+			Vec3 direction;
+			int quantity;
 
 			Node();
 			Node *getAdjacentNode(int, Vec3, bool);
@@ -52,8 +53,10 @@ namespace pg {
 
 			void setDensity(float density);
 			float getDensity() const;
-			void setFlux(Vec3 flux);
-			Vec3 getFlux() const;
+			void setDirection(Vec3 direction);
+			Vec3 getDirection() const;
+			void setQuantity(int quantity);
+			int getQuantity() const;
 		};
 
 		Volume(float size, int depth);

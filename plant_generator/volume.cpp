@@ -219,7 +219,8 @@ Node::Node(Vec3 center, float size) :
 	center(center),
 	size(size),
 	density(0.0f),
-	flux(0.0f, 0.0f, 0.0f)
+	direction(0.0f, 0.0f, 0.0f),
+	quantity(0)
 {
 
 }
@@ -229,7 +230,8 @@ Node::Node() :
 	parent(nullptr),
 	depth(0),
 	density(0.0f),
-	flux(0.0f, 0.0f, 0.0f)
+	direction(0.0f, 0.0f, 0.0f),
+	quantity(0)
 {
 
 }
@@ -312,12 +314,22 @@ float Node::getDensity() const
 	return this->density;
 }
 
-void Node::setFlux(Vec3 flux)
+void Node::setDirection(Vec3 direction)
 {
-	this->flux = flux;
+	this->direction = direction;
 }
 
-Vec3 Node::getFlux() const
+Vec3 Node::getDirection() const
 {
-	return this->flux;
+	return this->direction;
+}
+
+void Node::setQuantity(int quantity)
+{
+	this->quantity = quantity;
+}
+
+int Node::getQuantity() const
+{
+	return this->quantity;
 }

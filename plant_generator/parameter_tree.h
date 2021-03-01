@@ -25,6 +25,13 @@
 #endif
 
 namespace pg {
+	struct GeneratorState {
+		float concentration;
+		int node;
+
+		GeneratorState();
+	};
+
 	struct LeafData {
 		Spline densityCurve;
 		Vec3 scale;

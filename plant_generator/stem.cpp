@@ -160,6 +160,11 @@ ParameterTree Stem::getParameterTree() const
 	return this->parameterTree;
 }
 
+GeneratorState *Stem::getState()
+{
+	return &this->state;
+}
+
 size_t Stem::addLeaf(const Leaf &leaf)
 {
 	this->leaves.push_back(leaf);

@@ -16,6 +16,7 @@
 \renewcommand{\footrulewidth}{0pt}
 \renewcommand{\headrulewidth}{0.5pt}
 \newcommand\m[1]{\begin{bmatrix}#1\end{bmatrix}}
+\newcommand\h[0]{\hangindent=\parindent\hangafter=1\noindent}
 \makeatletter
 \begin{document}
 \begin{center}
@@ -29,13 +30,14 @@
 \pagebreak
 
 \section{Introduction}
-The project is split in two parts. The editor handles all user input and provides realtime feedback. It defines widgets, commands, selection types, and data structures for rendering. The plant generator generates plant structures and meshes, and it provides a means to export the result.
+The project is split in two parts. The editor handles all user input and provides realtime feedback. It defines widgets, commands, selection types, and data structures for rendering. The plant generator generates plant structures and meshes, and it provides a means to export the result. There are two generators. The pattern generator takes a parameter tree as input. The second generator attempts to reproduce patterns indirectly.
 \begin{figure}[H]
 \centering
 \includesvg{resources/diagrams/outline.svg} \\
-\caption{A high-level overview of the program.}
+\caption{A high-level overview of the program. The shaded boxes are defined in \textit{editor} and the unfilled boxes are defined in \textit{plant-generator}.}
 \end{figure}
 
+\newpage
 \section{Background}
 \subsection{Stems}
 Auxin (IAA) lengthens cells by increasing cell wall elasticity. It is transported away from light through the shifting of PIN proteins in cell membranes. This process results in stems bending towards light. A common hypothesis is that auxin determines the apical dominance of the plant through a source-sink model. Fully saturating stems with auxin prevents axillary buds from releasing auxin into the stem and prevents further growth. The effects of auxin are countered with cytokinins (CK) that stimulate growth.
@@ -44,7 +46,7 @@ Formation of reaction wood is required for stems to grow upward or otherwise ste
 
 The apical meristem exhibits determinate growth if it produces a flower. The loss of apical control causes sympodial branching. Monopodial branching occurs when the apical meristem exhibits indeterminate growth. Dichotomous branching occurs when the apical node splits in two.
 
-Growth is limited by the nitrogen concentration of the soil. More energy is put into roots when nitrogen is scarce and more stems are grown when nitrogen is abundant. There are other factors that affect growth such as altitude and temperature. Plants with needle-like leaves will resist freezing and water loss but not absorb as much sunlight.
+Growth is limited by the nitrogen concentration of the soil. More energy is put into roots when nitrogen is scarce and more stems are grown when nitrogen is abundant. Other factors that affect growth are altitude and temperature. Plants with needle-like leaves will resist freezing and water loss but not absorb as much sunlight.
 
 \subsubsection{Terms}
 \begin{itemize}
@@ -66,7 +68,7 @@ Growth is limited by the nitrogen concentration of the soil. More energy is put 
 \subsection{Leaves}
 The shape of a leaf is partly influenced by venation. The veins are composed of xylem cells (for the transportation of water) and phloem cells (for the outward transportation of sugars). Major veins provide support for the leaf and extend from the petiole to the leaf apices. Parallel venation can sometimes be seen in secondary veins, while minor veins form a network or a reticulate pattern. Minor veins can connect secondary veins creating loops.
 
-The edge of a leaf is termed the leaf margin. Margins, for example, can be smooth, serrated, or sinuous. The margins and the overal shape are commonly used to determine what species a plant is. Alder, Elm and Birch trees have serrated leaves, and several oak species have sinuate leaves. Some leaf shapes are elliptic, deltoid, cordate, orbicular, or lobed. If a leaf is lobed, the tips can be either pointed or rounded.
+The edge of a leaf is termed the leaf margin. Margins, for example, can be smooth, serrated, or sinuous. The margins and the overall shape are commonly used to determine what species a plant is. Alder, Elm and Birch trees have serrated leaves, and several oak species have sinuate leaves. Some leaf shapes are elliptic, deltoid, cordate, orbicular, or lobed. If a leaf is lobed, the tips can be either pointed or rounded.
 
 \subsubsection{Terms}
 \begin{itemize}
@@ -80,6 +82,18 @@ The edge of a leaf is termed the leaf margin. Margins, for example, can be smoot
 \item \texttt{Basipetal}: leaves and flowers start developing at the bottom
 \end{itemize}
 
+\subsection{Literature}
+\h Daniel Barth\'{e}l\'{e}my, Yves Caraglio. 2007. Plant Architecture: A Dynamic, Multilevel and Comprehensive Approach to Plant Form, Structure and Ontogeny. Annals of Botany 99: 375-407.
+
+\h Hiroaki T. Ishii, E. David Ford, Maureen C. Kennedy. 2006. Physiological and ecological implications of adaptive reiteration as a mechanism for crown maintenance and longevity. Tree Physiology 27, 455-246.
+
+\h Jiyoung Park, Youngsook Lee, Enrico Martinoia, Markus Geisler. 2017. Plant hormone transporters: what we know and what we would like to know. BMC Biol 15:93.
+
+\h Michael G. Mason, John J. Ross, Benjamin A. Babst, Brittany N. Wienclaw, Christine A. Beveridge. 2014. Sugar demand, not auxin, is the initial regulator of apical dominance. PNAS.
+
+\h Tesfamichael H. Kebrom. 2017. A Growing Stem Inhibits Bud Outgrowth – The Overlooked Theory of Apical Dominance. Front. Plant Sci.
+
+\pagebreak
 \section{Generator}
 \subsection{Iterative Growth Model}
 A plant is grown over a certain number of growth cycles. A bounding box is generated at the beginning of each cycle and is used to construct a dome (the sky). Rays (light) originating on the dome intersect leaves to determine the efficiency of each stem in the plant. A stem is efficient if many intersections occur with its leaves and is grown by a random growth factor. Otherwise, if a stem receives no or little ray intersections, then the stem is shedded by the plant (known as cladoptosis). Remaining stems will grow in the average directions of rays that intersect with their leaves.
@@ -90,21 +104,25 @@ Each stem develops buds at the beginning of each iteration. Leaves form along th
 The space the plant grows is partitioned using an octree. By recording how to the space is utilized, by the plant itself and surrounding objects, stems can be distributed more evenly throughout the space. Additionally, ray tracing volumes in the octree provides more information to the plant so that it can direct stems towards well illuminated volumes.
 
 \begin{figure}[H]
- \begin{minipage}[t]{0.48\textwidth}
+ \begin{minipage}[H]{0.48\textwidth}
   \centering
   \includesvg{resources/diagrams/octree_node.svg}
   \caption{The next node in the octree is determined by comparing the ray direction against the face normals of the volume. A corner in the volume is selected based on the signs of the dot products of the ray direction and normals.}
  \end{minipage}
  \hfill
- \begin{minipage}[t]{0.48\textwidth}
+ \begin{minipage}[H]{0.48\textwidth}
   \centering
   \includesvg{resources/diagrams/octree.svg} \\
   \caption{The plant is first stored in an octree and then the radiant flux through each volume is calculated by casting rays through the space.}
  \end{minipage}
 \end{figure}
 
+The efficiency of each stem can be estimated by the radiant energy absorbed by each leaf. The energy value of a ray decreases as it passes through dense volumes and this decreases the efficiency of leaves in the inner part of the canopy. Leaves are removed if absorption falls beneath a threshold.
+
+It is important to consider how the rays are distributed throughout space. Rays will be denser at the center of the volume if rays are emitted from a dome. In such case, normalizing or thresholding the magnitudes of rays helps balance the energy distribution. Otherwise, only the top of the plant will be exposed to light if rays are emitted from a flat plane.
+
 \begin{figure}[H]
-\begin{minipage}[t]{0.48\textwidth}
+\begin{minipage}[H]{0.48\textwidth}
 \begin{tikzpicture}
 \begin{axis}[height=6cm, width=6.5cm, xmin=0, xmax=1000, ymin=0, ymax=1000, xtick={0, 200, 400, 600, 800, 1000}, ytick={0, 200, 400, 600, 800, 1000}, grid=both, legend pos=north west, xlabel={Radiant Flux ($ W $)}, ylabel={Radiant Flux ($ W $)}]
 \addplot [domain=0:1000, samples=2, style=dashed]{x/(1)};
@@ -120,7 +138,7 @@ The space the plant grows is partitioned using an octree. By recording how to th
 \caption{The densisty ($ r $) of each volume in the octree reduces the radiant flux within the canopy.}
 \end{minipage}
 \hfill
-\begin{minipage}[t]{0.48\textwidth}
+\begin{minipage}[H]{0.48\textwidth}
 \begin{tikzpicture}
 \begin{axis}[height=6cm, width=7.5cm, xmin=0, xmax=1000, ymin=0, ymax=1, grid=both, legend pos=south east, xlabel={Irradiance ($ W/m^2 $)}, ylabel={Rate of Photosynthesis (\%)}]
 \addplot [domain=0:1000, samples=100]{x/(x+50)};
@@ -133,10 +151,10 @@ The space the plant grows is partitioned using an octree. By recording how to th
 \end{minipage}
 \end{figure}
 
-\subsubsection{Hormones}
-The rate of stem growth is determined by hormone concentrations. Some hormones, such as auxins, are produced in the apical nodes of stems. Other hormones, such as strigolactones and some cytokinins, are produced in the roots of the plant. Therefore, rates of growth are determined by both bottom-up and top-down processes.
+\subsubsection{Hormones and Resources}
+The rate of stem growth is determined by resources and hormone concentrations. Some hormones, such as auxins, are produced in the apical nodes of stems. Other hormones, such as strigolactones and some cytokinins, are produced in the roots of the plant. Sugars are produced in the leaves and water is absorbed from the air and soil. Therefore, rates of growth are determined by both bottom-up and top-down processes.
 
-Assume that each apical node produces a fixed amount of hormones. Also assume that each stem can only transport chemicals up to some threshold and that this threshold is proportional to the radius of the stem. Let $ R $ be the radius function, $ l $ be the length of a stem, and $ h $ be the quantity of some hormone.
+Modeling resource transportation is somewhat difficult. Possible parameters could be volume, velocity, density, and pressure. If only volume is considered, then assume that each apical node produces a fixed amount of hormones. Also assume that each stem can only transport chemicals up to some threshold and that this threshold is proportional to the radius of the stem. Let $ R $ be the radius function, $ l $ be the length of a stem, and $ h $ be the quantity of some hormone.
 
 \[ R(x) = 1 - \frac{x}{l} \]
 \[ V(x) = \int \pi R(x)^2 dx = \frac{-\pi l}{3} \left( 1 - \frac{x}{l} \right)^3 + c \]
@@ -145,48 +163,43 @@ Assume that each apical node produces a fixed amount of hormones. Also assume th
 \subsection{Stems}
 The positions of stems are stored as distances along parent stems. Stems internally calculate their location in the world space when distances are changed and when the paths of ancestor stems are changed. Some resources, such as materials and curves, are referenced with indices. The indices point to resources located in the plant object.
 
-\subsubsection{Materials}
-The plant object stores a list of all materials that stems and leaves can have. Stems and leaves store indices of materials so that they only have to be updated in the plant object. The geometry generator needs to create vertex seams (i.e., duplicate vertices) so that textures can be wraped around the stems.
+The plant object stores a list of all materials that stems and leaves can have. Stems and leaves store indices of materials so that they only have to be updated in the plant object. The geometry generator needs to create vertex seams (i.e., duplicate vertices) so that textures can be wrapped around the stems.
 
 \subsubsection{Bark Ridges and Branch Collars}
 The branch collar is a swelling at the base of the stem that increases the structural integrity of the joint. The bark ridge can be generated by using two B\'{e}zier curves, but that would require finding a third point and increasing the complexity of the algorithm.
 
-\setlength{\parindent}{1.5em}
 A cone intersection test (for tapered cylinders) can be used to fuse one stem to the other, but this is only ideal if the cross sections are guaranteed to be circular. Triangle intersection tests will work for all shapes but with the cost of worse performance. To increase performance, intersections should start at the the location of the stem and move outwards towards the top and bottom of the parent stem. If triangle intersections only pass when a ray intersects with the front sides of triangles, then the first intersection is likely to be the correct one.
 
-\begin{figure}[H]
- \begin{minipage}[H]{0.46\textwidth}
 The normals along the collar are interpolated using a piecewise function that resembles a sigmoid function, but such that $ f: \left[ 0, 1 \right] \rightarrow \left[ 0, 1 \right] $.
+
 \[ f(x) =
 \begin{cases}
 (\sqrt{2}x)^2 & 0 \leq x \leq \frac{1}{2}\\
 -\left[\sqrt{2}(x-1)\right]^2 + 1 & \frac{1}{2} \leq x \leq 1 \\
 \end{cases} \]
- \end{minipage}
- \hfill
- \begin{minipage}[H]{0.46\textwidth}
+
+\begin{figure}[H]
   \centering
   \includesvg{resources/diagrams/collar.svg} \\
   \caption{The first cross section is scaled along the parent stem direction (1) and is intersected with the parent's surface (2). A spline connects the transformed cross section with the second cross section (3).}
- \end{minipage}
 \end{figure}
 
 \subsubsection{Bifurcation}
 \begin{enumerate}
-\item The first stem is to avoid overlapping cross sections. Assuming that the paths are lines, the law of sines can be used to find a distance wherein no cross sections should be generated. Let $ d $ be the distance, $ r $ be the radius, and $ \theta $ be the angle between the vectors (Figure \ref{fig:forkside}).
+\item The first step is to avoid overlapping cross sections. Assuming that the paths are lines, the law of sines can be used to find a distance wherein no cross sections should be generated. Let $ d $ be the distance, $ r $ be the radius, and $ \theta $ be the angle between the vectors (Figure \ref{fig:forkside}).
 \[ d = r \cdot \frac{\sin[(\pi-\theta)\div2]}{\sin (\theta\div2)} \]
 A more flexible approach is to project points along one path onto the other path and measure the distances. The paths are evaluated in an alternating manner so that the algorithm exits the first time the paths stop intersecting so that not all points need to be evaluated. Alternation occurs whenever a check fails (Figure \ref{fig:path}).
 
 Another approach is to assume that the cross section are not overlapping. Cross sections between the first two control points of the stem path are eliminated, and the second control point is calculated in a manner that avoids overlapping.
 
-\begin{figure}[h]
- \begin{minipage}[b]{0.46\textwidth}
+\begin{figure}[H]
+ \begin{minipage}[H]{0.46\textwidth}
   \centering
   \includesvg{resources/diagrams/fork_side.svg}
   \caption{The length of the top edge of the shaded triangle is the distance that is required to be free of cross sections.} \label{fig:forkside}
  \end{minipage}
  \hfill
- \begin{minipage}[b]{0.46\textwidth}
+ \begin{minipage}[H]{0.46\textwidth}
   \centering
   \includesvg{resources/diagrams/path.svg}
   \caption{Points along one path are projected on the line segments of the second path. The paths intersect when the distances of the projections are less than the diameter of the cross sections and the projected points fall within the line segments.} \label{fig:path}
@@ -202,13 +215,13 @@ This method stops working reliably when a vector points in the opposite directio
 \[ \text{midpoint} = \left\lfloor \frac{\theta}{2\pi \div \text{number of points}} \right\rceil \]
 
 \begin{figure}[H]
- \begin{minipage}[b]{0.49\textwidth}
+ \begin{minipage}[H]{0.49\textwidth}
   \centering
   \includesvg{resources/diagrams/fork_section.svg}
   \caption{Rotating the cross section into the average direction of the two forks is necessary to determine where the cross section needs to be divided in half.} \label{fig:forkdiv}
  \end{minipage}
  \hfill
- \begin{minipage}[b]{0.48\textwidth}
+ \begin{minipage}[H]{0.48\textwidth}
   \centering
   \includesvg{resources/diagrams/fork_resolution.svg}
   \caption{Rounding to the nearest integer is required when $ n \bmod 4 = 0 $ and otherwise \texttt{floor} or \texttt{ceil} is required.}
@@ -238,7 +251,7 @@ This method stops working reliably when a vector points in the opposite directio
 \end{enumerate}
 
 \subsection{Leaves}
-The positions of leaves are stored as distances along the parent stem. The world positions of leaves can only be determined if the parent stems are also known because leaves do not know about their parent stems. Additionally, each leaf is defined by a mesh which contains a set of points, indices, and texture coordinates. These meshes are stored within the plant object and are inserted into the plant geometry during mesh generation.
+The positions of leaves are stored as distances along the parent stem. The world positions of leaves can only be determined if the parent stems are also known because leaves cannot reference their parent stems. That would create a circular dependency. Additionally, each leaf is defined by a mesh which contains a set of points, indices, and texture coordinates. These meshes are stored within the plant object and are inserted into the plant geometry during mesh generation.
 
 \subsubsection{Rotations}
 \begin{minipage}[t]{0.6\textwidth}
@@ -257,6 +270,7 @@ Cross products can be used to derive the rotations of leaves, but only in the ab
  \end{figure}
 \end{minipage}
 
+\pagebreak
 \section{Editor}
 \subsection{Camera}
 The camera produces matrices for transforming the world space into the screen space. It also produces inverse matrices so that the screen space can be transformed back into the world space. This is useful for object selection.
@@ -296,8 +310,8 @@ A \texttt{SharedResources} object stores all the shader programs and materials t
 \subsection{History}
 The history maintains a list of past and future commands. The timestamps within commands are used to verify that new commands are more recent than the previous command. Commands can be flipped if their timestamps are out of order, which could happen if they are added to the history during focus events.
 
-\section{Shaders}
-\subsection{Outlines}
+\subsection{Shaders}
+\subsubsection{Outlines}
 Selected objects are indicated with an outline around their silhouette. The outline is achieved in two passes. The first pass draws the selected objects offscreen in solid white onto a black background. This image is stored in a texture for the second pass. During the second pass, the fragment shader refers to this texture to determine if a fragment is close to the object's silhouette edge. Even though the fragment shader needs to scan and analyze the texture, it needs to avoid branch divergence in order to keep performance acceptable.
 
 \end{document}

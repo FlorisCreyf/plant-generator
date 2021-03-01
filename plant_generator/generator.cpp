@@ -27,8 +27,9 @@ const float pi = 3.14159265359f;
 Generator::Generator(Plant *plant) :
 	plant(plant),
 	primaryGrowthRate(0.1f),
-	secondaryGrowthRate(0.001f),
+	secondaryGrowthRate(0.01f),
 	minRadius(0.001f),
+	suppression(0.0025f),
 	rayCount(20),
 	rayLevels(10),
 	width(0.0f)
@@ -76,9 +77,10 @@ void Generator::grow(int cycles, int nodes)
 			volume.clear(std::pow(2.0, exp), exp);
 			addToVolume(&volume, this->plant->getRoot());
 			generalizeDensity(volume.getRoot());
+			setConcentration(this->plant->getRoot());
 			castRays(&volume);
 			generalizeFlux(volume.getRoot());
-			addNodes(&volume, this->plant->getRoot(), j);
+			addNodes(&volume, this->plant->getRoot(), j, nodes);
 		}
 	}
 }
@@ -89,8 +91,7 @@ void Generator::addToVolume(Volume *volume, Stem *stem)
 	for (size_t i = 1; i < path.getSize(); i++) {
 		Vec3 a = path.get(i-1);
 		Vec3 b = path.get(i);
-		float w = this->plant->getRadius(stem, i);
-		volume->addLine(a, b, 100.0f*w);
+		volume->addLine(a, b, 1.0f);
 	}
 	Stem *child = stem->getChild();
 	while (child) {
@@ -103,7 +104,7 @@ void Generator::castRays(Volume *volume)
 {
 	float width = this->width * 2.0f;
 	int offset = 0.0f;
-	float dt = 0.25f / static_cast<float>(this->rayLevels) * pi;
+	float dt = 0.5f / static_cast<float>(this->rayLevels) * pi;
 
 	for (int i = 1; i <= this->rayLevels; i++) {
 		float angle = i * dt;
@@ -131,12 +132,27 @@ void Generator::updateRadiantEnergy(Volume *volume, Ray ray)
 	Volume::Node *nextNode = volume->getNode(ray.origin);
 	while (nextNode && node != nextNode) {
 		node = nextNode;
+		node->setQuantity(node->getQuantity() + 1);
 		Vec3 direction = magnitude * ray.direction;
-		Vec3 flux = node->getFlux() + direction;
-		node->setFlux(flux);
-		magnitude /= 1.0f + node->getDensity();
+		node->setDirection(node->getDirection() + direction);
+		float density = node->getDensity();
+		if (density > 1.0f)
+			density = 1.0f;
+		magnitude /= 1.0f + 1.0f*density;
 		nextNode = node->getAdjacentNode(ray);
 	}
+}
+
+float Generator::setConcentration(Stem *stem)
+{
+	Stem *child = stem->getChild();
+	float total = this->suppression*this->suppression*pi;
+	while (child) {
+		total += setConcentration(child);
+		child->getState()->concentration = total;
+		child = child->getSibling();
+	}
+	return total;
 }
 
 void Generator::generalizeDensity(Volume::Node *node)
@@ -153,19 +169,27 @@ void Generator::generalizeDensity(Volume::Node *node)
 
 void Generator::generalizeFlux(Volume::Node *node)
 {
-	Vec3 flux(0.0f, 0.0f, 0.0f);
+	Vec3 direction(0.0f, 0.0f, 0.0f);
 	float count = 0.0f;
 	for (int i = 0; i < 8; i++) {
-		Volume::Node *child = node->getNode(i);
-		if (child->getNode(0))
-			generalizeFlux(child);
-		if (!isZero(child->getFlux())) {
+		Volume::Node *n = node->getNode(i);
+		if (n->getNode(0))
+			generalizeFlux(n);
+		else if (n->getQuantity() > 0) {
+			Vec3 f = n->getDirection() / n->getQuantity();
+			float m = magnitude(f);
+			if (m > 1.0f)
+				n->setDirection(f/m);
+			else
+				n->setDirection(f);
+		}
+		if (!isZero(n->getDirection())) {
 			count += 1.0f;
-			flux += child->getFlux();
+			direction += n->getDirection();
 		}
 	}
 	if (count > 0.0f)
-		node->setFlux(flux / count);
+		node->setDirection(direction / count);
 }
 
 float Generator::evaluateEfficiency(Volume *volume, Stem *stem)
@@ -180,10 +204,9 @@ float Generator::evaluateEfficiency(Volume *volume, Stem *stem)
 		float position = leaf->getPosition();
 		location += stem->getPath().getIntermediate(position);
 		Volume::Node *node = volume->getNode(location);
-		Vec3 r = node->getFlux();
+		Vec3 r = node->getDirection();
 		float s = magnitude(r);
-		if (s > 50.0f)
-			total += sqrt(s);
+		total += s*0.001f;
 	}
 
 	Stem *child = stem->getChild();
@@ -202,12 +225,12 @@ float Generator::evaluateEfficiency(Volume *volume, Stem *stem)
 	return total;
 }
 
-void Generator::addNodes(Volume *volume, Stem *stem, int iteration)
+void Generator::addNodes(Volume *volume, Stem *stem, int i, int n)
 {
-	addNode(volume, stem, iteration);
+	addNode(volume, stem, i, n);
 	Stem *child = stem->getChild();
 	while (child) {
-		addNodes(volume, child, iteration);
+		addNodes(volume, child, i, n);
 		child = child->getSibling();
 	}
 }
@@ -222,20 +245,24 @@ Vec3 getDirection(Stem *stem, Vec3 origin, Vec3 direction, Volume *volume)
 	Volume::Node *node = volume->getNode(stem->getLocation() + origin);
 	Vec3 d(0.0f, 0.0f, 0.0f);
 	while (node && isZero(d)) {
-		d = node->getFlux();
+		d += node->getDirection();
 		node = node->getParent();
 	}
-	d = normalize(d);
-	return normalize(-0.5f*d+direction);
+	return normalize(direction - d);
 }
 
-void Generator::addNode(Volume *volume, Stem *stem, int iteration)
+void Generator::addNode(Volume *volume, Stem *stem, int i, int n)
 {
+	float rate = 1.0f;
 	if (stem->getParent()) {
 		Stem *parent = stem->getParent();
 		float distance = stem->getDistance();
 		float r = this->plant->getIntermediateRadius(parent, distance);
+		rate = 1.0f - stem->getState()->concentration / (r*r*pi);
+		rate *= (rate > 0.0f);
 		/* TODO: Find a better way to model stem radii. */
+		if (rate < 0.5f || static_cast<int>(rate*n) < i)
+			return;
 		if (r >= 1.2f * stem->getSwelling().x * stem->getMaxRadius())
 			updateRadius(stem);
 		else
@@ -251,7 +278,7 @@ void Generator::addNode(Volume *volume, Stem *stem, int iteration)
 	ray.origin = controls.back();
 	ray.direction = path.getDirection(path.getSize()-1);
 	Vec3 direction = getDirection(stem, ray.origin, ray.direction, volume);
-	Vec3 point = ray.origin + this->primaryGrowthRate * direction;
+	Vec3 point = ray.origin + rate * this->primaryGrowthRate * direction;
 
 	controls.push_back(point);
 	spline.setControls(controls);
@@ -259,7 +286,7 @@ void Generator::addNode(Volume *volume, Stem *stem, int iteration)
 	stem->setPath(path);
 
 	updateBoundingBox(point + stem->getLocation());
-	addLeaves(stem, iteration);
+	addLeaves(stem, stem->getState()->node++);
 }
 
 Vec3 getInitialDirection(Leaf leaf, Stem *stem, Volume *volume)
@@ -275,7 +302,7 @@ void Generator::addStems(Stem *stem, Volume *volume)
 		addStems(child, volume);
 		child = child->getSibling();
 	}
-	if (stem->getDepth() < 3)
+	if (stem->getDepth() < 4)
 		addStem(stem, volume);
 }
 
@@ -311,20 +338,18 @@ void Generator::addStem(Stem *stem, Volume *volume)
 
 void Generator::addLeaves(Stem *stem, int node)
 {
+	Leaf leaf;
+	leaf.setMesh(0);
+	leaf.setScale(Vec3(0.2f, 0.2f, 0.2f));
+	const Path &path = stem->getPath();
+	float distance = path.getLength();
+	leaf.setPosition(distance);
 	LeafData data;
 	data.maxForward = 0.0f;
 	data.minForward = 0.0f;
 	data.localUp = 0.0f;
 	data.globalUp = 0.0f;
-	const Path &path = stem->getPath();
-	float distance = path.getLength();
-
-	Leaf leaf;
-	leaf.setMesh(0);
-	leaf.setScale(Vec3(0.2f, 0.2f, 0.2f));
-	leaf.setPosition(distance);
 	leaf.setRotation(data, distance, path, node);
-
 	stem->addLeaf(leaf);
 }
 

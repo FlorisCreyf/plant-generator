@@ -29,6 +29,7 @@ namespace pg {
 		float primaryGrowthRate;
 		float secondaryGrowthRate;
 		float minRadius;
+		float suppression;
 		int rayCount;
 		int rayLevels;
 		float width;
@@ -37,11 +38,12 @@ namespace pg {
 		void addToVolume(Volume *, Stem *);
 		void castRays(Volume *);
 		void updateRadiantEnergy(Volume *, Ray);
+		float setConcentration(Stem *);
 		void generalizeDensity(Volume::Node *);
 		void generalizeFlux(Volume::Node *);
 		float evaluateEfficiency(Volume *, Stem *);
-		void addNodes(Volume *, Stem *, int);
-		void addNode(Volume *, Stem *, int);
+		void addNodes(Volume *, Stem *, int, int);
+		void addNode(Volume *, Stem *, int, int);
 		void updateRadius(Stem *);
 		void addStems(Stem *, Volume *);
 		void addStem(Stem *, Volume *);

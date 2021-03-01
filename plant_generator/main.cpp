@@ -27,7 +27,7 @@ namespace po = boost::program_options;
 
 int main(int argc, char **argv)
 {
-	int cycles = 3;
+	int cycles = 5;
 	int nodes = 4;
 	int rays = 100;
 	int divisions = 100;
