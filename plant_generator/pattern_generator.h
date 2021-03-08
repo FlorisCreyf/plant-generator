@@ -25,10 +25,12 @@ namespace pg {
 		ParameterTree parameterTree;
 		std::mt19937 mt;
 
-		Vec3 getForkDirection(Stem *, const StemData &, int);
-		Vec3 getStemDirection(Stem *, const StemData &, int);
 		void addLateralStems(Stem *, float, const ParameterNode *);
-		void addLateralStem(Stem *, float, const ParameterNode *, int);
+		void addLateralStem(Stem *, float, int, const ParameterNode *,
+			Vec3 &, Vec3 &);
+		Vec3 getStemDirection(Stem *, const StemData &, Vec3, Vec3,
+			int);
+		Vec3 getForkDirection(Stem *, const StemData &, int);
 		float addStems(Stem *, Vec3, float, const ParameterNode *);
 		float setPath(Stem *, Vec3, float, const StemData &);
 		void addLeaves(Stem *, LeafData, float);

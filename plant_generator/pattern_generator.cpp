@@ -137,18 +137,27 @@ void PatternGenerator::addLateralStems(Stem *parent, float length,
 	if (end <= distance)
 		end = distance;
 
+	const Path &path = parent->getPath();
+	Vec3 parentDirection = path.getIntermediateDirection(end);
+	Vec3 direction;
+	if (parentDirection == Vec3(0.0f, 1.0f, 0.0f))
+		direction = Vec3(0.0f, 0.0f, 1.0f);
+	else
+		direction = cross(Vec3(0.0f, 1.0f, 0.0f), parentDirection);
+
 	for (int i = 0; position > end; i++) {
 		float t = position / length;
 		float r = stemData.densityCurve.getPoint(t).z;
 		if (r == 0.0f)
 			break;
-		addLateralStem(parent, position, node, i);
+		addLateralStem(parent, position, i, node, direction,
+			parentDirection);
 		position -= distance * (1.0f/r);
 	}
 }
 
-void PatternGenerator::addLateralStem(Stem *parent, float position,
-	const ParameterNode *node, int index)
+void PatternGenerator::addLateralStem(Stem *parent, float position, int index,
+	const ParameterNode *node, Vec3 &direction, Vec3 &parentDirection)
 {
 	StemData data = node->getData();
 	Vec2 collar(1.5f, 3.0f);
@@ -166,8 +175,31 @@ void PatternGenerator::addLateralStem(Stem *parent, float position,
 	else
 		stem->setSectionDivisions(parent->getSectionDivisions());
 
-	Vec3 direction = getStemDirection(stem, data, index);
-	addStems(stem, direction, 1.0f, node);
+	const Path &path = parent->getPath();
+	float distance = stem->getDistance();
+	Vec3 d = path.getIntermediateDirection(distance);
+	Quat r = rotateIntoVecQ(parentDirection, d);
+	parentDirection = d;
+	direction = rotate(r, direction);
+
+	d = getStemDirection(stem, data, direction, parentDirection, index);
+	addStems(stem, d, 1.0f, node);
+}
+
+Vec3 PatternGenerator::getStemDirection(Stem *stem, const StemData &data,
+	Vec3 direction, Vec3 parentDirection, int index)
+{
+	float variation = data.angleVariation * pi;
+	std::uniform_real_distribution<float> dis(-variation, variation);
+	float distance = stem->getDistance();
+	const Path &path = stem->getParent()->getPath();
+	float ratio = distance / path.getLength();
+	float angle = data.leaf.rotation*index + dis(this->mt);
+	Quat rotation = fromAxisAngle(parentDirection, angle);
+	direction = normalize(direction);
+	direction = rotate(rotation, direction);
+	dis = std::uniform_real_distribution<float>(ratio*0.5f, ratio);
+	return normalize(lerp(direction, parentDirection, dis(this->mt)));
 }
 
 Vec3 PatternGenerator::getForkDirection(Stem *stem, const StemData &data, int i)
@@ -191,29 +223,6 @@ Vec3 PatternGenerator::getForkDirection(Stem *stem, const StemData &data, int i)
 		return rotateAroundAxis(parentDirection, normal, angle);
 	else
 		return rotateAroundAxis(parentDirection, normal, -angle);
-}
-
-Vec3 PatternGenerator::getStemDirection(Stem *stem, const StemData &data, int i)
-{
-	float variation = data.angleVariation * pi;
-	std::uniform_real_distribution<float> dis(-variation, variation);
-	float distance = stem->getDistance();
-	const Path &path = stem->getParent()->getPath();
-	Vec3 parentDirection = path.getIntermediateDirection(distance);
-	float ratio = distance / path.getLength();
-	float angle = data.leaf.rotation*i + dis(this->mt);
-	Quat rotation = fromAxisAngle(parentDirection, angle);
-
-	Vec3 direction;
-	if (parentDirection == Vec3(0.0f, 1.0f, 0.0f))
-		direction = Vec3(0.0f, 0.0f, 1.0f);
-	else
-		direction = cross(Vec3(0.0f, 1.0f, 0.0f), parentDirection);
-	direction = normalize(direction);
-	direction = rotate(rotation, direction);
-
-	dis = std::uniform_real_distribution<float>(ratio*0.5f, ratio);
-	return normalize(lerp(direction, parentDirection, dis(this->mt)-0.1f));
 }
 
 float getCollarLength(Stem *stem, Vec3 direction, Plant *plant)
@@ -303,7 +312,7 @@ void PatternGenerator::addLeaves(Stem *stem, LeafData data, float length)
 	const Path &path = stem->getPath();
 	const float distance = 1.0f / data.density;
 	float position = path.getLength();
-	float end = (length - data.distance);
+	float end = length - data.distance;
 	end *= (end >= 0.0f);
 
 	for (int i = 0, j = 1; position > end; i++, j++) {
