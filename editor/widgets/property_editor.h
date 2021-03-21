@@ -68,6 +68,7 @@ class PropertyEditor : public QWidget {
 		for (auto &b : a)
 			for (size_t index : b.second)
 				func(b.first->getLeaf(index), value);
+		this->sameAsCurrent = this->saveStem->isSameAsCurrent();
 		this->editor->change();
 	}
 
@@ -78,6 +79,7 @@ class PropertyEditor : public QWidget {
 		auto a = this->editor->getSelection()->getStemInstances();
 		for (auto &b : a)
 			func(b.first, value);
+		this->sameAsCurrent = this->saveStem->isSameAsCurrent();
 		this->editor->change();
 	}
 

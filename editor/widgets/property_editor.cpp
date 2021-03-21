@@ -154,6 +154,7 @@ void PropertyEditor::createInterface()
 			changeStem([] (Stem *s, int v) {
 				s->setRadiusCurve(v);
 			}, v, this->cl[RadiusCurve]);
+			this->sameAsCurrent = this->saveStem->isSameAsCurrent();
 			finishChanging();
 		});
 
@@ -169,6 +170,7 @@ void PropertyEditor::createInterface()
 				path.setSpline(spline);
 				s->setPath(path);
 			}, v, this->cl[Degree]);
+			this->sameAsCurrent = this->saveStem->isSameAsCurrent();
 			finishChanging();
 		});
 
@@ -178,6 +180,7 @@ void PropertyEditor::createInterface()
 			changeStem([] (Stem *s, int v) {
 				s->setMaterial(Stem::Outer, v);
 			}, v, this->cl[StemMaterial]);
+			this->sameAsCurrent = this->saveStem->isSameAsCurrent();
 			finishChanging();
 		});
 
@@ -187,6 +190,7 @@ void PropertyEditor::createInterface()
 			changeStem([] (Stem *s, int v) {
 				s->setMaterial(Stem::Inner, v);
 			}, v, this->cl[CapMaterial]);
+			this->sameAsCurrent = this->saveStem->isSameAsCurrent();
 			finishChanging();
 		});
 
@@ -196,6 +200,7 @@ void PropertyEditor::createInterface()
 			changeLeaf([] (Leaf *l, int v) {
 				l->setMaterial(v);
 			}, v, this->cl[LeafMaterial]);
+			this->sameAsCurrent = this->saveStem->isSameAsCurrent();
 			finishChanging();
 		});
 
@@ -205,6 +210,7 @@ void PropertyEditor::createInterface()
 			changeLeaf([] (Leaf *l, int v) {
 				l->setMesh(v);
 			}, v, this->cl[Mesh]);
+			this->sameAsCurrent = this->saveStem->isSameAsCurrent();
 			finishChanging();
 		});
 
@@ -218,6 +224,7 @@ void PropertyEditor::createInterface()
 			changeStem([] (Stem *s, int v) {
 				s->setCustom(v);
 			}, v, this->bl[CustomStem]);
+			this->sameAsCurrent = false;
 			finishChanging();
 		});
 
@@ -226,6 +233,7 @@ void PropertyEditor::createInterface()
 			changeLeaf([] (Leaf *l, int v) {
 				l->setCustom(v);
 			}, v, this->bl[CustomLeaf]);
+			this->sameAsCurrent = false;
 			finishChanging();
 		});
 
@@ -366,13 +374,10 @@ void PropertyEditor::beginChanging(QLabel *label)
 		this->saveStem = new SaveStem(selection);
 		this->saveStem->execute();
 	}
-	this->sameAsCurrent = this->saveStem->isSameAsCurrent();
 }
 
 void PropertyEditor::finishChanging()
 {
-	if (this->saveStem)
-		this->sameAsCurrent = this->saveStem->isSameAsCurrent();
 	if (this->saveStem && !this->sameAsCurrent)
 		this->editor->getHistory()->add(this->saveStem);
 	else if (this->saveStem)

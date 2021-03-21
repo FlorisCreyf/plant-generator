@@ -104,11 +104,11 @@ void GeneratorEditor::createInterface()
 	this->dv[Noise]->setSingleStep(0.001);
 	this->dv[Noise]->setDecimals(3);
 	form->addRow("Bifurcation", this->dv[Fork]);
-	this->dv[Fork]->setSingleStep(0.001);
-	this->dv[Fork]->setDecimals(3);
+	this->dv[Fork]->setSingleStep(0.01);
+	this->dv[Fork]->setDecimals(2);
 	form->addRow("Bifurcation Angle", this->dv[ForkAngle]);
-	this->dv[ForkAngle]->setSingleStep(0.001);
-	this->dv[ForkAngle]->setDecimals(3);
+	this->dv[ForkAngle]->setSingleStep(0.01);
+	this->dv[ForkAngle]->setDecimals(2);
 	form->addRow("Angle Variation", this->dv[AngleVariation]);
 	form->addRow("Radius Threshold", this->dv[RadiusThreshold]);
 	this->dv[RadiusThreshold]->setSingleStep(0.001);
@@ -207,16 +207,16 @@ void GeneratorEditor::createRootGroup(QBoxLayout *layout)
 	this->irv[Seed]->setRange(min, max);
 	form->addRow("Seed", this->irv[Seed]);
 	form->addRow("Length", this->drv[RootLength]);
-	form->addRow("Radius Threshold", this->drv[RootThreshold]);
 	form->addRow("Noise", this->drv[RootNoise]);
 	this->drv[RootNoise]->setSingleStep(0.001);
 	this->drv[RootNoise]->setDecimals(3);
 	form->addRow("Bifurcation", this->drv[RootFork]);
-	this->drv[RootFork]->setSingleStep(0.001);
-	this->drv[RootFork]->setDecimals(3);
+	this->drv[RootFork]->setSingleStep(0.01);
+	this->drv[RootFork]->setDecimals(2);
 	form->addRow("Bifurcation Angle", this->drv[RootForkAngle]);
-	this->drv[RootForkAngle]->setSingleStep(0.001);
-	this->drv[RootForkAngle]->setDecimals(3);
+	this->drv[RootForkAngle]->setSingleStep(0.01);
+	this->drv[RootForkAngle]->setDecimals(2);
+	form->addRow("Radius Threshold", this->drv[RootThreshold]);
 
 	setFormLayout(form);
 	layout->addWidget(this->rootGroup);
