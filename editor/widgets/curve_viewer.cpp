@@ -17,6 +17,11 @@
 
 #include "curve_viewer.h"
 
+#ifdef _WIN32
+#undef near
+#undef far
+#endif
+
 using pg::Mat4;
 using pg::Vec3;
 using pg::Spline;

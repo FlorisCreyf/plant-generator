@@ -19,6 +19,11 @@
 #include <cmath>
 #include <stdio.h>
 
+#ifdef _WIN32
+#undef near
+#undef far
+#endif
+
 using pg::Vec2;
 using pg::Vec3;
 using pg::Vec4;

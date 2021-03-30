@@ -30,7 +30,6 @@
 #include <cmath>
 #include <fstream>
 #include <iterator>
-#include <QtWidgets>
 #include <boost/archive/text_iarchive.hpp>
 
 using pg::Mat4;

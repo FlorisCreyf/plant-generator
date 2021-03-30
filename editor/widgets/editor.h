@@ -36,6 +36,8 @@
 #include "plant_generator/scene.h"
 #include "plant_generator/wind.h"
 
+#include <QtWidgets>
+
 class Editor : public QOpenGLWidget, protected QOpenGLFunctions_4_3_Core {
 	Q_OBJECT
 

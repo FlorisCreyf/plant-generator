@@ -1,17 +1,21 @@
 TEMPLATE = app
-# Qt VS Tools might not generate object files in sub-directories.
-# Object File Name: $(IntDir)%(RelativeDir)
-CONFIG += qt object_parallel_to_source c++11 strict_c++ no_batch warn_on precompile_header
+# To generate a VS project file: Extensions -> Qt VS Tools -> Open .pro file
+# Visual studio might not generate object files in sub-directories.
+# Project settings -> C/C++ -> Output files -> Object file name: $(IntDir)%(RelativeDir)
+CONFIG += qt object_parallel_to_source c++11 strict_c++ no_batch warn_on
+unix::CONFIG += precompile_header
 # win32::CONFIG += console
+win32::DEFINES += PG_SERIALIZE GL_GLEXT_PROTOTYPES
 unix::QMAKE_LFLAGS += -no-pie
 TARGET = plant
 QT = core gui opengl xml openglextensions
 unix::LIBS += -lboost_serialization
 # Change the path name to reflect the Boost version.
-win32::LIBS += "C:\Program Files\boost\boost_1_73_0\stage\lib\libboost_serialization-vc142-mt-x64-1_73.lib"
+# To install Boost: .\bootstrap.bat; .\b2.exe;
+win32::LIBS += "C:\Program Files\boost\boost_1_75_0\stage\lib\libboost_serialization-vc142-mt-x64-1_75.lib"
 win32::LIBS += opengl32.lib
-win32::INCLUDEPATH += "C:\Program Files\boost\boost_1_73_0"
-win32::DEPENDPATH += "C:\Program Files\boost\boost_1_73_0"
+win32::INCLUDEPATH += "C:\Program Files\boost\boost_1_75_0"
+win32::DEPENDPATH += "C:\Program Files\boost\boost_1_75_0"
 FORMS += editor/qt/window.ui
 CONFIG(release, debug|release) {
 	OBJECTS_DIR = build/release
@@ -23,7 +27,7 @@ MOC_DIR = editor/qt
 RCC_DIR = editor/qt
 UI_DIR = editor/qt
 
-PRECOMPILED_HEADER = pch.h
+unix::PRECOMPILED_HEADER = pch.h
 
 SOURCES += \
 plant_generator/file/collada.cpp \
@@ -102,8 +106,8 @@ editor/point_selection.cpp \
 editor/selection.cpp \
 editor/selector.cpp
 
+unix::HEADERS += pch.h
 HEADERS += \
-pch.h \
 plant_generator/file/collada.h \
 plant_generator/file/wavefront.h \
 plant_generator/file/xml_writer.h \
