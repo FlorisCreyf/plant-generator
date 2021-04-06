@@ -348,7 +348,7 @@ void insertCurve(int sectionDivisions, int collarDivisions,
 	Vec2 weight[2];
 	Vec2 joints[2];
 	{
-		int b = sectionDivisions*collarDivisions;
+		int b = sectionDivisions * collarDivisions;
 		curve[0] = v2[0].position;
 		curve[1] = v1[b].position;
 		normal[0] = v2[0].normal;

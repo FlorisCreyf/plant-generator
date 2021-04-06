@@ -217,6 +217,8 @@ void GeneratorEditor::createRootGroup(QBoxLayout *layout)
 	this->drv[RootForkAngle]->setSingleStep(0.01);
 	this->drv[RootForkAngle]->setDecimals(2);
 	form->addRow("Radius Threshold", this->drv[RootThreshold]);
+	this->drv[RootThreshold]->setSingleStep(0.001);
+	this->drv[RootThreshold]->setDecimals(3);
 
 	setFormLayout(form);
 	layout->addWidget(this->rootGroup);

@@ -58,10 +58,9 @@ namespace pg {
 		void setTranslation(int, Vec3, Vec3, Animation &);
 		void setRootTranslation(Stem *, Animation &);
 		void transformJoint(Plant *, Stem *, Vec3, Animation &);
-		void transformChildJoints(Stem *, int, Plant *, Vec3,
-			Animation &);
+		void transformJoints(Stem *, int, Plant *, Vec3, Animation &);
 		int generateJoint(Stem *, int, int, size_t &);
-		int generateChildJoints(Stem *, int, int, size_t &, float);
+		int generateJoints(Stem *, int, int, size_t &, float);
 
 #ifdef PG_SERIALIZE
 		friend class boost::serialization::access;

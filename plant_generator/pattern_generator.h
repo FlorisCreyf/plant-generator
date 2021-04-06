@@ -21,19 +21,27 @@
 
 namespace pg {
 	class PatternGenerator {
+		struct Length {
+			float current;
+			float total;
+			Length(float c, float t) : current(c), total(t) {}
+		};
+
 		Plant *plant;
 		ParameterTree parameterTree;
 		std::mt19937 mt;
 
-		void addLateralStems(Stem *, float, const ParameterNode *);
-		void addLateralStem(Stem *, float, int, const ParameterNode *,
-			Vec3 &, Vec3 &);
-		Vec3 getStemDirection(Stem *, const StemData &, Vec3, Vec3,
-			int);
-		Vec3 getForkDirection(Stem *, const StemData &, int);
-		float addStems(Stem *, Vec3, float, const ParameterNode *);
+		void addLateralStems(Stem *, Length, const ParameterNode *);
+		void addLateralStem(Stem *, float, Length, int, Vec3 &, Vec3 &,
+			const ParameterNode *);
+		Vec3 getDirection(Stem *, int, Length, Vec3, Vec3,
+			const StemData &);
+		Vec3 getForkDirection(Stem *, float, const StemData &);
+		float addStems(Stem *, float, float, const ParameterNode *);
+		float getCollarLength(Stem *, Vec3);
 		float setPath(Stem *, Vec3, float, const StemData &);
-		void addLeaves(Stem *, LeafData, float);
+		float bifurcatePath(Stem *, int, int, const StemData &);
+		void addLeaves(Stem *, Length, LeafData);
 
 	public:
 		PatternGenerator(Plant *plant);

@@ -50,6 +50,102 @@ Animation Wind::generate(Plant *plant)
 	return animation;
 }
 
+int Wind::generateJoint(Stem *stem, int id, int pid, size_t &count)
+{
+	bool valid = stem->getMaxRadius() >= this->threshold;
+	if (!valid)
+		return id;
+
+	const Path &path = stem->getPath();
+	const Spline &spline = path.getSpline();
+	const std::vector<Vec3> &controls = spline.getControls();
+
+	const int degree = spline.getDegree();
+	const size_t controlCount = controls.size() - 1;
+	float distance = 0.0f;
+
+	{
+		size_t start = path.toPathIndex(0);
+		size_t end = path.toPathIndex(degree + degree);
+		distance += path.getDistance(start, end);
+		stem->addJoint(Joint(++id, pid, start));
+		pid = id;
+		id = generateJoints(stem, id, pid, ++count, distance);
+	}
+	for (size_t i = degree + degree; i < controlCount; i += degree) {
+		size_t start = path.toPathIndex(i);
+		size_t end = path.toPathIndex(i + degree);
+		distance += path.getDistance(start, end);
+		stem->addJoint(Joint(++id, pid, start));
+		pid = id;
+		id = generateJoints(stem, id, pid, ++count, distance);
+	}
+
+	distance = std::numeric_limits<float>::max();
+	return generateJoints(stem, id, pid, count, distance);
+}
+
+int Wind::generateJoints(Stem *stem, int id, int pid, size_t &count,
+	float distance)
+{
+	Stem *child = stem->getChild();
+	while (child) {
+		bool needsJoints = child->getJoints().empty();
+		if (child->getDistance() <= distance && needsJoints)
+			id = generateJoint(child, id, pid, count);
+		child = child->getSibling();
+	}
+	return id;
+}
+
+void Wind::transformJoint(Plant *plant, Stem *stem, Vec3 previousPoint,
+	Animation &animation)
+{
+	const Path &path = stem->getPath();
+	const Spline &spline = path.getSpline();
+	vector<Joint> joints = stem->getJoints();
+
+	for (size_t i = 0; i < joints.size(); i++) {
+		const Joint joint = joints[i];
+		const int id = joint.getID();
+		const size_t index = joint.getPathIndex();
+		const Vec3 point = stem->getLocation() + path.get(index);
+
+		if (i > 0) {
+			size_t j = i * spline.getDegree();
+			size_t start = path.toPathIndex(j);
+			size_t end = path.toPathIndex(j + spline.getDegree());
+			float distance = path.getDistance(start, end);
+			float r = plant->getRadius(stem, start);
+			Vec3 d = path.getDirection(start);
+			setRotation(id, distance, r, d, animation);
+		} else
+			setNoRotation(id, animation);
+
+		if (i > 0 || stem->getParent())
+			setTranslation(id, point, previousPoint, animation);
+		else
+			setRootTranslation(stem, animation);
+
+		transformJoints(stem, id, plant, point, animation);
+		previousPoint = path.get(index) + stem->getLocation();
+	}
+}
+
+void Wind::transformJoints(Stem *stem, int pid, Plant *plant, Vec3 point,
+	Animation &animation)
+{
+	Stem *child = stem->getChild();
+	while (child) {
+		if (child->hasJoints()) {
+			Joint joint = child->getJoints()[0];
+			if (joint.getParentID() == pid)
+				transformJoint(plant, child, point, animation);
+		}
+		child = child->getSibling();
+	}
+}
+
 void Wind::setRotation(int joint, float distance, float radius, Vec3 direction,
 	Animation &animation)
 {
@@ -69,7 +165,7 @@ void Wind::setRotation(int joint, float distance, float radius, Vec3 direction,
 		Vec3 movement = lerp(direction, this->direction, t);
 		frame.rotation = rotateIntoVecQ(direction, movement);
 
-		wave = sin(x+pi*0.5f) * cos(2.0f*x+pi*0.25f);
+		wave = 0.5f*(sin(x) * cos(2.0f*x+pi*0.25f));
 		t = intensity * wave;
 		movement = lerp(direction, orthogonalDirection, t);
 		frame.rotation *= rotateIntoVecQ(direction, movement);
@@ -101,93 +197,6 @@ void Wind::setRootTranslation(Stem *root, Animation &animation)
 		KeyFrame &frame = animation.frames[0][i];
 		frame.translation = toVec4(root->getLocation(), 0.0f);
 	}
-}
-
-void Wind::transformChildJoints(Stem *stem, int pid, Plant *plant,
-	Vec3 location, Animation &animation)
-{
-	Stem *child = stem->getChild();
-	while (child) {
-		if (child->hasJoints()) {
-			Joint joint = child->getJoints()[0];
-			if (joint.getParentID() == pid)
-				transformJoint(plant, child, location,
-					animation);
-		}
-		child = child->getSibling();
-	}
-}
-
-void Wind::transformJoint(Plant *plant, Stem *stem, Vec3 prevLocation,
-	Animation &animation)
-{
-	const Path &path = stem->getPath();
-	const Spline &spline = path.getSpline();
-	vector<Joint> joints = stem->getJoints();
-
-	for (size_t i = 0; i < joints.size(); i++) {
-		const Joint joint = joints[i];
-		const int id = joint.getID();
-		const size_t index = joint.getPathIndex();
-		const Vec3 location = stem->getLocation() + path.get(index);
-
-		if (i > 0) {
-			size_t start = path.toPathIndex(i);
-			size_t end = path.toPathIndex(i + spline.getDegree());
-			float distance = path.getDistance(start, end);
-			float r = plant->getRadius(stem, i);
-			Vec3 d = path.getDirection(start);
-			setRotation(id, distance, r, d, animation);
-		} else
-			setNoRotation(id, animation);
-
-		if (i > 0 || stem->getParent())
-			setTranslation(id, location, prevLocation, animation);
-		else
-			setRootTranslation(stem, animation);
-
-		transformChildJoints(stem, id, plant, location, animation);
-		prevLocation = path.get(index) + stem->getLocation();
-	}
-}
-
-int Wind::generateJoint(Stem *stem, int id, int pid, size_t &count)
-{
-	bool valid = stem->getMaxRadius() >= this->threshold;
-	if (!valid)
-		return id;
-
-	float distance = 0.0f;
-	const Path &path = stem->getPath();
-	const Spline &spline = path.getSpline();
-	const std::vector<Vec3> &controls = spline.getControls();
-	int degree = spline.getDegree();
-	size_t controlCount = controls.size();
-	size_t i = stem->getParent() ? degree : 0;
-	for (; i < controlCount-1; i += degree) {
-		size_t start = path.toPathIndex(i);
-		size_t end = path.toPathIndex(i + degree);
-		distance += path.getDistance(start, end);
-		stem->addJoint(Joint(++id, pid, start));
-		pid = id;
-		count++;
-		id = generateChildJoints(stem, id, pid, count, distance);
-	}
-	distance = std::numeric_limits<float>::max();
-	return generateChildJoints(stem, id, pid, count, distance);
-}
-
-int Wind::generateChildJoints(Stem *stem, int id, int pid, size_t &count,
-	float distance)
-{
-	Stem *child = stem->getChild();
-	while (child) {
-		bool needsJoints = child->getJoints().empty();
-		if (child->getDistance() <= distance && needsJoints)
-			id = generateJoint(child, id, pid, count);
-		child = child->getSibling();
-	}
-	return id;
 }
 
 void Wind::setSeed(int seed)

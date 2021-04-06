@@ -81,7 +81,7 @@ namespace pg {
 		std::vector<std::map<Stem *, Segment>> stemSegments;
 		std::vector<std::map<LeafID, Segment>> leafSegments;
 
-		void addSections(State &state, Segment, bool, Stem *);
+		void addSections(State &, Segment, bool, Stem *);
 		void addSection(State &, Quat, const CrossSection &);
 		float getTextureLength(Stem *, size_t);
 		float getTextureLength(Stem *, size_t, size_t);
@@ -91,12 +91,12 @@ namespace pg {
 		Segment addStem(Stem *, State &, State, bool);
 		void addChildStems(Stem *, Stem *[2], State &);
 
-		bool addForks(Stem * [2], State);
+		bool addForks(Stem *[2], State);
 		void createFork(Stem *, State &);
-		void reserveForkSpace(const Stem *stem, int mesh);
+		void reserveForkSpace(const Stem *, int);
 		int getForkMidpoint(int, Vec3, Vec3, Vec3, Quat);
 		void addForkTriangles(const State &, const State [2],
-			Stem * [2], const Segment [2]);
+			Stem *[2], const Segment [2]);
 
 		void createBranchCollar(State &, Segment);
 		size_t insertCollar(Segment, Segment, size_t);
@@ -108,12 +108,12 @@ namespace pg {
 		void connectCollar(const State &, bool);
 
 		void addLeaves(Stem *, const State &);
-		void addLeaf(Stem *stem, unsigned, const State &);
+		void addLeaf(Stem *, unsigned, const State &);
 		Geometry transformLeaf(const Leaf *, const Stem *);
 
 		void setInitialJointState(State &, const State &);
 		std::pair<size_t, Joint> getJoint(float, const Stem *);
-		void incrementJoint(State &state, const std::vector<Joint> &);
+		void incrementJoint(State &, const std::vector<Joint> &);
 		void updateJointState(State &, Vec2 &, Vec2 &);
 		void setJointInfo(const Stem *, float, size_t, Vec2 &, Vec2 &);
 

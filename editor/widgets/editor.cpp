@@ -32,6 +32,11 @@
 #include <iterator>
 #include <boost/archive/text_iarchive.hpp>
 
+#ifdef _WIN32
+#undef near
+#undef far
+#endif
+
 using pg::Mat4;
 using pg::Vec3;
 using pg::Stem;
