@@ -25,9 +25,7 @@
 
 class Camera {
 public:
-	enum Action {
-		Zoom, Rotate, Pan, None
-	};
+	enum Action {Zoom, Rotate, Pan, None};
 
 	Camera();
 	void setPanSpeed(float speed);
@@ -36,61 +34,53 @@ public:
 	void setDistance(float distance);
 	void setTarget(pg::Vec3 target);
 	void setAction(Action action);
-	/** Returns true if an action was executed. */
-	bool executeAction(float x, float y);
-	void setStartCoordinates(float x, float y);
-	void setPan(float x, float y);
-	void setCoordinates(float x, float y);
+	void setWindowSize(int width, int height);
 	void setOrthographic(pg::Vec3 near, pg::Vec3 far);
 	void setPerspective(float fovy, float near, float far, float aspect);
-	void setWindowSize(int width, int height);
+
+	void setStartCoordinates(float x, float y);
+	/** Returns true if an action was executed. */
+	bool executeAction(float x, float y);
 	void zoom(float y);
+	void pan(float x, float y);
+	void rotate(float x, float y);
+
 	pg::Vec3 getPosition() const;
 	pg::Vec3 getDirection() const;
-	pg::Vec3 getTarget() const;
 	pg::Mat4 getVP() const;
-	pg::Mat4 updateVP();
-	pg::Vec3 toScreenSpace(pg::Vec3 point) const;
 	pg::Ray getRay(int x, int y) const;
+	pg::Vec3 toScreenSpace(pg::Vec3 point) const;
 	pg::Vec3 getFar() const;
 	pg::Vec3 getNear() const;
+	float getDistance() const;
 	bool isPerspective() const;
 
 private:
-	pg::Vec2 posDiff;
-	pg::Vec2 pos;
-	pg::Vec2 start;
-
-	Action action;
-
-	pg::Mat4 projection;
-	pg::Vec3 eye;
-	pg::Vec3 feye;
-	pg::Vec3 target;
-	pg::Vec3 ftarget;
-	pg::Vec3 farPlane;
-	pg::Vec3 nearPlane;
-	int winWidth;
-	int winHeight;
+	float xAngle;
+	float zAngle;
 	float distance;
-	bool perspective;
-
 	float panSpeed;
 	float zoomSpeed;
+	float rotateSpeed;
 	float zoomMin;
 	float zoomMax;
-	float scroll;
-	float prevY;
+	pg::Vec2 cursor;
+	pg::Vec3 target;
+	pg::Vec3 far;
+	pg::Vec3 near;
+	Action action;
+	int winWidth;
+	int winHeight;
+	bool perspective;
 
-	pg::Vec3 getCameraPosition() const;
-	pg::Mat4 getInverseVP() const;
+	pg::Mat4 getOrthographicMatrix() const;
 	pg::Mat4 getInverseOrthographic() const;
+	pg::Mat4 getPerspectiveMatrix() const;
 	pg::Mat4 getInversePerspective() const;
-	pg::Mat4 getInverseLookAt() const;
-	pg::Mat4 getLookAtMatrix(pg::Vec3 eye, pg::Vec3 target) const;
+	pg::Mat4 getViewMatrix() const;
+	pg::Mat4 getInverseView() const;
 	pg::Ray getOrthographicRay(int x, int y) const;
 	pg::Ray getPerspectiveRay(int x, int y) const;
-	void initOrthographic(pg::Vec3 near, pg::Vec3 far);
 };
 
 #endif

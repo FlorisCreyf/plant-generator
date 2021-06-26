@@ -32,18 +32,17 @@ using pg::Mat4;
 const float pi = std::acos(-1.0);
 
 Camera::Camera() :
-	posDiff(0.0f, 0.0f),
-	pos(180.0f, 0.0f),
-	action(Action::None),
-	target(0.0f, 4.0f, 0.0f),
-	ftarget(target),
-	distance(18.0f),
+	xAngle(0.0f),
+	zAngle(0.0f),
+	distance(10.0f),
 	panSpeed(0.002f),
 	zoomSpeed(0.01f),
+	rotateSpeed(pi/360.0f),
 	zoomMin(0.1f),
 	zoomMax(100.0f),
-	scroll(0.0f),
-	prevY(0.0f)
+	target(0.0f, 0.0f, 6.0f),
+	action(Action::None),
+	perspective(true)
 {
 
 }
@@ -62,8 +61,8 @@ void Camera::setZoom(float speed, float min, float max)
 
 void Camera::setOrientation(float x, float y)
 {
-	this->pos.x = x;
-	this->pos.y = y;
+	this->xAngle = x;
+	this->zAngle = y;
 }
 
 void Camera::setTarget(Vec3 target)
@@ -84,14 +83,14 @@ void Camera::setAction(Action action)
 bool Camera::executeAction(float x, float y)
 {
 	if (this->action == Zoom)  {
-		zoom(prevY - y);
-		prevY = y;
+		zoom(this->cursor.y - y);
+		this->cursor.y = y;
 		return true;
 	} else if (this->action == Rotate) {
-		setCoordinates(x, y);
+		rotate(x, y);
 		return true;
 	} else if (this->action == Pan) {
-		setPan(x, y);
+		pan(x, y);
 		return true;
 	}
 	return false;
@@ -99,35 +98,31 @@ bool Camera::executeAction(float x, float y)
 
 void Camera::setStartCoordinates(float x, float y)
 {
-	this->posDiff.x = x - (this->pos.x - this->posDiff.x);
-	this->posDiff.y = y - (this->pos.y - this->posDiff.y);
-	this->start.y = y;
-	this->start.x = x;
-	this->pos = Vec2(x, y);
-	this->ftarget = this->target;
-	this->prevY = this->pos.y;
+	this->cursor = Vec2(x, y);
 }
 
-void Camera::setCoordinates(float x, float y)
+void Camera::rotate(float x, float y)
 {
-	this->pos = Vec2(x, y);
+	this->xAngle += (this->cursor.y-y) * this->rotateSpeed;
+	this->zAngle += (this->cursor.x-x) * this->rotateSpeed;
+	this->cursor = Vec2(x, y);
 }
 
-void Camera::setPan(float x, float y)
+void Camera::pan(float x, float y)
 {
-	Vec3 eye = getCameraPosition();
-	Vec3 dir = pg::normalize(eye - target);
-	float speed = distance * panSpeed;
-
-	const float toRadian = pi / 360.0f;
-	float xx = (this->pos.x - this->posDiff.x) * toRadian;
-	Vec3 c(-std::sin(xx), 0.0f, std::cos(xx));
-	Vec3 d = pg::cross(dir, c);
-
-	c = (x - this->start.x) * speed * c;
-	d = (this->start.y - y) * speed * d;
-
-	this->target = c + d + this->ftarget;
+	Vec3 eye = getPosition();
+	/* The direction from the camera to the target is the normal of the
+	plane the camera pans on. */
+	Vec3 normal = normalize(eye - target);
+	/* The horizontal vector is always on the xy-plane because the camera
+	is never tilted. */
+	Vec3 horizontal(std::cos(this->zAngle), std::sin(this->zAngle), 0.0f);
+	Vec3 vertical = cross(horizontal, normal);
+	float speed = this->panSpeed * distance;
+	horizontal *= (this->cursor.x - x) * speed;
+	vertical *= (this->cursor.y - y) * speed;
+	this->target += horizontal + vertical;
+	this->cursor = Vec2(x, y);
 }
 
 void Camera::setWindowSize(int width, int height)
@@ -147,157 +142,133 @@ void Camera::zoom(float y)
 		this->distance = this->zoomMax;
 }
 
-Vec3 Camera::getCameraPosition() const
-{
-	const float toRadian = pi / 180.0f;
-	float x = (this->pos.x - this->posDiff.x) * toRadian * 0.5f;
-	float y = (this->pos.y - this->posDiff.y) * toRadian * 0.5f;
-	Vec3 eye;
-	eye.x = this->distance * std::cos(x) * std::cos(y) + this->target.x;
-	eye.y = this->distance * std::sin(y) + this->target.y;
-	eye.z = this->distance * std::sin(x) * std::cos(y) + this->target.z;
-	return eye;
-}
-
 Vec3 Camera::getPosition() const
 {
-	return this->eye;
+	float cx = std::cos(-this->xAngle);
+	float cz = std::cos(-this->zAngle);
+	float sx = std::sin(-this->xAngle);
+	float sz = std::sin(-this->zAngle);
+	Vec3 eye;
+	eye.x = this->distance * sx * sz + this->target.x;
+	eye.y = this->distance * sx * cz + this->target.y;
+	eye.z = this->distance * cx + this->target.z;
+	return eye;
 }
 
 Vec3 Camera::getDirection() const
 {
-	return pg::normalize(this->target - this->eye);
-}
-
-Vec3 Camera::getTarget() const
-{
-	return this->target;
+	return pg::normalize(this->target - getPosition());
 }
 
 Mat4 Camera::getVP() const
 {
-	Vec3 eye = getCameraPosition();
-	return this->projection * getLookAtMatrix(eye, this->target);
+	if (this->perspective)
+		return getPerspectiveMatrix() * getViewMatrix();
+	else
+		return getOrthographicMatrix() * getViewMatrix();
 }
 
-Mat4 Camera::updateVP()
+Mat4 Camera::getViewMatrix() const
 {
-	this->eye = getCameraPosition();
-	if (!this->perspective)
-		initOrthographic(this->nearPlane, this->farPlane);
-	return this->projection * getLookAtMatrix(eye, this->target);
-}
-
-Mat4 Camera::getInverseVP() const
-{
-	Mat4 invP = getInversePerspective();
-	Mat4 invL = getInverseLookAt();
-	return invL * invP;
-}
-
-Mat4 Camera::getLookAtMatrix(Vec3 eye, Vec3 center) const
-{
-	float x, y, z;
-	float rot = (this->pos.x - this->posDiff.x) * pi / 360.0f;
-	Vec3 a = pg::normalize(center - eye);
-	Vec3 b(std::sin(rot), 0.0f, -std::cos(rot));
-	Vec3 c = pg::cross(b, a);
-	x = -pg::dot(b, eye);
-	y = -pg::dot(c, eye);
-	z = pg::dot(a, eye);
+	float cx = std::cos(-this->xAngle);
+	float sx = std::sin(-this->xAngle);
+	float cz = std::cos(-this->zAngle);
+	float sz = std::sin(-this->zAngle);
+	Vec3 t = getPosition();
+	float tx = -t.x*cz + t.y*sz;
+	float ty = -t.x*cx*sz - t.y*cx*cz + t.z*sx;
+	float tz = -t.x*sx*sz - t.y*sx*cz - t.z*cx;
 	return Mat4(
-		b.x, c.x, -a.x, 0.0f,
-		b.y, c.y, -a.y, 0.0f,
-		b.z, c.z, -a.z, 0.0f,
-		x, y, z, 1.0f);
+		cz, cx*sz, sx*sz, 0.0f,
+		-sz, cx*cz, sx*cz, 0.0f,
+		0.0f, -sx, cx, 0.0f,
+		tx, ty, tz, 1.0f);
 }
 
-Mat4 Camera::getInverseLookAt() const
+Mat4 Camera::getInverseView() const
 {
-	Vec3 eye = getCameraPosition();
-	Mat4 a = getLookAtMatrix(eye, this->target);
-	Mat4 b = pg::identity();
-
-	for (int i = 0; i < 3; i++)
-		for (int j = 0; j < 3; j++)
-			b[i][j] = a[j][i];
-
-	Vec3 t = {a[3][0], a[3][1], a[3][2]};
-	t = b.apply(t, 0.0f);
-	b[3][0] = -t.x;
-	b[3][1] = -t.y;
-	b[3][2] = -t.z;
-
-	return b;
-}
-
-void Camera::initOrthographic(Vec3 near, Vec3 far)
-{
-	near.x *= this->distance;
-	near.y *= this->distance;
-	far.x *= this->distance;
-	far.y *= this->distance;
-	float a = -(far.x+near.x)/(far.x-near.x);
-	float b = -(far.y+near.y)/(far.y-near.y);
-	float c = -(far.z+near.z)/(far.z-near.z);
-	this->projection = Mat4(
-		2.0f/(far.x-near.x), 0.0f, 0.0f, 0.0f,
-		0.0f, 2.0f/(far.y-near.y), 0.0f, 0.0f,
-		0.0f, 0.0f, -2.0f/(far.z-near.z), 0.0f,
-		a, b, c, 1.0f);
+	float cx = std::cos(this->xAngle);
+	float sx = std::sin(this->xAngle);
+	float cz = std::cos(this->zAngle);
+	float sz = std::sin(this->zAngle);
+	Vec3 t = getPosition();
+	return Mat4(
+		cz, sz, 0.0f, 0.0f,
+		-sz*cx, cz*cx, sx, 0.0f,
+		sz*sx, -cz*sx, cx, 0.0f,
+		t.x, t.y, t.z, 1.0f);
 }
 
 void Camera::setOrthographic(Vec3 near, Vec3 far)
 {
 	this->perspective = false;
-	this->farPlane = far;
-	this->nearPlane = near;
-	initOrthographic(near, far);
+	this->near = near;
+	this->far = far;
+}
+
+Mat4 Camera::getOrthographicMatrix() const
+{
+	Vec3 near = getNear();
+	Vec3 far = getFar();
+	Vec3 n = near + far;
+	Vec3 m = near - far;
+	return Mat4(
+		2.0f/m.x, 0.0f, 0.0f, 0.0f,
+		0.0f, 2.0f/m.y, 0.0f, 0.0f,
+		0.0f, 0.0f, 2.0f/m.z, 0.0f,
+		-n.x/m.x, -n.y/m.y, -n.z/m.z, 1.0f);
 }
 
 Mat4 Camera::getInverseOrthographic() const
 {
-	float a = this->projection[0][0];
-	float b = this->projection[1][1];
-	float c = this->projection[2][2];
-	float d = this->projection[3][0];
-	float e = this->projection[3][1];
-	float f = this->projection[3][2];
+	Vec3 near = getNear();
+	Vec3 far = getFar();
+	Vec3 n = near + far;
+	Vec3 m = near - far;
 	return Mat4(
-		1.0f/a, 0.0f, 0.0f, 0.0f,
-		0.0f, 1.0f/b, 0.0f, 0.0f,
-		0.0f, 0.0f, 1.0f/c, 0.0f,
-		-d/a, -e/b, -f/c, 1.0f);
+		m.x/2.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, m.y/2.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, m.z/2.0f, 0.0f,
+		n.x/2.0f, n.y/2.0f, n.z/2.0f, 1.0f);
 }
 
 void Camera::setPerspective(float fovy, float near, float far, float aspect)
 {
 	this->perspective = true;
-	float t = std::tan((fovy * pi / 180.0f) / 2.0f);
-	float a = 1.0f / (aspect * t);
-	float b = 1.0f / t;
-	float c = -(far + near) / (far - near);
-	float d = -1.0f;
-	float e = -(2.0f * far * near) / (far - near);
-	this->projection = Mat4(
-		a, 0.0f, 0.0f, 0.0f,
-		0.0f, b, 0.0f, 0.0f,
-		0.0f, 0.0f, c, d,
-		0.0f, 0.0f, e, 0.0f);
+	this->near = Vec3(aspect, fovy, near);
+	this->far = Vec3(aspect, fovy, far);
+}
+
+Mat4 Camera::getPerspectiveMatrix() const
+{
+	float aspect = this->near.x;
+	float fovy = this->near.y;
+	float near = this->near.z;
+	float far = this->far.z;
+	float a = (-near-far)/(near-far);
+	float b = (2.0f*near*far)/(near-far);
+	float c = 1.0f/std::tan(fovy);
+	return Mat4(
+		c/aspect, 0.0f, 0.0f, 0.0f,
+		0.0f, c, 0.0f, 0.0f,
+		0.0f, 0.0f, a, -1.0f,
+		0.0f, 0.0f, b, 0.0f);
 }
 
 Mat4 Camera::getInversePerspective() const
 {
-	float a = this->projection[0][0];
-	float b = this->projection[1][1];
-	float c = this->projection[2][2];
-	float d = this->projection[2][3];
-	float e = this->projection[3][2];
+	float aspect = this->near.x;
+	float fovy = this->near.y;
+	float near = this->near.z;
+	float far = this->far.z;
+	float a = (near-far)/(2.0f*near*far);
+	float b = (-near-far)/(2.0f*near*far);
+	float c = std::tan(fovy);
 	return Mat4(
-		1.0f/a, 0.0f, 0.0f, 0.0f,
-		0.0f, 1.0f/b, 0.0f, 0.0f,
-		0.0f, 0.0f, 0.0f, 1.0f/e,
-		0.0f, 0.0f, 1.0f/d, -c/(e*d));
+		c*aspect, 0.0f, 0.0f, 0.0f,
+		0.0f, c, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, a,
+		0.0f, 0.0f, -1.0f, b);
 }
 
 Vec3 Camera::toScreenSpace(Vec3 point) const
@@ -324,20 +295,21 @@ pg::Ray Camera::getRay(int x, int y) const
 stationary. The origin of the ray depends on the screen coordinates. */
 pg::Ray Camera::getOrthographicRay(int x, int y) const
 {
-	Mat4 invProj = getInverseOrthographic();
-	Mat4 invLook = getInverseLookAt();
+	Mat4 inverseProjection = getInverseOrthographic();
+	Mat4 inverseView = getInverseView();
+	Vec3 eye = getPosition();
 
-	Vec3 p;
-	p.x = 2.0f*x/(this->winWidth-1) - 1.0f;
-	p.y = 1.0f - 2.0f*y/(this->winHeight-1);
-	p.z = 0.0f;
-	p = invProj.apply(p, 1.0f);
-	p.z = eye.z;
-	p = invLook.apply(p, 1.0f);
+	Vec3 point;
+	point.x = 2.0f*x/(this->winWidth-1) - 1.0f;
+	point.y = 1.0f - 2.0f*y/(this->winHeight-1);
+	point.z = 0.0f;
+	point = inverseProjection.apply(point, 1.0f);
+	point.z = eye.z;
+	point = inverseView.apply(point, 1.0f);
 
 	pg::Ray ray;
 	ray.direction = getDirection();
-	ray.origin = p;
+	ray.origin = point;
 	return ray;
 }
 
@@ -345,31 +317,42 @@ pg::Ray Camera::getOrthographicRay(int x, int y) const
 the ray remains stationary at the camera position. */
 pg::Ray Camera::getPerspectiveRay(int x, int y) const
 {
-	Mat4 invProj = getInversePerspective();
-	Mat4 invLook = getInverseLookAt();
+	Mat4 inverseProjection = getInversePerspective();
+	Mat4 inverseView = getInverseView();
 
-	Vec3 p;
-	p.x = 2.0f*x/(this->winWidth-1) - 1.0f;
-	p.y = 1.0f - 2.0f*y/(this->winHeight-1);
-	p.z = -1.0f;
-	p = invProj.apply(p, 1.0f);
-	p.z = -1.0f;
-	p = pg::normalize(invLook.apply(p, 0.0f));
+	Vec3 point;
+	point.x = 2.0f*x/(this->winWidth-1) - 1.0f;
+	point.y = 1.0f - 2.0f*y/(this->winHeight-1);
+	point.z = -1.0f;
+	point = inverseProjection.apply(point, 1.0f);
+	point.z = -1.0f;
+	point = pg::normalize(inverseView.apply(point, 0.0f));
 
 	pg::Ray ray;
-	ray.direction = p;
-	ray.origin = eye;
+	ray.direction = point;
+	ray.origin = getPosition();
 	return ray;
 }
 
 Vec3 Camera::getFar() const
 {
-	return this->distance * this->farPlane;
+	Vec3 far = this->far;
+	far.x *= this->distance;
+	far.y *= this->distance;
+	return far;
 }
 
 Vec3 Camera::getNear() const
 {
-	return this->distance * this->nearPlane;
+	Vec3 near = this->near;
+	near.x *= this->distance;
+	near.y *= this->distance;
+	return near;
+}
+
+float Camera::getDistance() const
+{
+	return this->distance;
 }
 
 bool Camera::isPerspective() const

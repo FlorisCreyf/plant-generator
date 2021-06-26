@@ -43,7 +43,7 @@ void Generator::initRoot()
 	Spline spline;
 	std::vector<Vec3> controls;
 	controls.push_back(Vec3(0.0f, 0.0f, 0.0f));
-	controls.push_back(Vec3(0.0f, this->primaryGrowthRate/2.0f, 0.0f));
+	controls.push_back(Vec3(0.0f, 0.0f, this->primaryGrowthRate/2.0f));
 	spline.setControls(controls);
 	spline.setDegree(1);
 	path.setSpline(spline);
@@ -108,15 +108,15 @@ void Generator::castRays(Volume *volume)
 
 	for (int i = 1; i <= this->rayLevels; i++) {
 		float angle = i * dt;
-		float y = std::sin(angle) * width;
+		float z = std::sin(angle) * width;
 		float radius = width * std::cos(angle);
 		int rayCount = (this->rayCount-1) * std::cos(angle) + 1;
 
 		for (int j = 0; j < rayCount; j++) {
 			float angle = offset + j*(2.0f*pi/rayCount);
 			float x = std::cos(angle) * radius;
-			float z = std::sin(angle) * radius;
-			Vec3 origin(-x, 0.0f, -z);
+			float y = std::sin(angle) * radius;
+			Vec3 origin(-x, -y, 0.0f);
 			Ray ray;
 			ray.origin = Vec3(x, y, z);
 			ray.direction = normalize(origin-ray.origin);
@@ -198,7 +198,7 @@ float Generator::evaluateEfficiency(Volume *volume, Stem *stem)
 
 	for (size_t i = 0; i < stem->getLeafCount(); i++) {
 		const Leaf *leaf = stem->getLeaf(i);
-		Vec3 normal = Vec3(0.0f, 1.0f, 0.0f);
+		Vec3 normal = Vec3(0.0f, 0.0f, 1.0f);
 		normal = rotate(leaf->getRotation(), normal);
 		Vec3 location = stem->getLocation();
 		float position = leaf->getPosition();
@@ -291,7 +291,7 @@ void Generator::addNode(Volume *volume, Stem *stem, int i, int n)
 
 Vec3 getInitialDirection(Leaf leaf, Stem *stem, Volume *volume)
 {
-	Vec3 d = rotate(leaf.getRotation(), Vec3(0.0f, 0.0f, 1.0f));
+	Vec3 d = rotate(leaf.getRotation(), Vec3(0.0f, 1.0f, 0.0f));
 	return getDirection(stem, Vec3(0.0f, 0.0f, 0.0f), d, volume);
 }
 

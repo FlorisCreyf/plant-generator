@@ -39,8 +39,8 @@ CurveViewer::CurveViewer(SharedResources *shared, QWidget *parent) :
 	policy.setHorizontalStretch(1);
 	this->setSizePolicy(policy);
 
-	this->camera.setTarget(Vec3(0.5f, 0.0f, 0.5f));
-	this->camera.setOrientation(180.0f, -180.0f);
+	this->camera.setTarget(Vec3(0.5f, 0.5f, 0.0f));
+	this->camera.setOrientation(0.0f, 0.0f);
 	this->camera.setDistance(0.7f);
 	this->camera.setPanSpeed(0.004f);
 	this->camera.setZoom(0.01f, 0.3f, 2.0f);
@@ -82,8 +82,8 @@ void CurveViewer::appendInterface(Geometry &geometry)
 {
 	Geometry plane;
 	Vec3 a(1.0f, 0.0f, 0.0f);
-	Vec3 b(0.0f, 0.0f, 1.0f);
-	Vec3 center(0.0f, 0.2f, 0.0f);
+	Vec3 b(0.0f, 1.0f, 0.0f);
+	Vec3 center(0.0f, 0.0f, 0.0f);
 	Vec3 color(0.34f, 0.34f, 0.34f);
 	plane.addPlane(a, b, center, color, Vec3(0.0f, 0.0f, 0.0f));
 	this->plane = geometry.append(plane);
@@ -96,7 +96,7 @@ void CurveViewer::appendInterface(Geometry &geometry)
 		1.0f/6.0f, 0.0f, 0.0f, 0.0f,
 		0.0f, 1.0f/6.0f, 0.0f, 0.0f,
 		0.0f, 0.0f, 1.0f/6.0f, 0.0f,
-		0.5f, 0.0f, 0.5f, 1.0f);
+		0.5f, 0.5f, 0.0f, 1.0f);
 	grid.addGrid(100, colors, colors[0]);
 	Geometry::Segment segment = grid.getSegment();
 	grid.transform(segment.pstart, segment.pcount, t);
@@ -174,9 +174,9 @@ void CurveViewer::mouseReleaseEvent(QMouseEvent *event)
 void CurveViewer::resizeGL(int width, int height)
 {
 	float ratio = 1.0f;
-	this->camera.setWindowSize(width, height*ratio);
-	Vec3 near(-ratio, -1.0f, 0.0f);
-	Vec3 far(ratio, 1.0f, 100.0f);
+	Vec3 near(ratio, 1.0f, 0.0f);
+	Vec3 far(-ratio, -1.0f, -100.0f);
+	this->camera.setWindowSize(width, height);
 	this->camera.setOrthographic(near, far);
 }
 
@@ -187,7 +187,6 @@ void CurveViewer::paintGL()
 	glClearDepth(1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	this->camera.updateVP();
 	Mat4 vp = this->camera.getVP();
 
 	this->buffer.use();

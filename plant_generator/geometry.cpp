@@ -39,17 +39,17 @@ void pg::Geometry::setPlane()
 {
 	DVertex p;
 	p.tangentScale = 1.0f;
-	p.normal = Vec3(0.0f, 1.0f, 0.0f);
-	p.tangent = Vec3(1.0f, 0.0f, 0.0f);
+	p.normal = Vec3(0.0f, 0.0f, 1.0f);
+	p.tangent = Vec3(0.0f, 1.0f, 0.0f);
 	this->points.clear();
 	this->indices.clear();
 	p.position = Vec3(0.5f, 0.0f, 0.0f);
 	p.uv = Vec2(1.0f, 0.0f);
 	this->points.push_back(p);
-	p.position = Vec3(0.5f, 0.0f, 1.0f);
+	p.position = Vec3(0.5f, 1.0f, 0.0f);
 	p.uv = Vec2(1.0f, 1.0f);
 	this->points.push_back(p);
-	p.position = Vec3(-0.5f, 0.0f, 1.0f);
+	p.position = Vec3(-0.5f, 1.0f, 0.0f);
 	p.uv = Vec2(0.0f, 1.0f);
 	this->points.push_back(p);
 	p.position = Vec3(-0.5f, 0.0f, 0.0f);

@@ -21,6 +21,8 @@ using pg::Mat4;
 using pg::Vec3;
 using pg::DVertex;
 
+const float pi = 3.14159265359f;
+
 MeshViewer::MeshViewer(SharedResources *shared, QWidget *parent) :
 	QOpenGLWidget(parent), shared(shared)
 {
@@ -28,7 +30,7 @@ MeshViewer::MeshViewer(SharedResources *shared, QWidget *parent) :
 	setMouseTracking(true);
 
 	this->camera.setTarget(Vec3(0.0f, 0.0f, 0.0f));
-	this->camera.setOrientation(0.0f, 90.0f);
+	this->camera.setOrientation(0.0f, 0.0f);
 	this->camera.setDistance(2.0f);
 	this->camera.setPanSpeed(0.004f);
 	this->camera.setZoom(0.01f, 0.3f, 10.0f);
@@ -43,10 +45,8 @@ void MeshViewer::initializeGL()
 {
 	initializeOpenGLFunctions();
 	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LEQUAL);
 	glEnable(GL_LINE_SMOOTH);
 	glDepthMask(GL_TRUE);
-	glDepthRange(0.0f, 1.0f);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_PRIMITIVE_RESTART);
@@ -60,11 +60,12 @@ void MeshViewer::initializeGL()
 
 void MeshViewer::paintGL()
 {
+	glDepthFunc(GL_GEQUAL);
+	glClearDepth(0.0f);
 	glClearColor(0.22f, 0.22f, 0.22f, 1.0f);
-	glClearDepth(1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	Mat4 vp = this->camera.updateVP();
+	Mat4 vp = this->camera.getVP();
 	Vec3 cp = this->camera.getPosition();
 	this->buffer.use();
 	glUseProgram(this->shared->getShader(SharedResources::Solid));
@@ -78,7 +79,7 @@ void MeshViewer::resizeGL(int width, int height)
 {
 	float ratio = static_cast<float>(width) / static_cast<float>(height);
 	this->camera.setWindowSize(width, height);
-	this->camera.setPerspective(45.0f, 0.1f, 200.0f, ratio);
+	this->camera.setPerspective(pi/6.0f, -0.1f, -100.0f, ratio);
 }
 
 void MeshViewer::mousePressEvent(QMouseEvent *event)

@@ -28,18 +28,18 @@ Geometry RotationAxes::getLines()
 	Geometry lines;
 	Geometry::Segment segment;
 
-	lines.addCircle(radius, resolution, Vec3(0.0f, 1.0f, 0.2f));
+	lines.addCircle(radius, resolution, Vec3(0.4f, 0.4f, 1.0f));
 	while (index < resolution)
 		lines.addIndex(index++);
 	lines.addIndex(index - resolution);
 	lines.addIndex(Geometry::primitiveReset);
 	segment = lines.getSegment();
 
-	lines.addCircle(radius, resolution, Vec3(0.0f, 0.2f, 1.0f));
+	lines.addCircle(radius, resolution, Vec3(0.4f, 1.0f, 0.4f));
 	lines.transform(segment.pcount, segment.pcount, Mat4(
 		1.0f, 0.0f, 0.0f, 0.0f,
 		0.0f, 0.0f, 1.0f, 0.0f,
-		0.0f, -1.0f, 0.0f, 0.0f,
+		0.0f, 1.0f, 0.0f, 0.0f,
 		0.0f, 0.0f, 0.0f, 1.0f));
 
 	while (index < resolution*2)
@@ -48,11 +48,11 @@ Geometry RotationAxes::getLines()
 	lines.addIndex(Geometry::primitiveReset);
 
 	lines.addIndex(Geometry::primitiveReset);
-	lines.addCircle(radius, resolution, Vec3(1.0f, 0.2f, 0.0f));
+	lines.addCircle(radius, resolution, Vec3(1.0f, 0.4f, 0.4f));
 	lines.transform(segment.pcount*2, segment.pcount, Mat4(
-		0.0f, -1.0f, 0.0f, 0.0f,
-		1.0f, 0.0f, 0.0f, 0.0f,
 		0.0f, 0.0f, 1.0f, 0.0f,
+		0.0f, 1.0f, 0.0f, 0.0f,
+		1.0f, 0.0f, 0.0f, 0.0f,
 		0.0f, 0.0f, 0.0f, 1.0f));
 
 	while (index < resolution*3)
@@ -67,7 +67,7 @@ void RotationAxes::selectAxis(Axis axis)
 	this->selection = axis;
 }
 
-pg::Mat4 RotationAxes::getTransformation(float distance, pg::Vec3 direction)
+pg::Mat4 RotationAxes::getTransformation(float distance, Vec3 direction)
 {
 	float m = 1.0f;
 	if (scalable)
@@ -77,5 +77,6 @@ pg::Mat4 RotationAxes::getTransformation(float distance, pg::Vec3 direction)
 		0.0f, m, 0.0f, 0.0f,
 		0.0f, 0.0f, m, 0.0f,
 		position.x, position.y, position.z, 1.0f);
-	return transform * pg::rotateIntoVec(Vec3(0.0f, 1.0f, 0.0f), direction);
+	Vec3 up(0.0f, 0.0f, 1.0f);
+	return transform * pg::rotateIntoVec(up, direction);
 }

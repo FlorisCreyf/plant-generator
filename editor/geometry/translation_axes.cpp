@@ -29,17 +29,17 @@ Geometry TranslationAxes::getLines()
 
 	line[0] = Vec3(lineLength[0], 0.0f, 0.0f);
 	line[1] = Vec3(lineLength[1], 0.0f, 0.0f);
-	color = Vec3(1.0f, 0.2f, 0.0f);
+	color = Vec3(1.0f, 0.4f, 0.4f);
 	lines.addLine(line, color);
 
 	line[0] = Vec3(0.0f, lineLength[0], 0.0f);
 	line[1] = Vec3(0.0f, lineLength[1], 0.0f);
-	color = Vec3(0.0f, 1.0f, 0.2f);
+	color = Vec3(0.4f, 1.0f, 0.4f);
 	lines.addLine(line, color);
 
 	line[0] = Vec3(0.0f, 0.0f, lineLength[0]);
 	line[1] = Vec3(0.0f, 0.0f, lineLength[1]);
-	color = Vec3(0.0f, 0.2f, 1.0f);
+	color = Vec3(0.4f, 0.4f, 1.0f);
 	lines.addLine(line, color);
 
 	return lines;
@@ -52,35 +52,35 @@ Geometry TranslationAxes::getArrows()
 	Vec3 color;
 	int size = 10;
 
-	color = {0.0f, 1.0f, 0.2f};
+	color = Vec3(1.0f, 0.5f, 0.2f);
 	arrows.addCone(radius, coneLength[0], size, color);
 	segment = arrows.getSegment();
 	arrows.transform(segment.pstart, segment.pcount, Mat4(
-		1.0f, 0.0f, 0.0f, 0.0f,
-		0.0f, 1.0f, 0.0f, 0.0f,
 		0.0f, 0.0f, 1.0f, 0.0f,
-		0.0f, coneLength[1] - coneLength[0], 0.0f, 1.0f));
+		0.0f, 1.0f, 0.0f, 0.0f,
+		1.0f, 0.0f, 0.0f, 0.0f,
+		coneLength[1] - coneLength[0], 0.0f, 0.0f, 1.0f));
 
-	color = {0.0f, 0.2f, 1.0f};
+	color = Vec3(0.2f, 1.0f, 0.5f);
 	arrows.addCone(radius, coneLength[0], size, color);
 	arrows.transform(segment.pcount, segment.pcount, Mat4(
 		1.0f, 0.0f, 0.0f, 0.0f,
 		0.0f, 0.0f, 1.0f, 0.0f,
-		0.0f, -1.0f, 0.0f, 0.0f,
-		0.0f, 0.0f, coneLength[1] - coneLength[0], 1.0f));
+		0.0f, 1.0f, 0.0f, 0.0f,
+		0.0f, coneLength[1] - coneLength[0], 0.0f, 1.0f));
 
-	color = {1.0f, 0.2f, 0.0f};
+	color = Vec3(0.2f, 0.5f, 1.0f);
 	arrows.addCone(radius, coneLength[0], size, color);
 	arrows.transform(segment.pcount*2, segment.pcount, Mat4(
-		0.0f, -1.0f, 0.0f, 0.0f,
 		1.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 1.0f, 0.0f, 0.0f,
 		0.0f, 0.0f, 1.0f, 0.0f,
-		coneLength[1] - coneLength[0], 0.0f, 0.0f, 1.0f));
+		0.0f, 0.0f, coneLength[1] - coneLength[0], 1.0f));
 
 	return arrows;
 }
 
-int getClosest(float t[3])
+int getNearest(float t[3])
 {
 	float smallest = std::numeric_limits<float>::max();
 	int selected = 0;
@@ -129,7 +129,7 @@ TranslationAxes::Axis TranslationAxes::selectAxis(pg::Ray ray, float distance)
 		box.b.y = radius * scale + position.y;
 		t[2] = pg::intersectsAABB(ray, box);
 
-		selection = static_cast<Axis>(getClosest(t));
+		selection = static_cast<Axis>(getNearest(t));
 	}
 
 	return selection;
@@ -138,7 +138,7 @@ TranslationAxes::Axis TranslationAxes::selectAxis(pg::Ray ray, float distance)
 pg::Mat4 TranslationAxes::getTransformation(float distance)
 {
 	float m = 1.0f;
-	if (scalable)
+	// if (scalable)
 		m = distance / 15.0f * scale;
 	return Mat4(
 		m, 0.0f, 0.0f, 0.0f,

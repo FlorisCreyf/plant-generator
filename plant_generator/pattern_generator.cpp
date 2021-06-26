@@ -57,7 +57,7 @@ void PatternGenerator::grow()
 	const ParameterNode *root = this->parameterTree.getRoot();
 	if (root) {
 		reset();
-		Vec3 d(0.0f, 1.0f, 0.0f);
+		Vec3 d(0.0f, 0.0f, 1.0f);
 		float l = getCollarLength(stem, d);
 		float pathRatio = setPath(stem, d, l, root->getData());
 		addStems(stem, pathRatio, 0.0f, root);
@@ -131,14 +131,14 @@ void PatternGenerator::addLateralStems(Stem *parent, Length length,
 	if (end <= distance)
 		end = distance * 0.5f;
 
-	Vec3 d1(0.0f, 0.0f, 1.0f);
+	Vec3 d1(0.0f, 1.0f, 0.0f);
 	Vec3 d2 = path.getIntermediateDirection(end);
-	if (d2 != Vec3(0.0f, 1.0f, 0.0f))
-		d1 = cross(Vec3(0.0f, 1.0f, 0.0f), d2);
+	if (d2 != Vec3(0.0f, 0.0f, 1.0f))
+		d1 = cross(Vec3(0.0f, 0.0f, 1.0f), d2);
 
 	for (int i = 0; position > end; i++) {
 		float t = position / length.total;
-		float r = stemData.densityCurve.getPoint(t).z;
+		float r = stemData.densityCurve.getPoint(t).y;
 		if (r == 0.0f)
 			break;
 		addLateralStem(parent, position, length, i, d1, d2, node);
@@ -204,8 +204,8 @@ Vec3 PatternGenerator::getForkDirection(Stem *stem, float sign,
 	std::uniform_real_distribution<float> dis(minAngle, maxAngle);
 	const Path &path = stem->getPath();
 	Vec3 parentDirection = path.getDirection(path.getSize()-1);
-	Vec3 normal(0.0f, 0.0f, 1.0f);
-	Vec3 up(0.0f, 1.0f, 0.0f);
+	Vec3 normal(0.0f, 1.0f, 0.0f);
+	Vec3 up(0.0f, 0.0f, 1.0f);
 	if (parentDirection != up)
 		normal = normalize(cross(parentDirection, up));
 	normal = normalize(cross(normal, parentDirection));
@@ -295,7 +295,7 @@ float PatternGenerator::bifurcatePath(Stem *stem, int index, int points,
 		Spline spline = this->plant->getCurve(curve).getSpline();
 		float t = static_cast<float>(index + 1);
 		t /= static_cast<float>(points);
-		radius *= spline.getPoint(t).z;
+		radius *= spline.getPoint(t).y;
 		if (radius > data.radiusThreshold) {
 			stem->setMinRadius(radius);
 			return t;
@@ -317,7 +317,7 @@ void PatternGenerator::addLeaves(Stem *stem, Length length, LeafData data)
 
 	for (int i = 0, j = 1; position > end; i++, j++) {
 		float ratio = position / length.current;
-		float t = data.densityCurve.getPoint(ratio).z;
+		float t = data.densityCurve.getPoint(ratio).y;
 		if (t == 0.0f)
 			break;
 

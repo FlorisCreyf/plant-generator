@@ -44,15 +44,15 @@ void Spline::setDefault(unsigned type)
 	clear();
 	switch (type) {
 	case 0:
-		this->controls.push_back(Vec3(0.0f, 0.3f, 1.0f));
-		this->controls.push_back(Vec3(0.0f, 0.3f, 0.25f));
-		this->controls.push_back(Vec3(1.0f, 0.3f, 0.5f));
-		this->controls.push_back(Vec3(1.0f, 0.3f, 0.0f));
+		this->controls.push_back(Vec3(0.0f, 1.0f, 0.0f));
+		this->controls.push_back(Vec3(0.0f, 0.25f, 0.0f));
+		this->controls.push_back(Vec3(1.0f, 0.5f, 0.0f));
+		this->controls.push_back(Vec3(1.0f, 0.0f, 0.0f));
 		this->degree = 3;
 		break;
 	case 1:
-		this->controls.push_back(Vec3(0.0f, 0.3f, 1.0f));
-		this->controls.push_back(Vec3(1.0f, 0.3f, 1.0f));
+		this->controls.push_back(Vec3(0.0f, 1.0f, 0.0f));
+		this->controls.push_back(Vec3(1.0f, 1.0f, 0.0f));
 		this->degree = 1;
 		break;
 	}
@@ -314,10 +314,8 @@ void Spline::parallelize(unsigned index)
 		if (length == 0.0f)
 			length = 1.0f;
 		diff = controls[index-1] - controls[index];
-		/* Arbitrary default value because zero vectors cannot be
-		normalized. */
 		if (isZero(diff))
-			diff.z = 1.0f;
+			diff.y = 1.0f;
 		diff = length * normalize(diff) + controls[index-1];
 		controls[index-2] = diff;
 	} else if (index % 3 == 2 && index < controls.size() - 2) {
@@ -327,7 +325,7 @@ void Spline::parallelize(unsigned index)
 			length = 1.0f;
 		diff = controls[index+1] - controls[index];
 		if (isZero(diff))
-			diff.z = 1.0f;
+			diff.y = 1.0f;
 		diff = length * normalize(diff) + controls[index+1];
 		controls[index+2] = diff;
 	}

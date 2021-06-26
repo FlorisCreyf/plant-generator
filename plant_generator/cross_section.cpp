@@ -53,7 +53,7 @@ void CrossSection::generateCircle()
 	float deltaAngle = 2.0f * pi / this->resolution;
 	this->vertices.resize(this->resolution+1);
 	for (int i = 0; i <= this->resolution; i++) {
-		vertex.position = Vec3(std::cos(angle), 0.0f, std::sin(angle));
+		vertex.position = Vec3(std::cos(angle), std::sin(angle), 0.0f);
 		vertex.normal = normalize(vertex.position);
 		this->vertices[i] = vertex;
 		vertex.uv.x -= deltaUV;

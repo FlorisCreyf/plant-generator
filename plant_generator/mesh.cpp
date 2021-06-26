@@ -37,7 +37,7 @@ void Mesh::generate()
 		State parentState = {};
 		State state;
 		state.prevRotation = Quat(0.0f, 0.0f, 0.0f, 1.0f);
-		state.prevDirection = Vec3(0.0f, 1.0f, 0.0f);
+		state.prevDirection = Vec3(0.0f, 0.0f, 1.0f);
 		addStem(stem, state, parentState, false);
 		updateSegments();
 	}
@@ -132,6 +132,7 @@ void Mesh::addSections(State &state, Segment parentSegment,
 	state.prevIndex = this->vertices[state.mesh].size();
 	if (stem->getSectionDivisions() != this->crossSection.getResolution())
 		this->crossSection.generate(stem->getSectionDivisions());
+
 	if (isFork)
 		createFork(stem, state);
 	else {
@@ -224,7 +225,7 @@ void Mesh::setInitialRotation(Stem *stem, State &state)
 	const Path &path = stem->getPath();
 	Vec3 stemDirection = path.getDirection(0);
 
-	Vec3 up(0.0f, 1.0f, 0.0f);
+	Vec3 up(0.0f, 0.0f, 1.0f);
 	state.prevRotation = rotateIntoVecQ(up, stemDirection);
 	state.prevDirection = stemDirection;
 
@@ -753,24 +754,19 @@ int Mesh::getForkMidpoint(int divisions, Vec3 direction1, Vec3 direction2,
 	angle between that projected vector and the first point of the cross
 	section. */
 	Vec3 point = rotate(rotation, Vec3(1.0f, 0.0f, 0.0f));
-	Vec3 a = normalize(direction1 + direction2);
-	Quat sectionRotation = rotateIntoVecQ(a, direction);
+	Vec3 avg = normalize(direction1 + direction2);
+	Quat sectionRotation = rotateIntoVecQ(avg, direction);
 	direction1 = rotate(sectionRotation, direction1);
-	direction2 = rotate(sectionRotation, direction2);
-	Vec3 middle = normalize(projectOntoPlane(direction1, direction));
-	Vec3 division = cross(direction, middle);
+	Vec3 projection1 = normalize(projectOntoPlane(direction1, direction));
+	Vec3 projection2 = cross(projection1, direction);
 	if (d1 > d2 || d1 > d3)
-		division = -division;
+		projection2 = -projection2;
 
-	float x = dot(point, middle);
-	if (x > 1.0f)
-		x = 1.0f;
-	if (x < -1.0f)
-		x = -1.0f;
+	float x = dot(point, projection1);
 	float delta = 2.0f * pi / divisions;
 	float theta = std::acos(x);
-	if (dot(point, division) < 0.0f)
-		theta = 2.0f*pi-theta;
+	if (dot(point, projection2) < 0.0f)
+		theta = 2.0f * pi - theta;
 
 	int midpoint;
 	if (divisions % 4 == 0)
@@ -809,7 +805,8 @@ void Mesh::connectCollar(const State &state, bool fork)
 	bool a = !fork && state.section > 0 && state.section < sections;
 	bool b = fork && state.section+1 < sections;
 	if (a || b)
-		addTriangleRing(state.prevIndex,
+		addTriangleRing(
+			state.prevIndex,
 			this->vertices[state.mesh].size(),
 			stem->getSectionDivisions(), state.mesh);
 }
@@ -840,25 +837,24 @@ Mat4 Mesh::getBranchCollarScale(Stem *child, Stem *parent)
 
 	if (!parent) {
 		scale[0][0] = child->getSwelling().x;
-		scale[2][2] = child->getSwelling().y;
+		scale[1][1] = child->getSwelling().y;
 		return scale;
 	}
 
-	scale[2][2] = child->getSwelling().x;
-	scale[1][1] = child->getSwelling().y;
+	scale[0][0] = child->getSwelling().x;
+	scale[2][2] = child->getSwelling().y;
 
 	float position = child->getDistance();
-	Vec3 yaxis = parent->getPath().getIntermediateDirection(position);
-	Vec3 xaxis = child->getPath().getDirection(0);
-	xaxis = normalize(cross(cross(yaxis, xaxis), yaxis));
-	Vec3 zaxis = normalize(cross(yaxis, xaxis));
+	Vec3 zaxis = parent->getPath().getIntermediateDirection(position);
+	Vec3 yaxis = child->getPath().getDirection(0);
+	Vec3 xaxis = normalize(cross(zaxis, yaxis));
+	yaxis = cross(xaxis, zaxis);
+	Mat4 basis = identity();
+	basis.vectors[0] = toVec4(xaxis, 0.0f);
+	basis.vectors[1] = toVec4(yaxis, 0.0f);
+	basis.vectors[2] = toVec4(zaxis, 0.0f);
 
-	Mat4 axes = identity();
-	axes.vectors[0] = toVec4(xaxis, 0.0f);
-	axes.vectors[1] = toVec4(yaxis, 0.0f);
-	axes.vectors[2] = toVec4(zaxis, 0.0f);
-
-	return axes * scale * transpose(axes);
+	return basis * scale * transpose(basis);
 }
 
 Vec3 getSurfaceNormal(Vec3 p1, Vec3 p2, Vec3 p3, Vec3 n1, Vec3 n2, Vec3 n3,
@@ -883,7 +879,7 @@ DVertex Mesh::moveToSurface(DVertex vertex, Ray ray, Segment parent,
 
 	if (!parent.stem) {
 		Plane plane;
-		plane.normal = Vec3(0.0f, -1.0f, 0.0f);
+		plane.normal = Vec3(0.0f, 0.0f, 1.0f);
 		plane.point = Vec3(0.0f, 0.0f, 0.0f);
 		float t = intersectsPlane(ray, plane);
 		Vec3 offset = (t - length) * ray.direction;
@@ -895,7 +891,6 @@ DVertex Mesh::moveToSurface(DVertex vertex, Ray ray, Segment parent,
 	DVertex *vertices = &this->vertices[mesh][0];
 	unsigned *indices = &this->indices[mesh][0];
 
-	float s;
 	float t = std::numeric_limits<float>::max();
 	size_t lastIndex = parent.indexStart + parent.indexCount;
 	size_t offset = 0;
@@ -912,7 +907,7 @@ DVertex Mesh::moveToSurface(DVertex vertex, Ray ray, Segment parent,
 			Vec3 p2 = vertices[i2].position;
 			size_t i3 = indices[i+2];
 			Vec3 p3 = vertices[i3].position;
-			s = intersectsFrontTriangle(ray, p1, p2, p3);
+			float s = intersectsFrontTriangle(ray, p1, p2, p3);
 			if (s != 0.0f) {
 				t = s;
 				vertex.normal = getSurfaceNormal(p1, p2, p3,
@@ -930,7 +925,7 @@ DVertex Mesh::moveToSurface(DVertex vertex, Ray ray, Segment parent,
 			Vec3 p2 = vertices[j2].position;
 			size_t j3 = indices[j+2];
 			Vec3 p3 = vertices[j3].position;
-			s = intersectsFrontTriangle(ray, p1, p2, p3);
+			float s = intersectsFrontTriangle(ray, p1, p2, p3);
 			if (s != 0.0f) {
 				t = s;
 				vertex.normal = getSurfaceNormal(p1, p2, p3,
@@ -1380,13 +1375,13 @@ size_t Mesh::insertTriangleRing(size_t i1, size_t i2, int divisions,
 }
 
 /** Compute indices between the cross section just generated and the cross
-section that still needs to be generated. */
+section that still needs to be generated. Counterclockwise is outward. */
 void Mesh::addTriangleRing(size_t i1, size_t i2, int divisions, int mesh)
 {
 	for (int i = 0; i < divisions; i++) {
-		addTriangle(mesh, i2, i2 + 1, i1);
+		addTriangle(mesh, i1, i2 + 1, i2);
 		i2++;
-		addTriangle(mesh, i1, i2, i1 + 1);
+		addTriangle(mesh, i1, i1 + 1, i2);
 		i1++;
 	}
 }

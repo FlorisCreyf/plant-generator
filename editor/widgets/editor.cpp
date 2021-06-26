@@ -60,11 +60,11 @@ Editor::Editor(SharedResources *shared, KeyMap *keymap, QWidget *parent) :
 	Vec3 color2(0.102f, 0.212f, 0.6f);
 	Vec3 color3(0.1f, 1.0f, 0.4f);
 	this->path.setColor(color1, color2, color3);
+	this->camera.setOrientation(pi*0.45f, 0.0f);
+	this->camera.setDistance(15.0f);
+	createToolBar();
 	setMouseTracking(true);
 	setFocus();
-
-	createToolBar();
-
 	this->timer->setInterval(33);
 	connect(this->timer, &QTimer::timeout, this, &Editor::animate);
 }
@@ -101,8 +101,6 @@ void Editor::initializeGL()
 	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 	glEnable(GL_LINE_SMOOTH);
 	glDepthMask(GL_TRUE);
-	glDepthFunc(GL_LEQUAL);
-	glDepthRange(0.0f, 1.0f);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_PRIMITIVE_RESTART);
@@ -115,14 +113,12 @@ void Editor::initializeGL()
 
 void Editor::createFramebuffers()
 {
-	const int msaa = 4;
-
 	glGenFramebuffers(1, &this->msSilhouetteFramebuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, this->msSilhouetteFramebuffer);
 
 	glGenTextures(1, &this->msSilhouetteMap);
 	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, this->msSilhouetteMap);
-	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, msaa, GL_RGB,
+	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 4, GL_RGB,
 		width(), height(), GL_TRUE);
 	glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_WRAP_S,
 		GL_CLAMP_TO_EDGE);
@@ -171,7 +167,7 @@ void Editor::initializeBuffers()
 	plane.addPlane(
 		Vec3(2.0f, 0.0f, 0.0f),
 		Vec3(0.0f, 2.0f, 0.0f),
-		Vec3(-1.0f, -1.0f, -1.0f),
+		Vec3(-1.0f, -1.0f, 1.0f),
 		Vec3(0.0f, 0.0f, 0.0f),
 		Vec3(0.0f, 0.0f, 0.0f));
 
@@ -363,11 +359,8 @@ void Editor::wheelEvent(QWheelEvent *event)
 {
 	QPoint a = event->angleDelta();
 	if (!a.isNull()) {
-		float y = a.y() / 8.0f;
-		if (y != 0.0f) {
-			this->camera.zoom(y);
-			update();
-		}
+		this->camera.zoom(a.y()/8.0f);
+		update();
 	}
 	event->accept();
 }
@@ -452,18 +445,15 @@ void Editor::selectAxis(int x, int y)
 	if (this->selection.hasPoint(0))
 		return;
 
-	pg::Ray ray = this->camera.getRay(x, y);
 	float distance;
 	if (this->camera.isPerspective()) {
 		Vec3 cameraPosition = this->camera.getPosition();
 		Vec3 axesPosition = this->translationAxes.getPosition();
 		distance = pg::magnitude(cameraPosition - axesPosition);
-	} else {
-		Vec3 far = this->camera.getFar();
-		Vec3 near = this->camera.getNear();
-		distance = pg::magnitude(far - near);
-		distance /= 80.0f;
-	}
+	} else
+		distance = this->camera.getDistance() * 1.25f;
+
+	pg::Ray ray = this->camera.getRay(x, y);
 	this->translationAxes.selectAxis(ray, distance);
 }
 
@@ -480,23 +470,23 @@ void Editor::updateCamera(int width, int height)
 	float ratio = static_cast<float>(width) / static_cast<float>(height);
 	this->camera.setWindowSize(width, height);
 	if (this->perspective)
-		this->camera.setPerspective(45.0f, 0.01f, 100.0f, ratio);
+		this->camera.setPerspective(pi/6.0f, -0.01f, -100.0f, ratio);
 	else {
 		ratio /= 2.0f;
-		Vec3 a(-ratio, -0.5f, 0.0f);
-		Vec3 b(ratio, 0.5f, 100.0f);
-		this->camera.setOrthographic(a, b);
+		Vec3 near(ratio, 0.5f, 0.0f);
+		Vec3 far(-ratio, -0.5f, -100.0f);
+		this->camera.setOrthographic(near, far);
 	}
 }
 
 void Editor::paintGL()
 {
-	Mat4 projection = this->camera.updateVP();
+	Mat4 projection = this->camera.getVP();
 	Vec3 position = this->camera.getPosition();
 
-	glClearDepth(1.0f);
+	glDepthFunc(GL_GEQUAL);
+	glClearDepth(0.0f);
 	glClearColor(0.22f, 0.23f, 0.24f, 1.0);
-	glDepthFunc(GL_LEQUAL);
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
 
 	/* Paint the grid. */
@@ -548,10 +538,6 @@ void Editor::paintGL()
 	} else if (this->selection.hasLeaves() && !isAnimating())
 		paintAxes();
 
-	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_TRUE);
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
-	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 	glFlush();
 }
 
@@ -573,8 +559,10 @@ void Editor::paintOutline(const Mat4 &projection, const Vec3 &position)
 	glUniform2f(3, (GLfloat)width(), (GLfloat)height());
 
 	glBindFramebuffer(GL_FRAMEBUFFER, this->msSilhouetteFramebuffer);
+	glClearDepth(0.0f);
+	glDepthFunc(GL_GEQUAL);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 	glUniform1i(2, 0);
 	for (size_t i = 0; i < this->selections.size(); i++) {
 		size_t index = this->selections[i].indexStart;
@@ -600,6 +588,12 @@ void Editor::paintOutline(const Mat4 &projection, const Vec3 &position)
 	glDrawElements(GL_TRIANGLES, size, GL_UNSIGNED_INT, offset);
 
 	glActiveTexture(GL_TEXTURE0);
+
+	/* Clear the alpha channel to an opaque value. */
+	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_TRUE);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 }
 
 void Editor::paintWire(const Mat4 &projection)
@@ -691,7 +685,7 @@ void Editor::paintAxes()
 	Vec3 position = this->camera.getPosition();
 
 	glClear(GL_DEPTH_BUFFER_BIT);
-	glDepthFunc(GL_LEQUAL);
+	glDepthFunc(GL_GEQUAL);
 
 	glUseProgram(this->shared->getShader(SharedResources::Flat));
 	this->staticBuffer.use();
@@ -702,12 +696,8 @@ void Editor::paintAxes()
 	if (this->camera.isPerspective()) {
 		Vec3 diff = position - this->translationAxes.getPosition();
 		distance = pg::magnitude(diff);
-	} else {
-		Vec3 far = this->camera.getFar();
-		Vec3 near = this->camera.getNear();
-		distance = pg::magnitude(far - near);
-		distance /= 80.0f;
-	}
+	} else
+		distance = this->camera.getDistance() * 1.25f;
 
 	if (this->rotating) {
 		Vec3 direction = this->selection.getAverageDirectionFP();

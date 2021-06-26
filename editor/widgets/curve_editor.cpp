@@ -241,6 +241,15 @@ void CurveEditor::mousePressed(QMouseEvent *event)
 	}
 }
 
+void CurveEditor::initiateMovePoint()
+{
+	this->originalSpline = this->spline;
+	/* Restrictions need to be applied from left to right or right to left
+	depending on the direction the points are dragged. */
+	int point = *this->selection.getPoints().begin();
+	this->originalPoint = this->spline.getControls()[point];
+}
+
 void CurveEditor::mouseReleased(QMouseEvent *event)
 {
 	if (this->command)
@@ -258,15 +267,6 @@ void CurveEditor::mouseMoved(QMouseEvent *event)
 			change(true);
 		}
 	}
-}
-
-void CurveEditor::initiateMovePoint()
-{
-	this->originalSpline = this->spline;
-	/* Restrictions need to be applied from left to right or right to left
-	depending on the direction the points are dragged. */
-	int point = *this->selection.getPoints().begin();
-	this->originalPoint = this->spline.getControls()[point];
 }
 
 void CurveEditor::applyRestrictions()
@@ -310,10 +310,10 @@ void CurveEditor::restrictLinearControls()
 void CurveEditor::restrictLinearControl(std::vector<pg::Vec3>& controls, int i)
 {
 	int l = controls.size() - 1;
-	if (controls[i].z > 1.0f)
-			controls[i].z = 1.0f;
-	if (controls[i].z < 0.0f)
-		controls[i].z = 0.0f;
+	if (controls[i].y > 1.0f)
+		controls[i].y = 1.0f;
+	if (controls[i].y < 0.0f)
+		controls[i].y = 0.0f;
 
 	if (i != 0 && i != l) {
 		if (this->moveLeft) {
@@ -330,33 +330,36 @@ void CurveEditor::restrictLinearControl(std::vector<pg::Vec3>& controls, int i)
 	}
 }
 
-/** Restrict outer points and keep the tangents the same (the unrestricted
-points are not bound to x = 0 or x = 1). */
+/** Restrict the first and last points and keep the tangents the same (the
+unrestricted points are not bound to x = 0 or x = 1). */
 void CurveEditor::restrictOuterCubicControls(std::vector<Vec3> &controls)
 {
 	auto last = controls.size() - 1;
+
 	if (controls[last].x != 1.0f) {
 		controls[last-1].x -= (controls[last].x - 1.0f);
 		controls[last].x = 1.0f;
 	}
-	if (controls[last].z > 1.0f) {
-		controls[last-1].z -= (controls[last].z - 1.0f);
-		controls[last].z = 1.0f;
-	} else if (controls[last].z < 0.0f) {
-		controls[last-1].z -= controls[last].z;
-		controls[last].z = 0.0f;
+
+	if (controls[last].y > 1.0f) {
+		controls[last-1].y -= (controls[last].y - 1.0f);
+		controls[last].y = 1.0f;
+	} else if (controls[last].y < 0.0f) {
+		controls[last-1].y -= controls[last].y;
+		controls[last].y = 0.0f;
 	}
 
 	if (controls[0].x != 0.0f) {
 		controls[1].x -= controls[0].x;
 		controls[0].x = 0.0f;
 	}
-	if (controls[0].z > 1.0f) {
-		controls[1].z -= (controls[0].z - 1.0f);
-		controls[0].z = 1.0f;
-	} else if (controls[0].z < 0.0f) {
-		controls[1].z -= controls[0].z;
-		controls[0].z = 0.0f;
+
+	if (controls[0].y > 1.0f) {
+		controls[1].y -= (controls[0].y - 1.0f);
+		controls[0].y = 1.0f;
+	} else if (controls[0].y < 0.0f) {
+		controls[1].y -= controls[0].y;
+		controls[0].y = 0.0f;
 	}
 }
 
@@ -393,10 +396,10 @@ void CurveEditor::restrictCubicControls(std::vector<Vec3> &controls)
 
 void CurveEditor::restrictCubicControl(std::vector<Vec3> &controls, int i)
 {
-	if (controls[i].z > 1.0f)
-		controls[i].z = 1.0f;
-	else if (controls[i].z < 0.0f)
-		controls[i].z = 0.0f;
+	if (controls[i].y > 1.0f)
+		controls[i].y = 1.0f;
+	else if (controls[i].y < 0.0f)
+		controls[i].y = 0.0f;
 
 	if (i != 0 && i != (int)controls.size() - 1) {
 		if (i % 3 == 1) {
@@ -428,39 +431,6 @@ void CurveEditor::restrictCubicControl(std::vector<Vec3> &controls, int i)
 				Vec3 diff = controls[i] - p;
 				controls[i+1] += diff;
 				controls[i-1] += diff;
-			}
-		}
-	}
-}
-
-bool CurveEditor::isCenterSelected(std::set<int>::iterator &it)
-{
-	auto points = this->selection.getPoints();
-	int point = *it;
-	auto n = std::next(it);
-	auto p = std::prev(it);
-	auto e = --points.end();
-	auto b = points.begin();
-	if (point % 3 == 1 && it != b && *p == point - 1)
-		return true;
-	else if (point % 3 == 2 && n != e && *n == point + 1)
-		return true;
-	else
-		return false;
-}
-
-void CurveEditor::parallelizeTangents()
-{
-	auto points = this->selection.getPoints();
-	for (auto it = points.begin(); it != points.end(); ++it) {
-		if (!isCenterSelected(it)) {
-			int point = *it;
-			if (point % 3 == 1) {
-				if (points.find(point - 2) == points.end())
-					this->spline.parallelize(point);
-			} else if (point % 3 == 2) {
-				if (points.find(point + 2) == points.end())
-					this->spline.parallelize(point);
 			}
 		}
 	}
@@ -501,7 +471,7 @@ void CurveEditor::truncateCubicControl(std::vector<Vec3> &controls, int i)
 	}
 
 	Vec3 diff = controls[i] - controls[j];
-	if (!(diff.x == 0.0f && diff.z == 0.0f)) {
+	if (diff.x != 0.0f || diff.y != 0.0f) {
 		float length = pg::magnitude(diff);
 
 		pg::Ray2 tangent;
@@ -514,14 +484,12 @@ void CurveEditor::truncateCubicControl(std::vector<Vec3> &controls, int i)
 		boundary.origin = Vec2(0.0f, 1.0f);
 		boundary.direction = Vec2(1.0f, 0.0f);
 		t = intersectsLine(tangent, boundary);
-		/* Discard result if the direction is inward. */
 		if (tangent.direction.y < 0)
 			t = -1.0f;
 
 		boundary.origin = Vec2(0.0f, 0.0f);
 		boundary.direction = Vec2(1.0f, 0.0f);
 		r = intersectsLine(tangent, boundary);
-		/* Discard result if the direction is inward. */
 		if (tangent.direction.y > 0)
 			r = -1.0f;
 		if (t < 0 || (r < t && r >= 0))
@@ -534,12 +502,45 @@ void CurveEditor::truncateCubicControl(std::vector<Vec3> &controls, int i)
 			t = r;
 
 		if (length > t) {
-			pg::Vec2 p = t * pg::normalize(tangent.direction);
+			Vec2 p = t * pg::normalize(tangent.direction);
 			p += tangent.origin;
 			controls[i].x = p.x;
-			controls[i].z = p.y;
+			controls[i].y = p.y;
 		}
 	}
+}
+
+void CurveEditor::parallelizeTangents()
+{
+	auto points = this->selection.getPoints();
+	for (auto it = points.begin(); it != points.end(); ++it) {
+		if (!isCenterSelected(it)) {
+			int point = *it;
+			if (point % 3 == 1) {
+				if (points.find(point - 2) == points.end())
+					this->spline.parallelize(point);
+			} else if (point % 3 == 2) {
+				if (points.find(point + 2) == points.end())
+					this->spline.parallelize(point);
+			}
+		}
+	}
+}
+
+bool CurveEditor::isCenterSelected(std::set<int>::iterator &it)
+{
+	auto points = this->selection.getPoints();
+	int point = *it;
+	auto n = std::next(it);
+	auto p = std::prev(it);
+	auto e = --points.end();
+	auto b = points.begin();
+	if (point % 3 == 1 && it != b && *p == point - 1)
+		return true;
+	else if (point % 3 == 2 && n != e && *n == point + 1)
+		return true;
+	else
+		return false;
 }
 
 void CurveEditor::exitCommand(bool changed)

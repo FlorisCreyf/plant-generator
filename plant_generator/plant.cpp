@@ -267,7 +267,7 @@ float Plant::getRadius(Stem *stem, unsigned index) const
 {
 	float t = stem->path.getPercentage(index);
 	const Spline spline = this->curves[stem->getRadiusCurve()].getSpline();
-	float z = spline.getPoint(t).z;
+	float z = spline.getPoint(t).y;
 	return z * (stem->maxRadius - stem->minRadius) + stem->minRadius;
 }
 
@@ -275,7 +275,7 @@ float Plant::getIntermediateRadius(Stem *stem, float t) const
 {
 	float length = stem->path.getLength();
 	const Spline spline = this->curves[stem->getRadiusCurve()].getSpline();
-	float z = spline.getPoint(t / length).z;
+	float z = spline.getPoint(t / length).y;
 	return z * (stem->maxRadius - stem->minRadius) + stem->minRadius;
 }
 

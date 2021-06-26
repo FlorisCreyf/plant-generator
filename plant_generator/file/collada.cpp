@@ -645,7 +645,7 @@ void Collada::exportFile(string filename, const Mesh &mesh, const Scene &scene)
 		"xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'>";
 
 	xml >> "<asset>";
-	xml += "<up_axis>Y_UP</up_axis>";
+	xml += "<up_axis>Z_UP</up_axis>";
 	xml << "</asset>";
 
 	setImages(xml, mesh, scene.plant);

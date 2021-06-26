@@ -27,8 +27,8 @@ MaterialViewer::MaterialViewer(SharedResources *shared, QWidget *parent) :
 {
 	setFocusPolicy(Qt::StrongFocus);
 	setMouseTracking(true);
-	this->camera.setTarget(Vec3(0.5f, 0.0f, 0.5f));
-	this->camera.setOrientation(180.0f, -180.0f);
+	this->camera.setTarget(Vec3(0.5f, 0.5f, 0.0f));
+	this->camera.setOrientation(0.0f, 0.0f);
 	this->camera.setDistance(0.8f);
 	this->camera.setPanSpeed(0.004f);
 	this->camera.setZoom(0.01f, 0.3f, 2.0f);
@@ -49,7 +49,7 @@ void MaterialViewer::createInterface()
 {
 	Geometry plane;
 	Vec3 a(1.0f, 0.0f, 0.0f);
-	Vec3 b(0.0f, 0.0f, 1.0f);
+	Vec3 b(0.0f, 1.0f, 0.0f);
 	Vec3 c(0.0f, 0.0f, 0.0f);
 	Vec3 normal(0.0f, 0.0f, 1.0f);
 	Vec3 tangent(0.0f, 1.0f, 0.0f);
@@ -83,7 +83,6 @@ void MaterialViewer::paintGL()
 	glClearDepth(1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	this->camera.updateVP();
 	ShaderParams params = this->shared->getMaterial(this->materialIndex);
 	pg::Material material = params.getMaterial();
 
@@ -120,19 +119,16 @@ void MaterialViewer::paintGL()
 	GLsizei count = this->planeSegment.icount;
 	glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, start);
 
-	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_TRUE);
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
-	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 	glFlush();
 }
 
 void MaterialViewer::resizeGL(int width, int height)
 {
 	float ratio = static_cast<float>(width) / static_cast<float>(height);
+	Vec3 near(ratio, 1.0f, 0.0f);
+	Vec3 far(-ratio, -1.0f, -100.0f);
+	this->camera.setOrthographic(near, far);
 	this->camera.setWindowSize(width, height);
-	this->camera.setOrthographic(
-		Vec3(-ratio, -1.0f, 0.0f), Vec3(ratio, 1.0f, 100.0f));
 }
 
 void MaterialViewer::mousePressEvent(QMouseEvent *event)
