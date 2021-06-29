@@ -1,5 +1,5 @@
 /* Plant Generator
- * Copyright (C) 2020  Floris Creyf
+ * Copyright (C) 2021  Floris Creyf
  *
  * Plant Generator is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,35 +15,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef WIND_EDITOR_H
-#define WIND_EDITOR_H
+#ifndef SAVE_CURVE_H
+#define SAVE_CURVE_H
 
-#include "editor.h"
-#include "widgets.h"
-#include "plant_generator/wind.h"
+#include "command.h"
+#include "plant_generator/scene.h"
+#include <vector>
 
-class WindEditor : public QWidget {
-	Q_OBJECT
-
-	Editor *editor;
-
-	enum {DirectionX, DirectionY, DirectionZ, Threshold, Resistance, DSize};
-	enum {TimeStep, FrameCount, Seed, ISize};
-
-	QGroupBox *group;
-	DoubleSpinBox *dv[DSize];
-	SpinBox *iv[ISize];
-
-	void createInterface();
-	void blockSignals(bool);
+class SaveCurve : public Command {
+	std::vector<pg::Curve> curves;
+	pg::Scene *scene;
 
 public:
-	WindEditor(Editor *editor, QWidget *parent);
-	QSize sizeHint() const;
-	void setFields();
-
-public slots:
-	void change();
+	SaveCurve(pg::Scene *scene);
+	void execute();
+	void undo();
+	void redo();
 };
 
 #endif

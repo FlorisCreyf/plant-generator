@@ -70,24 +70,24 @@ void pg::Geometry::setPerpendicularPlanes()
 	p.normal = Vec3(1.0f, 0.0f, 0.0f);
 	p.tangent = Vec3(0.0f, 1.0f, 0.0f);
 	setPlane();
-	p.position = Vec3(0.0f, 0.5f, 0.0f);
+	p.position = Vec3(0.0f, 0.0f, 0.5f);
 	p.uv = Vec2(1.0f, 0.0f);
 	this->points.push_back(p);
-	p.position = Vec3(0.0f, 0.5f, 1.0f);
+	p.position = Vec3(0.0f, 0.0f, -0.5f);
+	p.uv = Vec2(0.0f, 0.0f);
+	this->points.push_back(p);
+	p.position = Vec3(0.0f, 1.0f, 0.5f);
 	p.uv = Vec2(1.0f, 1.0f);
 	this->points.push_back(p);
-	p.position = Vec3(0.0f, -0.5f, 1.0f);
+	p.position = Vec3(0.0f, 1.0f, -0.5f);
 	p.uv = Vec2(0.0f, 1.0f);
-	this->points.push_back(p);
-	p.position = Vec3(0.0f, -0.5f, 0.0f);
-	p.uv = Vec2(0.0f, 0.0f);
 	this->points.push_back(p);
 	this->indices.push_back(4);
 	this->indices.push_back(5);
 	this->indices.push_back(7);
-	this->indices.push_back(5);
-	this->indices.push_back(6);
 	this->indices.push_back(7);
+	this->indices.push_back(6);
+	this->indices.push_back(4);
 }
 
 void pg::Geometry::setPoints(std::vector<DVertex> points)

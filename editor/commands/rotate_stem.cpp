@@ -248,12 +248,12 @@ bool RotateStem::onKeyPress(QKeyEvent *event)
 {
 	char key = event->key();
 	if (key == Qt::Key_C)
-		this->axes->selectAxis(Axes::Center);
+		this->axes->setAxis(Axes::Center);
 	else if (key == Qt::Key_X)
-		this->axes->selectAxis(Axes::XAxis);
+		this->axes->setAxis(Axes::XAxis);
 	else if (key == Qt::Key_Y)
-		this->axes->selectAxis(Axes::YAxis);
+		this->axes->setAxis(Axes::YAxis);
 	else if (key == Qt::Key_Z)
-		this->axes->selectAxis(Axes::ZAxis);
+		this->axes->setAxis(Axes::ZAxis);
 	return false;
 }

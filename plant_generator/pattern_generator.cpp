@@ -316,7 +316,7 @@ void PatternGenerator::addLeaves(Stem *stem, Length length, LeafData data)
 	end *= (end >= 0.0f);
 
 	for (int i = 0, j = 1; position > end; i++, j++) {
-		float ratio = position / length.current;
+		float ratio = position / length.total;
 		float t = data.densityCurve.getPoint(ratio).y;
 		if (t == 0.0f)
 			break;

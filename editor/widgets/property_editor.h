@@ -18,27 +18,32 @@
 #ifndef PROPERTY_EDITOR_H
 #define PROPERTY_EDITOR_H
 
+#include "curve_editor.h"
+#include "mesh_viewer.h"
+#include "material_viewer.h"
 #include "editor.h"
 #include "widgets.h"
+#include "editor/keymap.h"
 #include "../commands/save_stem.h"
+#include "../commands/save_curve.h"
 
 class PropertyEditor : public QWidget {
 	Q_OBJECT
 
 	Editor *editor;
+	KeyMap *keymap;
 	SharedResources *shared;
 	SaveStem *saveStem;
+	SaveCurve *saveCurve;
 	bool sameAsCurrent;
 
 	enum {SectionDivisions, PathDivisions, CollarDivisions, ISize};
 	enum {Radius, MinRadius, CollarX, CollarY, ScaleX, ScaleY, ScaleZ,
 		DSize};
-	enum {RadiusCurve, Degree, StemMaterial, CapMaterial, LeafMaterial,
-		Mesh, CSize};
+	enum {RadiusCurve, PathDegree, StemMaterial, CapMaterial, LeafMaterial,
+		LeafMesh, CSize};
 	enum {CustomStem, CustomLeaf, BSize};
 
-	QGroupBox *stemGroup;
-	QGroupBox *leafGroup;
 	SpinBox *iv[ISize];
 	QLabel *il[ISize];
 	DoubleSpinBox *dv[DSize];
@@ -50,6 +55,7 @@ class PropertyEditor : public QWidget {
 
 	void blockSignals(bool);
 	void createInterface();
+	void createStemLeafFields();
 	void createStemInterface(QBoxLayout *);
 	void createLeafInterface(QBoxLayout *);
 	void setStemFields(const std::map<pg::Stem *, PointSelection> &);
@@ -83,25 +89,75 @@ class PropertyEditor : public QWidget {
 		this->editor->change();
 	}
 
+	CurveEditor *curveEditor;
+	ComboBox *curveName;
+	ComboBox *curveDegree;
+
+	void createCurveInterface(QBoxLayout *);
+	void setCurves();
+	void addCurve();
+	void addCurve(pg::Curve);
+	void addCurveName(QString);
+	void selectCurve();
+	void renameCurve();
+	void removeCurve();
+	void clearCurves();
+	void changeCurve(bool);
+	void createCurveCommand();
+
+	enum {Shininess, AmbientR, AmbientG, AmbientB, MSize};
+
+	MaterialViewer *materialViewer;
+	ComboBox *materialName;
+	QLineEdit *materialFile[pg::Material::MapQuantity];
+	DoubleSpinBox *materialValue[MSize];
+
+	void createMaterialInterface(QBoxLayout *);
+	void openMaterialFile(int);
+	void removeMaterialFile(int);
+	void selectMaterial(int);
+	void updateMaterial(ShaderParams, unsigned);
+	void changeMaterial();
+	void renameMaterial();
+	void addMaterial();
+	void addMaterialName(QString);
+	void removeMaterial();
+
+	MeshViewer *meshViewer;
+	ComboBox *meshName;
+
+	void createMeshInterface(QBoxLayout *);
+	void addMesh();
+	void addMeshName(QString);
+	void removeMesh();
+	void selectMesh();
+	void renameMesh();
+	void loadCustomMesh();
+	void loadPlaneMesh();
+	void loadPerpPlaneMesh();
+	void loadEmptyMesh();
+	void modifyMesh(pg::Geometry &, int);
+
+	enum {DirectionX, DirectionY, DirectionZ, Threshold, Resistance,
+		WDSize};
+	enum {TimeStep, FrameCount, Seed, WISize};
+
+	DoubleSpinBox *wdv[DSize];
+	SpinBox *wiv[ISize];
+
+	void createWindInterface(QBoxLayout *);
+	void changeWind();
+	void setWindFields();
+	void blockWindSignals(bool);
+
 public:
-	PropertyEditor(SharedResources *shared, Editor *editor,
+	PropertyEditor(SharedResources *shared, KeyMap *keymap, Editor *editor,
 		QWidget *parent);
+	void populate();
 	QSize sizeHint() const;
-
-public slots:
 	void setFields();
-	void clearOptions();
+	void clear();
 	void finishChanging();
-
-	void addCurve(pg::Curve curve);
-	void updateCurve(pg::Curve curve, int index);
-	void removeCurve(int index);
-	void addMaterial(ShaderParams params);
-	void updateMaterials();
-	void removeMaterial(int index);
-	void addMesh(pg::Geometry geom);
-	void updateMesh(pg::Geometry geom, int index);
-	void removeMesh(int index);
 };
 
 #endif

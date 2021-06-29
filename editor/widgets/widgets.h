@@ -52,7 +52,7 @@ protected:
 	virtual void wheelEvent(QWheelEvent *event);
 };
 
-class ItemDelegate : public QStyledItemDelegate {
+class SID : public QStyledItemDelegate {
 	Q_OBJECT
 
 public:

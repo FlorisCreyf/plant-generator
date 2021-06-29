@@ -101,7 +101,16 @@ bool MovePath::onMouseRelease(QMouseEvent *)
 	return false;
 }
 
-bool MovePath::onKeyPress(QKeyEvent *)
+bool MovePath::onKeyPress(QKeyEvent *event)
 {
+	char key = event->key();
+	if (key == Qt::Key_C)
+		this->axes->setAxis(Axes::Center);
+	else if (key == Qt::Key_X)
+		this->axes->setAxis(Axes::XAxis);
+	else if (key == Qt::Key_Y)
+		this->axes->setAxis(Axes::YAxis);
+	else if (key == Qt::Key_Z)
+		this->axes->setAxis(Axes::ZAxis);
 	return false;
 }

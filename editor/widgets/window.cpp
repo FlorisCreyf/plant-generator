@@ -36,27 +36,26 @@ Window::Window(int argc, char **argv)
 	setFilename(this->filename);
 
 	this->editor = new Editor(&this->shared, &this->keymap, this);
+	connect(this->editor, &Editor::changed, this, &Window::updateStatus);
 	setCentralWidget(this->editor);
 	createEditors();
 	initEditor();
+
 	this->widget.setupUi(this);
+	connect(this->widget.actionReportIssue, &QAction::triggered,
+		this, &Window::reportIssue);
 
 	QMenu *menu = createPopupMenu();
 	menu->setTitle("Window");
 	menuBar()->insertMenu(this->widget.menuHelp->menuAction(), menu);
-
-	connect(this->editor, &Editor::changed, this, &Window::updateStatus);
-	connect(this->widget.actionReportIssue, &QAction::triggered,
-		this, &Window::reportIssue);
 }
 
-QDockWidget *Window::createDockWidget(const char *name, QWidget *widget,
-	bool scrollbar)
+QDockWidget *Window::createDW(const char *name, QWidget *widget, bool scroll)
 {
 	QDockWidget *dw = new QDockWidget(name, this);
 	dw->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
 	dw->setMinimumWidth(UI_WIDGET_WIDTH);
-	if (scrollbar) {
+	if (scroll) {
 		QScrollArea *sa = new QScrollArea();
 		sa->setWidgetResizable(true);
 		sa->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -69,79 +68,22 @@ QDockWidget *Window::createDockWidget(const char *name, QWidget *widget,
 
 void Window::createEditors()
 {
-	QDockWidget *dw[7];
+	QDockWidget *dw[3];
 
-	this->propertyEditor = new PropertyEditor(
-		&this->shared, this->editor, this);
-	dw[0] = createDockWidget("Properties", this->propertyEditor, true);
+	this->propertyEditor = new PropertyEditor(&this->shared, &this->keymap,
+		this->editor, this);
+	dw[0] = createDW("Properties", this->propertyEditor, true);
 	addDockWidget(static_cast<Qt::DockWidgetArea>(1), dw[0]);
-	connect(&shared, &SharedResources::materialAdded,
-		this->propertyEditor, &PropertyEditor::addMaterial);
-	connect(&shared, &SharedResources::materialModified,
-		this->propertyEditor, &PropertyEditor::updateMaterials);
-	connect(&shared, &SharedResources::materialRemoved,
-		this->propertyEditor, &PropertyEditor::removeMaterial);
-
 	this->keyEditor = new KeyEditor(&keymap, this);
-	dw[1] = createDockWidget("Key Map", this->keyEditor, true);
+	dw[1] = createDW("Key Map", this->keyEditor, true);
 	addDockWidget(static_cast<Qt::DockWidgetArea>(1), dw[1]);
-
-	this->pcEditor = new PropertyCurveEditor(
-		&this->shared, &this->keymap, this->editor, this);
-	dw[2] = createDockWidget("Curves", this->pcEditor, false);
+	this->generatorEditor = new GeneratorEditor(&this->shared,
+		&this->keymap, this->editor, this);
+	dw[2] = createDW("Generator", this->generatorEditor, true);
 	addDockWidget(static_cast<Qt::DockWidgetArea>(1), dw[2]);
-	connect(this->pcEditor, &PropertyCurveEditor::curveAdded,
-		this->propertyEditor, &PropertyEditor::addCurve);
-	connect(this->pcEditor, &PropertyCurveEditor::curveModified,
-		this->propertyEditor, &PropertyEditor::updateCurve);
-	connect(this->pcEditor, &PropertyCurveEditor::curveRemoved,
-		this->propertyEditor, &PropertyEditor::removeCurve);
 
-	this->materialEditor = new MaterialEditor(
-		&this->shared, this->editor, this);
-	dw[3] = createDockWidget("Materials", this->materialEditor, true);
-	addDockWidget(static_cast<Qt::DockWidgetArea>(1), dw[3]);
-
-	this->meshEditor = new MeshEditor(&this->shared, this->editor, this);
-	dw[4] = createDockWidget("Meshes", this->meshEditor, true);
-	addDockWidget(static_cast<Qt::DockWidgetArea>(1), dw[4]);
-	connect(this->meshEditor, &MeshEditor::meshAdded,
-		this->propertyEditor, &PropertyEditor::addMesh);
-	connect(this->meshEditor, &MeshEditor::meshModified,
-		this->propertyEditor, &PropertyEditor::updateMesh);
-	connect(this->meshEditor, &MeshEditor::meshRemoved,
-		this->propertyEditor, &PropertyEditor::removeMesh);
-
-	dw[5] = createDockWidget("Generator", createGeneratorEditor(), true);
-	addDockWidget(static_cast<Qt::DockWidgetArea>(1), dw[5]);
-
-	this->gcEditor = new GeneratorCurveEditor(
-		&this->shared, &this->keymap, this->editor, this);
-	dw[6] = createDockWidget("Curves (Generator)", this->gcEditor, false);
-	addDockWidget(static_cast<Qt::DockWidgetArea>(1), dw[6]);
-	connect(this->generatorEditor, &GeneratorEditor::parameterTreeModified,
-		this->gcEditor, &GeneratorCurveEditor::setFields);
-
-	tabifyDockWidget(dw[1], dw[5]);
+	tabifyDockWidget(dw[1], dw[2]);
 	tabifyDockWidget(dw[1], dw[0]);
-	tabifyDockWidget(dw[4], dw[3]);
-	tabifyDockWidget(dw[4], dw[6]);
-	tabifyDockWidget(dw[4], dw[2]);
-}
-
-QWidget *Window::createGeneratorEditor()
-{
-	this->generatorEditor = new GeneratorEditor(this->editor, this);
-	this->windEditor = new WindEditor(this->editor, this);
-	QWidget *widget = new QWidget();
-	QVBoxLayout *layout = new QVBoxLayout(widget);
-	layout->setSizeConstraint(QLayout::SetMinimumSize);
-	layout->setSpacing(0);
-	layout->setMargin(0);
-	layout->addWidget(this->generatorEditor);
-	layout->addWidget(this->windEditor);
-	layout->addStretch(1);
-	return widget;
 }
 
 void Window::initEditor()
@@ -149,13 +91,20 @@ void Window::initEditor()
 	if (this->filename.isEmpty())
 		newFile();
 	else {
-		this->propertyEditor->clearOptions();
+		this->propertyEditor->clear();
 		this->editor->load(this->filename.toLatin1());
-		this->pcEditor->reset();
-		this->meshEditor->reset();
-		this->materialEditor->reset();
 		this->editor->reset();
+		this->propertyEditor->populate();
 	}
+}
+
+void Window::newFile()
+{
+	this->propertyEditor->clear();
+	this->editor->load(nullptr);
+	this->editor->reset();
+	this->propertyEditor->populate();
+	setFilename("");
 }
 
 void Window::updateStatus()
@@ -175,21 +124,15 @@ void Window::keyPressEvent(QKeyEvent *event)
 {
 	if (event->key() == Qt::Key_Z) {
 		if (event->modifiers() & Qt::ControlModifier) {
-			if (event->modifiers() & Qt::ShiftModifier) {
+			if (event->modifiers() & Qt::ShiftModifier)
 				this->editor->redo();
-				this->pcEditor->select();
-			} else {
+			else
 				this->editor->undo();
-				this->pcEditor->select();
-			}
 		}
 	} else if (event->key() == Qt::Key_Y) {
-		if (event->modifiers() & Qt::ControlModifier) {
+		if (event->modifiers() & Qt::ControlModifier)
 			this->editor->redo();
-			this->pcEditor->select();
-		}
 	}
-
 	QWidget::keyPressEvent(event);
 }
 
@@ -213,35 +156,13 @@ void Window::setFilename(QString filename)
 	setWindowTitle(title);
 }
 
-void Window::newFile()
-{
-	this->propertyEditor->clearOptions();
-	this->pcEditor->clear();
-	this->pcEditor->add();
-	this->materialEditor->clear();
-	this->materialEditor->addEmpty();
-	this->meshEditor->clear();
-	this->meshEditor->addEmpty();
-	this->editor->load(nullptr);
-	this->windEditor->setFields();
-	this->editor->reset();
-	setFilename("");
-}
-
 void Window::openDialogBox()
 {
 	QString filename = QFileDialog::getOpenFileName(this, "Open File", "",
 		"Plant (*.plant)");
-
 	if (!filename.isNull() || !filename.isEmpty()) {
-		this->propertyEditor->clearOptions();
-		this->editor->load(filename.toLatin1());
-		this->windEditor->setFields();
-		this->pcEditor->reset();
-		this->meshEditor->reset();
-		this->materialEditor->reset();
-		this->editor->reset();
 		setFilename(filename);
+		initEditor();
 	}
 }
 
@@ -249,7 +170,6 @@ void Window::saveAsDialogBox()
 {
 	QString filename = QFileDialog::getSaveFileName(this, "Save File",
 		"saved/untitled.plant", "Plant (*.plant)");
-
 	if (!filename.isNull() || !filename.isEmpty()) {
 		std::ofstream stream(filename.toLatin1());
 		if (stream.good()) {
@@ -280,7 +200,6 @@ void Window::exportWavefrontDialogBox()
 	const pg::Plant *plant = this->editor->getPlant();
 	QString filename = QFileDialog::getSaveFileName(this, "Export File",
 		"saved/plant.obj", "Wavefront (*.obj);;All Files (*)");
-
 	if (!filename.isEmpty()) {
 		pg::Wavefront obj;
 		QByteArray array = filename.toLatin1();
@@ -295,7 +214,6 @@ void Window::exportColladaDialogBox()
 	const pg::Scene *scene = this->editor->getScene();
 	QString filename = QFileDialog::getSaveFileName(this, "Export File",
 		"saved/plant.dae", "Collada (*.dae);;All Files (*)");
-
 	if (!filename.isEmpty()) {
 		pg::Collada dae;
 		QByteArray array = filename.toLatin1();

@@ -23,7 +23,6 @@
 class RotationAxes : public Axes {
 public:
 	Geometry getLines();
-	void selectAxis(Axis axis);
 	pg::Mat4 getTransformation(float distance, pg::Vec3 direction);
 };
 

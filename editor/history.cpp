@@ -60,6 +60,14 @@ void History::redo()
 	}
 }
 
+const Command *History::peak()
+{
+	if (this->past.size() > 0)
+		return this->past.back().get();
+	else
+		return nullptr;
+}
+
 void History::clear()
 {
 	this->future.clear();

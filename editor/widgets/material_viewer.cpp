@@ -29,14 +29,14 @@ MaterialViewer::MaterialViewer(SharedResources *shared, QWidget *parent) :
 	setMouseTracking(true);
 	this->camera.setTarget(Vec3(0.5f, 0.5f, 0.0f));
 	this->camera.setOrientation(0.0f, 0.0f);
-	this->camera.setDistance(0.8f);
+	this->camera.setDistance(0.6f);
 	this->camera.setPanSpeed(0.004f);
 	this->camera.setZoom(0.01f, 0.3f, 2.0f);
 }
 
 QSize MaterialViewer::sizeHint() const
 {
-	return QSize(width(), 200);
+	return QSize(width(), 150);
 }
 
 void MaterialViewer::updateMaterial(unsigned materialIndex)
@@ -79,7 +79,7 @@ void MaterialViewer::initializeGL()
 
 void MaterialViewer::paintGL()
 {
-	glClearColor(0.22f, 0.22f, 0.22f, 1.0f);
+	glClearColor(0.32f, 0.32f, 0.32f, 1.0f);
 	glClearDepth(1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -154,17 +154,4 @@ void MaterialViewer::mouseMoveEvent(QMouseEvent *event)
 	QPoint p = event->pos();
 	this->camera.executeAction(p.x(), p.y());
 	update();
-}
-
-void MaterialViewer::wheelEvent(QWheelEvent *event)
-{
-	QPoint a = event->angleDelta();
-	if (!a.isNull()) {
-		float y = a.y() / 10.0f;
-		if (y != 0.0f) {
-			this->camera.zoom(y);
-			update();
-		}
-	}
-	event->accept();
 }

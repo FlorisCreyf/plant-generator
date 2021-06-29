@@ -86,7 +86,7 @@ void Leaf::setRotation(const LeafData &data, float position, const Path &path,
 	rotation = fromAxisAngle(c, data.rotation*index) * rotation;
 
 	/* Rotate the leaf surface upward. */
-	Vec3 u = lerp(a, c, data.localUp); // between a and c
+	Vec3 u = lerp(a, c, data.localUp);
 	rotation = rotateIntoVecQ(c, u) * rotation;
 	Vec3 v = rotate(rotation, z);
 	Vec3 w = lerp(a, z, data.globalUp);

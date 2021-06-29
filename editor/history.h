@@ -33,6 +33,7 @@ public:
 	void undo();
 	void redo();
 	void clear();
+	const Command *peak();
 	void setLimit(unsigned limit);
 };
 

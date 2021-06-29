@@ -41,7 +41,7 @@ CurveViewer::CurveViewer(SharedResources *shared, QWidget *parent) :
 
 	this->camera.setTarget(Vec3(0.5f, 0.5f, 0.0f));
 	this->camera.setOrientation(0.0f, 0.0f);
-	this->camera.setDistance(0.7f);
+	this->camera.setDistance(0.67f);
 	this->camera.setPanSpeed(0.004f);
 	this->camera.setZoom(0.01f, 0.3f, 2.0f);
 
@@ -92,14 +92,14 @@ void CurveViewer::appendInterface(Geometry &geometry)
 	Vec3 colors[2];
 	colors[0] = Vec3(0.3f, 0.3f, 0.3f);
 	colors[1] = Vec3(0.3f, 0.3f, 0.3f);
-	Mat4 t(
+	Mat4 scale(
 		1.0f/6.0f, 0.0f, 0.0f, 0.0f,
 		0.0f, 1.0f/6.0f, 0.0f, 0.0f,
 		0.0f, 0.0f, 1.0f/6.0f, 0.0f,
 		0.5f, 0.5f, 0.0f, 1.0f);
 	grid.addGrid(100, colors, colors[0]);
 	Geometry::Segment segment = grid.getSegment();
-	grid.transform(segment.pstart, segment.pcount, t);
+	grid.transform(segment.pstart, segment.pcount, scale);
 	this->grid = geometry.append(grid);
 }
 
@@ -131,19 +131,6 @@ void CurveViewer::clear()
 		doneCurrent();
 		update();
 	}
-}
-
-void CurveViewer::wheelEvent(QWheelEvent *event)
-{
-	QPoint angleDelta = event->angleDelta();
-	if (!angleDelta.isNull()) {
-		float y = angleDelta.y() / 10.0f;
-		if (y != 0.0f) {
-			this->camera.zoom(y);
-			update();
-		}
-	}
-	event->accept();
 }
 
 void CurveViewer::mousePressEvent(QMouseEvent *event)
@@ -188,17 +175,16 @@ void CurveViewer::paintGL()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	Mat4 vp = this->camera.getVP();
+	GLuint texture = this->shared->getTexture(SharedResources::DotTexture);
 
 	this->buffer.use();
 	glUseProgram(this->shared->getShader(SharedResources::Flat));
 	glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
 
-	{
-		auto size = sizeof(unsigned);
-		GLvoid *start = (GLvoid *)(this->plane.istart * size);
-		GLsizei count = this->plane.icount;
-		glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, start);
-	}
+	auto size = sizeof(unsigned);
+	GLvoid *start = (GLvoid *)(this->plane.istart * size);
+	GLsizei count = this->plane.icount;
+	glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, start);
 
 	glDrawArrays(GL_LINES, this->grid.pstart, this->grid.pcount);
 
@@ -207,17 +193,16 @@ void CurveViewer::paintGL()
 		glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
 		glUniform2f(1, QWidget::width(), QWidget::height());
 
-		Geometry::Segment s = this->path.getLineSegment();
-		GLvoid *start = (GLvoid *)(s.istart * sizeof(unsigned));
-		glDrawElements(GL_LINE_STRIP, s.icount, GL_UNSIGNED_INT, start);
+		Geometry::Segment segment = this->path.getLineSegment();
+		start = (GLvoid *)(segment.istart * sizeof(unsigned));
+		count = segment.icount;
+		glDrawElements(GL_LINE_STRIP, count, GL_UNSIGNED_INT, start);
 
-		s = this->path.getPointSegment();
-		GLuint texture = this->shared->getTexture(
-			SharedResources::DotTexture);
+		segment = this->path.getPointSegment();
 		glBindTexture(GL_TEXTURE_2D, texture);
 		glUseProgram(this->shared->getShader(SharedResources::Point));
 		glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
-		glDrawArrays(GL_POINTS, s.pstart, s.pcount);
+		glDrawArrays(GL_POINTS, segment.pstart, segment.pcount);
 	}
 
 	glFlush();

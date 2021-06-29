@@ -172,8 +172,8 @@ void Editor::initializeBuffers()
 		Vec3(0.0f, 0.0f, 0.0f));
 
 	Vec3 colors[2];
-	colors[0] = Vec3(0.4f, 0.4f, 0.4f);
-	colors[1] = Vec3(0.4f, 0.4f, 0.4f);
+	colors[0] = Vec3(0.7f, 0.4f, 0.4f);
+	colors[1] = Vec3(0.4f, 0.7f, 0.4f);
 	geometry.addGrid(5, colors, Vec3(0.3f, 0.3f, 0.3f));
 	this->segments.grid = geometry.getSegment();
 	this->segments.plane = geometry.append(plane);
@@ -896,6 +896,7 @@ void Editor::createDefaultPlant()
 	pg::ParameterNode *node3 = tree.addChild("1.1");
 	stemData.density = 0.0f;
 	node3->setData(stemData);
+	this->scene.plant.setDefault();
 	this->scene.generator.setParameterTree(tree);
 	this->scene.generator.grow();
 	this->scene.wind.setDirection(Vec3(0.5f, 0.5f, 0.5f));
@@ -904,6 +905,8 @@ void Editor::createDefaultPlant()
 void Editor::load(const char *filename)
 {
 	this->scene.reset();
+	this->shared->clearMaterials();
+
 	if (filename) {
 		std::ifstream stream(filename);
 		boost::archive::text_iarchive ia(stream);
@@ -911,6 +914,9 @@ void Editor::load(const char *filename)
 		stream.close();
 	} else
 		createDefaultPlant();
+
+	for (const pg::Material &material : this->scene.plant.getMaterials())
+		this->shared->addMaterial(ShaderParams(material));
 }
 
 void Editor::reset()
@@ -952,12 +958,6 @@ void Editor::change(QAction *action)
 		this->materialAction->setChecked(true);
 	}
 	update();
-}
-
-void Editor::updateMaterial(unsigned index)
-{
-	ShaderParams params = this->shared->getMaterial(index);
-	this->scene.plant.updateMaterial(params.getMaterial(), index);
 }
 
 pg::Plant *Editor::getPlant()

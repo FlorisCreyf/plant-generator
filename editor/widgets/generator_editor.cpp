@@ -19,17 +19,24 @@
 #include "form.h"
 #include <limits>
 
+using pg::PatternGenerator;
 using pg::ParameterTree;
 using pg::ParameterNode;
 using pg::LeafData;
 using pg::StemData;
 using pg::Stem;
+using pg::Spline;
 using std::string;
 
 const float pi = 3.14159265359f;
 
-GeneratorEditor::GeneratorEditor(Editor *editor, QWidget *parent) :
-	QWidget(parent), editor(editor), generate(nullptr)
+GeneratorEditor::GeneratorEditor(SharedResources *shared, KeyMap *keymap,
+	Editor *editor, QWidget *parent) :
+	QWidget(parent),
+	editor(editor),
+	keymap(keymap),
+	shared(shared),
+	generate(nullptr)
 {
 	createInterface();
 	setEnabled(false);
@@ -42,24 +49,6 @@ QSize GeneratorEditor::sizeHint() const
 	return QSize(UI_WIDGET_WIDTH, UI_WIDGET_HEIGHT);
 }
 
-inline QGroupBox *createGroup(const char *name)
-{
-	QGroupBox *group = new QGroupBox(name);
-	group->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
-	return group;
-}
-
-inline QFormLayout *createForm(QGroupBox *group)
-{
-	QFormLayout *form = new QFormLayout(group);
-	form->setSizeConstraint(QLayout::SetMinimumSize);
-	form->setSpacing(0);
-	form->setMargin(0);
-	form->setSpacing(UI_FORM_SPACING);
-	form->setMargin(UI_FORM_MARGIN);
-	return form;
-}
-
 void GeneratorEditor::createInterface()
 {
 	QBoxLayout *layout = new QBoxLayout(QBoxLayout::TopToBottom, this);
@@ -67,90 +56,17 @@ void GeneratorEditor::createInterface()
 	layout->setSpacing(0);
 	createNodeGroup(layout);
 	createRootGroup(layout);
-	QFormLayout *form;
-
-	for (int i = 0; i < DSize; i++) {
-		this->dv[i] = new DoubleSpinBox(this);
-		this->dv[i]->setFocusPolicy(Qt::StrongFocus);
-		this->dv[i]->setSingleStep(0.1);
-		connect(this->dv[i],
-			QOverload<double>::of(&DoubleSpinBox::valueChanged),
-			this, &GeneratorEditor::change);
-		connect(this->dv[i], &DoubleSpinBox::editingFinished,
-			this, &GeneratorEditor::finishChanging);
-	}
-	for (int i = 0; i < ISize; i++) {
-		this->iv[i] = new SpinBox(this);
-		this->iv[i]->setFocusPolicy(Qt::StrongFocus);
-		this->iv[i]->setSingleStep(1);
-		connect(this->iv[i],
-			QOverload<int>::of(&SpinBox::valueChanged),
-			this, &GeneratorEditor::change);
-		connect(this->iv[i], &SpinBox::editingFinished,
-			this, &GeneratorEditor::finishChanging);
-	}
-
-	const float min = std::numeric_limits<float>::lowest();
-	const float max = std::numeric_limits<float>::max();
-
-	this->stemGroup = createGroup("Stems");
-	form = createForm(this->stemGroup);
-	form->addRow("Stem Density", this->dv[StemDensity]);
-	form->addRow("Length", this->dv[Length]);
-	this->dv[Length]->setSingleStep(1.0);
-	this->dv[Length]->setRange(0.0, std::numeric_limits<float>::max());
-	form->addRow("Distance", this->dv[StemDistance]);
-	form->addRow("Noise", this->dv[Noise]);
-	this->dv[Noise]->setSingleStep(0.001);
-	this->dv[Noise]->setDecimals(3);
-	form->addRow("Bifurcation", this->dv[Fork]);
-	this->dv[Fork]->setSingleStep(0.01);
-	this->dv[Fork]->setDecimals(2);
-	form->addRow("Bifurcation Angle", this->dv[ForkAngle]);
-	this->dv[ForkAngle]->setSingleStep(0.01);
-	this->dv[ForkAngle]->setDecimals(2);
-	form->addRow("Angle Variation", this->dv[AngleVariation]);
-	form->addRow("Radius Threshold", this->dv[RadiusThreshold]);
-	this->dv[RadiusThreshold]->setSingleStep(0.001);
-	this->dv[RadiusThreshold]->setDecimals(3);
-	form->addRow("Radius Scale", this->dv[Scale]);
-	this->dv[Scale]->setSingleStep(0.001);
-	this->dv[Scale]->setDecimals(3);
-	setFormLayout(form);
-	layout->addWidget(this->stemGroup);
-
-	this->leafGroup = createGroup("Leaves");
-	form = createForm(this->leafGroup);
-	form->addRow("Node Density", this->dv[LeafDensity]);
-	form->addRow("Distance", this->dv[LeafDistance]);
-	form->addRow("Rotation", this->dv[LeafRotation]);
-	this->dv[LeafRotation]->setRange(min, max);
-	form->addRow("Min Up", this->dv[MinUp]);
-	this->dv[MinUp]->setRange(min, max);
-	form->addRow("Max Up", this->dv[MaxUp]);
-	this->dv[MaxUp]->setRange(min, max);
-	form->addRow("Local Up", this->dv[LocalUp]);
-	this->dv[LocalUp]->setRange(min, max);
-	form->addRow("Global Up", this->dv[GlobalUp]);
-	this->dv[GlobalUp]->setRange(min, max);
-	form->addRow("Min Forward", this->dv[MinForward]);
-	this->dv[MinForward]->setRange(min, max);
-	form->addRow("Max Forward", this->dv[MaxForward]);
-	this->dv[MaxForward]->setRange(min, max);
-	form->addRow("Vertical Pull", this->dv[Pull]);
-	this->dv[Pull]->setRange(min, max);
-	form->addRow("Leaves/Node", this->iv[LeavesPerNode]);
-	form->addRow("Scale.X", this->dv[ScaleX]);
-	form->addRow("Scale.Y", this->dv[ScaleY]);
-	form->addRow("Scale.Z", this->dv[ScaleZ]);
-	setFormLayout(form);
-	layout->addWidget(this->leafGroup);
+	createStemLeafFields();
+	createStemGroup(layout);
+	createLeafGroup(layout);
+	createCurveGroup(layout);
+	layout->addStretch(1);
 }
 
 void GeneratorEditor::createNodeGroup(QBoxLayout *layout)
 {
-	this->nodeGroup = createGroup("Nodes");
-	QFormLayout *form = createForm(this->nodeGroup);
+	QGroupBox *nodeGroup = createGroup("Nodes");
+	QFormLayout *form = createForm(nodeGroup);
 
 	this->nodeValue = new ComboBox(this);
 	form->addRow(this->nodeValue);
@@ -172,13 +88,13 @@ void GeneratorEditor::createNodeGroup(QBoxLayout *layout)
 		this, &GeneratorEditor::removeNode);
 
 	setFormLayout(form);
-	layout->addWidget(this->nodeGroup);
+	layout->addWidget(nodeGroup);
 }
 
 void GeneratorEditor::createRootGroup(QBoxLayout *layout)
 {
-	this->rootGroup = createGroup("Root");
-	QFormLayout *form = createForm(this->rootGroup);
+	QGroupBox *rootGroup = createGroup("Root");
+	QFormLayout *form = createForm(rootGroup);
 
 	for (int i = 0; i < DRSize; i++) {
 		this->drv[i] = new DoubleSpinBox(this);
@@ -187,8 +103,6 @@ void GeneratorEditor::createRootGroup(QBoxLayout *layout)
 		connect(this->drv[i],
 			QOverload<double>::of(&DoubleSpinBox::valueChanged),
 			this, &GeneratorEditor::change);
-		connect(this->drv[i], &DoubleSpinBox::editingFinished,
-			this, &GeneratorEditor::finishChanging);
 	}
 	for (int i = 0; i < IRSize; i++) {
 		this->irv[i] = new SpinBox(this);
@@ -197,8 +111,6 @@ void GeneratorEditor::createRootGroup(QBoxLayout *layout)
 		connect(this->irv[i],
 			QOverload<int>::of(&SpinBox::valueChanged),
 			this, &GeneratorEditor::change);
-		connect(this->irv[i], &SpinBox::editingFinished,
-			this, &GeneratorEditor::finishChanging);
 	}
 
 	const int min = std::numeric_limits<int>::min();
@@ -221,12 +133,94 @@ void GeneratorEditor::createRootGroup(QBoxLayout *layout)
 	this->drv[RootThreshold]->setDecimals(3);
 
 	setFormLayout(form);
-	layout->addWidget(this->rootGroup);
+	layout->addWidget(rootGroup);
+}
+
+void GeneratorEditor::createStemLeafFields()
+{
+	for (int i = 0; i < DSize; i++) {
+		this->dv[i] = new DoubleSpinBox(this);
+		this->dv[i]->setFocusPolicy(Qt::StrongFocus);
+		this->dv[i]->setSingleStep(0.1);
+		connect(this->dv[i],
+			QOverload<double>::of(&DoubleSpinBox::valueChanged),
+			this, &GeneratorEditor::change);
+	}
+	for (int i = 0; i < ISize; i++) {
+		this->iv[i] = new SpinBox(this);
+		this->iv[i]->setFocusPolicy(Qt::StrongFocus);
+		this->iv[i]->setSingleStep(1);
+		connect(this->iv[i],
+			QOverload<int>::of(&SpinBox::valueChanged),
+			this, &GeneratorEditor::change);
+	}
+}
+
+void GeneratorEditor::createStemGroup(QBoxLayout *layout)
+{
+	QGroupBox *stemGroup = createGroup("Stems");
+	QFormLayout *form = createForm(stemGroup);
+	form->addRow("Stem Density", this->dv[StemDensity]);
+	form->addRow("Length", this->dv[Length]);
+	this->dv[Length]->setSingleStep(1.0);
+	this->dv[Length]->setRange(0.0, std::numeric_limits<float>::max());
+	form->addRow("Distance", this->dv[StemDistance]);
+	form->addRow("Noise", this->dv[Noise]);
+	this->dv[Noise]->setSingleStep(0.001);
+	this->dv[Noise]->setDecimals(3);
+	form->addRow("Bifurcation", this->dv[Fork]);
+	this->dv[Fork]->setSingleStep(0.01);
+	this->dv[Fork]->setDecimals(2);
+	form->addRow("Bifurcation Angle", this->dv[ForkAngle]);
+	this->dv[ForkAngle]->setSingleStep(0.01);
+	this->dv[ForkAngle]->setDecimals(2);
+	form->addRow("Angle Variation", this->dv[AngleVariation]);
+	form->addRow("Radius Threshold", this->dv[RadiusThreshold]);
+	this->dv[RadiusThreshold]->setSingleStep(0.001);
+	this->dv[RadiusThreshold]->setDecimals(3);
+	form->addRow("Radius Scale", this->dv[Scale]);
+	this->dv[Scale]->setSingleStep(0.001);
+	this->dv[Scale]->setDecimals(3);
+	setFormLayout(form);
+	layout->addWidget(stemGroup);
+}
+
+void GeneratorEditor::createLeafGroup(QBoxLayout *layout)
+{
+	QGroupBox *leafGroup = createGroup("Leaves");
+	QFormLayout *form = createForm(leafGroup);
+	form->addRow("Node Density", this->dv[LeafDensity]);
+	form->addRow("Distance", this->dv[LeafDistance]);
+	form->addRow("Rotation", this->dv[LeafRotation]);
+	const float min = std::numeric_limits<float>::lowest();
+	const float max = std::numeric_limits<float>::max();
+	this->dv[LeafRotation]->setRange(min, max);
+	form->addRow("Min Up", this->dv[MinUp]);
+	this->dv[MinUp]->setRange(min, max);
+	form->addRow("Max Up", this->dv[MaxUp]);
+	this->dv[MaxUp]->setRange(min, max);
+	form->addRow("Local Up", this->dv[LocalUp]);
+	this->dv[LocalUp]->setRange(min, max);
+	form->addRow("Global Up", this->dv[GlobalUp]);
+	this->dv[GlobalUp]->setRange(min, max);
+	form->addRow("Min Forward", this->dv[MinForward]);
+	this->dv[MinForward]->setRange(min, max);
+	form->addRow("Max Forward", this->dv[MaxForward]);
+	this->dv[MaxForward]->setRange(min, max);
+	form->addRow("Vertical Pull", this->dv[Pull]);
+	this->dv[Pull]->setRange(min, max);
+	form->addRow("Leaves/Node", this->iv[LeavesPerNode]);
+	form->addRow("Scale.X", this->dv[ScaleX]);
+	form->addRow("Scale.Y", this->dv[ScaleY]);
+	form->addRow("Scale.Z", this->dv[ScaleZ]);
+	setFormLayout(form);
+	layout->addWidget(leafGroup);
 }
 
 void GeneratorEditor::setFields()
 {
 	setEnabled(false);
+	setCurveFields();
 	auto instances = this->editor->getSelection()->getStemInstances();
 	if (!instances.empty()) {
 		ParameterTree tree;
@@ -272,7 +266,7 @@ void GeneratorEditor::setFields(const ParameterTree &tree, string name)
 	blockSignals(false);
 }
 
-void GeneratorEditor::setStemData(pg::StemData data)
+void GeneratorEditor::setStemData(StemData data)
 {
 	this->dv[StemDensity]->setValue(data.density);
 	this->dv[StemDistance]->setValue(data.distance);
@@ -286,7 +280,7 @@ void GeneratorEditor::setStemData(pg::StemData data)
 	setLeafData(data.leaf);
 }
 
-void GeneratorEditor::setLeafData(pg::LeafData data)
+void GeneratorEditor::setLeafData(LeafData data)
 {
 	this->dv[LeafDensity]->setValue(data.density);
 	this->dv[LeafDistance]->setValue(data.distance);
@@ -341,7 +335,7 @@ void GeneratorEditor::change()
 	if (instances.empty())
 		return;
 
-	beginChanging();
+	createCommand();
 	Stem *stem = instances.begin()->first;
 	ParameterTree tree = stem->getParameterTree();
 	if (!tree.getRoot())
@@ -351,7 +345,7 @@ void GeneratorEditor::change()
 	tree.getRoot()->setData(data);
 
 	if (this->nodeValue->currentIndex() > 0) {
-		std::string name = this->nodeValue->currentText().toStdString();
+		string name = this->nodeValue->currentText().toStdString();
 		ParameterNode *node = tree.get(name);
 		data = getStemData(node->getData());
 		node->setData(data);
@@ -409,26 +403,16 @@ LeafData GeneratorEditor::getLeafData(LeafData data)
 	return data;
 }
 
-void GeneratorEditor::changeOnce()
+void GeneratorEditor::createCommand()
 {
-	change();
-	finishChanging();
-}
-
-void GeneratorEditor::beginChanging()
-{
-	if (!this->generate) {
+	History *history = this->editor->getHistory();
+	const Command *command = history->peak();
+	bool undefined = !this->generate || !command;
+	if (undefined || command->getTime() != this->generate->getTime()) {
 		Selection *selection = this->editor->getSelection();
 		pg::Scene *scene = this->editor->getScene();
 		this->generate = new Generate(selection, &scene->generator);
-	}
-}
-
-void GeneratorEditor::finishChanging()
-{
-	if (this->generate) {
-		this->editor->getHistory()->add(this->generate);
-		this->generate = nullptr;
+		history->add(this->generate);
 	}
 }
 
@@ -448,7 +432,6 @@ void GeneratorEditor::addChildNode()
 	if (instances.empty())
 		return;
 
-	beginChanging();
 	Stem *stem = instances.begin()->first;
 	ParameterTree tree = stem->getParameterTree();
 	if (!tree.getRoot())
@@ -466,8 +449,7 @@ void GeneratorEditor::addChildNode()
 	for (auto it = instances.begin(); it != instances.end(); it++)
 		it->first->setParameterTree(tree);
 
-	changeOnce();
-	emit parameterTreeModified();
+	change();
 }
 
 void GeneratorEditor::addSiblingNode()
@@ -476,7 +458,6 @@ void GeneratorEditor::addSiblingNode()
 	if (instances.empty() || this->nodeValue->currentIndex() <= 0)
 		return;
 
-	beginChanging();
 	Stem *stem = instances.begin()->first;
 	ParameterTree tree = stem->getParameterTree();
 	string name = this->nodeValue->currentText().toStdString();
@@ -496,8 +477,7 @@ void GeneratorEditor::addSiblingNode()
 	for (auto it = instances.begin(); it != instances.end(); it++)
 		it->first->setParameterTree(tree);
 
-	changeOnce();
-	emit parameterTreeModified();
+	change();
 }
 
 void GeneratorEditor::removeNode()
@@ -506,7 +486,6 @@ void GeneratorEditor::removeNode()
 	if (instances.empty())
 		return;
 
-	beginChanging();
 	Stem *stem = instances.begin()->first;
 	ParameterTree tree = stem->getParameterTree();
 	string name = this->nodeValue->currentText().toStdString();
@@ -519,6 +498,136 @@ void GeneratorEditor::removeNode()
 	for (auto it = instances.begin(); it != instances.end(); it++)
 		it->first->setParameterTree(tree);
 
-	changeOnce();
-	emit parameterTreeModified();
+	change();
+}
+
+void GeneratorEditor::createCurveGroup(QBoxLayout *layout)
+{
+	QGroupBox *curveGroup = createGroup("Curve");
+	layout->addWidget(curveGroup);
+	QBoxLayout *vlayout = new QVBoxLayout(curveGroup);
+	vlayout->setMargin(0);
+	vlayout->setSpacing(0);
+	this->curveEditor = new CurveEditor(this->shared, this->keymap, this);
+	vlayout->addWidget(this->curveEditor);
+	QFormLayout *form = createForm(vlayout);
+	this->curveDegree = new ComboBox();
+	this->curveDegree->addItem("Linear");
+	this->curveDegree->addItem("Cubic");
+	this->curveType = new ComboBox();
+	this->curveType->addItem("Stem Density");
+	this->curveType->addItem("Leaf Density");
+	this->curveNode = new ComboBox();
+	form->addRow("Degree", this->curveDegree);
+	form->addRow("Type", this->curveType);
+	form->addRow("Node", this->curveNode);
+	setFormLayout(form);
+
+	connect(this->curveDegree,
+		QOverload<int>::of(&ComboBox::currentIndexChanged),
+		this->curveEditor, &CurveEditor::setDegree);
+	connect(this->curveType,
+		QOverload<int>::of(&ComboBox::currentIndexChanged),
+		this, &GeneratorEditor::selectCurve);
+	connect(this->curveNode,
+		QOverload<int>::of(&ComboBox::currentIndexChanged),
+		this, &GeneratorEditor::selectCurve);
+
+	this->curveEditor->setUpdateFunction(std::bind(
+		&GeneratorEditor::updateCurve, this, std::placeholders::_1));
+}
+
+void GeneratorEditor::setCurveFields()
+{
+	auto instances = this->editor->getSelection()->getStemInstances();
+	if (instances.empty()) {
+		this->curveEditor->clear();
+		enableCurve(false);
+		return;
+	}
+
+	Stem *stem = instances.begin()->first;
+	ParameterTree tree = stem->getParameterTree();
+	std::vector<string> names = tree.getNames();
+	this->curveNode->clear();
+	this->curveNode->addItem("");
+	for (string name : names)
+		this->curveNode->addItem(QString::fromStdString(name));
+	if (!names.empty())
+		this->curveNode->setCurrentIndex(1);
+
+	selectCurve();
+}
+
+void GeneratorEditor::selectCurve()
+{
+	this->curveEditor->clear();
+	auto instances = this->editor->getSelection()->getStemInstances();
+	if (instances.empty())
+		return;
+
+	int degree = 0;
+	int index = this->curveType->currentIndex();
+	Stem *stem = instances.begin()->first;
+	ParameterTree tree = stem->getParameterTree();
+
+	if (this->curveNode->currentIndex() > 0) {
+		string name = this->curveNode->currentText().toStdString();
+		ParameterNode *node = tree.get(name);
+		if (index == 0) {
+			Spline spline = node->getData().densityCurve;
+			degree = spline.getDegree();
+			this->curveEditor->setSpline(spline);
+		} else {
+			Spline spline = node->getData().leaf.densityCurve;
+			degree = spline.getDegree();
+			this->curveEditor->setSpline(spline);
+		}
+	}
+
+	this->curveDegree->blockSignals(true);
+	this->curveDegree->setCurrentIndex(degree == 3 ? 1 : 0);
+	this->curveDegree->blockSignals(false);
+	enableCurve(true);
+}
+
+void GeneratorEditor::enableCurve(bool enable)
+{
+	this->curveDegree->setEnabled(enable);
+	this->curveNode->setEnabled(enable);
+	this->curveType->setEnabled(enable);
+}
+
+void GeneratorEditor::updateCurve(Spline spline)
+{
+	createCommand();
+	updateParameterTree(spline);
+	this->generate->execute();
+	this->editor->change();
+}
+
+void GeneratorEditor::updateParameterTree(Spline spline)
+{
+	string name = this->curveNode->currentText().toStdString();
+	auto instances = this->editor->getSelection()->getStemInstances();
+	for (auto instance : instances) {
+		int index = this->curveType->currentIndex();
+		Stem *stem = instance.first;
+		ParameterTree tree = stem->getParameterTree();
+		if (!tree.getRoot())
+			continue;
+
+		if (this->curveNode->currentIndex() > 0) {
+			ParameterNode *node = tree.get(name);
+			if (!node)
+				continue;
+			StemData data = node->getData();
+			if (index == 0)
+				data.densityCurve = spline;
+			else
+				data.leaf.densityCurve = spline;
+			node->setData(data);
+			stem->setParameterTree(tree);
+		}
+	}
 }

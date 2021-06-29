@@ -20,6 +20,7 @@
 
 #include "editor.h"
 #include "widgets.h"
+#include "curve_editor.h"
 #include "../commands/generate.h"
 #include <string>
 
@@ -27,12 +28,10 @@ class GeneratorEditor : public QWidget {
 	Q_OBJECT
 
 	Editor *editor;
+	KeyMap *keymap;
+	SharedResources *shared;
 	Generate *generate;
 
-	QGroupBox *nodeGroup;
-	QGroupBox *rootGroup;
-	QGroupBox *stemGroup;
-	QGroupBox *leafGroup;
 	ComboBox *nodeValue;
 	QPushButton *childButton;
 	QPushButton *siblingButton;
@@ -52,12 +51,15 @@ class GeneratorEditor : public QWidget {
 	SpinBox *iv[ISize];
 
 	void createInterface();
+	void createStemLeafFields();
+	void createStemGroup(QBoxLayout *);
+	void createLeafGroup(QBoxLayout *);
 	void createNodeGroup(QBoxLayout *);
 	void createRootGroup(QBoxLayout *);
 	void removeCurrent();
 	void blockSignals(bool);
 	void setEnabled(bool);
-	void beginChanging();
+	void createCommand();
 	void setFields(const pg::ParameterTree &, std::string);
 	void setStemData(pg::StemData);
 	void setLeafData(pg::LeafData);
@@ -65,22 +67,30 @@ class GeneratorEditor : public QWidget {
 	pg::StemData getStemData(pg::StemData);
 	pg::LeafData getLeafData(pg::LeafData);
 
-public:
-	GeneratorEditor(Editor *editor, QWidget *parent);
-	QSize sizeHint() const;
+	CurveEditor *curveEditor;
+	ComboBox *curveDegree;
+	ComboBox *curveType;
+	ComboBox *curveNode;
 
-public slots:
+	void createCurveGroup(QBoxLayout *);
+	void setCurveFields();
+	void selectCurve();
+	void enableCurve(bool);
+	void updateCurve(pg::Spline);
+	void updateParameterTree(pg::Spline);
+
+public:
+	GeneratorEditor(SharedResources *shared, KeyMap *keymap,
+		Editor *editor, QWidget *parent);
+	QSize sizeHint() const;
 	void change();
-	void changeOnce();
-	void setFields();
-	void finishChanging();
 	void select();
 	void addChildNode();
 	void addSiblingNode();
 	void removeNode();
 
-signals:
-	void parameterTreeModified();
+public slots:
+	void setFields();
 };
 
 #endif

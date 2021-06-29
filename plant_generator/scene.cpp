@@ -22,7 +22,7 @@ pg::Scene::Scene() : generator(&plant)
 
 void pg::Scene::reset()
 {
-	this->plant.removeRoot();
+	this->plant.erase();
 	this->wind = Wind();
 	this->animation = Animation();
 	this->generator = PatternGenerator(&this->plant);

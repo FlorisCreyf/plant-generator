@@ -43,12 +43,11 @@ protected:
 	void mousePressEvent(QMouseEvent *event);
 	void mouseReleaseEvent(QMouseEvent *event);
 	void mouseMoveEvent(QMouseEvent *event);
-	void wheelEvent(QWheelEvent *event);
 
 public:
 	MeshViewer(SharedResources *shared, QWidget *parent);
-	QSize sizeHint() const;
 	void updateMesh(pg::Geometry mesh);
+	QSize sizeHint() const;
 };
 
 #endif

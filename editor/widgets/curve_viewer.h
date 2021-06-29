@@ -33,7 +33,6 @@ class CurveViewer : public QOpenGLWidget, protected QOpenGLFunctions_4_3_Core {
 	VertexBuffer buffer;
 	Path path;
 	Geometry geometry;
-
 	Geometry::Segment grid;
 	Geometry::Segment plane;
 
@@ -43,7 +42,6 @@ protected:
 	void initializeGL();
 	void paintGL();
 	void resizeGL(int width, int height);
-	void wheelEvent(QWheelEvent *event);
 	void mousePressEvent(QMouseEvent *event);
 	void mouseMoveEvent(QMouseEvent *event);
 	void mouseReleaseEvent(QMouseEvent *event);

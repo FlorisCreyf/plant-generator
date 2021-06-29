@@ -403,7 +403,6 @@ QWidget {
     <addaction name="actionReportIssue"/>
    </widget>
    <addaction name="menuFile"/>
-   <addaction name="menuEdit"/>
    <addaction name="menuHelp"/>
   </widget>
   <action name="actionOpen">

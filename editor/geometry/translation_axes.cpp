@@ -137,9 +137,7 @@ TranslationAxes::Axis TranslationAxes::selectAxis(pg::Ray ray, float distance)
 
 pg::Mat4 TranslationAxes::getTransformation(float distance)
 {
-	float m = 1.0f;
-	// if (scalable)
-		m = distance / 15.0f * scale;
+	float m = distance / 15.0f * scale;
 	return Mat4(
 		m, 0.0f, 0.0f, 0.0f,
 		0.0f, m, 0.0f, 0.0f,

@@ -18,20 +18,13 @@
 #ifndef WINDOW_H
 #define WINDOW_H
 
-#include "generator_editor.h"
-#include "generator_curve_editor.h"
-#include "property_curve_editor.h"
-#include "material_editor.h"
-#include "mesh_editor.h"
-#include "wind_editor.h"
-#include "key_editor.h"
-#include "property_editor.h"
 #include "editor.h"
-
+#include "generator_editor.h"
+#include "property_editor.h"
+#include "key_editor.h"
 #include "editor/keymap.h"
 #include "editor/graphics/shared_resources.h"
 #include "editor/qt/ui_window.h"
-
 #include <QtWidgets>
 
 class Window : public QMainWindow {
@@ -40,7 +33,7 @@ class Window : public QMainWindow {
 public:
 	Window(int argc, char **argv);
 
-public Q_SLOTS:
+public slots:
 	void newFile();
 	void openDialogBox();
 	void exportWavefrontDialogBox();
@@ -61,19 +54,13 @@ private:
 	QLabel *fileLabel;
 
 	PropertyEditor *propertyEditor;
-	GeneratorCurveEditor *gcEditor;
-	PropertyCurveEditor *pcEditor;
 	GeneratorEditor *generatorEditor;
-	WindEditor *windEditor;
-	MaterialEditor *materialEditor;
-	MeshEditor *meshEditor;
 	KeyEditor *keyEditor;
 
 	void keyPressEvent(QKeyEvent *event);
 	void createPropertyBox();
 	void createEditors();
-	QWidget *createGeneratorEditor();
-	QDockWidget *createDockWidget(const char *, QWidget *, bool);
+	QDockWidget *createDW(const char *, QWidget *, bool);
 	void setFilename(QString filename);
 };
 

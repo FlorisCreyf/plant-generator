@@ -50,6 +50,8 @@ namespace pg {
 		const Stem *getRoot() const;
 		/** Remove all stems in the plant. */
 		void removeRoot();
+		/** Remove all resources. */
+		void erase();
 
 		/* Remove a stem that has no children. */
 		Stem extractStem(Stem *stem);
@@ -78,7 +80,6 @@ namespace pg {
 		void addLeafMesh(Geometry mesh);
 		void updateLeafMesh(Geometry mesh, unsigned index);
 		void removeLeafMesh(unsigned index);
-		void removeLeafMeshes();
 		Geometry getLeafMesh(unsigned index) const;
 		const std::vector<Geometry> &getLeafMeshes() const;
 

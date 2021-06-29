@@ -31,14 +31,14 @@ MeshViewer::MeshViewer(SharedResources *shared, QWidget *parent) :
 
 	this->camera.setTarget(Vec3(0.0f, 0.0f, 0.0f));
 	this->camera.setOrientation(0.0f, 0.0f);
-	this->camera.setDistance(2.0f);
+	this->camera.setDistance(1.2f);
 	this->camera.setPanSpeed(0.004f);
 	this->camera.setZoom(0.01f, 0.3f, 10.0f);
 }
 
 QSize MeshViewer::sizeHint() const
 {
-	return QSize(width(), 200);
+	return QSize(width(), 150);
 }
 
 void MeshViewer::initializeGL()
@@ -62,9 +62,8 @@ void MeshViewer::paintGL()
 {
 	glDepthFunc(GL_GEQUAL);
 	glClearDepth(0.0f);
-	glClearColor(0.22f, 0.22f, 0.22f, 1.0f);
+	glClearColor(0.32f, 0.32f, 0.32f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 	Mat4 vp = this->camera.getVP();
 	Vec3 cp = this->camera.getPosition();
 	this->buffer.use();
@@ -105,19 +104,6 @@ void MeshViewer::mouseMoveEvent(QMouseEvent *event)
 	QPoint pos = event->pos();
 	this->camera.executeAction(pos.x(), pos.y());
 	update();
-}
-
-void MeshViewer::wheelEvent(QWheelEvent *event)
-{
-	QPoint angleDelta = event->angleDelta();
-	if (!angleDelta.isNull()) {
-		float y = angleDelta.y() / 10.0f;
-		if (y != 0.0f) {
-			this->camera.zoom(y);
-			update();
-		}
-	}
-	event->accept();
 }
 
 void MeshViewer::updateMesh(pg::Geometry mesh)

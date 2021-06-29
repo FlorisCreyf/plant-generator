@@ -26,9 +26,16 @@
 #define FORM_H
 
 #include <QtWidgets>
+#include "widgets.h"
 
 void setFormLayout(QFormLayout *layout);
 void indicateDifferences(QWidget *widget);
 void indicateSimilarities(QWidget *widget);
+QGroupBox *createGroup(const char *name);
+QFormLayout *createForm(QWidget *widget);
+QFormLayout *createForm(QBoxLayout *layout);
+QWidget *createCBField(ComboBox *cb, QPushButton *b1, QPushButton *b2);
+QWidget *createLEField(QLineEdit *le, QPushButton *b1, QPushButton *b2);
+QString createUniqueName(const char *prefix, QComboBox *names);
 
 #endif

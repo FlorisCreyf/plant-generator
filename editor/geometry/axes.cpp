@@ -17,7 +17,7 @@
 
 #include "axes.h"
 
-Axes::Axes() : scale(1.0f), position(), selection(None), scalable(true)
+Axes::Axes() : scale(1.0f), position(), selection(None)
 {
 
 }
@@ -47,12 +47,12 @@ Axes::Axis Axes::getSelection()
 	return selection;
 }
 
+void Axes::setAxis(Axis axis)
+{
+	this->selection = axis;
+}
+
 void Axes::clearSelection()
 {
 	selection = None;
-}
-
-void Axes::setScalable(bool scalable)
-{
-	this->scalable = scalable;
 }

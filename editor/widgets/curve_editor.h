@@ -27,15 +27,25 @@
 #include "editor/geometry/translation_axes.h"
 #include "plant_generator/curve.h"
 #include <vector>
+#include <functional>
 
 class CurveEditor : public QWidget {
 	Q_OBJECT
 
+	QVBoxLayout *layout;
+	CurveViewer *viewer;
+	PointSelection selection;
+	Command *command;
+	History history;
 	KeyMap *keymap;
 	TranslationAxes axes;
 	bool ctrl;
 	bool moveLeft;
 	pg::Vec3 originalPoint;
+	pg::Spline spline;
+	/* The original spline without restrictions. */
+	pg::Spline originalSpline;
+	std::function<void(pg::Spline)> update;
 
 	void initiateMovePoint();
 	void applyRestrictions();
@@ -53,36 +63,18 @@ class CurveEditor : public QWidget {
 	void mousePressed(QMouseEvent *event);
 	void mouseReleased(QMouseEvent *event);
 	void mouseMoved(QMouseEvent *event);
-	void focusOutEvent(QFocusEvent *);
 	void keyPressEvent(QKeyEvent *);
 	void exitCommand(bool);
 
-protected:
-	QVBoxLayout *layout;
-	ComboBox *degree;
-	PointSelection selection;
-	pg::Spline spline;
-	/* The original spline without restrictions. */
-	pg::Spline originalSpline;
-	Command *command;
-	CurveViewer *viewer;
-	History history;
-
-	CurveEditor(KeyMap *keymap, QWidget *parent);
-	bool eventFilter(QObject *object, QEvent *event);
-	void createInterface(SharedResources *shared);
-	void setSpline(const pg::Spline &spline);
-	virtual void change(bool curveChanged) = 0;
-
 public:
-	const CurveViewer *getViewer() const;
-	QSize sizeHint() const;
-
-public slots:
+	CurveEditor(SharedResources *shared, KeyMap *keymap, QWidget *parent);
+	bool eventFilter(QObject *object, QEvent *event);
+	void setSpline(const pg::Spline &spline);
 	void setDegree(int degree);
-
-signals:
-	void editingFinished();
+	void change(bool curveChanged);
+	void setUpdateFunction(std::function<void(pg::Spline)> function);
+	void clear();
+	QSize sizeHint() const;
 };
 
 #endif

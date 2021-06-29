@@ -30,11 +30,7 @@ Generate::Generate(Selection *selection, pg::PatternGenerator *generator) :
 {
 	createRemovalSelection(this->selection, &this->removals);
 	this->remove.execute();
-
-	Plant *plant = this->selection->getPlant();
 	auto instances = this->selection->getStemInstances();
-	for (const pg::Curve &curve : plant->getCurves())
-		this->splines.push_back(curve.getSpline());
 	for (auto &instance : instances) {
 		Stem *stem = instance.first;
 		this->parameterTrees.push_back(stem->getParameterTree());
@@ -46,11 +42,9 @@ void Generate::createRemovalSelection(Selection *selection, Selection *removals)
 {
 	selection->reduceToAncestors();
 	selection->removeLeaves();
-
 	auto instances = selection->getStemInstances();
 	for (auto instance : instances) {
 		Stem *stem = instance.first;
-
 		size_t leafCount = stem->getLeafCount();
 		for (size_t i = 0; i < leafCount; i++)
 			if (!stem->getLeaf(i)->isCustom())
@@ -71,7 +65,6 @@ void Generate::removeAdditions()
 	auto instances = this->selection->getStemInstances();
 	for (auto it = instances.rbegin(); it != instances.rend(); it++) {
 		Stem *stem = it->first;
-
 		for (int i = stem->getLeafCount() - 1; i >= 0; i--)
 			if (!stem->getLeaf(i)->isCustom())
 				stem->removeLeaf(i);
@@ -86,22 +79,11 @@ void Generate::removeAdditions()
 	}
 }
 
-void Generate::overwriteCurves(Plant *plant)
-{
-	for (size_t i = 0; i < this->splines.size(); i++) {
-		pg::Curve curve = plant->getCurve(i);
-		curve.setSpline(this->splines[i]);
-		plant->updateCurve(curve, i);
-	}
-}
-
 void Generate::execute()
 {
 	this->selection->reduceToAncestors();
 	removeAdditions();
-	Plant *plant = this->selection->getPlant();
 	auto instances = this->selection->getStemInstances();
-	overwriteCurves(plant);
 	for (auto instance : instances)
 		this->generator->grow(instance.first);
 }

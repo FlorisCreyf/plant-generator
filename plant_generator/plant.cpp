@@ -35,13 +35,20 @@ void Plant::setDefault()
 {
 	if (this->leafMeshes.empty()) {
 		Geometry geometry;
+		geometry.setName("Default");
 		geometry.setPlane();
 		this->addLeafMesh(geometry);
 	}
-	if (this->materials.empty())
-		this->addMaterial(Material());
-	if (this->curves.empty())
-		this->addCurve(Curve(0));
+	if (this->materials.empty()) {
+		Material material;
+		material.setName("Default");
+		this->addMaterial(material);
+	}
+	if (this->curves.empty()) {
+		Curve curve(0);
+		curve.setName("Default");
+		this->addCurve(curve);
+	}
 }
 
 Stem *Plant::move(Stem *value)
@@ -412,11 +419,6 @@ void Plant::removeLeafMesh(Stem *stem, unsigned index)
 	}
 }
 
-void Plant::removeLeafMeshes()
-{
-	this->leafMeshes.clear();
-}
-
 Geometry Plant::getLeafMesh(unsigned index) const
 {
 	return this->leafMeshes.at(index);
@@ -425,4 +427,12 @@ Geometry Plant::getLeafMesh(unsigned index) const
 const std::vector<Geometry> &Plant::getLeafMeshes() const
 {
 	return this->leafMeshes;
+}
+
+void Plant::erase()
+{
+	this->leafMeshes.clear();
+	this->materials.clear();
+	this->curves.clear();
+	this->removeRoot();
 }

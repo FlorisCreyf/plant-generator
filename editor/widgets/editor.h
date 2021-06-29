@@ -41,20 +41,12 @@
 class Editor : public QOpenGLWidget, protected QOpenGLFunctions_4_3_Core {
 	Q_OBJECT
 
-signals:
-	void selectionChanged();
-	void modeChanged();
-	void changed();
-
-public slots:
-	void change();
-	void change(QAction *action);
-	void updateMaterial(unsigned index);
-	void animate();
-
 public:
 	Editor(SharedResources *shared, KeyMap *keymap, QWidget *parent = 0);
 	void load(const char *filename);
+	void change();
+	void change(QAction *action);
+	void animate();
 	void changeWind();
 	void reset();
 	pg::Plant *getPlant();
@@ -64,6 +56,11 @@ public:
 	const pg::Mesh *getMesh();
 	void undo();
 	void redo();
+
+signals:
+	void selectionChanged();
+	void modeChanged();
+	void changed();
 
 protected:
 	void updateSelection();

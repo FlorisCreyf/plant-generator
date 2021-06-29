@@ -114,14 +114,14 @@ void Path::setControls(const vector<Path::Segment> &segments, int index)
 			this->path.addIndex(Geometry::primitiveReset);
 
 			while (i < controls.size() - 2) {
-				this->path.addPoint(
-					controls[i++], this->controlColor);
+				this->path.addPoint(controls[i++],
+					this->controlColor);
 				this->path.addIndex(index++);
-				this->path.addPoint(
-					controls[i++], this->controlColor);
+				this->path.addPoint(controls[i++],
+					this->controlColor);
 				this->path.addIndex(index++);
-				this->path.addPoint(
-					controls[i++], this->controlColor);
+				this->path.addPoint(controls[i++],
+					this->controlColor);
 				this->path.addIndex(index++);
 				this->path.addIndex(Geometry::primitiveReset);
 			}

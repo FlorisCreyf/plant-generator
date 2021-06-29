@@ -42,3 +42,75 @@ void indicateSimilarities(QWidget *widget)
 {
 	widget->setStyleSheet("");
 }
+
+QGroupBox *createGroup(const char *name)
+{
+	QGroupBox *group = new QGroupBox(name);
+	group->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
+	return group;
+}
+
+QFormLayout *createForm(QWidget *widget)
+{
+	QFormLayout *form = new QFormLayout(widget);
+	form->setSpacing(UI_FORM_SPACING);
+	form->setMargin(UI_FORM_MARGIN);
+	return form;
+}
+
+QFormLayout *createForm(QBoxLayout *layout)
+{
+	QFormLayout *form = new QFormLayout();
+	form->setSpacing(UI_FORM_SPACING);
+	form->setMargin(UI_FORM_MARGIN);
+	layout->addLayout(form);
+	return form;
+}
+
+QWidget *createCBField(ComboBox *cb, QPushButton *b1, QPushButton *b2)
+{
+	QHBoxLayout *row = new QHBoxLayout();
+	QWidget *field = new QWidget();
+	field->setLayout(row);
+	row->setSpacing(0);
+	row->setMargin(0);
+	b1->setFixedHeight(UI_FIELD_HEIGHT);
+	b1->setFixedWidth(UI_FIELD_HEIGHT);
+	b2->setFixedHeight(UI_FIELD_HEIGHT);
+	b2->setFixedWidth(UI_FIELD_HEIGHT);
+	cb->setEditable(true);
+	cb->setInsertPolicy(ComboBox::InsertAtCurrent);
+	row->addWidget(cb);
+	row->addWidget(b1);
+	row->addWidget(b2);
+	row->setAlignment(Qt::AlignTop);
+	return field;
+}
+
+QWidget *createLEField(QLineEdit *le, QPushButton *b1, QPushButton *b2)
+{
+	QHBoxLayout *row = new QHBoxLayout();
+	QWidget *field = new QWidget();
+	field->setLayout(row);
+	le->setFixedHeight(UI_FIELD_HEIGHT);
+	le->setReadOnly(true);
+	b1->setFixedWidth(UI_FIELD_HEIGHT);
+	b1->setFixedHeight(UI_FIELD_HEIGHT);
+	b2->setFixedWidth(UI_FIELD_HEIGHT);
+	b2->setFixedHeight(UI_FIELD_HEIGHT);
+	row->setSpacing(0);
+	row->setMargin(0);
+	row->addWidget(le);
+	row->addWidget(b1);
+	row->addWidget(b2);
+	return field;
+}
+
+QString createUniqueName(const char *prefix, QComboBox *names)
+{
+	for (int i = 1; true; i++) {
+		QString name = prefix + QString::number(i);
+		if (names->findText(name) == -1)
+			return name;
+	}
+}

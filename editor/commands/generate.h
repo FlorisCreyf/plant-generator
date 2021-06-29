@@ -29,14 +29,12 @@ class Generate : public Command {
 	Selection removals;
 	RemoveStem remove;
 	std::vector<pg::Stem> stems;
-	std::vector<pg::Spline> splines;
 	std::vector<pg::ParameterTree> parameterTrees;
 	pg::ParameterTree parameterTree;
 	pg::PatternGenerator *generator;
 
 	void createRemovalSelection(Selection *, Selection *);
 	void removeAdditions();
-	void overwriteCurves(pg::Plant *);
 
 public:
 	Generate(Selection *selection, pg::PatternGenerator *generator);

@@ -30,27 +30,16 @@ using pg::Vec2;
 using pg::Vec3;
 using pg::Mat4;
 
-CurveEditor::CurveEditor(KeyMap *keymap, QWidget *parent) :
+CurveEditor::CurveEditor(SharedResources *shared, KeyMap *keymap,
+	QWidget *parent) :
 	QWidget(parent),
-	keymap(keymap),
 	layout(new QVBoxLayout(this)),
-	degree(new ComboBox(this)),
-	command(nullptr)
+	command(nullptr),
+	keymap(keymap)
 {
 	this->layout->setSizeConstraint(QLayout::SetMinimumSize);
 	this->layout->setSpacing(0);
 	this->layout->setMargin(0);
-}
-
-void CurveEditor::createInterface(SharedResources *shared)
-{
-	this->degree->addItem(QString("Linear"));
-	this->degree->addItem(QString("Cubic"));
-	this->degree->setFixedHeight(UI_FIELD_HEIGHT);
-	this->layout->addWidget(this->degree);
-	connect(this->degree,
-		QOverload<int>::of(&ComboBox::currentIndexChanged),
-		this, &CurveEditor::setDegree);
 	this->viewer = new CurveViewer(shared, this);
 	this->viewer->installEventFilter(this);
 	this->layout->addWidget(this->viewer);
@@ -58,17 +47,7 @@ void CurveEditor::createInterface(SharedResources *shared)
 
 QSize CurveEditor::sizeHint() const
 {
-	return QSize(UI_WIDGET_WIDTH, UI_WIDGET_WIDTH);
-}
-
-const CurveViewer *CurveEditor::getViewer() const
-{
-	return this->viewer;
-}
-
-void CurveEditor::focusOutEvent(QFocusEvent *)
-{
-	emit editingFinished();
+	return QSize(UI_WIDGET_WIDTH, UI_WIDGET_HEIGHT);
 }
 
 bool CurveEditor::eventFilter(QObject *object, QEvent *event)
@@ -214,7 +193,7 @@ void CurveEditor::mousePressed(QMouseEvent *event)
 
 		Selector selector(camera);
 		selector.selectPoint(event, this->spline,
-			Vec3(0.0, 0.0f, 0.0f), &this->selection);
+			Vec3(0.0f, 0.0f, 0.0f), &this->selection);
 
 		if (selectionCopy->hasChanged()) {
 			selectionCopy->setAfter();
@@ -553,6 +532,25 @@ void CurveEditor::exitCommand(bool changed)
 	}
 }
 
+void CurveEditor::change(bool curveChanged)
+{
+	this->viewer->change(this->spline, this->selection);
+	if (curveChanged)
+		update(this->spline);
+}
+
+void CurveEditor::setUpdateFunction(std::function<void(pg::Spline)> f)
+{
+	this->update = f;
+}
+
+void CurveEditor::clear()
+{
+	this->selection.clear();
+	this->history.clear();
+	this->viewer->clear();
+}
+
 void CurveEditor::setDegree(int degree)
 {
 	degree = degree == 1 ? 3 : 1;
@@ -562,7 +560,6 @@ void CurveEditor::setDegree(int degree)
 		this->selection.clear();
 		this->history.clear();
 		change(true);
-		emit editingFinished();
 	}
 }
 

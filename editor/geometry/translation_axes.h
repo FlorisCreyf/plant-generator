@@ -21,20 +21,16 @@
 #include "axes.h"
 
 class TranslationAxes : public Axes {
-public:
-	Geometry getLines();
-	Geometry getArrows();
-
-	/** Selects an axis using intersection tests. */
-	Axis selectAxis(pg::Ray ray, float distance);
-	/** The position of the camera is needed to keep the size of the axes
-	the same. */
-	pg::Mat4 getTransformation(float distance);
-
-private:
 	const float radius = 0.08f;
 	const float lineLength[2] = {0.3f, 1.0f};
 	const float coneLength[2] = {0.5f, 1.5f};
+
+public:
+	Geometry getLines();
+	Geometry getArrows();
+	/** Selects an axis using intersection tests. */
+	Axis selectAxis(pg::Ray ray, float distance);
+	pg::Mat4 getTransformation(float distance);
 };
 
 #endif
