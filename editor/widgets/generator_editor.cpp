@@ -432,6 +432,7 @@ void GeneratorEditor::addChildNode()
 	if (instances.empty())
 		return;
 
+	createCommand();
 	Stem *stem = instances.begin()->first;
 	ParameterTree tree = stem->getParameterTree();
 	if (!tree.getRoot())
@@ -449,6 +450,7 @@ void GeneratorEditor::addChildNode()
 	for (auto it = instances.begin(); it != instances.end(); it++)
 		it->first->setParameterTree(tree);
 
+	setCurveFields();
 	change();
 }
 
@@ -458,6 +460,7 @@ void GeneratorEditor::addSiblingNode()
 	if (instances.empty() || this->nodeValue->currentIndex() <= 0)
 		return;
 
+	createCommand();
 	Stem *stem = instances.begin()->first;
 	ParameterTree tree = stem->getParameterTree();
 	string name = this->nodeValue->currentText().toStdString();
@@ -477,6 +480,7 @@ void GeneratorEditor::addSiblingNode()
 	for (auto it = instances.begin(); it != instances.end(); it++)
 		it->first->setParameterTree(tree);
 
+	setCurveFields();
 	change();
 }
 
@@ -486,6 +490,7 @@ void GeneratorEditor::removeNode()
 	if (instances.empty())
 		return;
 
+	createCommand();
 	Stem *stem = instances.begin()->first;
 	ParameterTree tree = stem->getParameterTree();
 	string name = this->nodeValue->currentText().toStdString();
@@ -498,6 +503,7 @@ void GeneratorEditor::removeNode()
 	for (auto it = instances.begin(); it != instances.end(); it++)
 		it->first->setParameterTree(tree);
 
+	setCurveFields();
 	change();
 }
 
