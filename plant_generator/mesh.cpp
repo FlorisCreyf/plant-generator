@@ -329,15 +329,16 @@ inline void addExtraTriangles(vector<unsigned> &indices, int edge1, int edge2,
 {
 	int p = edge1 - 1;
 	p += divisions * (p < 0);
-	indices.push_back(start2 + edge1);
+	edge1 += divisions * (edge1 == 0);
 	indices.push_back(start0 + edge1);
+	indices.push_back(start2 + edge1);
 	indices.push_back(start0 + p);
 	edge2 += divisions * (edge2 <= 0);
 	p = edge2 - 1;
 	p += divisions * (p < 0);
 	indices.push_back(start0 + edge2);
-	indices.push_back(start0 + p);
 	indices.push_back(start1 + edge2);
+	indices.push_back(start0 + p);
 }
 
 void insertCurve(int sectionDivisions, int collarDivisions,
@@ -491,12 +492,12 @@ bool Mesh::addForks(Stem *fork[2], State state)
 {
 	const int cDivisions = fork[0]->getPath().getInitialDivisions();
 	const int sDivisions = state.segment.stem->getSectionDivisions();
-	/** The directions from the fork origin to the fork boundary. */
+	/* The directions from the fork origin to the fork boundary. */
 	const Vec3 direction1 = normalize(fork[0]->getPath().get(cDivisions+1));
 	const Vec3 direction2 = normalize(fork[1]->getPath().get(cDivisions+1));
 	const size_t size = getForkVertexCount(fork[0]);
 
-	/** Generate stems. The first cross section is followed with enough
+	/* Generate stems. The first cross section is followed with enough
 	empty space to fill with curves. Points of the first cross sections are
 	used to compute the tangents for the curves and are overwritten. */
 	Segment segments[2];
@@ -516,7 +517,7 @@ bool Mesh::addForks(Stem *fork[2], State state)
 	fs[1].prevDirection = direction2;
 	segments[1] = addStem(fork[1], fs[1], state, true);
 
-	/** Create some pointers to make it easier to access the starting point
+	/* Create some pointers to make it easier to access the starting point
 	of each stem. */
 	DVertex *v1 = &this->vertices[fs[0].mesh][segments[0].vertexStart];
 	DVertex *v2 = &this->vertices[fs[1].mesh][segments[1].vertexStart];
@@ -527,7 +528,7 @@ bool Mesh::addForks(Stem *fork[2], State state)
 		v0 = &this->vertices[state.mesh][start+count-sDivisions-1];
 	}
 
-	/** Use the fork directions to determine how the cross sections should
+	/* Use the fork directions to determine how the cross sections should
 	be split in half. */
 	int length = sDivisions / 2;
 	int quad = sDivisions % 4 == 0;
@@ -561,7 +562,7 @@ bool Mesh::addForks(Stem *fork[2], State state)
 			segments[0].vertexStart, segments[1].vertexStart);
 	}
 
-	/** Intersect the cross sections on three planes. These points are used
+	/* Intersect the cross sections on three planes. These points are used
 	to create the tangents of the Bezier curves. */
 	Ray ray;
 	Plane plane1;
@@ -703,7 +704,7 @@ void Mesh::addForkTriangles(const State &state, const State fs[2],
 	size_t i2 = i1 + sDivisions;
 
 	for (int i = 0; i < cDivisions; i++) {
-		indices += insertTriangleRing(i1, i2, sDivisions-1, indices);
+		indices += insertTriangleRing(i2, i1, sDivisions-1, indices);
 		i1 = i2;
 		i2 += sDivisions;
 	}
@@ -712,7 +713,7 @@ void Mesh::addForkTriangles(const State &state, const State fs[2],
 	i1 = segments[0].vertexStart;
 	i2 = i1 + sDivisions;
 	for (int i = 0; i < cDivisions; i++) {
-		indices += insertTriangleRing(i1, i2, sDivisions-1, indices);
+		indices += insertTriangleRing(i2, i1, sDivisions-1, indices);
 		i1 = i2;
 		i2 += sDivisions;
 	}
@@ -721,7 +722,7 @@ void Mesh::addForkTriangles(const State &state, const State fs[2],
 	i1 = segments[1].vertexStart;
 	i2 = i1 + sDivisions;
 	for (int i = 0; i < cDivisions; i++) {
-		indices += insertTriangleRing(i1, i2, sDivisions-1, indices);
+		indices += insertTriangleRing(i2, i1, sDivisions-1, indices);
 		i1 = i2;
 		i2 += sDivisions;
 	}
