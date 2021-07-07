@@ -58,8 +58,8 @@ string Wavefront::exportMaterials(string filename, const Plant &plant)
 	return filename;
 }
 
-void Wavefront::exportFile(
-	string filename, const Mesh &mesh, const Plant &plant)
+void Wavefront::exportFile(string filename, const Mesh &mesh,
+	const Plant &plant)
 {
 	std::ofstream file;
 	file.open(filename);
@@ -108,8 +108,8 @@ void Wavefront::exportFile(
 	file.close();
 }
 
-void insertVertexInfo(ifstream &file,
-	vector<Vec3> &vs, vector<Vec3> &vns, vector<Vec2> &vts)
+void insertVertexInfo(ifstream &file,vector<Vec3> &vs, vector<Vec3> &vns,
+	vector<Vec2> &vts)
 {
 	string line;
 	while (std::getline(file, line)) {

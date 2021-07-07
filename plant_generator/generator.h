@@ -26,15 +26,10 @@
 namespace pg {
 	class Generator {
 		Plant *plant;
-		float primaryGrowthRate;
-		float secondaryGrowthRate;
-		float minRadius;
-		float suppression;
-		int rayCount;
-		int rayLevels;
 		float width;
+		Volume volume;
 
-		void initRoot();
+		Stem *createRoot();
 		void addToVolume(Volume *, Stem *);
 		void castRays(Volume *);
 		void updateRadiantEnergy(Volume *, Ray);
@@ -52,11 +47,20 @@ namespace pg {
 		void updateBoundingBox(Vec3);
 
 	public:
+		float primaryGrowthRate;
+		float secondaryGrowthRate;
+		float minRadius;
+		float suppression;
+		int depth;
+		int rayCount;
+		int rayLevels;
+		int cycles;
+		int nodes;
+
 		Generator(Plant *plant);
-		void grow(int cycles, int nodes);
-		void setPrimaryGrowthRate(float rate);
-		void setSecondaryGrowthRate(float rate);
-		void setRayDensity(int baseCount, int levels);
+		void grow();
+		void clearVolume();
+		const Volume *getVolume();
 	};
 }
 

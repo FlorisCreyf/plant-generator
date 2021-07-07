@@ -68,8 +68,7 @@ QDockWidget *Window::createDW(const char *name, QWidget *widget, bool scroll)
 
 void Window::createEditors()
 {
-	QDockWidget *dw[3];
-
+	QDockWidget *dw[4];
 	this->propertyEditor = new PropertyEditor(&this->shared, &this->keymap,
 		this->editor, this);
 	dw[0] = createDW("Properties", this->propertyEditor, true);
@@ -77,11 +76,17 @@ void Window::createEditors()
 	this->keyEditor = new KeyEditor(&keymap, this);
 	dw[1] = createDW("Key Map", this->keyEditor, true);
 	addDockWidget(static_cast<Qt::DockWidgetArea>(1), dw[1]);
-	this->generatorEditor = new GeneratorEditor(&this->shared,
+	this->patternEditor = new PatternEditor(&this->shared,
 		&this->keymap, this->editor, this);
-	dw[2] = createDW("Generator", this->generatorEditor, true);
+	dw[2] = createDW("Pattern", this->patternEditor, true);
 	addDockWidget(static_cast<Qt::DockWidgetArea>(1), dw[2]);
+	this->generatorEditor = new GeneratorEditor(this->editor, this);
+	dw[3] = createDW("Generator", this->generatorEditor, true);
+	addDockWidget(static_cast<Qt::DockWidgetArea>(1), dw[3]);
+	connect(this->generatorEditor, &GeneratorEditor::reset,
+		this, &Window::newEmptyFile);
 
+	tabifyDockWidget(dw[1], dw[3]);
 	tabifyDockWidget(dw[1], dw[2]);
 	tabifyDockWidget(dw[1], dw[0]);
 }
@@ -98,10 +103,20 @@ void Window::initEditor()
 	}
 }
 
+void Window::newEmptyFile()
+{
+	this->propertyEditor->clear();
+	this->editor->load(nullptr);
+	this->editor->reset();
+	this->propertyEditor->populate();
+	setFilename("");
+}
+
 void Window::newFile()
 {
 	this->propertyEditor->clear();
 	this->editor->load(nullptr);
+	this->editor->setDefaultPlant();
 	this->editor->reset();
 	this->propertyEditor->populate();
 	setFilename("");

@@ -1,66 +1,24 @@
 <keymap>
-	<command>
-		<name>Animate</name>
-		<key>N</key>
-	</command>
-	<command>
-		<name>Add Leaf</name>
-		<key>L</key>
-	</command>
-	<command>
-		<name>Add Stem</name>
-		<key>S</key>
-	</command>
-	<command>
-		<name>Extrude</name>
-		<key>E</key>
-	</command>
-	<command>
-		<name>Move Point</name>
-		<key>G</key>
-	</command>
-	<command>
-		<name>Move Stem</name>
-		<key>H</key>
-	</command>
-	<command>
-		<name>Remove</name>
-		<key>DEL</key>
-	</command>
-	<command>
-		<name>Rotate</name>
-		<key>R</key>
-	</command>
-	<command>
-		<name>Reduce To Ancestors</name>
-		<key>CTRL+T</key>
-	</command>
-	<command>
-		<name>Select Stems</name>
-		<key>A</key>
-	</command>
-	<command>
-		<name>Select Points</name>
-		<key>CTRL+A</key>
-	</command>
-	<command>
-		<name>Select Children</name>
-		<key>C</key>
-	</command>
-	<command>
-		<name>Select Leaves</name>
-		<key>SHIFT+A</key>
-	</command>
-	<command>
-		<name>Select Previous Points</name>
-		<key>CTRL+P</key>
-	</command>
-	<command>
-		<name>Select Next Points</name>
-		<key>P</key>
-	</command>
-	<command>
-		<name>Select Siblings</name>
-		<key>CTRL+I</key>
-	</command>
+<command><name>Animate</name><key>N</key></command>
+<command><name>Add Leaf</name><key>L</key></command>
+<command><name>Add Stem</name><key>S</key></command>
+<command><name>Extrude</name><key>E</key></command>
+<command><name>Move Point</name><key>G</key></command>
+<command><name>Move Stem</name><key>H</key></command>
+<command><name>Remove</name><key>DEL</key></command>
+<command><name>Rotate</name><key>R</key></command>
+<command><name>Reduce To Ancestors</name><key>CTRL+T</key></command>
+<command><name>Select Stems</name><key>A</key></command>
+<command><name>Select Points</name><key>CTRL+A</key></command>
+<command><name>Select Children</name><key>C</key></command>
+<command><name>Select Leaves</name><key>SHIFT+A</key></command>
+<command><name>Select Previous Points</name><key>CTRL+P</key></command>
+<command><name>Select Next Points</name><key>P</key></command>
+<command><name>Select Siblings</name><key>CTRL+I</key></command>
+<command><name>View Top</name><key>6</key></command>
+<command><name>View Bottom</name><key>5</key></command>
+<command><name>View Right</name><key>4</key></command>
+<command><name>View Left</name><key>3</key></command>
+<command><name>View Front</name><key>2</key></command>
+<command><name>View Back</name><key>1</key></command>
 </keymap>

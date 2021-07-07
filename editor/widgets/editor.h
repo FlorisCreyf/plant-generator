@@ -44,6 +44,8 @@ class Editor : public QOpenGLWidget, protected QOpenGLFunctions_4_3_Core {
 public:
 	Editor(SharedResources *shared, KeyMap *keymap, QWidget *parent = 0);
 	void load(const char *filename);
+	void displayVolume(bool display);
+	void setDefaultPlant();
 	void change();
 	void change(QAction *action);
 	void animate();
@@ -86,6 +88,7 @@ private:
 		Geometry::Segment plane;
 		Geometry::Segment rotation;
 		Geometry::Segment selection;
+		Geometry::Segment volume;
 	} segments;
 
 	Command *command;
@@ -93,6 +96,7 @@ private:
 	SharedResources *shared;
 
 	VertexBuffer pathBuffer;
+	VertexBuffer volumeBuffer;
 	VertexBuffer plantBuffer;
 	VertexBuffer staticBuffer;
 	StorageBuffer jointBuffer;
@@ -117,7 +121,6 @@ private:
 	bool rotating;
 	int ticks;
 
-	void createDefaultPlant();
 	void addSelectionToHistory(SaveSelection *);
 	void createToolBar();
 	void createFramebuffers();
@@ -126,11 +129,12 @@ private:
 	void initializeGL();
 	void initializeBuffers();
 	void paintGL();
-	void paintOutline(const pg::Mat4 &, const pg::Vec3 &);
+	void paintOutline(const pg::Mat4 &);
 	void paintWire(const pg::Mat4 &);
 	void paintSolid(const pg::Mat4 &, const pg::Vec3 &);
 	void paintMaterial(const pg::Mat4 &, const pg::Vec3 &);
-	void paintAxes();
+	void paintAxes(const pg::Mat4 &, const pg::Vec3 &);
+	void paintVolume(const pg::Mat4 &);
 	void resizeGL(int, int);
 	void selectStem(QMouseEvent *);
 	void selectPoint(QMouseEvent *);

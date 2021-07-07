@@ -86,10 +86,13 @@ int main(int argc, char **argv)
 
 #ifndef PATTERN_GENERATOR
 	pg::Generator generator(&scene.plant);
-	generator.setPrimaryGrowthRate(pgr);
-	generator.setSecondaryGrowthRate(sgr);
-	generator.setRayDensity(rays, divisions);
-	generator.grow(cycles, nodes);
+	generator.primaryGrowthRate = pgr;
+	generator.secondaryGrowthRate = sgr;
+	generator.rayCount = rays;
+	generator.rayLevels = divisions;
+	generator.cycles = cycles;
+	generator.nodes = nodes;
+	generator.grow();
 #else
 	pg::PatternGenerator generator(&scene.plant);
 	pg::ParameterTree tree = generator.getParameterTree();

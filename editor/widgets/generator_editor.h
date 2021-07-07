@@ -1,5 +1,5 @@
 /* Plant Generator
- * Copyright (C) 2020  Floris Creyf
+ * Copyright (C) 2021  Floris Creyf
  *
  * Plant Generator is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,77 +20,53 @@
 
 #include "editor.h"
 #include "widgets.h"
-#include "curve_editor.h"
-#include "../commands/generate.h"
-#include <string>
+
+class GeneratorWorkload : public QObject
+{
+	Q_OBJECT
+
+	pg::Scene *scene;
+
+public:
+	GeneratorWorkload(pg::Scene *scene);
+
+public slots:
+	void generate();
+
+signals:
+	void done();
+};
 
 class GeneratorEditor : public QWidget {
 	Q_OBJECT
 
+	QThread thread;
 	Editor *editor;
-	KeyMap *keymap;
-	SharedResources *shared;
-	Generate *generate;
+	GeneratorWorkload *workload;
 
-	ComboBox *nodeValue;
-	QPushButton *childButton;
-	QPushButton *siblingButton;
-	QPushButton *removeButton;
+	enum {PrimaryRate, SecondaryRate, Suppression, DSize};
+	enum {Cycles, Nodes, RayCount, RayLevels, Depth, ISize};
 
-	enum {RootLength, RootFork, RootForkAngle, RootThreshold, RootNoise,
-		DRSize};
-	enum {Seed, IRSize};
-	SpinBox *irv[IRSize];
-	DoubleSpinBox *drv[DRSize];
-	enum {StemDensity, StemDistance, Length, Scale, AngleVariation, Noise,
-		RadiusThreshold, Fork, ForkAngle, LeafDensity, LeafDistance,
-		LeafRotation, MinUp, MaxUp, LocalUp, GlobalUp, MinForward,
-		MaxForward, Pull, ScaleX, ScaleY, ScaleZ, DSize};
-	enum {LeavesPerNode, ISize};
-	DoubleSpinBox *dv[DSize];
+	QPushButton *startButton;
+	QPushButton *showVolumeButton;
+	QPushButton *hideVolumeButton;
 	SpinBox *iv[ISize];
+	DoubleSpinBox *dv[DSize];
 
 	void createInterface();
-	void createStemLeafFields();
-	void createStemGroup(QBoxLayout *);
-	void createLeafGroup(QBoxLayout *);
-	void createNodeGroup(QBoxLayout *);
-	void createRootGroup(QBoxLayout *);
-	void removeCurrent();
-	void blockSignals(bool);
-	void setEnabled(bool);
-	void createCommand();
-	void setFields(const pg::ParameterTree &, std::string);
-	void setStemData(pg::StemData);
-	void setLeafData(pg::LeafData);
-	pg::StemData getRootData(pg::StemData);
-	pg::StemData getStemData(pg::StemData);
-	pg::LeafData getLeafData(pg::LeafData);
-
-	CurveEditor *curveEditor;
-	ComboBox *curveDegree;
-	ComboBox *curveType;
-	ComboBox *curveNode;
-
-	void createCurveGroup(QBoxLayout *);
-	void setCurveFields();
-	void selectCurve();
-	void enableCurve(bool);
-	void updateCurve(pg::Spline);
-	void updateParameterTree(pg::Spline);
+	void change();
 
 public:
-	GeneratorEditor(SharedResources *shared, KeyMap *keymap,
-		Editor *editor, QWidget *parent);
-	QSize sizeHint() const;
-	void change();
-	void select();
-	void addChildNode();
-	void addSiblingNode();
-	void removeNode();
+	GeneratorEditor(Editor *editor, QWidget *parent);
+	~GeneratorEditor();
 
 public slots:
-	void setFields();
+	void start();
+	void end();
+
+signals:
+	void generate();
+	void reset();
 };
 
 #endif

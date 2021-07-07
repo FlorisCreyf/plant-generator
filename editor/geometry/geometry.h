@@ -21,14 +21,17 @@
 #include "plant_generator/math/mat4.h"
 #include "plant_generator/spline.h"
 #include "plant_generator/vertex.h"
+#include "plant_generator/volume.h"
 #include <vector>
 
 class Geometry {
 	std::vector<pg::DVertex> points;
 	std::vector<unsigned> indices;
 
+	void divideVolume(const pg::Volume::Node *);
+
 public:
-	static const unsigned primitiveReset = 65534;
+	static const unsigned primitiveReset = 2147483647;
 	struct Segment {
 		size_t pstart;
 		size_t pcount;
@@ -47,6 +50,8 @@ public:
 		pg::Vec3 tangent);
 	void addCone(float radius, float height, int points, pg::Vec3 color);
 	void addGrid(int size, pg::Vec3 pcolor[2], pg::Vec3 scolor);
+	void addCube(pg::Vec3 center, float size, pg::Vec3 color);
+	void addVolume(const pg::Volume *volume);
 	void transform(size_t start, size_t count, const pg::Mat4 &transform);
 	void changeColor(size_t start, pg::Vec3 color);
 

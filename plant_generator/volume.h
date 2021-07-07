@@ -41,6 +41,7 @@ namespace pg {
 			Node(Vec3 center, float size);
 			Node *getParent();
 			Node *getNode(int index);
+			const Node *getNode(int index) const;
 			Node *getNextNode(int axis, Vec3 point);
 			Node *getPreviousNode(int axis, Vec3 point);
 			Node *getChildNode(Vec3 point);
@@ -59,12 +60,13 @@ namespace pg {
 			int getQuantity() const;
 		};
 
-		Volume(float size, int depth);
+		Volume(float size = 1.0f, int depth = 1);
 		void clear(float size, int depth);
 		Node *addNode(Vec3 point);
 		void addLine(Vec3 a, Vec3 b, float weight);
 		Node *getNode(Vec3 point);
 		Node *getRoot();
+		const Node *getRoot() const;
 
 	private:
 		float size;

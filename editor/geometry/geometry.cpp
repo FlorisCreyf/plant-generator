@@ -21,6 +21,7 @@
 const float pi = 3.14159265359f;
 
 using pg::DVertex;
+using pg::Volume;
 using pg::Vec2;
 using pg::Vec3;
 using pg::Mat4;
@@ -158,6 +159,126 @@ void Geometry::addGrid(int size, Vec3 pcolor[2], Vec3 scolor)
 		line[0] = Vec3(bound, -j, 0.0f);
 		line[1] = Vec3(-bound, -j, 0.0f);
 		addLine(line, scolor);
+	}
+}
+
+void Geometry::addCube(Vec3 center, float size, Vec3 color)
+{
+	Vec3 line[2];
+	/* bottom square */
+	line[0] = center + Vec3(size, -size, -size);
+	line[1] = center + Vec3(-size, -size, -size);
+	addLine(line, color);
+	line[0] = center + Vec3(size, size, -size);
+	line[1] = center + Vec3(-size, size, -size);
+	addLine(line, color);
+	line[0] = center + Vec3(size, size, -size);
+	line[1] = center + Vec3(size, -size, -size);
+	addLine(line, color);
+	line[0] = center + Vec3(-size, size, -size);
+	line[1] = center + Vec3(-size, -size, -size);
+	addLine(line, color);
+	/* top square */
+	line[0] = center + Vec3(size, -size, size);
+	line[1] = center + Vec3(-size, -size, size);
+	addLine(line, color);
+	line[0] = center + Vec3(size, size, size);
+	line[1] = center + Vec3(-size, size, size);
+	addLine(line, color);
+	line[0] = center + Vec3(size, size, size);
+	line[1] = center + Vec3(size, -size, size);
+	addLine(line, color);
+	line[0] = center + Vec3(-size, size, size);
+	line[1] = center + Vec3(-size, -size, size);
+	addLine(line, color);
+	/* vertical lines */
+	line[0] = center + Vec3(size, -size, size);
+	line[1] = center + Vec3(size, -size, -size);
+	addLine(line, color);
+	line[0] = center + Vec3(size, size, size);
+	line[1] = center + Vec3(size, size, -size);
+	addLine(line, color);
+	line[0] = center + Vec3(-size, size, size);
+	line[1] = center + Vec3(-size, size, -size);
+	addLine(line, color);
+	line[0] = center + Vec3(-size, -size, size);
+	line[1] = center + Vec3(-size, -size, -size);
+	addLine(line, color);
+}
+
+Vec3 getVolumeColor(const Volume::Node *node)
+{
+	float a = node->getDensity();
+	float c = a*0.9f+0.1f;
+	return Vec3(0.1f, c, c);
+}
+
+void Geometry::addVolume(const Volume *volume)
+{
+	const Volume::Node *node = volume->getRoot();
+	Vec3 center = node->getCenter();
+	float size = node->getSize();
+	addCube(center, size, getVolumeColor(node));
+	divideVolume(node);
+}
+
+void Geometry::divideVolume(const Volume::Node *parent)
+{
+	Vec3 center = parent->getCenter();
+	float size = parent->getSize();
+	Vec3 color = getVolumeColor(parent);
+	if (parent->getNode(0)) {
+		Vec3 line[2];
+		/* vertical lines */
+		line[0] = center + Vec3(0.0f, 0.0f, -size);
+		line[1] = center + Vec3(0.0f, 0.0f, size);
+		addLine(line, color);
+		line[0] = center + Vec3(0.0f, size, -size);
+		line[1] = center + Vec3(0.0f, size, size);
+		addLine(line, color);
+		line[0] = center + Vec3(0.0f, -size, -size);
+		line[1] = center + Vec3(0.0f, -size, size);
+		addLine(line, color);
+		line[0] = center + Vec3(size, 0.0f, -size);
+		line[1] = center + Vec3(size, 0.0f, size);
+		addLine(line, color);
+		line[0] = center + Vec3(-size, 0.0f, -size);
+		line[1] = center + Vec3(-size, 0.0f, size);
+		addLine(line, color);
+		/* outer horizontal lines */
+		line[0] = center + Vec3(size, -size, 0.0f);
+		line[1] = center + Vec3(size, size, 0.0f);
+		addLine(line, color);
+		line[0] = center + Vec3(-size, -size, 0.0f);
+		line[1] = center + Vec3(-size, size, 0.0f);
+		addLine(line, color);
+		line[0] = center + Vec3(-size, size, 0.0f);
+		line[1] = center + Vec3(size, size, 0.0f);
+		addLine(line, color);
+		line[0] = center + Vec3(-size, -size, 0.0f);
+		line[1] = center + Vec3(size, -size, 0.0f);
+		addLine(line, color);
+		/* inner horizontal lines */
+		line[0] = center + Vec3(0.0f, -size, -size);
+		line[1] = center + Vec3(0.0f, size, -size);
+		addLine(line, color);
+		line[0] = center + Vec3(-size, 0.0f, -size);
+		line[1] = center + Vec3(size, 0.0f, -size);
+		addLine(line, color);
+		line[0] = center + Vec3(0.0f, -size, 0.0f);
+		line[1] = center + Vec3(0.0f, size, 0.0f);
+		addLine(line, color);
+		line[0] = center + Vec3(-size, 0.0f, 0.0f);
+		line[1] = center + Vec3(size, 0.0f, 0.0f);
+		addLine(line, color);
+		line[0] = center + Vec3(0.0f, -size, size);
+		line[1] = center + Vec3(0.0f, size, size);
+		addLine(line, color);
+		line[0] = center + Vec3(-size, 0.0f, size);
+		line[1] = center + Vec3(size, 0.0f, size);
+		addLine(line, color);
+		for (int i = 0; i < 8; i++)
+			divideVolume(parent->getNode(i));
 	}
 }
 

@@ -120,14 +120,6 @@ void Editor::createFramebuffers()
 	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, this->msSilhouetteMap);
 	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 4, GL_RGB,
 		width(), height(), GL_TRUE);
-	glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_WRAP_S,
-		GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_WRAP_T,
-		GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MAG_FILTER,
-		GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MIN_FILTER,
-		GL_NEAREST);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
 		GL_TEXTURE_2D_MULTISAMPLE, this->msSilhouetteMap, 0);
 
@@ -180,6 +172,7 @@ void Editor::initializeBuffers()
 	this->segments.axesLines = geometry.append(axesLines);
 	this->segments.axesArrows = geometry.append(axesArrows);
 	this->segments.rotation = geometry.append(rotationLines);
+	this->segments.volume = {};
 
 	this->staticBuffer.initialize(GL_STATIC_DRAW);
 	this->staticBuffer.load(geometry);
@@ -189,6 +182,8 @@ void Editor::initializeBuffers()
 	this->pathBuffer.initialize(GL_DYNAMIC_DRAW);
 	this->pathBuffer.allocatePointMemory(100);
 	this->pathBuffer.allocateIndexMemory(100);
+	this->volumeBuffer.initialize(GL_DYNAMIC_DRAW);
+	this->volumeBuffer.allocatePointMemory(100);
 	this->jointBuffer.initialize(GL_DYNAMIC_DRAW, 5);
 }
 
@@ -198,7 +193,8 @@ void Editor::keyPressEvent(QKeyEvent *event)
 		QWidget::keyPressEvent(event);
 		exitCommand(this->command->onKeyPress(event));
 		return;
-	}
+	} else if (this->scene.updating)
+		return;
 
 	Stem *root = this->scene.plant.getRoot();
 	QPoint pos = mapFromGlobal(QCursor::pos());
@@ -321,11 +317,23 @@ void Editor::keyPressEvent(QKeyEvent *event)
 		SaveSelection *copy = new SaveSelection(&this->selection);
 		this->selection.selectStems();
 		addSelectionToHistory(copy);
-	} if (commandName == "Animate") {
+	} else if (commandName == "Animate") {
 		if (this->timer->isActive())
 			endAnimation();
 		else
 			startAnimation();
+	} else if (commandName == "View Top") {
+		this->camera.setOrientation(0.0f, 0.0f);
+	} else if (commandName == "View Bottom") {
+		this->camera.setOrientation(pi, 0.0f);
+	} else if (commandName == "View Right") {
+		this->camera.setOrientation(pi*0.5f, pi*0.5f);
+	} else if (commandName == "View Left") {
+		this->camera.setOrientation(pi*0.5f, -pi*0.5f);
+	} else if (commandName == "View Front") {
+		this->camera.setOrientation(pi*0.5f, 0.0f);
+	} else if (commandName == "View Back") {
+		this->camera.setOrientation(pi*0.5f, pi);
 	}
 
 	update();
@@ -470,11 +478,11 @@ void Editor::updateCamera(int width, int height)
 	float ratio = static_cast<float>(width) / static_cast<float>(height);
 	this->camera.setWindowSize(width, height);
 	if (this->perspective)
-		this->camera.setPerspective(pi/6.0f, -0.01f, -100.0f, ratio);
+		this->camera.setPerspective(pi/6.0f, -0.01f, -1000.0f, ratio);
 	else {
 		ratio /= 2.0f;
 		Vec3 near(ratio, 0.5f, 0.0f);
-		Vec3 far(-ratio, -0.5f, -100.0f);
+		Vec3 far(-ratio, -0.5f, -1000.0f);
 		this->camera.setOrthographic(near, far);
 	}
 }
@@ -490,11 +498,15 @@ void Editor::paintGL()
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
 
 	/* Paint the grid. */
-	this->staticBuffer.use();
-	glUseProgram(this->shared->getShader(SharedResources::Flat));
-	glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
-	glDrawArrays(GL_LINES, this->segments.grid.pstart,
-		this->segments.grid.pcount);
+	if (this->segments.volume.pcount > 0)
+		paintVolume(projection);
+	else {
+		this->staticBuffer.use();
+		glUseProgram(this->shared->getShader(SharedResources::Flat));
+		glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
+		glDrawArrays(GL_LINES, this->segments.grid.pstart,
+			this->segments.grid.pcount);
+	}
 
 	/* Paint the plant. */
 	this->plantBuffer.use();
@@ -506,7 +518,7 @@ void Editor::paintGL()
 		paintMaterial(projection, position);
 
 	if (this->selection.hasStems() || this->selection.hasLeaves())
-		paintOutline(projection, position);
+		paintOutline(projection);
 
 	/* Paint path lines. */
 	if (this->selection.hasStems() && !isAnimating()) {
@@ -534,14 +546,14 @@ void Editor::paintGL()
 		glDrawArrays(GL_POINTS, segment.pstart, segment.pcount);
 
 		if (this->selection.hasPoints())
-			paintAxes();
+			paintAxes(projection, position);
 	} else if (this->selection.hasLeaves() && !isAnimating())
-		paintAxes();
+		paintAxes(projection, position);
 
 	glFlush();
 }
 
-void Editor::paintOutline(const Mat4 &projection, const Vec3 &position)
+void Editor::paintOutline(const Mat4 &projection)
 {
 	GLuint defaultFramebuffer = this->context()->defaultFramebufferObject();
 	GLsizei size = this->mesh.getIndexCount();
@@ -555,7 +567,6 @@ void Editor::paintOutline(const Mat4 &projection, const Vec3 &position)
 		glUseProgram(this->shared->getShader(type));
 	}
 	glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
-	glUniform3f(1, position.x, position.y, position.z);
 	glUniform2f(3, (GLfloat)width(), (GLfloat)height());
 
 	glBindFramebuffer(GL_FRAMEBUFFER, this->msSilhouetteFramebuffer);
@@ -573,7 +584,6 @@ void Editor::paintOutline(const Mat4 &projection, const Vec3 &position)
 
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, this->silhouetteFramebuffer);
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, this->msSilhouetteFramebuffer);
-	glDrawBuffer(GL_BACK);
 	glBlitFramebuffer(0, 0, width(), height(), 0, 0, width(), height(),
 		GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
@@ -679,11 +689,8 @@ void Editor::paintMaterial(const Mat4 &projection, const Vec3 &position)
 	}
 }
 
-void Editor::paintAxes()
+void Editor::paintAxes(const Mat4 &projection, const Vec3 &position)
 {
-	Mat4 projection = this->camera.getVP();
-	Vec3 position = this->camera.getPosition();
-
 	glClear(GL_DEPTH_BUFFER_BIT);
 	glDepthFunc(GL_GEQUAL);
 
@@ -723,6 +730,36 @@ void Editor::paintAxes()
 	}
 }
 
+void Editor::paintVolume(const Mat4 &projection)
+{
+	glUseProgram(this->shared->getShader(SharedResources::Flat));
+	this->volumeBuffer.use();
+	glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
+	glDrawArrays(GL_LINES, 0, this->segments.volume.pcount);
+}
+
+void Editor::displayVolume(bool display)
+{
+	if (display) {
+		Geometry geometry;
+		const pg::Volume *volume = this->scene.generator.getVolume();
+		geometry.addVolume(volume);
+		this->segments.volume = geometry.getSegment();
+
+		makeCurrent();
+		this->volumeBuffer.use();
+		size_t capacity = this->volumeBuffer.getCapacity(
+			VertexBuffer::Points);
+		if (this->segments.volume.pcount > capacity) {
+			size_t count = this->mesh.getVertexCount() * 2;
+			this->volumeBuffer.allocatePointMemory(count);
+		}
+		this->volumeBuffer.update(geometry);
+		doneCurrent();
+	} else
+		this->segments.volume = {};
+}
+
 /** Determine what regions in the buffer are the selection. */
 void Editor::updateSelection()
 {
@@ -731,12 +768,11 @@ void Editor::updateSelection()
 	for (auto &instance : stemInstances)
 		this->selections.push_back(mesh.findStem(instance.first));
 	auto leafInstances = this->selection.getLeafInstances();
-	for (auto &instance : leafInstances) {
+	for (auto &instance : leafInstances)
 		for (auto &leaf : instance.second) {
 			pg::Mesh::LeafID id(instance.first, leaf);
 			this->selections.push_back(this->mesh.findLeaf(id));
 		}
-	}
 
 	if (!stemInstances.empty()) {
 		std::vector<Path::Segment> segments;
@@ -864,9 +900,9 @@ void Editor::endAnimation()
 	this->timer->stop();
 }
 
-void Editor::createDefaultPlant()
+void Editor::setDefaultPlant()
 {
-	pg::ParameterTree tree = this->scene.generator.getParameterTree();
+	pg::ParameterTree tree = this->scene.pattern.getParameterTree();
 	pg::ParameterNode *root = tree.createRoot();
 	std::random_device rd;
 	pg::StemData stemData;
@@ -896,10 +932,8 @@ void Editor::createDefaultPlant()
 	pg::ParameterNode *node3 = tree.addChild("1.1");
 	stemData.density = 0.0f;
 	node3->setData(stemData);
-	this->scene.plant.setDefault();
-	this->scene.generator.setParameterTree(tree);
-	this->scene.generator.grow();
-	this->scene.wind.setDirection(Vec3(0.5f, 0.5f, 0.5f));
+	this->scene.pattern.setParameterTree(tree);
+	this->scene.pattern.grow();
 }
 
 void Editor::load(const char *filename)
@@ -913,7 +947,7 @@ void Editor::load(const char *filename)
 		ia >> this->scene;
 		stream.close();
 	} else
-		createDefaultPlant();
+		this->scene.plant.setDefault();
 
 	for (const pg::Material &material : this->scene.plant.getMaterials())
 		this->shared->addMaterial(ShaderParams(material));
@@ -921,6 +955,7 @@ void Editor::load(const char *filename)
 
 void Editor::reset()
 {
+	displayVolume(false);
 	this->selection.clear();
 	this->history.clear();
 	if (isValid())

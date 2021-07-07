@@ -20,6 +20,7 @@
 
 #include "editor.h"
 #include "generator_editor.h"
+#include "pattern_editor.h"
 #include "property_editor.h"
 #include "key_editor.h"
 #include "editor/keymap.h"
@@ -34,6 +35,7 @@ public:
 	Window(int argc, char **argv);
 
 public slots:
+	void newEmptyFile();
 	void newFile();
 	void openDialogBox();
 	void exportWavefrontDialogBox();
@@ -55,6 +57,7 @@ private:
 
 	PropertyEditor *propertyEditor;
 	GeneratorEditor *generatorEditor;
+	PatternEditor *patternEditor;
 	KeyEditor *keyEditor;
 
 	void keyPressEvent(QKeyEvent *event);

@@ -183,7 +183,7 @@ void PropertyEditor::createStemLeafFields()
 		QOverload<int>::of(&ComboBox::currentIndexChanged),
 		this, [&] (int v) {
 			this->editor->getSelection()->clearPoints();
-			changeStem([&] (Stem *s, int v) {
+			changeStem([] (Stem *s, int v) {
 				int degree = v == 1 ? 3 : 1;
 				pg::Path path = s->getPath();
 				pg::Spline spline = path.getSpline();
@@ -566,16 +566,17 @@ void PropertyEditor::createCurveInterface(QBoxLayout *layout)
 
 void PropertyEditor::addCurve()
 {
-	Curve curve;
-	QString name = createUniqueName("Curve ", this->curveName);
-	curve.setName(name.toStdString());
-	pg::Spline spline;
-	spline.setDefault(0);
-	curve.setSpline(spline);
-	createCurveCommand();
-	addCurve(curve);
-	this->curveName->setCurrentIndex(this->curveName->findText(name));
-	selectCurve();
+	if (!this->editor->getScene()->updating) {
+		Curve curve;
+		QString name = createUniqueName("Curve ", this->curveName);
+		curve.setName(name.toStdString());
+		curve.setSpline(pg::Spline(0));
+		createCurveCommand();
+		addCurve(curve);
+		int index = this->curveName->findText(name);
+		this->curveName->setCurrentIndex(index);
+		selectCurve();
+	}
 }
 
 void PropertyEditor::addCurve(Curve curve)

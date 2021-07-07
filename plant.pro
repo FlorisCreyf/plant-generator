@@ -43,6 +43,7 @@ plant_generator/math/vec4.cpp \
 plant_generator/animation.cpp \
 plant_generator/cross_section.cpp \
 plant_generator/curve.cpp \
+plant_generator/generator.cpp \
 plant_generator/geometry.cpp \
 plant_generator/joint.cpp \
 plant_generator/leaf.cpp \
@@ -91,6 +92,7 @@ editor/widgets/generator_editor.cpp \
 editor/widgets/key_editor.cpp \
 editor/widgets/material_viewer.cpp \
 editor/widgets/mesh_viewer.cpp \
+editor/widgets/pattern_editor.cpp \
 editor/widgets/property_editor.cpp \
 editor/widgets/widgets.cpp \
 editor/widgets/window.cpp \
@@ -117,6 +119,7 @@ plant_generator/math/vec4.h \
 plant_generator/animation.h \
 plant_generator/cross_section.h \
 plant_generator/curve.h \
+plant_generator/generator.h \
 plant_generator/geometry.h \
 plant_generator/joint.h \
 plant_generator/leaf.h \
@@ -166,6 +169,7 @@ editor/widgets/widgets.h \
 editor/widgets/key_editor.h \
 editor/widgets/material_viewer.h \
 editor/widgets/mesh_viewer.h \
+editor/widgets/pattern_editor.h \
 editor/widgets/property_editor.h \
 editor/widgets/window.h \
 editor/camera.h \

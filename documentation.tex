@@ -260,7 +260,7 @@ The clipping volume contains objects that are visible to the camera and that wil
 0 & 0 & \frac{2}{n_z-f_z} & -\frac{n_z + f_z}{n_z-f_z} \\
 0 & 0 & 0 & 1 \\
 \end{pmatrix}\]
-The perspective transform ($ P $) morphs a truncated pyramid into a cube, and this is done by examining several points along the pyramid. Let $\phi$ be half the viewing angle.
+The perspective transform ($ P $) morphs a truncated pyramid into a cube. This is done by examining several points along the pyramid. Let $\phi$ be half the viewing angle.
 \[\begin{pmatrix}
 1 & 0 & 0 & 0 \\
 0 & 1 & 0 & 0 \\
@@ -322,12 +322,12 @@ The view matrix translates and rotates a portion of the scene into the clipping 
 The editor uses the command pattern to store all user invocable commands. This allows each command to be easily associated with a key combination, and this makes it possible to implement an undo/redo system without having to copy the entire application state. Commands are required to have execute, undo, and redo methods. The downside of this approach is that the the undo behavior of prior commands will be wrong if a command improperly undoes its changes.
 
 \subsubsection{Move Commands}
-The cursor position is converted into a ray pointing into the world space in order to move an object in the world space using the cursor. The ray is used to create a point in the world space by intersecting with a plane that is parallel to the camera direction. Points are moved by the difference of the initial and last (cursor generated) points.
+In order to move an object in the world space, the cursor coordinates are converted into a ray pointing into the world space. The ray is used to create a point in the world space by intersecting the ray with a plane that is parallel to the camera direction. Points are moved by the difference of the initial and last (cursor generated) points.
 
 There is also a need to move points along paths instead of straight through the world space. This functions differently from the first method. Instead of converting the cursor position to a point in the world space, the points along the path are converted to the screen space. The cursor position is projected onto the (now two-dimensional) path to determine a new point.
 
 \subsubsection{Save Commands}
-The internal properties of stems and leaves can be adjusted using a property editor. The program checks for changes within the selection whenever a property editor loses focus. A save command storing the original objects is inserted into the history if changes were made.
+The internal properties of stems and leaves can be adjusted using the property editor. The program checks for changes within the selection whenever the property editor loses focus. A save command storing the original objects is inserted into the history if changes were made.
 
 \subsubsection{Generator Commands}
 Ideally, a generator command should not have to store generated objects in order to be able to redo the program state. The following options would increase the program complexity in one way or another.
@@ -341,7 +341,7 @@ Ideally, a generator command should not have to store generated objects in order
 The selection object contains structures for storing stem, point and leaf selections. The user creates a selection through a selector object. Removing camera and other scene information from the selection decreases the size of the history and coupling. Commands can update the selection directly through the selection object.
 
 \subsection{Resources}
-A \texttt{SharedResources} object stores all the shader programs and materials that are needed across all OpenGL widgets. Default images are automatically loaded from the \texttt{resources} file, and shaders are automatically loaded from the \texttt{shaders} file. Signals are emitted whenever materials are modified so that property editors can adjust their combo boxes to match the global state.
+A \texttt{SharedResources} object stores all the shader programs and materials that are needed across all OpenGL widgets. Default images are automatically loaded from the \texttt{resources} directory, and shaders are automatically loaded from the \texttt{shaders} directory. Signals are emitted whenever materials are modified so that property editors can adjust their combo boxes to match the global state.
 
 \subsection{History}
 The history maintains a list of past and future commands. The timestamps within commands are used to verify that new commands are more recent than the previous command. Commands can be flipped if their timestamps are out of order, which could happen if they are added to the history during focus events.

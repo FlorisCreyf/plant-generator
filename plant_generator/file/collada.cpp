@@ -421,8 +421,7 @@ void getJointPoses(const Stem *stem, vector<Vec3> &poses, vector<int> &ids)
 	}
 }
 
-void setControllerSources(
-	XMLWriter &xml, const Mesh &mesh, const Plant &plant)
+void setControllerSources(XMLWriter &xml, const Mesh &mesh, const Plant &plant)
 {
 	vector<Vec3> poses;
 	vector<int> ids;

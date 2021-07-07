@@ -18,6 +18,7 @@
 
 #include "plant.h"
 #include "pattern_generator.h"
+#include "generator.h"
 #include "wind.h"
 
 #ifdef PG_SERIALIZE
@@ -27,7 +28,9 @@
 namespace pg {
 	struct Scene {
 		Plant plant;
-		PatternGenerator generator;
+		bool updating;
+		Generator generator;
+		PatternGenerator pattern;
 		Animation animation;
 		Wind wind;
 

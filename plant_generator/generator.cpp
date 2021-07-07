@@ -26,18 +26,21 @@ const float pi = 3.14159265359f;
 
 Generator::Generator(Plant *plant) :
 	plant(plant),
-	primaryGrowthRate(0.1f),
-	secondaryGrowthRate(0.01f),
+	width(0.0f),
+	primaryGrowthRate(0.5f),
+	secondaryGrowthRate(0.005f),
 	minRadius(0.001f),
 	suppression(0.0025f),
-	rayCount(20),
-	rayLevels(10),
-	width(0.0f)
+	depth(1),
+	rayCount(100),
+	rayLevels(100),
+	cycles(5),
+	nodes(4)
 {
 
 }
 
-void Generator::initRoot()
+Stem *Generator::createRoot()
 {
 	Path path;
 	Spline spline;
@@ -57,30 +60,30 @@ void Generator::initRoot()
 
 	updateBoundingBox(controls[0]);
 	updateBoundingBox(controls[1]);
+	return root;
 }
 
-void Generator::grow(int cycles, int nodes)
+void Generator::grow()
 {
-	initRoot();
-	Volume volume(this->width*2.0f, 4);
-
-	for (int i = 0; i < cycles; i++) {
-		std::cout << "cycle: " << i+1 << std::endl;
-
+	clearVolume();
+	Stem *root = createRoot();
+	for (int i = 0; i < this->cycles; i++) {
 		if (i > 0) {
-			evaluateEfficiency(&volume, this->plant->getRoot());
-			addStems(this->plant->getRoot(), &volume);
+			evaluateEfficiency(&this->volume, root);
+			addStems(root, &this->volume);
 		}
 
-		for (int j = 0; j < nodes; j++) {
-			float exp = std::ceil(std::sqrt(this->width)) + 1.0f;
-			volume.clear(std::pow(2.0, exp), exp);
-			addToVolume(&volume, this->plant->getRoot());
-			generalizeDensity(volume.getRoot());
-			setConcentration(this->plant->getRoot());
-			castRays(&volume);
-			generalizeFlux(volume.getRoot());
-			addNodes(&volume, this->plant->getRoot(), j, nodes);
+		for (int j = 0; j < this->nodes; j++) {
+			int depth = std::log2(this->width) + this->depth;
+			if (depth <= 0)
+				depth = 1;
+			this->volume.clear(this->width, depth);
+			addToVolume(&this->volume, root);
+			generalizeDensity(this->volume.getRoot());
+			setConcentration(root);
+			castRays(&this->volume);
+			generalizeFlux(this->volume.getRoot());
+			addNodes(&this->volume, root, j, nodes);
 		}
 	}
 }
@@ -88,9 +91,10 @@ void Generator::grow(int cycles, int nodes)
 void Generator::addToVolume(Volume *volume, Stem *stem)
 {
 	const Path &path = stem->getPath();
+	Vec3 position = stem->getLocation();
 	for (size_t i = 1; i < path.getSize(); i++) {
-		Vec3 a = path.get(i-1);
-		Vec3 b = path.get(i);
+		Vec3 a = position + path.get(i-1);
+		Vec3 b = position + path.get(i);
 		volume->addLine(a, b, 1.0f);
 	}
 	Stem *child = stem->getChild();
@@ -260,7 +264,6 @@ void Generator::addNode(Volume *volume, Stem *stem, int i, int n)
 		float r = this->plant->getIntermediateRadius(parent, distance);
 		rate = 1.0f - stem->getState()->concentration / (r*r*pi);
 		rate *= (rate > 0.0f);
-		/* TODO: Find a better way to model stem radii. */
 		if (rate < 0.5f || static_cast<int>(rate*n) < i)
 			return;
 		if (r >= 1.2f * stem->getSwelling().x * stem->getMaxRadius())
@@ -375,22 +378,13 @@ void Generator::updateBoundingBox(Vec3 point)
 		this->width = point.z;
 }
 
-void Generator::setPrimaryGrowthRate(float rate)
+const Volume *Generator::getVolume()
 {
-	if (rate > 0.0f)
-		this->primaryGrowthRate = rate;
+	return &this->volume;
 }
 
-void Generator::setSecondaryGrowthRate(float rate)
+void Generator::clearVolume()
 {
-	if (rate > 0.0f)
-		this->secondaryGrowthRate = rate;
-}
-
-void Generator::setRayDensity(int baseCount, int levels)
-{
-	if (baseCount > 0)
-		this->rayCount = baseCount;
-	if (levels > 0)
-		this->rayLevels = levels;
+	this->width = 1.0f;
+	this->volume.clear(this->width*2.0f, 4);
 }

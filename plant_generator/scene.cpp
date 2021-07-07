@@ -15,7 +15,7 @@
 
 #include "scene.h"
 
-pg::Scene::Scene() : generator(&plant)
+pg::Scene::Scene() : updating(false), generator(&plant), pattern(&plant)
 {
 
 }
@@ -25,5 +25,6 @@ void pg::Scene::reset()
 	this->plant.erase();
 	this->wind = Wind();
 	this->animation = Animation();
-	this->generator = PatternGenerator(&this->plant);
+	this->pattern = PatternGenerator(&this->plant);
+	this->generator.clearVolume();
 }

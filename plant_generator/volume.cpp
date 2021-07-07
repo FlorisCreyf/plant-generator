@@ -24,7 +24,7 @@ typedef Volume::Node Node;
 Volume::Volume(float size, int depth) :
 	size(size),
 	depth(depth),
-	root(Vec3(0.0f, size*0.5f, 0.0f), 0.5f*size)
+	root(Vec3(0.0f, 0.0f, size*0.5f), 0.5f*size)
 {
 
 }
@@ -33,7 +33,7 @@ void Volume::clear(float size, int depth)
 {
 	if (this->root.getNode(0)) {
 		this->root.clear();
-		this->root = Node(Vec3(0.0f, size*0.5f, 0.0f), 0.5f*size);
+		this->root = Node(Vec3(0.0f, 0.0f, size*0.5f), 0.5f*size);
 		this->size = size;
 		this->depth = depth;
 	}
@@ -54,16 +54,21 @@ Node *Volume::addNode(Vec3 point)
 void Volume::addLine(Vec3 a, Vec3 b, float weight)
 {
 	Ray ray(a, normalize(b-a));
-	Node *node = addNode(a);
+	float length = magnitude(b-a);
+	Node *firstNode = addNode(a);
 	Node *lastNode = addNode(b);
+	Node *node = firstNode;
 	node->setDensity(weight);
 	while (node != lastNode) {
 		Node *nextNode = node->getAdjacentNode(ray);
 		if (!nextNode || nextNode == node)
 			break;
-		node = nextNode;
 
+		node = nextNode;
 		Vec3 center = node->getCenter();
+		if (magnitude(a-center) > length)
+			break;
+
 		while (node->getDepth() < this->depth) {
 			node->divide();
 			node = node->getChildNode(center);
@@ -193,6 +198,11 @@ Node *Volume::getRoot()
 	return &this->root;
 }
 
+const Node *Volume::getRoot() const
+{
+	return &this->root;
+}
+
 Node *Volume::getNode(Vec3 point)
 {
 	return getNode(point, &this->root);
@@ -244,6 +254,9 @@ Node::~Node()
 
 void Node::clear()
 {
+	this->density = 0.0f;
+	this->direction = Vec3(0.0f, 0.0f, 0.0f);
+	this->quantity = 0;
 	if (this->nodes) {
 		delete[] this->nodes;
 		this->nodes = nullptr;
@@ -271,6 +284,14 @@ Node *Node::getParent()
 }
 
 Node *Node::getNode(int index)
+{
+	if (this->nodes)
+		return &this->nodes[index];
+	else
+		return nullptr;
+}
+
+const Node *Node::getNode(int index) const
 {
 	if (this->nodes)
 		return &this->nodes[index];

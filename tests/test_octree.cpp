@@ -13,14 +13,14 @@ BOOST_AUTO_TEST_SUITE(octree)
 BOOST_AUTO_TEST_CASE(test_get_node, *bt::tolerance(tolerance))
 {
 	Volume volume(1.0f, 3);
-	Vec3 point(0.76f-0.5f, 0.26f, 0.126f-0.5f);
+	Vec3 point(0.76f-0.5f, 0.126f-0.5f, 0.26f);
 	Volume::Node *node1 = volume.addNode(point);
 	Volume::Node *node2 = volume.getNode(point);
 	BOOST_TEST(node1 == node2);
 	Vec3 center = node1->getCenter();
 	BOOST_TEST(center.x == 0.8125f-0.5f);
-	BOOST_TEST(center.y == 0.3125f);
-	BOOST_TEST(center.z == 0.1875f-0.5f);
+	BOOST_TEST(center.y == 0.1875f-0.5f);
+	BOOST_TEST(center.z == 0.3125f);
 }
 
 BOOST_AUTO_TEST_CASE(test_add_line)
@@ -28,9 +28,9 @@ BOOST_AUTO_TEST_CASE(test_add_line)
 	/* This test will fail if the ray direction is diagonal to the volume
 	due to floating point precision errors. */
 	Volume volume(1.0f, 3);
-	Vec3 a(-0.5f, 0.1f, -0.5f);
-	Vec3 b(0.99f-0.5f, 0.01f, 0.01f-0.5f);
-	Vec3 c(0.51f, 0.1f, 0.50f);
+	Vec3 a(-0.5f, -0.5f, 0.1f);
+	Vec3 b(0.99f-0.5f, 0.01f-0.5f, 0.01f);
+	Vec3 c(0.51f, 0.50f, 0.1f);
 	float weight = 0.6f;
 
 	volume.addLine(a, b, weight);
