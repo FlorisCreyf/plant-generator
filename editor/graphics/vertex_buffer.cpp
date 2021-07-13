@@ -90,17 +90,17 @@ void VertexBuffer::update(const DVertex *points, size_t psize,
 	else
 		glBindBuffer(GL_ARRAY_BUFFER, this->buffers[Points]);
 	psize *= sizeof(DVertex);
-	isize *= sizeof(unsigned);
 	glBufferSubData(GL_ARRAY_BUFFER, 0, psize, points);
 
-	if (indices) {
-		if (isize > this->capacity[Indices])
-			allocateIndexMemory(isize * 2);
-		else
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,
-				this->buffers[Indices]);
-		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, isize, indices);
-	}
+	if (!indices)
+		return;
+
+	if (isize > this->capacity[Indices])
+		allocateIndexMemory(isize * 2);
+	else
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->buffers[Indices]);
+	isize *= sizeof(unsigned);
+	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, isize, indices);
 }
 
 bool VertexBuffer::update(const DVertex *points, size_t start, size_t size)

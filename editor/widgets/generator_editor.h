@@ -21,8 +21,7 @@
 #include "editor.h"
 #include "widgets.h"
 
-class GeneratorWorkload : public QObject
-{
+class GeneratorWorkload : public QObject {
 	Q_OBJECT
 
 	pg::Scene *scene;
@@ -44,12 +43,12 @@ class GeneratorEditor : public QWidget {
 	Editor *editor;
 	GeneratorWorkload *workload;
 
-	enum {PrimaryRate, SecondaryRate, Suppression, DSize};
-	enum {Cycles, Nodes, RayCount, RayLevels, Depth, ISize};
+	enum {PrimaryRate, SecondaryRate, Suppression, SynthesisThreshold,
+		SynthesisRate, DSize};
+	enum {Cycles, Nodes, Rays, Depth, Seed, ISize};
 
 	QPushButton *startButton;
-	QPushButton *showVolumeButton;
-	QPushButton *hideVolumeButton;
+	QPushButton *toggleVolumeButton;
 	SpinBox *iv[ISize];
 	DoubleSpinBox *dv[DSize];
 

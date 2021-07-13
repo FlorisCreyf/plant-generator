@@ -33,7 +33,7 @@ BOOST_AUTO_TEST_CASE(test_add_line)
 	Vec3 c(0.51f, 0.50f, 0.1f);
 	float weight = 0.6f;
 
-	volume.addLine(a, b, weight);
+	volume.addLine(a, b, weight, 0.001f);
 	Volume::Node *node1 = volume.getNode(a);
 	Volume::Node *node2 = volume.getNode(b);
 	BOOST_TEST(node1->getDepth() == 3);
@@ -41,7 +41,7 @@ BOOST_AUTO_TEST_CASE(test_add_line)
 	BOOST_TEST(node1->getDensity() == weight);
 	BOOST_TEST(node2->getDensity() == weight);
 
-	volume.addLine(a, c, weight);
+	volume.addLine(a, c, weight, 0.001f);
 	Volume::Node *node3 = volume.getNode(c);
 	BOOST_TEST(node3->getDepth() == 3);
 	BOOST_TEST(node3->getDensity() == weight);

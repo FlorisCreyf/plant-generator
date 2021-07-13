@@ -206,11 +206,34 @@ void Geometry::addCube(Vec3 center, float size, Vec3 color)
 	addLine(line, color);
 }
 
+Vec3 toRGB(float hue, float saturation, float lightness)
+{
+	hue *= 6.0f;
+	float chroma = saturation * (1.0f - std::abs(2.0f*lightness-1.0f));
+	float x = chroma * (1.0f - std::abs(std::fmod(hue, 2.0f)-1.0f));
+	float y = lightness - 0.5f * chroma;
+	Vec3 color;
+	if (0.0f <= hue && hue < 1)
+		color = Vec3(chroma, x, 0.0f);
+	else if (1.0f <= hue && hue < 2.0f)
+		color = Vec3(x, chroma, 0.0f);
+	else if (2.0f <= hue && hue < 3.0f)
+		color = Vec3(0.0f, chroma, x);
+	else if (3.0f <= hue && hue < 4.0f)
+		color = Vec3(0.0f, x, chroma);
+	else if (4.0f <= hue && hue < 5.0f)
+		color = Vec3(x, 0.0f, chroma);
+	else if (5.0f <= hue && hue <= 6.0f)
+		color = Vec3(chroma, 0.0f, x);
+	else
+		color = Vec3(0.0f, 0.0f, 0.0f);
+	return Vec3(color.x+y, color.y+y, color.z+y);
+}
+
 Vec3 getVolumeColor(const Volume::Node *node)
 {
-	float a = node->getDensity();
-	float c = a*0.9f+0.1f;
-	return Vec3(0.1f, c, c);
+	float a = pg::magnitude(node->getDirection());
+	return toRGB(1.0f - a*0.5f, 0.5f, 0.5f);
 }
 
 void Geometry::addVolume(const Volume *volume)
@@ -218,7 +241,7 @@ void Geometry::addVolume(const Volume *volume)
 	const Volume::Node *node = volume->getRoot();
 	Vec3 center = node->getCenter();
 	float size = node->getSize();
-	addCube(center, size, getVolumeColor(node));
+	addCube(center, size, Vec3(0.15f, 0.15f, 0.15f));
 	divideVolume(node);
 }
 
@@ -226,7 +249,7 @@ void Geometry::divideVolume(const Volume::Node *parent)
 {
 	Vec3 center = parent->getCenter();
 	float size = parent->getSize();
-	Vec3 color = getVolumeColor(parent);
+	Vec3 color = Vec3(0.15f, 0.15f, 0.15f);
 	if (parent->getNode(0)) {
 		Vec3 line[2];
 		/* vertical lines */
@@ -277,6 +300,16 @@ void Geometry::divideVolume(const Volume::Node *parent)
 		line[0] = center + Vec3(-size, 0.0f, size);
 		line[1] = center + Vec3(size, 0.0f, size);
 		addLine(line, color);
+		for (int i = 0; i < 8; i++) {
+			const Volume::Node *n = parent->getNode(i);
+			if (!n->getNode(0)) {
+				line[0] = n->getCenter();
+				line[1] = n->getCenter();
+				float s = n->getSize();
+				line[1] += s*normalize(n->getDirection());
+				addLine(line, getVolumeColor(n));
+			}
+		}
 		for (int i = 0; i < 8; i++)
 			divideVolume(parent->getNode(i));
 	}

@@ -31,53 +31,56 @@ Volume::Volume(float size, int depth) :
 
 void Volume::clear(float size, int depth)
 {
-	if (this->root.getNode(0)) {
+	this->size = size;
+	this->depth = depth;
+	this->root = Node(Vec3(0.0f, 0.0f, size*0.5f), 0.5f*size);
+	if (this->root.getNode(0))
 		this->root.clear();
-		this->root = Node(Vec3(0.0f, 0.0f, size*0.5f), 0.5f*size);
-		this->size = size;
-		this->depth = depth;
-	}
 }
 
-Node *Volume::addNode(Vec3 point)
+Node *Volume::addNode(Vec3 point, int depth)
 {
-	Node *node = &this->root;
-	while (node->getDepth() < this->depth) {
-		Node *cnode = getNode(point, node);
-		if (cnode == node)
-			node->divide();
+	Node *node = getNode(point, &this->root);
+	while (node->getDepth() < this->depth && node->getDepth() < depth) {
+		node->divide();
 		node = getNode(point, node);
 	}
 	return node;
 }
 
-void Volume::addLine(Vec3 a, Vec3 b, float weight)
+void Volume::addLine(Vec3 a, Vec3 b, float weight, float radius)
 {
-	Ray ray(a, normalize(b-a));
 	float length = magnitude(b-a);
-	Node *firstNode = addNode(a);
-	Node *lastNode = addNode(b);
+	int depth = std::abs(std::log2(radius/this->size))-1;
+	Node *firstNode = addNode(a, depth);
+	Node *lastNode = addNode(b, depth);
+	a = firstNode->getCenter();
+	b = lastNode->getCenter();
+	Ray ray(a, normalize(b-a));
 	Node *node = firstNode;
 	node->setDensity(weight);
+
 	while (node != lastNode) {
-		Node *nextNode = node->getAdjacentNode(ray);
+		Node *nextNode = node->getAdjacentNode(ray, depth);
 		if (!nextNode || nextNode == node)
 			break;
 
-		node = nextNode;
 		Vec3 center = node->getCenter();
+		node = nextNode;
 		if (magnitude(a-center) > length)
 			break;
 
-		while (node->getDepth() < this->depth) {
+		int d = node->getDepth();
+		while (d < this->depth && d < depth) {
 			node->divide();
-			node = node->getChildNode(center);
+			node = node->getChildNode(center, depth);
+			d = node->getDepth();
 		}
 		node->setDensity(weight);
 	}
 }
 
-Node *Node::getAdjacentNode(Ray ray)
+Node *Node::getAdjacentNode(Ray ray, int depth)
 {
 	Vec3 d;
 	Plane plane;
@@ -111,35 +114,41 @@ Node *Node::getAdjacentNode(Ray ray)
 	plane.normal = Vec3(d.x, 0.0f, 0.0f);
 	t = intersectsPlane(ray, plane);
 	p = t*ray.direction + ray.origin;
-	if (t && d.y*p.y <= d.y*plane.point.y && d.z*p.z <= d.z*plane.point.z)
-		node = node->getAdjacentNode(1, p, d.x > 0.0f);
+	p.y -= 0.000001f;
+	p.z -= 0.000001f;
+	if (t && d.y*p.y < d.y*plane.point.y && d.z*p.z < d.z*plane.point.z)
+		node = node->getAdjacentNode(1, p, d.x > 0.0f, depth);
 
 	plane.normal = Vec3(0.0f, d.y, 0.0f);
 	t = intersectsPlane(ray, plane);
 	p = t*ray.direction + ray.origin;
-	if (t && d.x*p.x <= d.x*plane.point.x && d.z*p.z <= d.z*plane.point.z)
-		node = node->getAdjacentNode(2, p, d.y > 0.0f);
+	p.x -= 0.000001f;
+	p.z -= 0.000001f;
+	if (t && d.x*p.x < d.x*plane.point.x && d.z*p.z < d.z*plane.point.z)
+		node = node->getAdjacentNode(2, p, d.y > 0.0f, depth);
 
 	plane.normal = Vec3(0.0f, 0.0f, d.z);
 	t = intersectsPlane(ray, plane);
 	p = t*ray.direction + ray.origin;
-	if (t && d.y*p.y <= d.y*plane.point.y && d.x*p.x <= d.x*plane.point.x)
-		node = node->getAdjacentNode(4, p, d.z > 0.0f);
+	p.y -= 0.000001f;
+	p.x -= 0.000001f;
+	if (t && d.y*p.y < d.y*plane.point.y && d.x*p.x < d.x*plane.point.x)
+		node = node->getAdjacentNode(4, p, d.z > 0.0f, depth);
 
 	return node;
 }
 
-Node *Node::getAdjacentNode(int axis, Vec3 point, bool positive)
+Node *Node::getAdjacentNode(int axis, Vec3 point, bool positive, int depth)
 {
 	if (!getParent())
 		return this;
 	else if (positive)
-		return getNextNode(axis, point);
+		return getNextNode(axis, point, depth);
 	else
-		return getPreviousNode(axis, point);
+		return getPreviousNode(axis, point, depth);
 }
 
-Node *Node::getNextNode(int axis, Vec3 point)
+Node *Node::getNextNode(int axis, Vec3 point, int depth)
 {
 	Node *node = this;
 	Node *pnode = node->getParent();
@@ -149,15 +158,16 @@ Node *Node::getNextNode(int axis, Vec3 point)
 	negative direction (x=1, y=2, z=4). */
 	int index = node - pnode->getNode(0);
 	if ((index & axis) == axis)
-		node = pnode->getNextNode(axis, point);
+		node = pnode->getNextNode(axis, point, depth);
 	else
 		node = pnode->getNode(index + axis);
-	if (node && node->getNode(0))
-		node = node->getChildNode(point);
+
+	if (node && node->getNode(0) && node->depth < depth)
+		node = node->getChildNode(point, depth);
 	return node ? node : this;
 }
 
-Node *Node::getPreviousNode(int axis, Vec3 point)
+Node *Node::getPreviousNode(int axis, Vec3 point, int depth)
 {
 	Node *node = this;
 	Node *pnode = node->getParent();
@@ -165,15 +175,15 @@ Node *Node::getPreviousNode(int axis, Vec3 point)
 		return nullptr;
 	int index = node - pnode->getNode(0);
 	if ((index & axis) == 0)
-		node = pnode->getPreviousNode(axis, point);
+		node = pnode->getPreviousNode(axis, point, depth);
 	else
 		node = pnode->getNode(index - axis);
-	if (node && node->getNode(0))
-		node = node->getChildNode(point);
+	if (node && node->getNode(0) && node->depth < depth)
+		node = node->getChildNode(point, depth);
 	return node ? node : this;
 }
 
-Node *Node::getChildNode(Vec3 point)
+Node *Node::getChildNode(Vec3 point, int depth)
 {
 	Node *pnode = this;
 	Node *node = nullptr;
@@ -187,8 +197,8 @@ Node *Node::getChildNode(Vec3 point)
 			node = cnode;
 		}
 	}
-	if (node->getNode(0))
-		return node->getChildNode(point);
+	if (node->getNode(0) && node->depth < depth)
+		return node->getChildNode(point, depth);
 	else
 		return node;
 }

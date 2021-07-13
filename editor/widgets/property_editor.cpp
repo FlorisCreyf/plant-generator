@@ -542,7 +542,7 @@ void PropertyEditor::createCurveInterface(QBoxLayout *layout)
 
 	connect(this->curveDegree,
 		QOverload<int>::of(&ComboBox::currentIndexChanged),
-		this->curveEditor, &CurveEditor::setDegree);
+		this, &PropertyEditor::setCurveDegree);
 	connect(addB, &QPushButton::clicked,
 		this, QOverload<>::of(&PropertyEditor::addCurve));
 	connect(removeB, &QPushButton::clicked,
@@ -562,6 +562,12 @@ void PropertyEditor::createCurveInterface(QBoxLayout *layout)
 		plant->updateCurve(curve, index);
 		this->editor->change();
 	});
+}
+
+void PropertyEditor::setCurveDegree(int index)
+{
+	if (!this->editor->getScene()->updating)
+		this->curveEditor->setDegree(index);
 }
 
 void PropertyEditor::addCurve()

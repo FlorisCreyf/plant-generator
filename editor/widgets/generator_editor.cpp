@@ -46,8 +46,8 @@ void GeneratorEditor::createInterface()
 {
 	for (int i = 0; i < DSize; i++) {
 		this->dv[i] = new DoubleSpinBox(this);
-		this->dv[i]->setSingleStep(0.01);
-		this->dv[i]->setDecimals(3);
+		this->dv[i]->setSingleStep(0.0001);
+		this->dv[i]->setDecimals(4);
 	}
 	for (int i = 0; i < ISize; i++) {
 		this->iv[i] = new SpinBox(this);
@@ -60,29 +60,35 @@ void GeneratorEditor::createInterface()
 	layout->setMargin(0);
 	layout->setSpacing(0);
 
+	const int min = std::numeric_limits<int>::min();
+	const int max = std::numeric_limits<int>::max();
 	QGroupBox *group = createGroup("Properties");
 	QFormLayout *form = createForm(group);
 	this->dv[PrimaryRate]->setValue(g->primaryGrowthRate);
 	form->addRow("Primary Growth", this->dv[PrimaryRate]);
-	this->dv[SecondaryRate]->setSingleStep(0.001);
-	this->dv[SecondaryRate]->setDecimals(4);
 	this->dv[SecondaryRate]->setValue(g->secondaryGrowthRate);
 	form->addRow("Secondary Growth", this->dv[SecondaryRate]);
-	this->dv[Suppression]->setSingleStep(0.0001);
-	this->dv[Suppression]->setDecimals(4);
 	this->dv[Suppression]->setValue(g->suppression);
 	form->addRow("Suppression", this->dv[Suppression]);
+	this->dv[SynthesisRate]->setValue(g->synthesisRate);
+	form->addRow("Synthesis Rate", this->dv[SynthesisRate]);
+	this->dv[SynthesisThreshold]->setValue(g->synthesisThreshold);
+	form->addRow("Synthesis Threshold", this->dv[SynthesisThreshold]);
+	this->iv[Cycles]->setRange(1, 1000);
 	this->iv[Cycles]->setValue(g->cycles);
 	form->addRow("Cycles", this->iv[Cycles]);
+	this->iv[Nodes]->setRange(1, 1000);
 	this->iv[Nodes]->setValue(g->nodes);
 	form->addRow("Nodes", this->iv[Nodes]);
-	this->iv[RayCount]->setValue(g->rayCount);
-	form->addRow("Ray Count", this->iv[RayCount]);
-	this->iv[RayLevels]->setValue(g->rayLevels);
-	form->addRow("Ray Levels", this->iv[RayLevels]);
+	this->iv[Rays]->setRange(0, 100000);
+	this->iv[Rays]->setValue(g->rays);
+	form->addRow("Rays", this->iv[Rays]);
 	this->iv[Depth]->setValue(g->depth);
 	this->iv[Depth]->setRange(-10, 10);
 	form->addRow("Volume Depth", this->iv[Depth]);
+	this->iv[Seed]->setValue(g->seed);
+	this->iv[Seed]->setRange(min, max);
+	form->addRow("Seed", this->iv[Seed]);
 	setFormLayout(form);
 	layout->addWidget(group);
 
@@ -90,10 +96,8 @@ void GeneratorEditor::createInterface()
 	form = createForm(group);
 	this->startButton = new QPushButton("Erase && Generate", this);
 	form->addRow(this->startButton);
-	this->showVolumeButton = new QPushButton("Show Volume", this);
-	form->addRow(this->showVolumeButton);
-	this->hideVolumeButton = new QPushButton("Show Grid", this);
-	form->addRow(this->hideVolumeButton);
+	this->toggleVolumeButton = new QPushButton("Toggle Volume", this);
+	form->addRow(this->toggleVolumeButton);
 	setFormLayout(form);
 	layout->addWidget(group);
 
@@ -110,13 +114,8 @@ void GeneratorEditor::createInterface()
 
 	connect(this->startButton, &QPushButton::clicked,
 		this, &GeneratorEditor::start);
-
-	connect(this->hideVolumeButton, &QPushButton::clicked, [&] () {
-		this->editor->displayVolume(false);
-		this->editor->change();
-	});
-	connect(this->showVolumeButton, &QPushButton::clicked, [&] () {
-		this->editor->displayVolume(true);
+	connect(this->toggleVolumeButton, &QPushButton::clicked, [&] () {
+		this->editor->displayVolume(!this->editor->showingVolume());
 		this->editor->change();
 	});
 }
@@ -127,18 +126,20 @@ void GeneratorEditor::change()
 	g->primaryGrowthRate = this->dv[PrimaryRate]->value();
 	g->secondaryGrowthRate = this->dv[SecondaryRate]->value();
 	g->suppression = this->dv[Suppression]->value();
-	g->rayCount = this->iv[RayCount]->value();
-	g->rayLevels = this->iv[RayLevels]->value();
+	g->synthesisThreshold = this->dv[SynthesisThreshold]->value();
+	g->synthesisRate = this->dv[SynthesisRate]->value();
+	g->rays = this->iv[Rays]->value();
 	g->cycles = this->iv[Cycles]->value();
 	g->nodes = this->iv[Nodes]->value();
 	g->depth = this->iv[Depth]->value();
+	g->seed = this->iv[Seed]->value();
 }
 
 void GeneratorEditor::start()
 {
 	this->startButton->setEnabled(false);
-	this->editor->getScene()->updating = true;
 	emit reset();
+	this->editor->getScene()->updating = true;
 	emit generate();
 }
 
@@ -146,7 +147,6 @@ void GeneratorEditor::end()
 {
 	this->startButton->setEnabled(true);
 	this->editor->getScene()->updating = false;
-	this->editor->displayVolume(true);
 	this->editor->change();
 }
 

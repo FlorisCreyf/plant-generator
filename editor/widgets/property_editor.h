@@ -94,6 +94,7 @@ class PropertyEditor : public QWidget {
 	ComboBox *curveDegree;
 
 	void createCurveInterface(QBoxLayout *);
+	void setCurveDegree(int);
 	void setCurves();
 	void addCurve();
 	void addCurve(pg::Curve);

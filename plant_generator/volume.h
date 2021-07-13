@@ -34,7 +34,7 @@ namespace pg {
 			int quantity;
 
 			Node();
-			Node *getAdjacentNode(int, Vec3, bool);
+			Node *getAdjacentNode(int, Vec3, bool, int);
 
 		public:
 			~Node();
@@ -42,10 +42,10 @@ namespace pg {
 			Node *getParent();
 			Node *getNode(int index);
 			const Node *getNode(int index) const;
-			Node *getNextNode(int axis, Vec3 point);
-			Node *getPreviousNode(int axis, Vec3 point);
-			Node *getChildNode(Vec3 point);
-			Node *getAdjacentNode(Ray ray);
+			Node *getNextNode(int axis, Vec3 point, int depth);
+			Node *getPreviousNode(int axis, Vec3 point, int depth);
+			Node *getChildNode(Vec3 point, int depth);
+			Node *getAdjacentNode(Ray ray, int depth = 1000);
 			Vec3 getCenter() const;
 			float getSize() const;
 			int getDepth() const;
@@ -62,8 +62,8 @@ namespace pg {
 
 		Volume(float size = 1.0f, int depth = 1);
 		void clear(float size, int depth);
-		Node *addNode(Vec3 point);
-		void addLine(Vec3 a, Vec3 b, float weight);
+		Node *addNode(Vec3 point, int depth = 1000);
+		void addLine(Vec3 a, Vec3 b, float weight, float radius);
 		Node *getNode(Vec3 point);
 		Node *getRoot();
 		const Node *getRoot() const;

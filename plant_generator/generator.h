@@ -22,12 +22,14 @@
 #include "math/intersection.h"
 #include <vector>
 #include <map>
+#include <random>
 
 namespace pg {
 	class Generator {
 		Plant *plant;
 		float width;
 		Volume volume;
+		std::mt19937 mt;
 
 		Stem *createRoot();
 		void addToVolume(Volume *, Stem *);
@@ -51,11 +53,13 @@ namespace pg {
 		float secondaryGrowthRate;
 		float minRadius;
 		float suppression;
+		float synthesisRate;
+		float synthesisThreshold;
 		int depth;
-		int rayCount;
-		int rayLevels;
+		int rays;
 		int cycles;
 		int nodes;
+		int seed;
 
 		Generator(Plant *plant);
 		void grow();

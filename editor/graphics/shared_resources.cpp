@@ -68,67 +68,66 @@ void SharedResources::createPrograms()
 {
 	GLuint shaders[3];
 
-	GLuint solidFS = buildShader(GL_FRAGMENT_SHADER,
-		"shaders/model.frag", "#define SOLID\n");
+	GLuint solidFS = buildShader(GL_FRAGMENT_SHADER, "shaders/model.frag",
+		"#define SOLID\n");
 	GLuint wireframeFS = buildShader(GL_FRAGMENT_SHADER,
 		"shaders/model.frag", "#define WIREFRAME\n");
 	GLuint materialFS = buildShader(GL_FRAGMENT_SHADER,
 		"shaders/model.frag", "#define MATERIAL\n");
 	GLuint outlineFS = buildShader(GL_FRAGMENT_SHADER,
 		"shaders/model.frag", "#define OUTLINE\n");
+	GLuint flatVS = buildShader(GL_VERTEX_SHADER, "shaders/flat.vert",
+		nullptr);
 
-	shaders[0] = buildShader(GL_VERTEX_SHADER,
-		"shaders/model.vert", "#define SOLID\n");
+	shaders[0] = buildShader(GL_VERTEX_SHADER, "shaders/model.vert",
+		"#define SOLID\n");
 	shaders[1] = solidFS;
 	this->programs[Shader::Solid] = buildProgram(shaders, 2);
-	shaders[0] = buildShader(GL_VERTEX_SHADER,
-		"shaders/model.vert", "#define WIREFRAME\n");
+	shaders[0] = buildShader(GL_VERTEX_SHADER, "shaders/model.vert",
+		"#define WIREFRAME\n");
 	shaders[1] = wireframeFS;
 	this->programs[Shader::Wireframe] = buildProgram(shaders, 2);
-	shaders[0] = buildShader(GL_VERTEX_SHADER,
-		"shaders/model.vert", "#define MATERIAL\n");
+	shaders[0] = buildShader(GL_VERTEX_SHADER, "shaders/model.vert",
+		"#define MATERIAL\n");
 	shaders[1] = materialFS;
 	this->programs[Shader::Material] = buildProgram(shaders, 2);
-	shaders[0] = buildShader(GL_VERTEX_SHADER,
-		"shaders/model.vert", "#define OUTLINE\n");
+	shaders[0] = buildShader(GL_VERTEX_SHADER, "shaders/model.vert",
+		"#define OUTLINE\n");
 	shaders[1] = outlineFS;
 	this->programs[Shader::Outline] = buildProgram(shaders, 2);
 
-	shaders[0] = buildShader(GL_VERTEX_SHADER,
-		"shaders/model.vert", "#define SOLID\n#define DYNAMIC\n");
+	shaders[0] = buildShader(GL_VERTEX_SHADER, "shaders/model.vert",
+		"#define SOLID\n#define DYNAMIC\n");
 	shaders[1] = solidFS;
 	this->programs[Shader::DynamicSolid] = buildProgram(shaders, 2);
-	shaders[0] = buildShader(GL_VERTEX_SHADER,
-		"shaders/model.vert", "#define WIREFRAME\n#define DYNAMIC\n");
+	shaders[0] = buildShader(GL_VERTEX_SHADER, "shaders/model.vert",
+		"#define WIREFRAME\n#define DYNAMIC\n");
 	shaders[1] = wireframeFS;
 	this->programs[Shader::DynamicWireframe] = buildProgram(shaders, 2);
-	shaders[0] = buildShader(GL_VERTEX_SHADER,
-		"shaders/model.vert", "#define MATERIAL\n#define DYNAMIC\n");
+	shaders[0] = buildShader(GL_VERTEX_SHADER, "shaders/model.vert",
+		"#define MATERIAL\n#define DYNAMIC\n");
 	shaders[1] = materialFS;
 	this->programs[Shader::DynamicMaterial] = buildProgram(shaders, 2);
-	shaders[0] = buildShader(GL_VERTEX_SHADER,
-		"shaders/model.vert", "#define OUTLINE\n#define DYNAMIC\n");
+	shaders[0] = buildShader(GL_VERTEX_SHADER, "shaders/model.vert",
+		"#define OUTLINE\n#define DYNAMIC\n");
 	shaders[1] = outlineFS;
 	this->programs[Shader::DynamicOutline] = buildProgram(shaders, 2);
 
-	shaders[0] = buildShader(GL_VERTEX_SHADER,
-		"shaders/line.vert", nullptr);
-	shaders[1] = buildShader(GL_GEOMETRY_SHADER,
-		"shaders/line.geom", nullptr);
-	shaders[2] = buildShader(GL_FRAGMENT_SHADER,
-		"shaders/line.frag", nullptr);
+	shaders[0] = buildShader(GL_VERTEX_SHADER, "shaders/line.vert",
+		nullptr);
+	shaders[1] = buildShader(GL_GEOMETRY_SHADER, "shaders/line.geom",
+		nullptr);
+	shaders[2] = buildShader(GL_FRAGMENT_SHADER, "shaders/line.frag",
+		nullptr);
 	this->programs[Shader::Line] = buildProgram(shaders, 3);
 
-	GLuint flatVS = buildShader(GL_VERTEX_SHADER,
-		"shaders/flat.vert", nullptr);
-
 	shaders[0] = flatVS;
-	shaders[1] = buildShader(GL_FRAGMENT_SHADER,
-		"shaders/flat.frag", nullptr);
+	shaders[1] = buildShader(GL_FRAGMENT_SHADER, "shaders/flat.frag",
+		nullptr);
 	this->programs[Shader::Flat] = buildProgram(shaders, 2);
 	shaders[0] = flatVS;
-	shaders[1] = buildShader(GL_FRAGMENT_SHADER,
-		"shaders/point.frag", nullptr);
+	shaders[1] = buildShader(GL_FRAGMENT_SHADER, "shaders/point.frag",
+		nullptr);
 	this->programs[Shader::Point] = buildProgram(shaders, 2);
 }
 

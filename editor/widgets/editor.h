@@ -45,6 +45,7 @@ public:
 	Editor(SharedResources *shared, KeyMap *keymap, QWidget *parent = 0);
 	void load(const char *filename);
 	void displayVolume(bool display);
+	bool showingVolume() const;
 	void setDefaultPlant();
 	void change();
 	void change(QAction *action);

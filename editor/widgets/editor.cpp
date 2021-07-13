@@ -498,7 +498,7 @@ void Editor::paintGL()
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
 
 	/* Paint the grid. */
-	if (this->segments.volume.pcount > 0)
+	if (showingVolume())
 		paintVolume(projection);
 	else {
 		this->staticBuffer.use();
@@ -748,19 +748,17 @@ void Editor::displayVolume(bool display)
 
 		makeCurrent();
 		this->volumeBuffer.use();
-		size_t capacity = this->volumeBuffer.getCapacity(
-			VertexBuffer::Points);
-		if (this->segments.volume.pcount > capacity) {
-			size_t count = this->mesh.getVertexCount() * 2;
-			this->volumeBuffer.allocatePointMemory(count);
-		}
 		this->volumeBuffer.update(geometry);
 		doneCurrent();
 	} else
 		this->segments.volume = {};
 }
 
-/** Determine what regions in the buffer are the selection. */
+bool Editor::showingVolume() const
+{
+	return this->segments.volume.pcount > 0;
+}
+
 void Editor::updateSelection()
 {
 	this->selections.clear();
@@ -804,12 +802,14 @@ void Editor::updateSelection()
 
 void Editor::change()
 {
-	if (isAnimating())
-		endAnimation();
-	updateBuffers();
-	updateSelection();
-	update();
-	emit changed();
+	if (!this->scene.updating) {
+		if (isAnimating())
+			endAnimation();
+		updateBuffers();
+		updateSelection();
+		update();
+		emit changed();
+	}
 }
 
 void Editor::updateBuffers()
