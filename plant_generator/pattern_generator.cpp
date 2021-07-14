@@ -87,7 +87,7 @@ float PatternGenerator::addStems(Stem *stem, float pathRatio, float length,
 	if (!stem->isCustom() && pathRatio <= 0.0f)
 		stem->setMinRadius(0.0f);
 	else {
-		float radius = stem->getMinRadius() * 0.9f;
+		float radius = stem->getMinRadius() * 0.8f;
 		Vec3 direction1 = getForkDirection(stem, 1.0f, data);
 		Vec3 direction2 = getForkDirection(stem, -1.0f, data);
 		float t = 0.5f * std::acos(dot(direction1, direction2));
@@ -152,8 +152,9 @@ void PatternGenerator::addLateralStem(Stem *parent, float position,
 {
 	StemData data = node->getData();
 	Vec2 collar(1.5f, 3.0f);
+
 	float radius = this->plant->getIntermediateRadius(parent, position);
-	radius = radius / collar.x * data.scale;
+	radius = modifyRadius(data, radius / collar.x);
 	if (radius < data.radiusThreshold)
 		return;
 
@@ -179,18 +180,38 @@ void PatternGenerator::addLateralStem(Stem *parent, float position,
 	addStems(stem, pathRatio, 0.0f, node);
 }
 
+float PatternGenerator::modifyRadius(const StemData &data, float radius)
+{
+	std::normal_distribution<float> dis(1.0f, data.radiusVariation);
+	float variation = dis(this->mt);
+	if (variation > 1.0f)
+		variation = 1.0f;
+	return radius * data.radius * variation;
+}
+
 Vec3 PatternGenerator::getDirection(Stem *stem, int index, Length length,
 	Vec3 direction1, Vec3 direction2, const StemData &data)
 {
 	float variation = data.angleVariation * pi;
-	std::uniform_real_distribution<float> dis(-variation, variation);
+	std::uniform_real_distribution<float> dis1(-variation, variation);
 	float ratio = (stem->getDistance() + length.current) / length.total;
-	float angle = data.leaf.rotation*index + dis(this->mt);
-	Quat rotation = fromAxisAngle(direction2, angle);
+	float radialAngle = data.leaf.rotation*index + dis1(this->mt);
+	Quat radialRotation = fromAxisAngle(direction2, radialAngle);
 	direction1 = normalize(direction1);
-	direction1 = rotate(rotation, direction1);
-	dis = std::uniform_real_distribution<float>(ratio*0.5f, ratio);
-	return normalize(lerp(direction1, direction2, dis(this->mt)));
+	direction1 = rotate(radialRotation, direction1);
+
+	ratio = data.inclineCurve.getPoint(ratio).y;
+	float t = 2.0f * (ratio - 0.5f);
+	std::normal_distribution<float> dis2(0.0f, data.inclineVariation);
+	t += dis2(this->mt);
+	if (t < 0.0f) {
+		t *= -1.0f;
+		direction2 *= -1.0f;
+	}
+	if (t > 0.9f)
+		t = 0.9f;
+
+	return normalize(lerp(direction1, direction2, t));
 }
 
 Vec3 PatternGenerator::getForkDirection(Stem *stem, float sign,
@@ -254,6 +275,7 @@ float PatternGenerator::setPath(Stem *stem, Vec3 direction, float collarLength,
 		control.x += dis(this->mt) * data.noise;
 		control.y += dis(this->mt) * data.noise;
 		control.z += dis(this->mt) * data.noise;
+
 		length += magnitude(controls.back() - control);
 		controls.push_back(control);
 
@@ -261,18 +283,13 @@ float PatternGenerator::setPath(Stem *stem, Vec3 direction, float collarLength,
 		if (pathRatio != 1.0f)
 			break;
 
-		float divergence = 1.0f;
-		if (dis(this->mt) > 0.0f) {
-			float influence = radius;
-			if (influence < 0.1f)
-				influence = 0.1f;
-			divergence = dis(this->mt) * 0.05f;
-			divergence /= influence * influence;
-		}
 		Vec3 change;
-		change.x = dis(this->mt) * 0.05f * divergence;
-		change.y = dis(this->mt) * 0.05f * divergence;
-		change.z = dis(this->mt) * 0.05f * divergence;
+		float scale = 1.0f/(1.0f+pi*radius*radius*length) * 0.1f;
+		float pull = sqrt(control.x*control.x + control.y*control.y);
+		change.x = dis(this->mt) * scale;
+		change.y = dis(this->mt) * scale;
+		change.z = dis(this->mt) * scale;
+		change.z -= data.gravity * pull;
 		direction = normalize(direction + change);
 	}
 
@@ -287,9 +304,7 @@ float PatternGenerator::setPath(Stem *stem, Vec3 direction, float collarLength,
 float PatternGenerator::bifurcatePath(Stem *stem, int index, int points,
 	const StemData &data)
 {
-	std::uniform_real_distribution<float> dis(-1.0f, 1.0f);
-	float probability = dis(this->mt) - (1.0f-data.fork*2.0f);
-	if (index < points-1 && probability > 0.0f) {
+	if (index < points-1 && occurs(data.fork)) {
 		float radius = stem->getMaxRadius();
 		unsigned curve = stem->getRadiusCurve();
 		Spline spline = this->plant->getCurve(curve).getSpline();
@@ -332,4 +347,10 @@ void PatternGenerator::addLeaves(Stem *stem, Length length, LeafData data)
 			j = 0;
 		}
 	}
+}
+
+bool PatternGenerator::occurs(float percentage)
+{
+	std::uniform_real_distribution<float> dis(-1.0f, 1.0f);
+	return dis(this->mt) - (1.0f-percentage*2.0f) > 0.0f;
 }

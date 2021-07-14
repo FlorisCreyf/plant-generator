@@ -914,7 +914,7 @@ void Editor::setDefaultPlant()
 	stemData.density = 1.0f;
 	stemData.densityCurve.setDefault(1);
 	stemData.distance = 10.0f;
-	stemData.scale = 0.8f;
+	stemData.radius = 0.9f;
 	stemData.radiusThreshold = 0.02f;
 	stemData.length = 60.0f;
 	stemData.leaf.density = 3.0f;

@@ -36,19 +36,23 @@ class PatternEditor : public QWidget {
 	QPushButton *childButton;
 	QPushButton *siblingButton;
 	QPushButton *removeButton;
+	std::string name;
 
 	enum {RootLength, RootFork, RootForkAngle, RootThreshold, RootNoise,
 		DRSize};
 	enum {Seed, IRSize};
 	SpinBox *irv[IRSize];
 	DoubleSpinBox *drv[DRSize];
-	enum {StemDensity, StemDistance, Length, Scale, AngleVariation, Noise,
-		RadiusThreshold, Fork, ForkAngle, LeafDensity, LeafDistance,
-		LeafRotation, MinUp, MaxUp, LocalUp, GlobalUp, MinForward,
-		MaxForward, Pull, ScaleX, ScaleY, ScaleZ, DSize};
-	enum {LeavesPerNode, ISize};
-	DoubleSpinBox *dv[DSize];
-	SpinBox *iv[ISize];
+	enum {StemDensity, StemDistance, Length, Radius, AngleVariation, Noise,
+		RadiusThreshold, Fork, ForkAngle, InclineVariation, StemPull,
+		RadiusVariation, DSSize};
+	enum {LeafDensity, LeafDistance, LeafRotation, MinUp, MaxUp, LocalUp,
+		GlobalUp, MinForward, MaxForward, LeafPull, ScaleX, ScaleY,
+		ScaleZ, DLSize};
+	enum {LeavesPerNode, ILSize};
+	DoubleSpinBox *dsv[DSSize];
+	DoubleSpinBox *dlv[DLSize];
+	SpinBox *ilv[ILSize];
 
 	void createInterface();
 	void createStemLeafFields();
@@ -84,6 +88,7 @@ public:
 		Editor *editor, QWidget *parent);
 	QSize sizeHint() const;
 	void change();
+	void changeField(std::function<void(pg::StemData *)> function);
 	void select();
 	void addChildNode();
 	void addSiblingNode();

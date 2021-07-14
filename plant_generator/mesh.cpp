@@ -764,6 +764,10 @@ int Mesh::getForkMidpoint(int divisions, Vec3 direction1, Vec3 direction2,
 		projection2 = -projection2;
 
 	float x = dot(point, projection1);
+	if (x > 1.0f)
+		x = 1.0f;
+	if (x < -1.0f)
+		x = -1.0f;
 	float delta = 2.0f * pi / divisions;
 	float theta = std::acos(x);
 	if (dot(point, projection2) < 0.0f)

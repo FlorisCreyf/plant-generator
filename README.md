@@ -23,6 +23,7 @@ pdflatex --shell-escape documentation.tex
 - Middle mouse button + Ctrl: Zoom with the camera
 - Left mouse button: Move points
 - Right mouse button (+ Ctrl): Select stems and points
+- Scroll + Shift: Change the value for all nodes
 
 ### Key Controls
 

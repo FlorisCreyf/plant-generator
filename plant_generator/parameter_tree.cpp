@@ -29,13 +29,17 @@ GeneratorState::GeneratorState() : concentration(0.0f), node(0)
 }
 
 StemData::StemData() :
-	densityCurve(0),
+	densityCurve(1),
+	inclineCurve(2),
 	density(0.0f),
 	distance(0.0f),
 	length(60.0f),
 	angleVariation(0.5f),
 	radiusThreshold(0.01f),
-	scale(1.0f),
+	inclineVariation(0.0f),
+	radiusVariation(0.1f),
+	gravity(0.1f),
+	radius(1.0f),
 	fork(0.0f),
 	forkAngle(0.5f),
 	noise(0.05f)
@@ -44,7 +48,7 @@ StemData::StemData() :
 }
 
 LeafData::LeafData() :
-	densityCurve(0),
+	densityCurve(1),
 	scale(1.0f, 1.0f, 1.0f),
 	density(0.0f),
 	distance(2.0f),
@@ -55,7 +59,7 @@ LeafData::LeafData() :
 	globalUp(1.0f),
 	minForward(0.0f),
 	maxForward(1.0f),
-	verticalPull(0.0f),
+	gravity(0.0f),
 	leavesPerNode(1)
 {
 
@@ -327,4 +331,26 @@ int ParameterTree::getSize(const string &name, size_t &start) const
 		start = name.size();
 		return size;
 	}
+}
+
+void ParameterTree::updateField(std::function<void(StemData *)> function,
+	std::string name)
+{
+	ParameterNode *node = get(name);
+	function(&node->data);
+}
+
+void ParameterTree::updateFields(std::function<void(StemData *)> function)
+{
+	updateFields(function, this->root->child);
+}
+
+void ParameterTree::updateFields(std::function<void(StemData *)> function,
+	ParameterNode *node)
+{
+	function(&node->data);
+	if (node->nextSibling)
+		updateFields(function, node->nextSibling);
+	if (node->child)
+		updateFields(function, node->child);
 }

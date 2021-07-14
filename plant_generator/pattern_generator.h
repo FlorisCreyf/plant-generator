@@ -34,6 +34,7 @@ namespace pg {
 		void addLateralStems(Stem *, Length, const ParameterNode *);
 		void addLateralStem(Stem *, float, Length, int, Vec3 &, Vec3 &,
 			const ParameterNode *);
+		float modifyRadius(const StemData &, float);
 		Vec3 getDirection(Stem *, int, Length, Vec3, Vec3,
 			const StemData &);
 		Vec3 getForkDirection(Stem *, float, const StemData &);
@@ -42,6 +43,7 @@ namespace pg {
 		float setPath(Stem *, Vec3, float, const StemData &);
 		float bifurcatePath(Stem *, int, int, const StemData &);
 		void addLeaves(Stem *, Length, LeafData);
+		bool occurs(float);
 
 	public:
 		PatternGenerator(Plant *plant);

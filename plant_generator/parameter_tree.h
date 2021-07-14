@@ -44,7 +44,7 @@ namespace pg {
 		float globalUp;
 		float minForward;
 		float maxForward;
-		float verticalPull;
+		float gravity;
 		int leavesPerNode;
 
 		LeafData();
@@ -65,7 +65,7 @@ namespace pg {
 			ar & globalUp;
 			ar & minForward;
 			ar & maxForward;
-			ar & verticalPull;
+			ar & gravity;
 			ar & leavesPerNode;
 			ar & scale;
 		}
@@ -74,12 +74,16 @@ namespace pg {
 
 	struct StemData {
 		Spline densityCurve;
+		Spline inclineCurve;
 		float density;
 		float distance;
 		float length;
 		float angleVariation;
 		float radiusThreshold;
-		float scale;
+		float inclineVariation;
+		float radiusVariation;
+		float gravity;
+		float radius;
 		float fork;
 		float forkAngle;
 		float noise;
@@ -92,15 +96,21 @@ namespace pg {
 #ifdef PG_SERIALIZE
 		friend class boost::serialization::access;
 		template<class Archive>
-		void serialize(Archive &ar, const unsigned)
+		void serialize(Archive &ar, const unsigned version)
 		{
 			ar & densityCurve;
+			if (version == 2) {
+				ar & inclineCurve;
+				ar & inclineVariation;
+				ar & radiusVariation;
+				ar & gravity;
+			}
 			ar & density;
 			ar & distance;
 			ar & length;
 			ar & radiusThreshold;
 			ar & angleVariation;
-			ar & scale;
+			ar & radius;
 			ar & fork;
 			ar & forkAngle;
 			ar & noise;
@@ -156,6 +166,8 @@ namespace pg {
 			ParameterNode *) const;
 		ParameterNode *getNode(const std::string &, size_t,
 			ParameterNode *) const;
+		void updateFields(std::function<void(StemData *)>,
+			ParameterNode *);
 
 #ifdef PG_SERIALIZE
 		friend class boost::serialization::access;
@@ -180,7 +192,14 @@ namespace pg {
 		ParameterNode *get(std::string name) const;
 		bool remove(std::string name);
 		std::vector<std::string> getNames() const;
+		void updateFields(std::function<void(StemData *)> function);
+		void updateField(std::function<void(StemData *)> function,
+			std::string name);
 	};
 }
+
+#ifdef PG_SERIALIZE
+BOOST_CLASS_VERSION(pg::StemData, 2)
+#endif
 
 #endif

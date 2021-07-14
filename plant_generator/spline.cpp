@@ -55,6 +55,10 @@ void Spline::setDefault(unsigned type)
 		this->controls.push_back(Vec3(1.0f, 1.0f, 0.0f));
 		this->degree = 1;
 		break;
+	case 2:
+		this->controls.push_back(Vec3(0.0f, 0.5f, 0.0f));
+		this->controls.push_back(Vec3(1.0f, 1.0f, 0.0f));
+		this->degree = 1;
 	}
 }
 

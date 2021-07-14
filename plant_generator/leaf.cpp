@@ -102,7 +102,7 @@ void Leaf::setRotation(const LeafData &data, float position, const Path &path,
 
 	/* Pull the leaf downward or upward. */
 	v = rotate(rotation, y);
-	mix = data.verticalPull;
+	mix = data.gravity;
 	rotation = rotateIntoVecQ(v, lerp(v, z, mix)) * rotation;
 
 	this->rotation = normalize(rotation);
