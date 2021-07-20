@@ -30,17 +30,12 @@ class SharedResources : public QObject, protected QOpenGLFunctions_4_3_Core {
 
 public:
 	enum Shader {
-		Solid,
-		Wireframe,
-		Material,
-		Outline,
-		DynamicSolid,
-		DynamicWireframe,
-		DynamicMaterial,
-		DynamicOutline,
-		Point,
-		Line,
-		Flat,
+		Solid, DynamicSolid,
+		Wireframe, DynamicWireframe,
+		Material, DynamicMaterial,
+		Outline, DynamicOutline,
+		Shadow, DynamicShadow,
+		Point, Line, Flat,
 		ShaderQuantity
 	};
 	enum Texture {

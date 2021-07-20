@@ -37,5 +37,6 @@ QFormLayout *createForm(QBoxLayout *layout);
 QWidget *createCBField(ComboBox *cb, QPushButton *b1, QPushButton *b2);
 QWidget *createLEField(QLineEdit *le, QPushButton *b1, QPushButton *b2);
 QString createUniqueName(const char *prefix, QComboBox *names);
+void clearFocusIfDescendant(QWidget *widget);
 
 #endif

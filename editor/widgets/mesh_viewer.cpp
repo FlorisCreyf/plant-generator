@@ -28,7 +28,6 @@ MeshViewer::MeshViewer(SharedResources *shared, QWidget *parent) :
 {
 	setFocusPolicy(Qt::StrongFocus);
 	setMouseTracking(true);
-
 	this->camera.setTarget(Vec3(0.0f, 0.0f, 0.0f));
 	this->camera.setOrientation(0.0f, 0.0f);
 	this->camera.setDistance(1.2f);
@@ -64,11 +63,11 @@ void MeshViewer::paintGL()
 	glClearDepth(0.0f);
 	glClearColor(0.32f, 0.32f, 0.32f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	Mat4 vp = this->camera.getVP();
+	Mat4 ct = this->camera.getTransform();
 	Vec3 cp = this->camera.getPosition();
 	this->buffer.use();
 	glUseProgram(this->shared->getShader(SharedResources::Solid));
-	glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
+	glUniformMatrix4fv(0, 1, GL_FALSE, &ct[0][0]);
 	glUniform3f(1, cp.x, cp.y, cp.z);
 	glDrawElements(GL_TRIANGLES, this->count, GL_UNSIGNED_INT, 0);
 	glFlush();

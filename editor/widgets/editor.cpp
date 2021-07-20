@@ -40,6 +40,7 @@
 using pg::Mat4;
 using pg::Vec3;
 using pg::Stem;
+using pg::Material;
 
 const float pi = 3.14159265359f;
 
@@ -97,25 +98,22 @@ void Editor::initializeGL()
 	initializeOpenGLFunctions();
 	glEnable(GL_MULTISAMPLE);
 	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_STENCIL_TEST);
-	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 	glEnable(GL_LINE_SMOOTH);
 	glDepthMask(GL_TRUE);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_PRIMITIVE_RESTART);
 	glPrimitiveRestartIndex(Geometry::primitiveReset);
-	createFramebuffers();
+	createFramebuffers(true);
 	this->shared->initialize();
 	initializeBuffers();
 	change();
 }
 
-void Editor::createFramebuffers()
+void Editor::createFramebuffers(bool initial)
 {
 	glGenFramebuffers(1, &this->msSilhouetteFramebuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, this->msSilhouetteFramebuffer);
-
 	glGenTextures(1, &this->msSilhouetteMap);
 	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, this->msSilhouetteMap);
 	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 4, GL_RGB,
@@ -128,7 +126,7 @@ void Editor::createFramebuffers()
 	glGenTextures(1, &this->silhouetteMap);
 	glBindTexture(GL_TEXTURE_2D, this->silhouetteMap);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width(), height(), 0, GL_RGB,
-		GL_UNSIGNED_BYTE, NULL);
+		GL_UNSIGNED_BYTE, 0);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -137,7 +135,26 @@ void Editor::createFramebuffers()
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
 		GL_TEXTURE_2D, this->silhouetteMap, 0);
 
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	if (!initial)
+		return;
+
+	this->shadowMapSize = 2048;
+	glGenFramebuffers(1, &this->shadowFramebuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, this->shadowFramebuffer);
+	glGenTextures(1, &this->shadowMap);
+	glBindTexture(GL_TEXTURE_2D, this->shadowMap);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, this->shadowMapSize,
+		this->shadowMapSize, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	GLfloat border[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+		GL_TEXTURE_2D, this->shadowMap, 0);
+	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
 }
 
 void Editor::deleteFramebuffers()
@@ -470,7 +487,7 @@ void Editor::resizeGL(int width, int height)
 	updateCamera(width, height);
 	this->translationAxes.setScale(600.0f / height);
 	deleteFramebuffers();
-	createFramebuffers();
+	createFramebuffers(false);
 }
 
 void Editor::updateCamera(int width, int height)
@@ -489,13 +506,13 @@ void Editor::updateCamera(int width, int height)
 
 void Editor::paintGL()
 {
-	Mat4 projection = this->camera.getVP();
+	Mat4 projection = this->camera.getTransform();
 	Vec3 position = this->camera.getPosition();
 
 	glDepthFunc(GL_GEQUAL);
 	glClearDepth(0.0f);
 	glClearColor(0.22f, 0.23f, 0.24f, 1.0);
-	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	/* Paint the grid. */
 	if (showingVolume())
@@ -510,6 +527,8 @@ void Editor::paintGL()
 
 	/* Paint the plant. */
 	this->plantBuffer.use();
+	if (isAnimating())
+		updateJoints();
 	if (this->shader == SharedResources::Solid)
 		paintSolid(projection, position);
 	else if (this->shader == SharedResources::Wireframe)
@@ -531,17 +550,16 @@ void Editor::paintGL()
 		glUseProgram(this->shared->getShader(SharedResources::Line));
 		glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
 		glUniform2f(1, QWidget::width(), QWidget::height());
-
 		segment = this->path.getLineSegment();
 		GLvoid *offset = (GLvoid *)(segment.istart * sizeof(unsigned));
 		glDrawElements(GL_LINE_STRIP, segment.icount,
 			GL_UNSIGNED_INT, offset);
 
 		auto texture = this->shared->getTexture(shared->DotTexture);
+		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture);
 		glUseProgram(this->shared->getShader(SharedResources::Point));
 		glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
-
 		segment = this->path.getPointSegment();
 		glDrawArrays(GL_POINTS, segment.pstart, segment.pcount);
 
@@ -573,7 +591,7 @@ void Editor::paintOutline(const Mat4 &projection)
 	glClearDepth(0.0f);
 	glDepthFunc(GL_GEQUAL);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUniform1i(2, 0);
 	for (size_t i = 0; i < this->selections.size(); i++) {
 		size_t index = this->selections[i].indexStart;
@@ -597,8 +615,6 @@ void Editor::paintOutline(const Mat4 &projection)
 	size = this->segments.plane.icount;
 	glDrawElements(GL_TRIANGLES, size, GL_UNSIGNED_INT, offset);
 
-	glActiveTexture(GL_TEXTURE0);
-
 	/* Clear the alpha channel to an opaque value. */
 	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_TRUE);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -613,7 +629,6 @@ void Editor::paintWire(const Mat4 &projection)
 	if (isAnimating()) {
 		auto type = SharedResources::DynamicWireframe;
 		glUseProgram(this->shared->getShader(type));
-		updateJoints();
 	} else {
 		auto type = SharedResources::Wireframe;
 		glUseProgram(this->shared->getShader(type));
@@ -632,7 +647,6 @@ void Editor::paintSolid(const Mat4 &projection, const Vec3 &position)
 	if (isAnimating()) {
 		auto type = SharedResources::DynamicSolid;
 		glUseProgram(this->shared->getShader(type));
-		updateJoints();
 	} else
 		glUseProgram(this->shared->getShader(SharedResources::Solid));
 
@@ -644,44 +658,71 @@ void Editor::paintSolid(const Mat4 &projection, const Vec3 &position)
 
 void Editor::paintMaterial(const Mat4 &projection, const Vec3 &position)
 {
-	GLuint program;
+	Camera light;
+	light.setOrientation(pi*0.3f, pi*0.1);
+	light.setDistance(15.0f);
+	light.setTarget(Vec3(0.0f, 0.0f, 5.0f));
+	light.setOrthographic(Vec3(1.0f, 1.0f, 0.0f),
+		Vec3(-1.0f, -1.0f, -50.0f));
+
+	glBindFramebuffer(GL_FRAMEBUFFER, this->shadowFramebuffer);
+	glViewport(0, 0, this->shadowMapSize, this->shadowMapSize);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	if (isAnimating()) {
+		auto type = SharedResources::DynamicShadow;
+		glUseProgram(this->shared->getShader(type));
+	} else {
+		auto type = SharedResources::Shadow;
+		glUseProgram(this->shared->getShader(type));
+	}
+	Mat4 lightTransform = light.getTransform();
+	Vec3 lightPosition = light.getPosition();
+	glUniformMatrix4fv(0, 1, GL_FALSE, &lightTransform[0][0]);
+	glUniform3f(1, lightPosition.x, lightPosition.y, lightPosition.z);
+	for (size_t i = 0, start = 0; i < this->mesh.getMeshCount(); i++) {
+		unsigned index = this->mesh.getMaterialIndex(i);
+		ShaderParams p = this->shared->getMaterial(index);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, p.getTexture(Material::Opacity));
+		GLsizei size = this->mesh.getIndices(i)->size();
+		GLvoid *ptr = (GLvoid *)start;
+		glDrawElements(GL_TRIANGLES, size, GL_UNSIGNED_INT, ptr);
+		start += this->mesh.getIndices(i)->size() * sizeof(unsigned);
+	}
+
+	GLuint defaultFramebuffer = this->context()->defaultFramebufferObject();
+	glBindFramebuffer(GL_FRAMEBUFFER, defaultFramebuffer);
+	glViewport(0, 0, width(), height());
 	if (isAnimating()) {
 		auto type = SharedResources::DynamicMaterial;
-		program = this->shared->getShader(type);
-		glUseProgram(program);
-		updateJoints();
+		glUseProgram(this->shared->getShader(type));
 	} else {
 		auto type = SharedResources::Material;
-		program = this->shared->getShader(type);
-		glUseProgram(program);
+		glUseProgram(this->shared->getShader(type));
 	}
 	glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
 	glUniform3f(1, position.x, position.y, position.z);
-
-	size_t start = 0;
-	for (size_t i = 0; i < this->mesh.getMeshCount(); i++) {
+	glUniform3f(5, lightPosition.x, lightPosition.y, lightPosition.z);
+	glUniform1i(6, true);
+	glUniformMatrix4fv(4, 1, GL_FALSE, &lightTransform[0][0]);
+	glActiveTexture(GL_TEXTURE4);
+	glBindTexture(GL_TEXTURE_2D, this->shadowMap);
+	for (size_t i = 0, start = 0; i < this->mesh.getMeshCount(); i++) {
 		unsigned index = this->mesh.getMaterialIndex(i);
-		ShaderParams params = this->shared->getMaterial(index);
-		pg::Material material = params.getMaterial();
-
+		ShaderParams p = this->shared->getMaterial(index);
+		Material material = p.getMaterial();
 		float shininess = material.getShininess();
 		Vec3 ambient = material.getAmbient();
 		glUniform3f(2, ambient.x, ambient.y, ambient.z);
 		glUniform1f(3, shininess);
-
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D,
-			params.getTexture(pg::Material::Albedo));
+		glBindTexture(GL_TEXTURE_2D, p.getTexture(Material::Albedo));
 		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D,
-			params.getTexture(pg::Material::Opacity));
+		glBindTexture(GL_TEXTURE_2D, p.getTexture(Material::Opacity));
 		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D,
-			params.getTexture(pg::Material::Specular));
+		glBindTexture(GL_TEXTURE_2D, p.getTexture(Material::Specular));
 		glActiveTexture(GL_TEXTURE3);
-		glBindTexture(GL_TEXTURE_2D,
-			params.getTexture(pg::Material::Normal));
-
+		glBindTexture(GL_TEXTURE_2D, p.getTexture(Material::Normal));
 		GLsizei size = this->mesh.getIndices(i)->size();
 		GLvoid *ptr = (GLvoid *)start;
 		glDrawElements(GL_TRIANGLES, size, GL_UNSIGNED_INT, ptr);
@@ -720,8 +761,7 @@ void Editor::paintAxes(const Mat4 &projection, const Vec3 &position)
 		Mat4 mat = this->translationAxes.getTransformation(distance);
 		mat = projection * mat;
 		glUniformMatrix4fv(0, 1, GL_FALSE, &mat[0][0]);
-		glDrawArrays(GL_LINES,
-			this->segments.axesLines.pstart,
+		glDrawArrays(GL_LINES, this->segments.axesLines.pstart,
 			this->segments.axesLines.pcount);
 		unsigned index = this->segments.axesArrows.istart;
 		GLvoid *offset = (GLvoid *)(index * sizeof(unsigned));
@@ -949,7 +989,7 @@ void Editor::load(const char *filename)
 	} else
 		this->scene.plant.setDefault();
 
-	for (const pg::Material &material : this->scene.plant.getMaterials())
+	for (const Material &material : this->scene.plant.getMaterials())
 		this->shared->addMaterial(ShaderParams(material));
 }
 

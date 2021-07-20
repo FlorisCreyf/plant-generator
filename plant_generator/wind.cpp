@@ -59,22 +59,20 @@ int Wind::generateJoint(Stem *stem, int id, int pid, size_t &count)
 	const Path &path = stem->getPath();
 	const Spline &spline = path.getSpline();
 	const std::vector<Vec3> &controls = spline.getControls();
-
 	const int degree = spline.getDegree();
 	const size_t controlCount = controls.size() - 1;
 	float distance = 0.0f;
 
-	{
-		size_t start = path.toPathIndex(0);
-		size_t end = path.toPathIndex(degree + degree);
-		distance += path.getDistance(start, end);
-		stem->addJoint(Joint(++id, pid, start));
-		pid = id;
-		id = generateJoints(stem, id, pid, ++count, distance);
-	}
+	size_t start = path.toPathIndex(0);
+	size_t end = path.toPathIndex(degree + degree);
+	distance += path.getDistance(start, end);
+	stem->addJoint(Joint(++id, pid, start));
+	pid = id;
+	id = generateJoints(stem, id, pid, ++count, distance);
+
 	for (size_t i = degree + degree; i < controlCount; i += degree) {
-		size_t start = path.toPathIndex(i);
-		size_t end = path.toPathIndex(i + degree);
+		start = path.toPathIndex(i);
+		end = path.toPathIndex(i + degree);
 		distance += path.getDistance(start, end);
 		stem->addJoint(Joint(++id, pid, start));
 		pid = id;

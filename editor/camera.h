@@ -47,7 +47,7 @@ public:
 
 	pg::Vec3 getPosition() const;
 	pg::Vec3 getDirection() const;
-	pg::Mat4 getVP() const;
+	pg::Mat4 getTransform() const;
 	pg::Ray getRay(int x, int y) const;
 	pg::Vec3 toScreenSpace(pg::Vec3 point) const;
 	pg::Vec3 getFar() const;
@@ -73,11 +73,11 @@ private:
 	int winHeight;
 	bool perspective;
 
-	pg::Mat4 getOrthographicMatrix() const;
+	pg::Mat4 getOrthographic() const;
 	pg::Mat4 getInverseOrthographic() const;
-	pg::Mat4 getPerspectiveMatrix() const;
+	pg::Mat4 getPerspective() const;
 	pg::Mat4 getInversePerspective() const;
-	pg::Mat4 getViewMatrix() const;
+	pg::Mat4 getView() const;
 	pg::Mat4 getInverseView() const;
 	pg::Ray getOrthographicRay(int x, int y) const;
 	pg::Ray getPerspectiveRay(int x, int y) const;

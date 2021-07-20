@@ -114,3 +114,12 @@ QString createUniqueName(const char *prefix, QComboBox *names)
 			return name;
 	}
 }
+
+void clearFocusIfDescendant(QWidget *widget)
+{
+	QWidget *focusWidget = QApplication::focusWidget();
+	while (focusWidget && focusWidget != widget)
+		focusWidget = focusWidget->parentWidget();
+	if (focusWidget == widget)
+		QApplication::focusWidget()->clearFocus();
+}

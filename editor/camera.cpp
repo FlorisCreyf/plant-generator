@@ -160,15 +160,15 @@ Vec3 Camera::getDirection() const
 	return pg::normalize(this->target - getPosition());
 }
 
-Mat4 Camera::getVP() const
+Mat4 Camera::getTransform() const
 {
 	if (this->perspective)
-		return getPerspectiveMatrix() * getViewMatrix();
+		return getPerspective() * getView();
 	else
-		return getOrthographicMatrix() * getViewMatrix();
+		return getOrthographic() * getView();
 }
 
-Mat4 Camera::getViewMatrix() const
+Mat4 Camera::getView() const
 {
 	float cx = std::cos(-this->xAngle);
 	float sx = std::sin(-this->xAngle);
@@ -206,7 +206,7 @@ void Camera::setOrthographic(Vec3 near, Vec3 far)
 	this->far = far;
 }
 
-Mat4 Camera::getOrthographicMatrix() const
+Mat4 Camera::getOrthographic() const
 {
 	Vec3 near = getNear();
 	Vec3 far = getFar();
@@ -239,7 +239,7 @@ void Camera::setPerspective(float fovy, float near, float far, float aspect)
 	this->far = Vec3(aspect, fovy, far);
 }
 
-Mat4 Camera::getPerspectiveMatrix() const
+Mat4 Camera::getPerspective() const
 {
 	float aspect = this->near.x;
 	float fovy = this->near.y;
@@ -273,8 +273,8 @@ Mat4 Camera::getInversePerspective() const
 
 Vec3 Camera::toScreenSpace(Vec3 point) const
 {
-	Mat4 vp = getVP();
-	Vec4 v = vp * pg::toVec4(point, 1.0f);
+	Mat4 transform = getTransform();
+	Vec4 v = transform * pg::toVec4(point, 1.0f);
 	point = pg::toVec3(v);
 	point.x /= v.w;
 	point.y /= v.w;

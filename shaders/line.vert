@@ -7,7 +7,7 @@ layout(location = 3) in float tangentScale;
 layout(location = 4) in vec2 uv;
 layout(location = 5) in vec2 indices;
 layout(location = 6) in vec2 weights;
-layout(location = 0) uniform mat4 vp;
+layout(location = 0) uniform mat4 transform;
 
 out VertexData {
 	vec4 color;
@@ -16,5 +16,5 @@ out VertexData {
 void main()
 {
 	vertexOut.color = vec4(normal, 1.0);
-	gl_Position = vp * vec4(position, 1.0);
+	gl_Position = transform * vec4(position, 1.0);
 }

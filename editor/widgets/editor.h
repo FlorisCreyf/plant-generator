@@ -106,6 +106,9 @@ private:
 	GLuint msSilhouetteMap;
 	GLuint silhouetteFramebuffer;
 	GLuint silhouetteMap;
+	GLuint shadowFramebuffer;
+	GLuint shadowMap;
+	int shadowMapSize;
 
 	std::vector<pg::Segment> selections;
 	pg::Scene scene;
@@ -124,7 +127,7 @@ private:
 
 	void addSelectionToHistory(SaveSelection *);
 	void createToolBar();
-	void createFramebuffers();
+	void createFramebuffers(bool);
 	void deleteFramebuffers();
 	void exitCommand(bool);
 	void initializeGL();

@@ -27,15 +27,12 @@ void main()
 	gl_Position = vec4(p0.xy + offset*p0.w, p0.z, p0.w);
 	vertexOut.color = vertexIn[1].color;
 	EmitVertex();
-
 	gl_Position = vec4(p0.xy - offset*p0.w, p0.z, p0.w);
 	vertexOut.color = vertexIn[1].color;
 	EmitVertex();
-
 	gl_Position = vec4(p1.xy + offset*p1.w, p1.z, p1.w);
 	vertexOut.color = vertexIn[1].color;
 	EmitVertex();
-
 	gl_Position = vec4(p1.xy - offset*p1.w, p1.z, p1.w);
 	vertexOut.color = vertexIn[1].color;
 	EmitVertex();

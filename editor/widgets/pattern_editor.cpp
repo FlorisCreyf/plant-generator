@@ -462,8 +462,7 @@ void PatternEditor::setLeafData(LeafData data)
 void PatternEditor::setEnabled(bool enable)
 {
 	/* Prevent the scrollbar from jumping to the next focused widget. */
-	if (QApplication::focusWidget())
-		QApplication::focusWidget()->clearFocus();
+	clearFocusIfDescendant(this);
 
 	this->nodeValue->setEnabled(enable);
 	this->childButton->setEnabled(enable);

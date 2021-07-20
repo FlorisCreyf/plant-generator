@@ -127,7 +127,7 @@ The branch collar is a swelling at the base of the stem that increases the struc
 
 A cone intersection test (for tapered cylinders) can be used to fuse one stem to the other, but this is only ideal if the cross sections are guaranteed to be circular. Triangle intersection tests will work for all shapes but with the cost of worse performance. To increase performance, intersections should start at the the location of the stem and move outwards towards the top and bottom of the parent stem. If triangle intersections only pass when a ray intersects with the front sides of triangles, then the first intersection is likely to be the correct one.
 
-The normals along the collar are interpolated using a piecewise function that resembles a sigmoid function, but such that $ f: \left[ 0, 1 \right] \rightarrow \left[ 0, 1 \right] $.
+Interpolating normals linearly causes a sharp junction where the collar ends. To provide a smoother junction, the normals along the collar are interpolated using a piecewise function that resembles a sigmoid function, but such that $ f: \left[ 0, 1 \right] \rightarrow \left[ 0, 1 \right] $.
 
 \[ f(x) =
 \begin{cases}
@@ -349,5 +349,17 @@ The history maintains a list of past and future commands. The timestamps within 
 \subsection{Shaders}
 \subsubsection{Outlines}
 Selected objects are indicated with an outline around their silhouette. The outline is achieved in two passes. The first pass draws the selected objects offscreen in solid white onto a black background. This image is stored in a texture for the second pass. During the second pass, the fragment shader refers to this texture to determine if a fragment is close to the object's silhouette edge. Even though the fragment shader needs to scan and analyze the texture, it needs to avoid branch divergence in order to keep performance acceptable.
+
+The outline will be aliased if no precautions are taken. To prevent aliasing, the silhouette is rendered to a mutlisample texture. The multisample texture is resolved by blitting it to a regular framebuffer.
+
+\subsubsection{Animation}
+
+Each vertex stores several joint indices and weights. Transformation matrices are generated for each joint and each keyframe. A timer is used to select two keyframes and to determine how to interpolate the keyframes. The vertex shader retrieves the interpolated transformations from a shader storage buffer (SSO) using the indices stored in each of the vertices. The weights indicate how transformations should be blended together.
+
+The wind generator adds joints to each stem and simultaneously constructs an animation object to store transformations for each joint. The mesh is then regenerated so that the vertices contain the correct joint indices. The joint hierarchy could be stored in a separate tree structure within the animation object, but it is instead defined directly in the plant object to avoid maintaining two parallel tree structures.
+
+\subsubsection{Shadows}
+
+A separate framebuffer is used to store depth information from the perspective of a light source. When the scene is rendered, the vertices are transformed by both the light and camera transformations. The fragment shader discards fragments based on the camera transformation. Additionally, it uses the depth texture of the light source and the z values of the light transformed vertices to compare currently discarded fragments to previously discarded fragments.
 
 \end{document}

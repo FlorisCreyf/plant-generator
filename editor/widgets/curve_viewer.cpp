@@ -174,23 +174,22 @@ void CurveViewer::paintGL()
 	glClearDepth(1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	Mat4 vp = this->camera.getVP();
-	GLuint texture = this->shared->getTexture(SharedResources::DotTexture);
 
 	this->buffer.use();
 	glUseProgram(this->shared->getShader(SharedResources::Flat));
-	glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
+	GLuint texture = this->shared->getTexture(SharedResources::DotTexture);
+	Mat4 transform = this->camera.getTransform();
+	glUniformMatrix4fv(0, 1, GL_FALSE, &transform[0][0]);
 
 	auto size = sizeof(unsigned);
 	GLvoid *start = (GLvoid *)(this->plane.istart * size);
 	GLsizei count = this->plane.icount;
 	glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, start);
-
 	glDrawArrays(GL_LINES, this->grid.pstart, this->grid.pcount);
 
 	if (this->path.getLineSegment().pcount) {
 		glUseProgram(this->shared->getShader(SharedResources::Line));
-		glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
+		glUniformMatrix4fv(0, 1, GL_FALSE, &transform[0][0]);
 		glUniform2f(1, QWidget::width(), QWidget::height());
 
 		Geometry::Segment segment = this->path.getLineSegment();
@@ -201,7 +200,7 @@ void CurveViewer::paintGL()
 		segment = this->path.getPointSegment();
 		glBindTexture(GL_TEXTURE_2D, texture);
 		glUseProgram(this->shared->getShader(SharedResources::Point));
-		glUniformMatrix4fv(0, 1, GL_FALSE, &vp[0][0]);
+		glUniformMatrix4fv(0, 1, GL_FALSE, &transform[0][0]);
 		glDrawArrays(GL_POINTS, segment.pstart, segment.pcount);
 	}
 

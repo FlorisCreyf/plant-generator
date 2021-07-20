@@ -21,6 +21,7 @@
 
 using pg::Vec3;
 using pg::Mat4;
+using pg::Material;
 
 MaterialViewer::MaterialViewer(SharedResources *shared, QWidget *parent) :
 	QOpenGLWidget(parent), shared(shared), materialIndex(0)
@@ -84,35 +85,34 @@ void MaterialViewer::paintGL()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	ShaderParams params = this->shared->getMaterial(this->materialIndex);
-	pg::Material material = params.getMaterial();
-
 	float aspect = params.getMaterial().getRatio();
+	Material material = params.getMaterial();
+	float shininess = material.getShininess();
+	Vec3 ambient = material.getAmbient();
 	Mat4 scale;
 	if (aspect < 1.0f)
 		scale = pg::scale(Vec3(1.0f, 1.0f/aspect, 1.0f));
 	else
 		scale = pg::scale(Vec3(aspect, 1.0f, 1.0f));
+	Mat4 projection = scale * this->camera.getTransform();
+	Vec3 position = this->camera.getPosition();
+
 	this->buffer.use();
 	glUseProgram(this->shared->getShader(SharedResources::Material));
-
-	Mat4 projection = scale * this->camera.getVP();
-	Vec3 position = this->camera.getPosition();
 	glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
 	glUniform3f(1, position.x, position.y, position.z);
-
-	float shininess = material.getShininess();
-	Vec3 ambient = material.getAmbient();
 	glUniform3f(2, ambient.x, ambient.y, ambient.z);
 	glUniform1f(3, shininess);
-
+	glUniform3f(5, 0.0f, 0.0f, 1.0f);
+	glUniform1i(6, false);
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, params.getTexture(pg::Material::Albedo));
+	glBindTexture(GL_TEXTURE_2D, params.getTexture(Material::Albedo));
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, params.getTexture(pg::Material::Opacity));
+	glBindTexture(GL_TEXTURE_2D, params.getTexture(Material::Opacity));
 	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D, params.getTexture(pg::Material::Specular));
+	glBindTexture(GL_TEXTURE_2D, params.getTexture(Material::Specular));
 	glActiveTexture(GL_TEXTURE3);
-	glBindTexture(GL_TEXTURE_2D, params.getTexture(pg::Material::Normal));
+	glBindTexture(GL_TEXTURE_2D, params.getTexture(Material::Normal));
 
 	auto size = sizeof(unsigned);
 	GLvoid *start = (GLvoid *)(this->planeSegment.istart * size);
