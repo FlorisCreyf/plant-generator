@@ -46,7 +46,7 @@ void Spline::setDefault(unsigned type)
 	case 0:
 		this->controls.push_back(Vec3(0.0f, 1.0f, 0.0f));
 		this->controls.push_back(Vec3(0.0f, 0.25f, 0.0f));
-		this->controls.push_back(Vec3(1.0f, 0.5f, 0.0f));
+		this->controls.push_back(Vec3(1.0f, 0.75f, 0.0f));
 		this->controls.push_back(Vec3(1.0f, 0.0f, 0.0f));
 		this->degree = 3;
 		break;
@@ -56,9 +56,25 @@ void Spline::setDefault(unsigned type)
 		this->degree = 1;
 		break;
 	case 2:
+		this->controls.push_back(Vec3(0.0f, 0.0f, 0.0f));
+		this->controls.push_back(Vec3(1.0f, 0.0f, 0.0f));
+		this->degree = 1;
+		break;
+	case 3:
+		this->controls.push_back(Vec3(0.0f, 0.0f, 0.0f));
+		this->controls.push_back(Vec3(1.0f, 1.0f, 0.0f));
+		this->degree = 1;
+		break;
+	case 4:
+		this->controls.push_back(Vec3(0.0f, 1.0f, 0.0f));
+		this->controls.push_back(Vec3(1.0f, 0.0f, 0.0f));
+		this->degree = 1;
+		break;
+	case 5:
 		this->controls.push_back(Vec3(0.0f, 0.5f, 0.0f));
 		this->controls.push_back(Vec3(1.0f, 1.0f, 0.0f));
 		this->degree = 1;
+		break;
 	}
 }
 

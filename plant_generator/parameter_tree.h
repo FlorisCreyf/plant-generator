@@ -75,6 +75,7 @@ namespace pg {
 	struct StemData {
 		Spline densityCurve;
 		Spline inclineCurve;
+		Spline lengthCurve;
 		float density;
 		float distance;
 		float length;
@@ -82,12 +83,15 @@ namespace pg {
 		float radiusThreshold;
 		float inclineVariation;
 		float radiusVariation;
+		float pointDensity;
 		float gravity;
 		float radius;
 		float fork;
 		float forkAngle;
+		float forkScale;
 		float noise;
-		unsigned seed;
+		int maxDepth;
+		int seed;
 		LeafData leaf;
 
 		StemData();
@@ -99,11 +103,17 @@ namespace pg {
 		void serialize(Archive &ar, const unsigned version)
 		{
 			ar & densityCurve;
-			if (version == 2) {
+			if (version >= 2) {
 				ar & inclineCurve;
 				ar & inclineVariation;
 				ar & radiusVariation;
 				ar & gravity;
+			}
+			if (version >= 3) {
+				ar & lengthCurve;
+				ar & pointDensity;
+				ar & forkScale;
+				ar & maxDepth;
 			}
 			ar & density;
 			ar & distance;
@@ -199,7 +209,7 @@ namespace pg {
 }
 
 #ifdef PG_SERIALIZE
-BOOST_CLASS_VERSION(pg::StemData, 2)
+BOOST_CLASS_VERSION(pg::StemData, 3)
 #endif
 
 #endif

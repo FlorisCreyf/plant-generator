@@ -66,7 +66,7 @@ namespace pg {
 		/** Returns the index of the center point of the insertion */
 		int insert(unsigned index, Vec3 point);
 		void remove(unsigned index);
-		/* Changes the degree and modifies the spline. */
+		/** Changes the degree and modifies the spline. */
 		void adjust(int degree);
 		void move(unsigned index, Vec3 location, bool parallel);
 		void parallelize(unsigned index);

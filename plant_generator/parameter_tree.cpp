@@ -30,7 +30,8 @@ GeneratorState::GeneratorState() : concentration(0.0f), node(0)
 
 StemData::StemData() :
 	densityCurve(1),
-	inclineCurve(2),
+	inclineCurve(5),
+	lengthCurve(1),
 	density(0.0f),
 	distance(0.0f),
 	length(60.0f),
@@ -38,11 +39,15 @@ StemData::StemData() :
 	radiusThreshold(0.01f),
 	inclineVariation(0.0f),
 	radiusVariation(0.1f),
-	gravity(0.1f),
+	pointDensity(1.0f),
+	gravity(0.0f),
 	radius(1.0f),
 	fork(0.0f),
 	forkAngle(0.5f),
-	noise(0.05f)
+	forkScale(0.8f),
+	noise(0.05f),
+	maxDepth(4),
+	seed(0)
 {
 
 }

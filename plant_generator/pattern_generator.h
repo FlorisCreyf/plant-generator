@@ -28,6 +28,7 @@ namespace pg {
 		};
 
 		Plant *plant;
+		int maxDepth;
 		ParameterTree parameterTree;
 		std::mt19937 mt;
 
@@ -40,10 +41,9 @@ namespace pg {
 		Vec3 getForkDirection(Stem *, float, const StemData &);
 		float addStems(Stem *, float, float, const ParameterNode *);
 		float getCollarLength(Stem *, Vec3);
-		float setPath(Stem *, Vec3, float, const StemData &);
-		float bifurcatePath(Stem *, int, int, const StemData &);
+		float setPath(Stem *, float, Vec3, float, const StemData &);
+		float bifurcatePath(Stem *, float, const StemData &);
 		void addLeaves(Stem *, Length, LeafData);
-		bool occurs(float);
 
 	public:
 		PatternGenerator(Plant *plant);

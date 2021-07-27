@@ -89,22 +89,21 @@ Segment Mesh::addStem(Stem *stem, State &state, State parentState, bool isFork)
 	state.segment.vertexCount -= state.segment.vertexStart;
 	state.segment.indexCount = this->indices[state.mesh].size();
 	state.segment.indexCount -= state.segment.indexStart;
-	this->stemSegments[state.mesh].emplace(stem, state.segment);
 	addLeaves(stem, state);
 
-	/* The parent stem finishes generating both forks and will generate the
-	child stems for this stem. */
+	if (fork[0])
+		addForks(fork, state);
 	if (!isFork)
+		/* The parent stem finishes generating both forks and will
+		generate the child stems for this stem. */
 		addChildStems(stem, fork, state);
+
 	return state.segment;
 }
 
 void Mesh::addChildStems(Stem *stem, Stem *fork[2], State &state)
 {
-	if (fork[0])
-		if (!addForks(fork, state))
-			fork[0] = fork[1] = nullptr;
-
+	this->stemSegments[state.mesh].emplace(stem, state.segment);
 	Stem *child = stem->getChild();
 	while (child) {
 		if (fork[0] != child && fork[1] != child) {
@@ -125,8 +124,7 @@ size_t getSectionCount(Stem *stem, Stem *fork)
 		return path.getSize();
 }
 
-void Mesh::addSections(State &state, Segment parentSegment,
-	bool isFork, Stem *fork)
+void Mesh::addSections(State &state, Segment parent, bool isFork, Stem *fork)
 {
 	Stem *stem = state.segment.stem;
 	state.prevIndex = this->vertices[state.mesh].size();
@@ -140,7 +138,7 @@ void Mesh::addSections(State &state, Segment parentSegment,
 		state.texOffset = 0.0f;
 		Vec2 swelling = stem->getSwelling();
 		if (swelling.x >= 1.0f && swelling.y >= 1.0f) {
-			createBranchCollar(state, parentSegment);
+			createBranchCollar(state, parent);
 			connectCollar(state, fork);
 		}
 	}
@@ -171,7 +169,7 @@ void Mesh::addSections(State &state, Segment parentSegment,
 		state.texOffset += getTextureLength(stem, section1, section2);
 		state.section = section2;
 		addSection(state, rotation, this->crossSection);
-	} else if (!fork && stem->getMinRadius() > 0)
+	} else if (!fork && stem->getMinRadius() > 0.0f)
 		capStem(stem, state.mesh, state.prevIndex);
 }
 
@@ -238,9 +236,6 @@ void Mesh::setInitialRotation(Stem *stem, State &state)
 	state.prevRotation = rotation * state.prevRotation;
 }
 
-/** A rotation for a cross section is relative to the rotation of the previous
-cross section. Twisting can occur in stems if all sections are rotated relative
-to the global axis. */
 Quat Mesh::rotateSection(State &state)
 {
 	Stem *stem = state.segment.stem;
@@ -264,7 +259,6 @@ float getAspect(const Plant *plant, const Stem *stem)
 	return aspect;
 }
 
-/** Determine a length to preserve the aspect ratio throughout the stem. */
 float Mesh::getTextureLength(Stem *stem, size_t section)
 {
 	if (section > 0) {
@@ -325,60 +319,62 @@ void Mesh::createFork(Stem *stem, State &state)
 }
 
 inline void addExtraTriangles(vector<unsigned> &indices, int edge1, int edge2,
-	int divisions, size_t start0, size_t start1, size_t start2)
+	int divisions, size_t start1, size_t start2, Segment segment)
 {
+	size_t start = segment.vertexStart;
+	size_t count = segment.vertexCount;
+	size_t start0 = start + count - divisions - 1;
+	int offset = segment.indexStart + segment.indexCount + 6;
 	int p = edge1 - 1;
 	p += divisions * (p < 0);
 	edge1 += divisions * (edge1 == 0);
-	indices.push_back(start0 + edge1);
-	indices.push_back(start2 + edge1);
-	indices.push_back(start0 + p);
+	indices[offset-6] = start0 + edge1;
+	indices[offset-5] = start2 + edge1;
+	indices[offset-4] = start0 + p;
 	edge2 += divisions * (edge2 <= 0);
 	p = edge2 - 1;
 	p += divisions * (p < 0);
-	indices.push_back(start0 + edge2);
-	indices.push_back(start1 + edge2);
-	indices.push_back(start0 + p);
+	indices[offset-3] = start0 + edge2;
+	indices[offset-2] = start1 + edge2;
+	indices[offset-1] = start0 + p;
 }
 
-void insertCurve(int sectionDivisions, int collarDivisions,
-	DVertex *v1, DVertex *v2)
+void insertCurve(int sdivisions, int cdivisions, DVertex *v1, DVertex *v2)
 {
 	Vec3 curve[2];
 	Vec3 normal[2];
 	Vec3 tangent[2];
 	Vec2 weight[2];
 	Vec2 joints[2];
-	{
-		int b = sectionDivisions * collarDivisions;
-		curve[0] = v2[0].position;
-		curve[1] = v1[b].position;
-		normal[0] = v2[0].normal;
-		normal[1] = v1[b].normal;
-		tangent[0] = v2[0].tangent;
-		tangent[1] = v1[b].tangent;
-		weight[0] = v1[b].weights;
-		weight[1] = v1[b].weights;
-		joints[0] = v1[b].indices;
-		joints[1] = v1[b].indices;
-	}
 
-	float dt = 1.0f / collarDivisions;
+	int b = sdivisions * cdivisions;
+	curve[0] = v2[0].position;
+	curve[1] = v1[b].position;
+	normal[0] = v2[0].normal;
+	normal[1] = v1[b].normal;
+	tangent[0] = v2[0].tangent;
+	tangent[1] = v1[b].tangent;
+	weight[0] = v1[b].weights;
+	weight[1] = v1[b].weights;
+	joints[0] = v1[b].indices;
+	joints[1] = v1[b].indices;
+
 	float t = 0.0f;
+	float dt = 1.0f / cdivisions;
 	size_t index = 0;
-	for (int i = 0; i < collarDivisions; i++) {
+	for (int i = 0; i < cdivisions; i++) {
 		v1[index].position = getLinearBezier(t, curve[0], curve[1]);
 		v1[index].normal = normalize(lerp(normal[0], normal[1], t));
 		v1[index].tangent = normalize(lerp(tangent[0], tangent[1], t));
 		v1[index].weights = lerp(weight[0], weight[1], t);
 		v1[index].indices = joints[0];
-		index += sectionDivisions;
+		index += sdivisions;
 		t += dt;
 	}
 }
 
-void insertCurve(int sectionDivisions, int collarDivisions, int size,
-	bool invert, DVertex *v1, DVertex *v2)
+void insertCurve(int sdivisions, int cdivisions, int size, bool invert,
+	DVertex *v1, DVertex *v2)
 {
 	Vec3 curve[3];
 	Vec3 normal[2];
@@ -386,16 +382,15 @@ void insertCurve(int sectionDivisions, int collarDivisions, int size,
 	Vec2 weight[2];
 	Vec2 joints[2];
 	size_t index = 0;
-	float ds = 1.0f / collarDivisions;
-	float dt = 0.5f / collarDivisions;
-	float s;
-	float t;
+	float ds = 1.0f / cdivisions;
+	float dt = 0.5f / cdivisions;
+	float s, t;
 
 	if (invert) {
 		t = 0.5f;
 		s = 0.0f;
 		dt = -dt;
-		const int i = sectionDivisions + size;
+		const int i = sdivisions + size;
 		curve[0] = v1[i].position;
 		curve[1] = v1[0].position;
 		normal[0] = v1[i].normal;
@@ -407,7 +402,7 @@ void insertCurve(int sectionDivisions, int collarDivisions, int size,
 	} else {
 		s = ds;
 		t = dt;
-		const int i = -sectionDivisions;
+		const int i = -sdivisions;
 		curve[0] = v1[i].position;
 		curve[1] = v1[size].position;
 		normal[0] = v1[i].normal;
@@ -417,18 +412,18 @@ void insertCurve(int sectionDivisions, int collarDivisions, int size,
 		joints[0] = v1[i].indices;
 		joints[1] = v1[size].indices;
 	}
-	curve[2] = v2[sectionDivisions+size].position;
-	normal[1] = v2[sectionDivisions+size].normal;
-	tangent[1] = v2[sectionDivisions+size].tangent;
+	curve[2] = v2[sdivisions+size].position;
+	normal[1] = v2[sdivisions+size].normal;
+	tangent[1] = v2[sdivisions+size].tangent;
 
-	for (int j = 0; j < collarDivisions; j++) {
+	for (int j = 0; j < cdivisions; j++) {
 		Vec3 p = getQuadraticBezier(t, curve[0], curve[1], curve[2]);
 		v1[index].position = p;
 		v1[index].normal = normalize(lerp(normal[0], normal[1], t));
 		v1[index].tangent = normalize(lerp(tangent[0], tangent[1], t));
 		v1[index].weights = lerp(weight[0], weight[1], s);
 		v1[index].indices = joints[0];
-		index += sectionDivisions;
+		index += sdivisions;
 		t += dt;
 		s += ds;
 	}
@@ -437,105 +432,73 @@ void insertCurve(int sectionDivisions, int collarDivisions, int size,
 	s = 0.0f;
 	index = 0;
 	weight[0] = v2[0].weights;
-	weight[1] = v2[sectionDivisions+size].weights;
+	weight[1] = v2[sdivisions+size].weights;
 	joints[0] = v2[0].indices;
-	joints[1] = v2[sectionDivisions+size].indices;
+	joints[1] = v2[sdivisions+size].indices;
 	if (invert)
 		dt = -dt;
 
-	for (int j = 0; j < collarDivisions; j++) {
+	for (int j = 0; j < cdivisions; j++) {
 		Vec3 p = getQuadraticBezier(t, curve[0], curve[1], curve[2]);
 		v2[index].position = p;
 		v2[index].normal = normalize(lerp(normal[0], normal[1], t));
 		v2[index].tangent = normalize(lerp(tangent[0], tangent[1], t));
 		v2[index].weights = lerp(weight[0], weight[1], s);
 		v2[index].indices = joints[1];
-		index += sectionDivisions;
+		index += sdivisions;
 		t += dt;
 		s += ds;
 	}
 }
 
-void setFork1UVs(Stem *stem, int sDivisions, int cDivisions, DVertex *v)
+void setBaseUVs(Stem *stem, int sdivisions, int cdivisions, DVertex *v)
 {
 	const Vec3 location = stem->getLocation();
 	const Path &path = stem->getPath();
 	const Vec3 c[2] = {
 		location + path.get(path.getSize()-path.getDivisions()-2),
-		location + path.get(path.getSize()-1)};
-	for (int i = 0, offset = 0; i < cDivisions; i++)
-		for (int j = 0; j < sDivisions; j++, offset++) {
-			Vec3 p = v[offset].position;
-			float y = project(p-c[0], normalize(c[1]-c[0]));
-			v[offset].uv.y = v[j-sDivisions].uv.y + y;
-			v[offset].uv.x = v[j-sDivisions].uv.x;
+		location + path.get(path.getSize()-1)
+	};
+	Vec3 direction = normalize(c[1]-c[0]);
+	for (int i = 0, offset = 0; i < cdivisions; i++) {
+		for (int j = 0; j < sdivisions; j++, offset++) {
+			float y = dot(v[offset].position - c[0], direction);
+			v[offset].uv.y = v[j-sdivisions].uv.y + y;
+			v[offset].uv.x = v[j-sdivisions].uv.x;
 		}
+	}
 }
 
-void setFork2UVs(Stem *stem, int sDivisions, int cDivisions, DVertex *v)
+void setForkUVs(Stem *stem, int sdivisions, int cdivisions, DVertex *v)
 {
-	const int size = getForkVertexCount(stem) + sDivisions;
+	const int size = getForkVertexCount(stem) + sdivisions;
 	const Path &path = stem->getPath();
 	const Vec3 c[2] = {
-		stem->getLocation() + path.get(0),
-		stem->getLocation() + path.get(path.getInitialDivisions()+1)};
-	for (int i = 0, offset = 0; i < cDivisions; i++)
-		for (int j = 0; j < sDivisions; j++, offset++) {
-			Vec3 p = v[offset].position;
-			float y = project(c[1]-p, normalize(c[1]-c[0]));
+		stem->getLocation(),
+		stem->getLocation() + path.get(path.getInitialDivisions()+1)
+	};
+	Vec3 direction = normalize(c[1]-c[0]);
+	for (int i = 0, offset = 0; i < cdivisions; i++) {
+		for (int j = 0; j < sdivisions; j++, offset++) {
+			float y = dot(c[1] - v[offset].position, direction);
 			v[offset].uv.y = v[size+j].uv.y - y;
 			v[offset].uv.x = v[size+j].uv.x;
 		}
+	}
 }
 
-bool Mesh::addForks(Stem *fork[2], State state)
+void Mesh::addForks(Stem *fork[2], State &state)
 {
-	const int cDivisions = fork[0]->getPath().getInitialDivisions();
-	const int sDivisions = state.segment.stem->getSectionDivisions();
-	/* The directions from the fork origin to the fork boundary. */
-	const Vec3 direction1 = normalize(fork[0]->getPath().get(cDivisions+1));
-	const Vec3 direction2 = normalize(fork[1]->getPath().get(cDivisions+1));
+	const int cd = fork[0]->getPath().getInitialDivisions();
+	const int sd = state.segment.stem->getSectionDivisions();
+	const Vec3 direction1 = normalize(fork[0]->getPath().get(cd+1));
+	const Vec3 direction2 = normalize(fork[1]->getPath().get(cd+1));
 	const size_t size = getForkVertexCount(fork[0]);
 
-	/* Generate stems. The first cross section is followed with enough
-	empty space to fill with curves. Points of the first cross sections are
-	used to compute the tangents for the curves and are overwritten. */
-	Segment segments[2];
-	State fs[2];
-	fs[0].mesh = fork[0]->getMaterial(Stem::Outer);
-	fs[0].section = cDivisions + 1;
-	fs[0].texOffset = state.texOffset;
-	fs[0].prevRotation = rotateIntoVecQ(state.prevDirection, direction1);
-	fs[0].prevRotation *= state.prevRotation;
-	fs[0].prevDirection = direction1;
-	segments[0] = addStem(fork[0], fs[0], state, true);
-	fs[1].mesh = fork[1]->getMaterial(Stem::Outer);
-	fs[1].section = cDivisions + 1;
-	fs[1].texOffset = state.texOffset;
-	fs[1].prevRotation = rotateIntoVecQ(state.prevDirection, direction2);
-	fs[1].prevRotation *= state.prevRotation;
-	fs[1].prevDirection = direction2;
-	segments[1] = addStem(fork[1], fs[1], state, true);
-
-	/* Create some pointers to make it easier to access the starting point
-	of each stem. */
-	DVertex *v1 = &this->vertices[fs[0].mesh][segments[0].vertexStart];
-	DVertex *v2 = &this->vertices[fs[1].mesh][segments[1].vertexStart];
-	DVertex *v0;
-	{
-		size_t start = state.segment.vertexStart;
-		size_t count = state.segment.vertexCount;
-		v0 = &this->vertices[state.mesh][start+count-sDivisions-1];
-	}
-
-	/* Use the fork directions to determine how the cross sections should
-	be split in half. */
-	int length = sDivisions / 2;
-	int quad = sDivisions % 4 == 0;
-	int offset;
-	int edge1;
-	int edge2;
-	int midpoint = getForkMidpoint(2*sDivisions, direction1, direction2,
+	const int quad = sd % 4 == 0;
+	int length = sd / 2;
+	int edge1, edge2, offset;
+	int midpoint = getForkMidpoint(2*sd, direction1, direction2,
 		state.prevDirection, state.prevRotation);
 
 	if ((quad && midpoint % 2 == 0) || (!quad && midpoint % 2 != 0)) {
@@ -543,27 +506,61 @@ bool Mesh::addForks(Stem *fork[2], State state)
 		offset = 1;
 		edge1 = midpoint - length / 2;
 		edge2 = edge1 + length;
-		edge1 += (edge1 < 0) * sDivisions;
-		edge2 -= (edge2 >= sDivisions) * sDivisions;
+		edge1 += (edge1 < 0) * sd;
+		edge2 -= (edge2 >= sd) * sd;
+
+		Stem *stem = state.segment.stem;
+		this->stemSegments[state.mesh].emplace(stem, state.segment);
 	} else {
 		midpoint /= 2;
 		offset = 0;
 		edge1 = midpoint - length / 2 + quad;
 		edge2 = midpoint + length / 2 + 1;
 		length -= 1;
-		edge1 += (edge1 < 0) * sDivisions;
-		edge2 -= (edge2 >= sDivisions) * sDivisions;
+		edge1 += (edge1 < 0) * sd;
+		edge2 -= (edge2 >= sd) * sd;
 
-		size_t start = state.segment.vertexStart;
-		size_t count = state.segment.vertexCount;
-		vector<unsigned> &indices = this->indices[state.mesh];
-		addExtraTriangles(indices, edge1, edge2, sDivisions,
-			start + count - sDivisions - 1,
-			segments[0].vertexStart, segments[1].vertexStart);
+		Stem *stem = state.segment.stem;
+		size_t size = this->indices[state.mesh].size() + 6;
+		this->indices[state.mesh].resize(size);
+		state.segment.indexCount += 6;
+		this->stemSegments[state.mesh].emplace(stem, state.segment);
 	}
 
-	/* Intersect the cross sections on three planes. These points are used
-	to create the tangents of the Bezier curves. */
+	Segment segments[2];
+	State fs[2];
+	fs[0].mesh = fork[0]->getMaterial(Stem::Outer);
+	fs[0].section = cd + 1;
+	fs[0].texOffset = state.texOffset;
+	fs[0].prevRotation = rotateIntoVecQ(state.prevDirection, direction1);
+	fs[0].prevRotation *= state.prevRotation;
+	fs[0].prevDirection = direction1;
+	segments[0] = addStem(fork[0], fs[0], state, true);
+	fs[1].mesh = fork[1]->getMaterial(Stem::Outer);
+	fs[1].section = cd + 1;
+	fs[1].texOffset = state.texOffset;
+	fs[1].prevRotation = rotateIntoVecQ(state.prevDirection, direction2);
+	fs[1].prevRotation *= state.prevRotation;
+	fs[1].prevDirection = direction2;
+	segments[1] = addStem(fork[1], fs[1], state, true);
+
+	if (offset == 0) {
+		state.segment.indexCount -= 6;
+		vector<unsigned> &indices = this->indices[state.mesh];
+		addExtraTriangles(indices, edge1, edge2, sd,
+			segments[0].vertexStart, segments[1].vertexStart,
+			state.segment);
+	}
+
+	DVertex *v1 = &this->vertices[fs[0].mesh][segments[0].vertexStart];
+	DVertex *v2 = &this->vertices[fs[1].mesh][segments[1].vertexStart];
+	DVertex *v0;
+	{
+		size_t start = state.segment.vertexStart;
+		size_t count = state.segment.vertexCount;
+		v0 = &this->vertices[state.mesh][start+count-sd-1];
+	}
+
 	Ray ray;
 	Plane plane1;
 	plane1.point = fork[0]->getLocation();
@@ -582,7 +579,7 @@ bool Mesh::addForks(Stem *fork[2], State state)
 
 	for (int i = 0; i <= length; i++) {
 		int k = edge1 + i;
-		k -= (k >= sDivisions) * sDivisions;
+		k -= (k >= sd) * sd;
 		ray.origin = v0[k].position;
 		ray.direction = state.prevDirection;
 		float t = intersectsPlane(ray, plane1);
@@ -593,13 +590,12 @@ bool Mesh::addForks(Stem *fork[2], State state)
 		v0[k].tangent = normalize(v0[k].tangent + v1[k].tangent);
 		v1[k].tangent = v0[k].tangent;
 		v0[k].uv.y += t;
-		v1[k].uv.y = v0[k].uv.y;
-		insertCurve(sDivisions+1, cDivisions, size, false,
-			&v0[k-size], &v1[k]);
+		v1[k].uv.y += v0[k].uv.y;
+		insertCurve(sd+1, cd, size, false, &v0[k-size], &v1[k]);
 	}
 	for (int i = offset; i <= length - offset; i++) {
 		int k = edge2 + i;
-		k -= (k >= sDivisions) * sDivisions;
+		k -= (k >= sd) * sd;
 		ray.origin = v0[k].position;
 		ray.direction = state.prevDirection;
 		float t = intersectsPlane(ray, plane2);
@@ -610,9 +606,8 @@ bool Mesh::addForks(Stem *fork[2], State state)
 		v0[k].tangent = normalize(v0[k].tangent + v2[k].tangent);
 		v2[k].tangent = v0[k].tangent;
 		v0[k].uv.y += t;
-		v2[k].uv.y = v0[k].uv.y;
-		insertCurve(sDivisions+1, cDivisions, size, false,
-			&v0[k-size], &v2[k]);
+		v2[k].uv.y += v0[k].uv.y;
+		insertCurve(sd+1, cd, size, false, &v0[k-size], &v2[k]);
 	}
 	if (offset > 0) {
 		v2[edge2].position = v1[edge2].position;
@@ -625,10 +620,10 @@ bool Mesh::addForks(Stem *fork[2], State state)
 	for (int i = offset; i <= length - offset; i++) {
 		int k1 = edge1 - 1 + offset - i;
 		int k2 = edge1 + i;
-		k1 += (k1 < 0) * sDivisions;
-		k1 -= (k1 >= sDivisions) * sDivisions;
-		k2 += (k2 < 0) * sDivisions;
-		k2 -= (k2 >= sDivisions) * sDivisions;
+		k1 += (k1 < 0) * sd;
+		k1 -= (k1 >= sd) * sd;
+		k2 += (k2 < 0) * sd;
+		k2 -= (k2 >= sd) * sd;
 		ray.origin = v1[k1].position;
 		ray.direction = direction1;
 		float t = intersectsPlane(ray, plane3);
@@ -638,16 +633,17 @@ bool Mesh::addForks(Stem *fork[2], State state)
 		v2[k2].normal = v1[k1].normal;
 		v1[k1].tangent = normalize(v1[k1].tangent + v2[k2].tangent);
 		v2[k2].tangent = v1[k1].tangent;
-		insertCurve(sDivisions+1, cDivisions, size, true,
-			&v1[k1], &v2[k2]);
+		v1[k1].uv.y += t;
+		v2[k2].uv.y += t;
+		insertCurve(sd+1, cd, size, true, &v1[k1], &v2[k2]);
 	}
-	if (offset == 1 && cDivisions > 1) {
-		insertCurve(sDivisions+1, cDivisions, &v2[edge2], &v0[edge2]);
-		insertCurve(sDivisions+1, cDivisions, &v2[edge1], &v0[edge1]);
+	if (offset == 1 && cd > 1) {
+		insertCurve(sd+1, cd, &v2[edge2], &v0[edge2]);
+		insertCurve(sd+1, cd, &v2[edge1], &v0[edge1]);
 	}
-	for (int i = 0; i < cDivisions || i == 0; i++) {
-		size_t a = i*(sDivisions+1);
-		size_t b = a + sDivisions;
+	for (int i = 0; i < cd || i == 0; i++) {
+		size_t a = i*(sd+1);
+		size_t b = a + sd;
 		v0[b-size].position = v0[a-size].position;
 		v0[b-size].normal = v0[a-size].normal;
 		v0[b-size].tangent = v0[a-size].tangent;
@@ -670,12 +666,14 @@ bool Mesh::addForks(Stem *fork[2], State state)
 		v2[b].uv.y = v2[a].uv.y;
 		v2[b].uv.x = 0.0f;
 	}
-	setFork1UVs(state.segment.stem, sDivisions+1, cDivisions, &v0[-size]);
-	setFork2UVs(fork[0], sDivisions+1, cDivisions, &v1[0]);
-	setFork2UVs(fork[1], sDivisions+1, cDivisions, &v2[0]);
-
-	if (cDivisions > 0)
+	if (cd > 0) {
+		setBaseUVs(state.segment.stem, sd+1, cd, &v0[-size]);
+		setForkUVs(fork[0], sd+1, cd, &v1[0]);
+		setForkUVs(fork[1], sd+1, cd, &v2[0]);
 		addForkTriangles(state, fs, fork, segments);
+	}
+	if (offset == 0)
+		state.segment.indexCount += 6;
 
 	for (int i = 0; i < 2; i++) {
 		Stem *childFork[2];
@@ -684,15 +682,13 @@ bool Mesh::addForks(Stem *fork[2], State state)
 			childFork[0] = childFork[1] = nullptr;
 		addChildStems(fork[i], childFork, fs[i]);
 	}
-
-	return true;
 }
 
-void Mesh::addForkTriangles(const State &state, const State fs[2],
+void Mesh::addForkTriangles(const State &state, const State forkState[2],
 	Stem *fork[2], const Segment segments[2])
 {
-	const int cDivisions = fork[0]->getPath().getInitialDivisions();
-	const int sDivisions = state.segment.stem->getSectionDivisions() + 1;
+	const int cdivisions = fork[0]->getPath().getInitialDivisions();
+	const int sdivisions = state.segment.stem->getSectionDivisions() + 1;
 	const size_t vsize = getForkVertexCount(fork[0]);
 	const size_t isize = getForkIndexCount(fork[0]);
 	const size_t istart = state.segment.indexStart;
@@ -700,31 +696,31 @@ void Mesh::addForkTriangles(const State &state, const State fs[2],
 	unsigned *indices = &this->indices[state.mesh][istart+icount-isize];
 	const size_t vstart = state.segment.vertexStart;
 	const size_t vcount = state.segment.vertexCount;
-	size_t i1 = vstart + vcount - vsize - sDivisions*2;
-	size_t i2 = i1 + sDivisions;
+	size_t i1 = vstart + vcount - vsize - sdivisions*2;
+	size_t i2 = i1 + sdivisions;
 
-	for (int i = 0; i < cDivisions; i++) {
-		indices += insertTriangleRing(i2, i1, sDivisions-1, indices);
+	for (int i = 0; i < cdivisions; i++) {
+		indices += insertTriangleRing(i2, i1, sdivisions-1, indices);
 		i1 = i2;
-		i2 += sDivisions;
+		i2 += sdivisions;
 	}
 
-	indices = &this->indices[fs[0].mesh][segments[0].indexStart];
+	indices = &this->indices[forkState[0].mesh][segments[0].indexStart];
 	i1 = segments[0].vertexStart;
-	i2 = i1 + sDivisions;
-	for (int i = 0; i < cDivisions; i++) {
-		indices += insertTriangleRing(i2, i1, sDivisions-1, indices);
+	i2 = i1 + sdivisions;
+	for (int i = 0; i < cdivisions; i++) {
+		indices += insertTriangleRing(i2, i1, sdivisions-1, indices);
 		i1 = i2;
-		i2 += sDivisions;
+		i2 += sdivisions;
 	}
 
-	indices = &this->indices[fs[1].mesh][segments[1].indexStart];
+	indices = &this->indices[forkState[1].mesh][segments[1].indexStart];
 	i1 = segments[1].vertexStart;
-	i2 = i1 + sDivisions;
-	for (int i = 0; i < cDivisions; i++) {
-		indices += insertTriangleRing(i2, i1, sDivisions-1, indices);
+	i2 = i1 + sdivisions;
+	for (int i = 0; i < cdivisions; i++) {
+		indices += insertTriangleRing(i2, i1, sdivisions-1, indices);
 		i1 = i2;
-		i2 += sDivisions;
+		i2 += sdivisions;
 	}
 }
 
@@ -787,7 +783,6 @@ void Mesh::createBranchCollar(State &state, Segment parentSegment)
 {
 	Stem *stem = state.segment.stem;
 	State originalState = state;
-
 	addSection(state, rotateSection(state), this->crossSection);
 	size_t start = this->vertices[state.mesh].size();
 	reserveBranchCollarSpace(stem, state.mesh);
@@ -796,7 +791,6 @@ void Mesh::createBranchCollar(State &state, Segment parentSegment)
 	state.section = stem->getPath().getInitialDivisions() + 1;
 	state.prevIndex = this->vertices[state.mesh].size();
 	addSection(state, rotateSection(state), this->crossSection);
-
 	state.section = insertCollar(state.segment, parentSegment, start);
 	if (state.section == 0)
 		state = originalState;
@@ -810,8 +804,7 @@ void Mesh::connectCollar(const State &state, bool fork)
 	bool a = !fork && state.section > 0 && state.section < sections;
 	bool b = fork && state.section+1 < sections;
 	if (a || b)
-		addTriangleRing(
-			state.prevIndex,
+		addTriangleRing(state.prevIndex,
 			this->vertices[state.mesh].size(),
 			stem->getSectionDivisions(), state.mesh);
 }
@@ -825,9 +818,7 @@ inline size_t getBranchCollarSize(Stem *stem)
 
 /** Cross sections are usually created one at a time and then connected with
 triangles. Branch collars are created by connecting cross sections with
-splines, which means that many cross sections are created at a time. Reserving
-memory in advance enables offsets to be used to maintain an identical vertex
-layout. */
+splines. Reserving memory in advance enables an identical vertex layout. */
 void Mesh::reserveBranchCollarSpace(Stem *stem, int mesh)
 {
 	size_t size = getBranchCollarSize(stem) + this->vertices[mesh].size();
@@ -839,16 +830,13 @@ section of the stem along the parent stem. */
 Mat4 Mesh::getBranchCollarScale(Stem *child, Stem *parent)
 {
 	Mat4 scale = identity();
-
 	if (!parent) {
 		scale[0][0] = child->getSwelling().x;
 		scale[1][1] = child->getSwelling().y;
 		return scale;
 	}
-
 	scale[0][0] = child->getSwelling().x;
 	scale[2][2] = child->getSwelling().y;
-
 	float position = child->getDistance();
 	Vec3 zaxis = parent->getPath().getIntermediateDirection(position);
 	Vec3 yaxis = child->getPath().getDirection(0);
@@ -858,7 +846,6 @@ Mat4 Mesh::getBranchCollarScale(Stem *child, Stem *parent)
 	basis.vectors[0] = toVec4(xaxis, 0.0f);
 	basis.vectors[1] = toVec4(yaxis, 0.0f);
 	basis.vectors[2] = toVec4(zaxis, 0.0f);
-
 	return basis * scale * transpose(basis);
 }
 
@@ -873,87 +860,6 @@ Vec3 getSurfaceNormal(Vec3 p1, Vec3 p2, Vec3 p3, Vec3 n1, Vec3 n2, Vec3 n3,
 	n1 = lerp(n1, n2, project(intersection, m1*edge1) * m1);
 	n2 = lerp(n1, n3, project(intersection, m2*edge2) * m2);
 	return normalize(normalize(n1) + normalize(n2));
-}
-
-/** Project a point from a cross section on its parent's surface. */
-DVertex Mesh::moveToSurface(DVertex vertex, Ray ray, Segment parent,
-	size_t firstIndex)
-{
-	float length = magnitude(ray.direction);
-	ray.direction = normalize(ray.direction);
-
-	if (!parent.stem) {
-		Plane plane;
-		plane.normal = Vec3(0.0f, 0.0f, 1.0f);
-		plane.point = Vec3(0.0f, 0.0f, 0.0f);
-		float t = intersectsPlane(ray, plane);
-		Vec3 offset = (t - length) * ray.direction;
-		vertex.position += offset;
-		return vertex;
-	}
-
-	unsigned mesh = parent.stem->getMaterial(Stem::Outer);
-	DVertex *vertices = &this->vertices[mesh][0];
-	unsigned *indices = &this->indices[mesh][0];
-
-	float t = std::numeric_limits<float>::max();
-	size_t lastIndex = parent.indexStart + parent.indexCount;
-	size_t offset = 0;
-
-	while (offset < parent.indexCount) {
-		size_t i = firstIndex + offset;
-		size_t j = firstIndex - offset;
-		offset += 3;
-
-		if (i < lastIndex) {
-			size_t i1 = indices[i];
-			Vec3 p1 = vertices[i1].position;
-			size_t i2 = indices[i+1];
-			Vec3 p2 = vertices[i2].position;
-			size_t i3 = indices[i+2];
-			Vec3 p3 = vertices[i3].position;
-			float s = intersectsFrontTriangle(ray, p1, p2, p3);
-			if (s != 0.0f) {
-				t = s;
-				vertex.normal = getSurfaceNormal(p1, p2, p3,
-					vertices[i1].normal,
-					vertices[i2].normal,
-					vertices[i3].normal,
-					t*ray.direction + ray.origin);
-				break;
-			}
-		}
-		if (j >= parent.indexStart && offset <= firstIndex) {
-			size_t j1 = indices[j];
-			Vec3 p1 = vertices[j1].position;
-			size_t j2 = indices[j+1];
-			Vec3 p2 = vertices[j2].position;
-			size_t j3 = indices[j+2];
-			Vec3 p3 = vertices[j3].position;
-			float s = intersectsFrontTriangle(ray, p1, p2, p3);
-			if (s != 0.0f) {
-				t = s;
-				vertex.normal = getSurfaceNormal(p1, p2, p3,
-					vertices[j1].normal,
-					vertices[j2].normal,
-					vertices[j3].normal,
-					t*ray.direction + ray.origin);
-				break;
-			}
-		}
-	}
-
-	if (t != std::numeric_limits<float>::max()) {
-		Vec3 offset = (length - t) * ray.direction;
-		vertex.normal = normalize(vertex.normal);
-		vertex.position -= offset;
-	} else {
-		vertex.position.x = std::numeric_limits<float>::infinity();
-		vertex.position.y = std::numeric_limits<float>::infinity();
-		vertex.position.z = std::numeric_limits<float>::infinity();
-	}
-
-	return vertex;
 }
 
 /** Return a starting point for branch collar triangle intersections. */
@@ -973,112 +879,233 @@ inline size_t getTriangleOffset(const Segment &parent, const Segment &child)
 	return offset;
 }
 
-inline void insertCurve(Vec3 c[4], int degree, DVertex v, int cDivisions,
-	int sDivisions,  DVertex *buffer)
+inline void insertCurve(Vec3 c[4], int degree, DVertex v, int cdivisions,
+	int sdivisions, DVertex *buffer)
 {
-	float delta = 1.0f / (cDivisions + 1);
+	float delta = 1.0f / (cdivisions + 1);
 	float t = delta;
 	if (degree == 3)
-		for (int i = 0; i < cDivisions; i++, t += delta) {
+		for (int i = 0; i < cdivisions; i++, t += delta) {
 			v.position = getCubicBezier(t, c[0], c[1], c[2], c[3]);
-			buffer[sDivisions*i] = v;
+			buffer[sdivisions*i] = v;
 		}
 	else
-		for (int i = 0; i < cDivisions; i++, t += delta) {
+		for (int i = 0; i < cdivisions; i++, t += delta) {
 			v.position = getQuadraticBezier(t, c[0], c[1], c[3]);
-			buffer[sDivisions*i] = v;
+			buffer[sdivisions*i] = v;
 		}
 }
 
 size_t Mesh::insertCollar(Segment child, Segment parent, size_t vertexStart)
 {
-	const unsigned mesh = child.stem->getMaterial(Stem::Outer);
+	const int mesh = child.stem->getMaterial(Stem::Outer);
 	const Path &path = child.stem->getPath();
-	const int sDivisions = child.stem->getSectionDivisions() + 1;
-	const int cDivisions = path.getInitialDivisions();
+	const int sdivisions = child.stem->getSectionDivisions() + 1;
+	const int cdivisions = path.getInitialDivisions();
 	size_t collarSize = getBranchCollarSize(child.stem);
 	Mat4 scale = getBranchCollarScale(child.stem, parent.stem);
-	size_t triangleOffset = getTriangleOffset(parent, child);
+	size_t offset = getTriangleOffset(parent, child);
 
-	Vec3 direction;
+	Vec3 direction(0.0f);
 	int degree = path.getSpline().getDegree();
 	if (degree == 3) {
 		auto controls = path.getSpline().getControls();
 		direction = controls[3] - controls[2];
 	}
 
-	for (int i = 0; i < sDivisions; i++) {
+	for (int i = 0; i < sdivisions; i++) {
 		size_t index = child.vertexStart + i;
-		size_t index2 = index + collarSize + sDivisions;
-
+		size_t index2 = index + collarSize + sdivisions;
+		DVertex v1 = this->vertices[mesh][index];
+		DVertex v2;
 		Ray ray;
-		DVertex p1 = this->vertices[mesh][index];
-		DVertex p2;
-		p2.normal = p1.normal;
-		p2.tangent = p1.tangent;
-		p2.tangentScale = p1.tangentScale;
-		p2.position = p1.position - child.stem->getLocation();
-		p2.position = scale.apply(p2.position, 1.0f);
-		p2.position += child.stem->getLocation();
+		v2.normal = v1.normal;
+		v2.tangent = v1.tangent;
+		v2.tangentScale = v1.tangentScale;
+		v2.position = v1.position - child.stem->getLocation();
+		v2.position = scale.apply(v2.position, 1.0f);
+		v2.position += child.stem->getLocation();
 		ray.origin = this->vertices[mesh][index2].position;
-		ray.direction = p2.position - ray.origin;
-		p2 = moveToSurface(p2, ray, parent, triangleOffset);
-		if (std::isinf(p2.position.x)) {
+		ray.direction = normalize(v2.position - ray.origin);
+		v2 = moveToSurface(v2, ray, parent, offset);
+		if (std::isinf(v2.position.x)) {
 			this->vertices[mesh].resize(child.vertexStart);
 			this->indices[mesh].resize(child.indexStart);
 			return 0;
 		}
-		p2.weights = this->vertices[mesh][index].weights;
-		p2.indices = this->vertices[mesh][index].indices;
-		this->vertices[mesh][index] = p2;
-
-		ray.direction = p1.position - ray.origin;
-		p1 = moveToSurface(p1, ray, parent, triangleOffset);
-		if (std::isinf(p1.position.x)) {
+		v2.weights = this->vertices[mesh][index].weights;
+		v2.indices = this->vertices[mesh][index].indices;
+		this->vertices[mesh][index] = v2;
+		ray.direction = normalize(v1.position - ray.origin);
+		v1 = moveToSurface(v1, ray, parent, offset);
+		if (std::isinf(v1.position.x)) {
 			this->vertices[mesh].resize(child.vertexStart);
 			this->indices[mesh].resize(child.indexStart);
 			return 0;
 		}
-
 		Vec3 curve[4];
-		curve[0] = p2.position;
-		curve[1] = p1.position;
-		curve[2] = this->vertices[mesh][index2].position - direction;
-		curve[3] = this->vertices[mesh][index2].position;
-		insertCurve(curve, degree, p2, cDivisions, sDivisions,
-			&this->vertices[mesh][vertexStart+i]);
+		curve[0] = v2.position;
+		curve[1] = v1.position;
+		curve[2] = ray.origin - direction;
+		curve[3] = ray.origin;
+		DVertex *buffer = &this->vertices[mesh][vertexStart+i];
+		insertCurve(curve, degree, v2, cdivisions, sdivisions, buffer);
 	}
 
 	size_t index1 = child.vertexStart;
-	size_t index2 = child.vertexStart + sDivisions;
-	for (int i = 0; i <= cDivisions; i++) {
-		addTriangleRing(index1, index2, sDivisions-1, mesh);
+	size_t index2 = child.vertexStart + sdivisions;
+	for (int i = 0; i <= cdivisions; i++) {
+		addTriangleRing(index1, index2, sdivisions-1, mesh);
 		index1 = index2;
-		index2 += sDivisions;
+		index2 += sdivisions;
 	}
 
 	index1 = child.vertexStart;
 	index2 = vertexStart + collarSize;
-	setBranchCollarNormals(index1, index2, mesh, sDivisions, cDivisions);
-	setBranchCollarUVs(index2, child.stem, mesh, sDivisions, cDivisions);
-	return cDivisions + 2;
+	setBranchCollarNormals(index1, index2, mesh, sdivisions, cdivisions);
+	setBranchCollarUVs(index2, child.stem, mesh, sdivisions, cdivisions);
+	return cdivisions + 2;
+}
+
+/** Project a point from a cross section on its parent's surface. */
+DVertex Mesh::moveToSurface(DVertex vertex, Ray ray, Segment parent,
+	size_t firstIndex)
+{
+	if (!parent.stem) {
+		Plane plane;
+		plane.point = Vec3(0.0f);
+		plane.normal = Vec3(0.0f, 0.0f, 1.0f);
+		float t = intersectsPlane(ray, plane);
+		vertex.position = ray.origin + t * ray.direction;
+		return vertex;
+	}
+
+	unsigned mesh = parent.stem->getMaterial(Stem::Outer);
+	DVertex *vertices = &this->vertices[mesh][0];
+	unsigned *indices = &this->indices[mesh][0];
+	size_t lastIndex = parent.indexStart + parent.indexCount;
+	float t = 0.0f;
+
+	for (size_t offset = 0; offset < parent.indexCount; offset += 3) {
+		size_t i = firstIndex + offset;
+		if (i < lastIndex) {
+			Vec3 p1 = vertices[indices[i+0]].position;
+			Vec3 p2 = vertices[indices[i+1]].position;
+			Vec3 p3 = vertices[indices[i+2]].position;
+			t = intersectsFrontTriangle(ray, p1, p2, p3);
+			if (t != 0.0f) {
+				vertex.normal = getSurfaceNormal(p1, p2, p3,
+					vertices[indices[i+0]].normal,
+					vertices[indices[i+1]].normal,
+					vertices[indices[i+2]].normal,
+					t*ray.direction + ray.origin);
+				break;
+			}
+		}
+		i = firstIndex - offset;
+		if (i >= parent.indexStart && offset <= firstIndex) {
+			Vec3 p1 = vertices[indices[i+0]].position;
+			Vec3 p2 = vertices[indices[i+1]].position;
+			Vec3 p3 = vertices[indices[i+2]].position;
+			t = intersectsFrontTriangle(ray, p1, p2, p3);
+			if (t != 0.0f) {
+				vertex.normal = getSurfaceNormal(p1, p2, p3,
+					vertices[indices[i+0]].normal,
+					vertices[indices[i+1]].normal,
+					vertices[indices[i+2]].normal,
+					t*ray.direction + ray.origin);
+				break;
+			}
+		}
+	}
+
+	if (t == 0.0f)
+		return moveToForkSurface(vertex, ray, parent);
+	else if (t != 0.0f) {
+		vertex.normal = normalize(vertex.normal);
+		vertex.position = ray.origin + t * ray.direction;
+		return vertex;
+	} else {
+		vertex.position = Vec3(std::numeric_limits<float>::infinity());
+		return vertex;
+	}
+}
+
+DVertex Mesh::moveToForkSurface(DVertex vertex, Ray ray, Segment parent)
+{
+	Stem *fork[2] = {};
+	parent.stem->getFork(fork);
+	if (!fork[0]) {
+		vertex.position = Vec3(std::numeric_limits<float>::infinity());
+		return vertex;
+	}
+
+	float t = 0.0f;
+	Segment segment1 = findStem(fork[0]);
+	Segment segment2 = findStem(fork[1]);
+	unsigned mesh1 = fork[0]->getMaterial(Stem::Outer);
+	unsigned mesh2 = fork[1]->getMaterial(Stem::Outer);
+	DVertex *vertices1 = &this->vertices[mesh1][0];
+	DVertex *vertices2 = &this->vertices[mesh2][0];
+	unsigned *indices1 = &this->indices[mesh1][0];
+	unsigned *indices2 = &this->indices[mesh2][0];
+	size_t collarSize = fork[0]->getPath().getInitialDivisions();
+	collarSize *= fork[0]->getSectionDivisions() * 6;
+
+	for (size_t offset = 0; offset < collarSize; offset += 3) {
+		size_t i = segment1.indexStart + offset;
+		Vec3 p1 = vertices1[indices1[i+0]].position;
+		Vec3 p2 = vertices1[indices1[i+1]].position;
+		Vec3 p3 = vertices1[indices1[i+2]].position;
+		t = intersectsFrontTriangle(ray, p1, p2, p3);
+		if (t != 0.0f) {
+			vertex.normal = getSurfaceNormal(p1, p2, p3,
+				vertices1[indices1[i+0]].normal,
+				vertices1[indices1[i+1]].normal,
+				vertices1[indices1[i+2]].normal,
+				t*ray.direction + ray.origin);
+			break;
+		}
+		i = segment2.indexStart + offset;
+		p1 = vertices2[indices2[i+0]].position;
+		p2 = vertices2[indices2[i+1]].position;
+		p3 = vertices2[indices2[i+2]].position;
+		t = intersectsFrontTriangle(ray, p1, p2, p3);
+		if (t != 0.0f) {
+			vertex.normal = getSurfaceNormal(p1, p2, p3,
+				vertices2[indices2[i+0]].normal,
+				vertices2[indices2[i+1]].normal,
+				vertices2[indices2[i+2]].normal,
+				t*ray.direction + ray.origin);
+			break;
+		}
+	}
+
+	if (t != 0.0f) {
+		vertex.normal = normalize(vertex.normal);
+		vertex.position = ray.origin + t * ray.direction;
+		return vertex;
+	} else {
+		vertex.position = Vec3(std::numeric_limits<float>::infinity());
+		return vertex;
+	}
 }
 
 /** Interpolate normals from the first cross section of the stem with normals
 from the first cross section after the branch collar. */
 void Mesh::setBranchCollarNormals(size_t index1, size_t index2, int mesh,
-	int sDivisions, int cDivisions)
+	int sdivisions, int cdivisions)
 {
 	DVertex *buffer1 = &this->vertices[mesh][0];
 	DVertex *buffer2 = &this->vertices[mesh][0];
-	for (int i = 0; i < sDivisions; i++) {
+	for (int i = 0; i < sdivisions; i++) {
 		Vec3 normal1 = buffer1[index1].normal;
 		Vec3 normal2 = buffer2[index2].normal;
 		Vec3 tangent1 = buffer1[index1].tangent;
 		Vec3 tangent2 = buffer2[index2].tangent;
 
-		for (int j = 1; j <= cDivisions; j++) {
-			float t = j/static_cast<float>(cDivisions);
+		for (int j = 1; j <= cdivisions; j++) {
+			float t = j/static_cast<float>(cdivisions);
 			float a = 2.0f*t*t;
 			float b = -2.0f*t*t + 4.0f*t - 1.0f;
 			t = a * (t <= 0.5f) + b * (t > 0.5f);
@@ -1088,7 +1115,7 @@ void Mesh::setBranchCollarNormals(size_t index1, size_t index2, int mesh,
 			Vec3 tangent = lerp(tangent1, tangent2, t);
 			tangent = normalize(tangent);
 
-			size_t offset = j * sDivisions;
+			size_t offset = j * sdivisions;
 			buffer1[index1 + offset].normal = normal;
 			buffer1[index1 + offset].tangent = tangent;
 		}
@@ -1102,19 +1129,19 @@ void Mesh::setBranchCollarNormals(size_t index1, size_t index2, int mesh,
 The UV coordinates for branch collars are generated backwards because splines
 are not guaranteed to be the same length. */
 void Mesh::setBranchCollarUVs(size_t lastIndex, Stem *stem, int mesh,
-	int sDivisions, int cDivisions)
+	int sdivisions, int cdivisions)
 {
 	DVertex *buffer = &this->vertices[mesh][lastIndex];
 	float radius = this->plant->getRadius(stem, 1);
 	float aspect = getAspect(this->plant, stem);
 
-	for (int i = 0; i < sDivisions; i++) {
+	for (int i = 0; i < sdivisions; i++) {
 		Vec2 uv = buffer[i].uv;
 		size_t index = i;
 
-		for (int j = cDivisions; j >= 0; j--) {
+		for (int j = cdivisions; j >= 0; j--) {
 			Vec3 p1 = buffer[index].position;
-			index -= sDivisions;
+			index -= sdivisions;
 			Vec3 p2 = buffer[index].position;
 			float length = magnitude(p2 - p1);
 			uv.y -= (length * aspect) / (radius * 2.0f * pi);
@@ -1140,17 +1167,15 @@ void Mesh::capStem(Stem *stem, int stemMesh, size_t section)
 	}
 
 	for (index = 0; index < divisions/2 - 1; index++) {
-		addTriangle(mesh,
-			section + index,
+		addTriangle(mesh, section + index,
 			section + divisions - index - 1,
 			section + index + 1);
-		addTriangle(mesh,
-			section + index + 1,
+		addTriangle(mesh, section + index + 1,
 			section + divisions - index - 1,
 			section + divisions - index - 2);
 	}
 
-	if ((divisions & 1) != 0) { /* is odd */
+	if ((divisions & 1) != 0) {
 		size_t lastSection = section + index;
 		addTriangle(mesh, lastSection, lastSection+2, lastSection+1);
 	}

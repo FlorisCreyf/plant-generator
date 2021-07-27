@@ -91,7 +91,7 @@ namespace pg {
 		Segment addStem(Stem *, State &, State, bool);
 		void addChildStems(Stem *, Stem *[2], State &);
 
-		bool addForks(Stem *[2], State);
+		void addForks(Stem *[2], State &);
 		void createFork(Stem *, State &);
 		void reserveForkSpace(const Stem *, int);
 		int getForkMidpoint(int, Vec3, Vec3, Vec3, Quat);
@@ -103,6 +103,7 @@ namespace pg {
 		void reserveBranchCollarSpace(Stem *, int);
 		Mat4 getBranchCollarScale(Stem *, Stem *);
 		DVertex moveToSurface(DVertex, Ray, Segment, size_t);
+		DVertex moveToForkSurface(DVertex, Ray, Segment);
 		void setBranchCollarNormals(size_t, size_t, int, int, int);
 		void setBranchCollarUVs(size_t, Stem *, int, int, int);
 		void connectCollar(const State &, bool);

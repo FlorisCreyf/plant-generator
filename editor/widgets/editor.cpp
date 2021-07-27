@@ -955,7 +955,7 @@ void Editor::setDefaultPlant()
 	stemData.densityCurve.setDefault(1);
 	stemData.distance = 10.0f;
 	stemData.radius = 0.9f;
-	stemData.radiusThreshold = 0.02f;
+	stemData.radiusThreshold = 0.03f;
 	stemData.length = 60.0f;
 	stemData.leaf.density = 3.0f;
 	stemData.leaf.densityCurve.setDefault(1);
@@ -964,7 +964,7 @@ void Editor::setDefaultPlant()
 	node1->setData(stemData);
 	pg::ParameterNode *node2 = tree.addChild("1");
 	stemData.distance = 4.0f;
-	stemData.length = 150.0f;
+	stemData.length = 100.0f;
 	stemData.density = 2.0f;
 	stemData.radiusThreshold = 0.01f;
 	stemData.angleVariation = 0.2f;

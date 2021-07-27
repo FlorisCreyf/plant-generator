@@ -38,21 +38,24 @@ class PatternEditor : public QWidget {
 	QPushButton *removeButton;
 	std::string name;
 
-	enum {RootLength, RootFork, RootForkAngle, RootThreshold, RootNoise,
-		DRSize};
-	enum {Seed, IRSize};
+	enum {RMaxDepth, Seed, IRSize};
+	enum {RLength, RFork, RForkAngle, RForkScale, RThreshold, RNoise,
+		RPull, RPointDensity, DRSize};
 	SpinBox *irv[IRSize];
 	DoubleSpinBox *drv[DRSize];
-	enum {StemDensity, StemDistance, Length, Radius, AngleVariation, Noise,
-		RadiusThreshold, Fork, ForkAngle, InclineVariation, StemPull,
-		RadiusVariation, DSSize};
-	enum {LeafDensity, LeafDistance, LeafRotation, MinUp, MaxUp, LocalUp,
-		GlobalUp, MinForward, MaxForward, LeafPull, ScaleX, ScaleY,
-		ScaleZ, DLSize};
-	enum {LeavesPerNode, ILSize};
+	enum {ISSize};
+	enum {SDensity, SDistance, SLength, SRadius, SAngleVariation, SNoise,
+		SRadiusThreshold, SFork, SForkAngle, SForkScale,
+		SInclineVariation, SPull, SRadiusVariation, SPointDensity,
+		DSSize};
+	SpinBox *isv[ISSize];
 	DoubleSpinBox *dsv[DSSize];
-	DoubleSpinBox *dlv[DLSize];
+	enum {LeavesPerNode, ILSize};
+	enum {LDensity, LDistance, LRotation, LMinUp, LMaxUp, LLocalUp,
+		LGlobalUp, LMinForward, LMaxForward, LPull, LScaleX, LScaleY,
+		LScaleZ, DLSize};
 	SpinBox *ilv[ILSize];
+	DoubleSpinBox *dlv[DLSize];
 
 	void createInterface();
 	void createStemLeafFields();
@@ -68,8 +71,6 @@ class PatternEditor : public QWidget {
 	void setStemData(pg::StemData);
 	void setLeafData(pg::LeafData);
 	pg::StemData getRootData(pg::StemData);
-	pg::StemData getStemData(pg::StemData);
-	pg::LeafData getLeafData(pg::LeafData);
 
 	CurveEditor *curveEditor;
 	ComboBox *curveDegree;
@@ -84,8 +85,8 @@ class PatternEditor : public QWidget {
 	void updateParameterTree(pg::Spline);
 
 public:
-	PatternEditor(SharedResources *shared, KeyMap *keymap,
-		Editor *editor, QWidget *parent);
+	PatternEditor(SharedResources *shared, KeyMap *keymap, Editor *editor,
+		QWidget *parent);
 	QSize sizeHint() const;
 	void change();
 	void changeField(std::function<void(pg::StemData *)> function);

@@ -36,6 +36,11 @@ namespace pg {
 
 		}
 
+		Vec3(float x) : x(x), y(x), z(x)
+		{
+
+		}
+
 		Vec3(float x, float y, float z) : x(x), y(y), z(z)
 		{
 
@@ -90,7 +95,7 @@ namespace pg {
 
 	inline bool isZero(const Vec3 &vec)
 	{
-		return vec.x == 0 && vec.y == 0 && vec.z == 0;
+		return vec.x == 0.0f && vec.y == 0.0f && vec.z == 0.0f;
 	}
 
 	inline std::ostream &operator<<(std::ostream &stream, const Vec3 &v)
@@ -166,7 +171,6 @@ namespace pg {
 		return a.x*b.x + a.y*b.y + a.z*b.z;
 	}
 
-	/** Projects a onto b and returns distance along b. */
 	inline float project(Vec3 a, Vec3 b)
 	{
 		return dot(a, b) / dot(b, b);
@@ -196,7 +200,6 @@ namespace pg {
 		return (1.0f - t) * a + t * b;
 	}
 
-	/** Clamp "a" if the dot product is less than "max". */
 	Vec3 clamp(Vec3 a, Vec3 b, float max);
 	Vec3 rotateAroundAxis(Vec3 vec, Vec3 axis, float n);
 }
