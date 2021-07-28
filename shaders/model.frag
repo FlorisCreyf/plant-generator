@@ -86,7 +86,7 @@ void main()
 	/* The normals are flipped based on the camera direction in order to
 	cope with double sided leaf surfaces */
 	vec3 cameraDirection = normalize(cameraPosition - vertexPosition);
-	if (dot(cameraDirection, normal) < 0)
+	if (dot(cameraDirection, normal) < 0.0)
 		normal = -normal;
 
 	float diffuse = max(dot(lightDirection, normal), 0.0) * 0.5 + 0.5;
@@ -125,8 +125,8 @@ void drawOutline()
 {
 	float dx = 1.0 / viewport.x;
 	float dy = 1.0 / viewport.y;
-	float x = gl_FragCoord.x  / viewport.x;
-	float y = gl_FragCoord.y  / viewport.y;
+	float x = gl_FragCoord.x / viewport.x;
+	float y = gl_FragCoord.y / viewport.y;
 	float adjacentY = y - dy * thickness;
 	float adjacentX = 0.0;
 	float result = 0.0;
@@ -147,7 +147,7 @@ void drawOutline()
 	if (color.r == 0.0)
 		fragmentColor = vec4(0.102, 0.212, 0.6, result);
 	else if (color.r > 0.0)
-		fragmentColor = vec4(0.102, 0.212, 0.6, 1.0f - color.r);
+		fragmentColor = vec4(0.102, 0.212, 0.6, 1.0 - color.r);
 	else
 		fragmentColor = vec4(0.0, 0.0, 0.0, 0.0);
 }

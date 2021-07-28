@@ -53,6 +53,7 @@ Editor::Editor(SharedResources *shared, KeyMap *keymap, QWidget *parent) :
 	shader(SharedResources::Solid),
 	mesh(&scene.plant),
 	selection(&scene.plant),
+	updatedLight(false),
 	perspective(true),
 	rotating(false),
 	ticks(-1)
@@ -633,8 +634,8 @@ void Editor::paintWire(const Mat4 &projection)
 		auto type = SharedResources::Wireframe;
 		glUseProgram(this->shared->getShader(type));
 	}
-	glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
 	glPointSize(4);
+	glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
 	glDrawArrays(GL_POINTS, 0, vsize);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -658,12 +659,8 @@ void Editor::paintSolid(const Mat4 &projection, const Vec3 &position)
 
 void Editor::paintMaterial(const Mat4 &projection, const Vec3 &position)
 {
-	Camera light;
-	light.setOrientation(pi*0.3f, pi*0.1);
-	light.setDistance(15.0f);
-	light.setTarget(Vec3(0.0f, 0.0f, 5.0f));
-	light.setOrthographic(Vec3(1.0f, 1.0f, 0.0f),
-		Vec3(-1.0f, -1.0f, -50.0f));
+	if (!this->updatedLight)
+		updateLight();
 
 	glBindFramebuffer(GL_FRAMEBUFFER, this->shadowFramebuffer);
 	glViewport(0, 0, this->shadowMapSize, this->shadowMapSize);
@@ -675,8 +672,8 @@ void Editor::paintMaterial(const Mat4 &projection, const Vec3 &position)
 		auto type = SharedResources::Shadow;
 		glUseProgram(this->shared->getShader(type));
 	}
-	Mat4 lightTransform = light.getTransform();
-	Vec3 lightPosition = light.getPosition();
+	Mat4 lightTransform = this->light.getTransform();
+	Vec3 lightPosition = this->light.getPosition();
 	glUniformMatrix4fv(0, 1, GL_FALSE, &lightTransform[0][0]);
 	glUniform3f(1, lightPosition.x, lightPosition.y, lightPosition.z);
 	for (size_t i = 0, start = 0; i < this->mesh.getMeshCount(); i++) {
@@ -732,21 +729,18 @@ void Editor::paintMaterial(const Mat4 &projection, const Vec3 &position)
 
 void Editor::paintAxes(const Mat4 &projection, const Vec3 &position)
 {
-	glClear(GL_DEPTH_BUFFER_BIT);
-	glDepthFunc(GL_GEQUAL);
-
-	glUseProgram(this->shared->getShader(SharedResources::Flat));
-	this->staticBuffer.use();
-
-	this->translationAxes.setPosition(this->selection.getAveragePosition());
-
 	float distance;
+	this->translationAxes.setPosition(this->selection.getAveragePosition());
 	if (this->camera.isPerspective()) {
 		Vec3 diff = position - this->translationAxes.getPosition();
 		distance = pg::magnitude(diff);
 	} else
 		distance = this->camera.getDistance() * 1.25f;
 
+	glUseProgram(this->shared->getShader(SharedResources::Flat));
+	glClear(GL_DEPTH_BUFFER_BIT);
+	glDepthFunc(GL_GEQUAL);
+	this->staticBuffer.use();
 	if (this->rotating) {
 		Vec3 direction = this->selection.getAverageDirectionFP();
 		Mat4 transform = this->rotationAxes.getTransformation(
@@ -770,6 +764,49 @@ void Editor::paintAxes(const Mat4 &projection, const Vec3 &position)
 	}
 }
 
+void Editor::updateLight()
+{
+	pg::Aabb aabb = {};
+	bool firstAABB = true;
+	for (size_t i = 0; i < this->mesh.getMeshCount(); i++) {
+		const std::vector<pg::DVertex> *v = this->mesh.getVertices(i);
+		if (v->size() > 0) {
+			pg::Aabb a = pg::createAABB(&v->at(0), v->size());
+			if (!firstAABB)
+				aabb = pg::combineAABB(aabb, a);
+			else {
+				firstAABB = false;
+				aabb = a;
+			}
+		}
+	}
+	this->light.setOrientation(pi*0.3f, pi*0.0f);
+	this->light.setDistance(0.0f);
+	this->light.scaleOrthographicVolume(false);
+	Mat4 transform = this->light.getView();
+	Vec3 c[8] = {
+		transform.apply(Vec3(aabb.a.x, aabb.a.y, aabb.a.z), 0.0f),
+		transform.apply(Vec3(aabb.a.x, aabb.a.y, aabb.b.z), 0.0f),
+		transform.apply(Vec3(aabb.a.x, aabb.b.y, aabb.a.z), 0.0f),
+		transform.apply(Vec3(aabb.a.x, aabb.b.y, aabb.b.z), 0.0f),
+		transform.apply(Vec3(aabb.b.x, aabb.a.y, aabb.a.z), 0.0f),
+		transform.apply(Vec3(aabb.b.x, aabb.a.y, aabb.b.z), 0.0f),
+		transform.apply(Vec3(aabb.b.x, aabb.b.y, aabb.a.z), 0.0f),
+		transform.apply(Vec3(aabb.b.x, aabb.b.y, aabb.b.z), 0.0f)
+	};
+	aabb = pg::createAABB(c, 8);
+	transform = this->light.getInverseView();
+	float x = (aabb.b.x + aabb.a.x) * 0.5f;
+	float y = (aabb.b.y + aabb.a.y) * 0.5f;
+	float z = aabb.b.z;
+	this->light.setTarget(transform.apply(Vec3(x, y, z), 0.0f));
+	x = (aabb.b.x - aabb.a.x) * 0.5f;
+	y = (aabb.b.y - aabb.a.y) * 0.5f;
+	z = aabb.b.z - aabb.a.z;
+	this->light.setOrthographic(Vec3(x, y, 0.0f), Vec3(-x, -y, -z));
+	this->updatedLight = true;
+}
+
 void Editor::paintVolume(const Mat4 &projection)
 {
 	glUseProgram(this->shared->getShader(SharedResources::Flat));
@@ -785,7 +822,6 @@ void Editor::displayVolume(bool display)
 		const pg::Volume *volume = this->scene.generator.getVolume();
 		geometry.addVolume(volume);
 		this->segments.volume = geometry.getSegment();
-
 		makeCurrent();
 		this->volumeBuffer.use();
 		this->volumeBuffer.update(geometry);
@@ -819,7 +855,6 @@ void Editor::updateSelection()
 			Vec3 location = stem->getLocation();
 			pg::Path path = stem->getPath();
 			pg::Spline spline = path.getSpline();
-
 			Path::Segment segment;
 			segment.spline = spline;
 			segment.divisions = path.getDivisions();
@@ -843,6 +878,7 @@ void Editor::updateSelection()
 void Editor::change()
 {
 	if (!this->scene.updating) {
+		this->updatedLight = false;
 		if (isAnimating())
 			endAnimation();
 		updateBuffers();
@@ -858,7 +894,6 @@ void Editor::updateBuffers()
 		return;
 
 	this->mesh.generate();
-
 	makeCurrent();
 	this->plantBuffer.use();
 
@@ -873,7 +908,6 @@ void Editor::updateBuffers()
 		size_t count = this->mesh.getIndexCount() * 2;
 		this->plantBuffer.allocateIndexMemory(count);
 	}
-
 	int pointOffset = 0;
 	int indexOffset = 0;
 	for (size_t m = 0; m < this->mesh.getMeshCount(); m++) {
@@ -884,7 +918,6 @@ void Editor::updateBuffers()
 		pointOffset += v->size();
 		indexOffset += i->size();
 	}
-
 	doneCurrent();
 }
 
@@ -980,7 +1013,6 @@ void Editor::load(const char *filename)
 {
 	this->scene.reset();
 	this->shared->clearMaterials();
-
 	if (filename) {
 		std::ifstream stream(filename);
 		boost::archive::text_iarchive ia(stream);
@@ -988,7 +1020,6 @@ void Editor::load(const char *filename)
 		stream.close();
 	} else
 		this->scene.plant.setDefault();
-
 	for (const Material &material : this->scene.plant.getMaterials())
 		this->shared->addMaterial(ShaderParams(material));
 }

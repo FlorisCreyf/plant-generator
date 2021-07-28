@@ -17,8 +17,7 @@
 #include "mat4.h"
 #include "quat.h"
 #include <cmath>
-#include <stdlib.h>
-#include <float.h>
+#include <limits>
 
 using pg::Aabb;
 using pg::Ray;
@@ -27,10 +26,10 @@ using pg::Mat4;
 using pg::Obb;
 using pg::Plane;
 
-Aabb pg::createAABB(const pg::DVertex *buffer, size_t size)
+Aabb pg::createAABB(const DVertex *buffer, size_t size)
 {
 	Aabb aabb(buffer[0].position, buffer[0].position);
-	for (size_t i = 0; i < size; i += 6) {
+	for (size_t i = 1; i < size; i++) {
 		Vec3 position = buffer[i].position;
 		if (aabb.a.x > position.x)
 			aabb.a.x = position.x;
@@ -48,6 +47,44 @@ Aabb pg::createAABB(const pg::DVertex *buffer, size_t size)
 	return aabb;
 }
 
+Aabb pg::createAABB(const Vec3 *buffer, size_t size)
+{
+	Aabb aabb(buffer[0], buffer[0]);
+	for (size_t i = 1; i < size; i++) {
+		Vec3 position = buffer[i];
+		if (aabb.a.x > position.x)
+			aabb.a.x = position.x;
+		if (aabb.b.x < position.x)
+			aabb.b.x = position.x;
+		if (aabb.a.y > position.y)
+			aabb.a.y = position.y;
+		if (aabb.b.y < position.y)
+			aabb.b.y = position.y;
+		if (aabb.a.z > position.z)
+			aabb.a.z = position.z;
+		if (aabb.b.z < position.z)
+			aabb.b.z = position.z;
+	}
+	return aabb;
+}
+
+Aabb pg::combineAABB(Aabb a, Aabb b)
+{
+	if (a.a.x > b.a.x)
+		a.a.x = b.a.x;
+	if (a.b.x < b.b.x)
+		a.b.x = b.b.x;
+	if (a.a.y > b.a.y)
+		a.a.y = b.a.y;
+	if (a.b.y < b.b.y)
+		a.b.y = b.b.y;
+	if (a.a.z > b.a.z)
+		a.a.z = b.a.z;
+	if (a.b.z < b.b.z)
+		a.b.z = b.b.z;
+	return a;
+}
+
 void swap(float *a, float *b)
 {
 	float t = *b;
@@ -57,18 +94,15 @@ void swap(float *a, float *b)
 
 float pg::intersectsOBB(Ray &ray, Obb &obb)
 {
-	float tmin = FLT_MIN;
-	float tmax = FLT_MAX;
+	float tmin = std::numeric_limits<float>::lowest();
+	float tmax = std::numeric_limits<float>::max();
 	Vec3 p = obb.center - ray.origin;
-
 	for (int i = 0; i < 3; i++) {
 		float e = dot(obb.n[i], p);
 		float f = dot(obb.n[i], ray.direction);
-
 		if (std::abs(f) > 0.0001f) {
 			float t1 = (e + obb.h[i]) / f;
 			float t2 = (e - obb.h[i]) / f;
-
 			if (t1 > t2)
 				swap(&t1, &t2);
 			if (t1 > tmin)
@@ -82,7 +116,6 @@ float pg::intersectsOBB(Ray &ray, Obb &obb)
 		} else if (-e - obb.h[i] > 0.0f || -e + obb.h[i] < 0.0f)
 			return 0.0f;
 	}
-
 	return tmin > 0 ? tmin : tmax;
 }
 
@@ -98,7 +131,7 @@ float pg::intersectsAABB(Ray &ray, Aabb &aabb)
 	obb.n[0] = Vec3(1.0f, 0.0f, 0.0f);
 	obb.n[1] = Vec3(0.0f, 1.0f, 0.0f);
 	obb.n[2] = Vec3(0.0f, 0.0f, 1.0f);
-	return pg::intersectsOBB(ray, obb);
+	return intersectsOBB(ray, obb);
 }
 
 float pg::intersectsTriangle(Ray &ray, Vec3 p1, Vec3 p2, Vec3 p3)
@@ -108,22 +141,18 @@ float pg::intersectsTriangle(Ray &ray, Vec3 p1, Vec3 p2, Vec3 p3)
 	Vec3 edge2 = p3 - p1;
 	Vec3 q = cross(ray.direction, edge2);
 	float a = dot(edge1, q);
-
 	if (a != 0.0f) {
 		float f = 1.0f / a;
 		Vec3 s = ray.origin - p1;
 		float u = f * dot(s, q);
 		if (u < 0.0f)
 			return 0.0f;
-
 		Vec3 r = cross(s, edge1);
 		float v = f * dot(ray.direction, r);
 		if (v < 0.0f || u + v > 1.0f)
 			return 0.0f;
-
 		t = f * dot(edge2, r);
 	}
-
 	return t;
 }
 
@@ -134,22 +163,18 @@ float pg::intersectsFrontTriangle(Ray &ray, Vec3 p1, Vec3 p2, Vec3 p3)
 	Vec3 edge2 = p3 - p1;
 	Vec3 q = cross(ray.direction, edge2);
 	float a = dot(edge1, q);
-
 	if (a > 0.0f) {
 		float f = 1.0f / a;
 		Vec3 s = ray.origin - p1;
 		float u = f * dot(s, q);
 		if (u < 0.0f)
 			return 0.0f;
-
 		Vec3 r = cross(s, edge1);
 		float v = f * dot(ray.direction, r);
 		if (v < 0.0f || u + v > 1.0f)
 			return 0.0f;
-
 		t = f * dot(edge2, r);
 	}
-
 	return t;
 }
 
@@ -175,7 +200,6 @@ float pg::intersectsRectangle(Ray ray, Vec3 a, Vec3 b, Vec3 d)
 	float t = intersectsPlane(ray, plane);
 	if (t == 0.0f)
 		return 0.0f;
-
 	Vec3 m = ray.origin + t*ray.direction;
 	Vec3 ab = b - a;
 	Vec3 ad = d - a;
@@ -193,14 +217,11 @@ float pg::intersectsSphere(Ray &ray, Vec3 position, float radius)
 	Vec3 l = position - ray.origin;
 	float a = dot(l, ray.direction);
 	float b = dot(l, l);
-
 	if (a < 0.0f && b > pow(radius, 2))
 		return 0.0f;
-
 	float c = b - a*a;
 	if (c > pow(radius, 2))
 		return 0.0f;
-
 	float d = sqrt(pow(radius, 2) - c);
 	return b > pow(radius, 2) ? a - d : a + d;
 }
@@ -256,7 +277,6 @@ float pg::intersectsTaperedCylinder(Ray ray, Vec3 start, Vec3 direction,
 	float roots[2];
 	if (findRoots(aq, bq, cq, roots)) {
 		t = roots[0] < roots[1] ? roots[0] : roots[1];
-
 		/* The intersection fails if the intersection falls under the
 		y-axis or above the height value. The cone is always along
 		the y-axis because the ray is transformed into the object
@@ -270,7 +290,7 @@ float pg::intersectsTaperedCylinder(Ray ray, Vec3 start, Vec3 direction,
 	return t;
 }
 
-float pg::intersectsLine(pg::Ray2 a, pg::Ray2 b)
+float pg::intersectsLine(Ray2 a, Ray2 b)
 {
 	Vec2 p = perp(b.direction);
 	float d = dot(a.direction, p);

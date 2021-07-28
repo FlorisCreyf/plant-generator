@@ -42,7 +42,8 @@ Camera::Camera() :
 	zoomMax(100.0f),
 	target(0.0f, 0.0f, 6.0f),
 	action(Action::None),
-	perspective(true)
+	perspective(true),
+	scaleOrthographic(true)
 {
 
 }
@@ -129,6 +130,11 @@ void Camera::setWindowSize(int width, int height)
 {
 	this->winWidth = width;
 	this->winHeight = height;
+}
+
+void Camera::scaleOrthographicVolume(bool scale)
+{
+	this->scaleOrthographic = scale;
 }
 
 void Camera::zoom(float y)
@@ -337,16 +343,20 @@ pg::Ray Camera::getPerspectiveRay(int x, int y) const
 Vec3 Camera::getFar() const
 {
 	Vec3 far = this->far;
-	far.x *= this->distance;
-	far.y *= this->distance;
+	if (!this->perspective && this->scaleOrthographic) {
+		far.x *= this->distance;
+		far.y *= this->distance;
+	}
 	return far;
 }
 
 Vec3 Camera::getNear() const
 {
 	Vec3 near = this->near;
-	near.x *= this->distance;
-	near.y *= this->distance;
+	if (!this->perspective && this->scaleOrthographic) {
+		near.x *= this->distance;
+		near.y *= this->distance;
+	}
 	return near;
 }
 

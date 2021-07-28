@@ -116,11 +116,13 @@ private:
 	Path path;
 
 	Camera camera;
+	Camera light;
 	History history;
 	RotationAxes rotationAxes;
 	Selection selection;
 	TranslationAxes translationAxes;
 
+	bool updatedLight;
 	bool perspective;
 	bool rotating;
 	int ticks;
@@ -139,6 +141,7 @@ private:
 	void paintMaterial(const pg::Mat4 &, const pg::Vec3 &);
 	void paintAxes(const pg::Mat4 &, const pg::Vec3 &);
 	void paintVolume(const pg::Mat4 &);
+	void updateLight();
 	void resizeGL(int, int);
 	void selectStem(QMouseEvent *);
 	void selectPoint(QMouseEvent *);

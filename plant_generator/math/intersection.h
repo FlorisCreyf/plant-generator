@@ -55,7 +55,9 @@ namespace pg {
 		Vec3 normal;
 	};
 
-	Aabb createAABB(const pg::DVertex *buffer, size_t size);
+	Aabb createAABB(const DVertex *buffer, size_t size);
+	Aabb createAABB(const Vec3 *buffer, size_t size);
+	Aabb combineAABB(Aabb a, Aabb b);
 	float intersectsOBB(Ray &ray, Obb &obb);
 	float intersectsAABB(Ray &ray, Aabb &aabb);
 	float intersectsTriangle(Ray &ray, Vec3 p1, Vec3 p2, Vec3 p3);
@@ -65,7 +67,7 @@ namespace pg {
 	float intersectsSphere(Ray &ray, Vec3 position, float radius);
 	float intersectsTaperedCylinder(Ray ray, Vec3 start, Vec3 direction,
 		float height, float r1, float r2);
-	float intersectsLine(pg::Ray2 a, pg::Ray2 b);
+	float intersectsLine(Ray2 a, Ray2 b);
 }
 
 #endif

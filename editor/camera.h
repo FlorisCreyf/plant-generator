@@ -37,6 +37,7 @@ public:
 	void setWindowSize(int width, int height);
 	void setOrthographic(pg::Vec3 near, pg::Vec3 far);
 	void setPerspective(float fovy, float near, float far, float aspect);
+	void scaleOrthographicVolume(bool scale);
 
 	void setStartCoordinates(float x, float y);
 	/** Returns true if an action was executed. */
@@ -55,6 +56,13 @@ public:
 	float getDistance() const;
 	bool isPerspective() const;
 
+	pg::Mat4 getOrthographic() const;
+	pg::Mat4 getInverseOrthographic() const;
+	pg::Mat4 getPerspective() const;
+	pg::Mat4 getInversePerspective() const;
+	pg::Mat4 getView() const;
+	pg::Mat4 getInverseView() const;
+
 private:
 	float xAngle;
 	float zAngle;
@@ -72,13 +80,8 @@ private:
 	int winWidth;
 	int winHeight;
 	bool perspective;
+	bool scaleOrthographic;
 
-	pg::Mat4 getOrthographic() const;
-	pg::Mat4 getInverseOrthographic() const;
-	pg::Mat4 getPerspective() const;
-	pg::Mat4 getInversePerspective() const;
-	pg::Mat4 getView() const;
-	pg::Mat4 getInverseView() const;
 	pg::Ray getOrthographicRay(int x, int y) const;
 	pg::Ray getPerspectiveRay(int x, int y) const;
 };

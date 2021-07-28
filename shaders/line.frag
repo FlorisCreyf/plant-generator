@@ -1,7 +1,7 @@
 #version 430 core
 
 in VertexData {
-        vec4 color;
+	vec4 color;
 } vertexIn;
 
 out vec4 color;
