@@ -44,7 +44,7 @@ void main()
 layout(location = 1) uniform vec3 cameraPosition;
 layout(location = 2) uniform vec3 ambient;
 layout(location = 3) uniform float shininess;
-layout(location = 5) uniform vec3 lightPosition;
+layout(location = 5) uniform vec3 lightDirection;
 layout(location = 6) uniform bool enableShadows;
 layout(binding = 0) uniform sampler2D albedoMap;
 layout(binding = 1) uniform sampler2D opacityMap;
@@ -57,14 +57,14 @@ in vec3 vertexNormal;
 in vec2 vertexUV;
 in mat3 surfaceBasis;
 
-float getIlluminance(vec4 position, vec3 direction)
+float getIlluminance(vec4 position)
 {
 	vec3 point = (position.xyz / position.w + 1.0) * 0.5;
 	if (texture(shadowMap, point.xy).r == 0.0)
 		return 1.0;
 
 	float illuminance = 0.0;
-	float angle = 1.0f - abs(dot(vertexNormal, direction));
+	float angle = 1.0f - abs(dot(vertexNormal, lightDirection));
 	float bias = max(0.005 * angle, 0.0005);
 	vec2 size = 1.0 / textureSize(shadowMap, 0);
 	for (float x = -1.5; x <= 1.5; x += 1.0) {
@@ -82,11 +82,10 @@ void main()
 {
 	vec3 normal = texture(normalMap, vertexUV).rgb * 2.0 - 1.0;
 	normal = normalize(surfaceBasis * normal);
-	vec3 lightDirection = normalize(lightPosition - vertexPosition);
 	/* The normals are flipped based on the camera direction in order to
 	cope with double sided leaf surfaces */
 	vec3 cameraDirection = normalize(cameraPosition - vertexPosition);
-	if (dot(cameraDirection, normal) < 0.0)
+	if (dot(cameraDirection, vertexNormal) > 0.0)
 		normal = -normal;
 
 	float diffuse = max(dot(lightDirection, normal), 0.0) * 0.5 + 0.5;
@@ -97,7 +96,7 @@ void main()
 	vec4 color = texture(albedoMap, vertexUV) * diffuse;
 	color += texture(specularMap, vertexUV) * specular;
 	if (enableShadows) {
-		float l = getIlluminance(lightFragment, lightDirection);
+		float l = getIlluminance(lightFragment);
 		color = (0.5 + 0.5 * l) * color + vec4(ambient, 1.0);
 	} else
 		color += vec4(ambient, 1.0);

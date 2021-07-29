@@ -163,7 +163,11 @@ Vec3 Camera::getPosition() const
 
 Vec3 Camera::getDirection() const
 {
-	return pg::normalize(this->target - getPosition());
+	float cx = std::cos(-this->xAngle);
+	float cz = std::cos(-this->zAngle);
+	float sx = std::sin(-this->xAngle);
+	float sz = std::sin(-this->zAngle);
+	return Vec3(-sx*sz, -sx*cz, -cx);;
 }
 
 Mat4 Camera::getTransform() const

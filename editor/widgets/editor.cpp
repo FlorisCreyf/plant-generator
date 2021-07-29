@@ -41,6 +41,8 @@ using pg::Mat4;
 using pg::Vec3;
 using pg::Stem;
 using pg::Material;
+using pg::DVertex;
+using std::vector;
 
 const float pi = 3.14159265359f;
 
@@ -673,9 +675,8 @@ void Editor::paintMaterial(const Mat4 &projection, const Vec3 &position)
 		glUseProgram(this->shared->getShader(type));
 	}
 	Mat4 lightTransform = this->light.getTransform();
-	Vec3 lightPosition = this->light.getPosition();
+	Vec3 lightDirection = this->light.getDirection();
 	glUniformMatrix4fv(0, 1, GL_FALSE, &lightTransform[0][0]);
-	glUniform3f(1, lightPosition.x, lightPosition.y, lightPosition.z);
 	for (size_t i = 0, start = 0; i < this->mesh.getMeshCount(); i++) {
 		unsigned index = this->mesh.getMaterialIndex(i);
 		ShaderParams p = this->shared->getMaterial(index);
@@ -699,7 +700,7 @@ void Editor::paintMaterial(const Mat4 &projection, const Vec3 &position)
 	}
 	glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
 	glUniform3f(1, position.x, position.y, position.z);
-	glUniform3f(5, lightPosition.x, lightPosition.y, lightPosition.z);
+	glUniform3f(5, lightDirection.x, lightDirection.y, lightDirection.z);
 	glUniform1i(6, true);
 	glUniformMatrix4fv(4, 1, GL_FALSE, &lightTransform[0][0]);
 	glActiveTexture(GL_TEXTURE4);
@@ -769,7 +770,7 @@ void Editor::updateLight()
 	pg::Aabb aabb = {};
 	bool firstAABB = true;
 	for (size_t i = 0; i < this->mesh.getMeshCount(); i++) {
-		const std::vector<pg::DVertex> *v = this->mesh.getVertices(i);
+		const vector<DVertex> *v = this->mesh.getVertices(i);
 		if (v->size() > 0) {
 			pg::Aabb a = pg::createAABB(&v->at(0), v->size());
 			if (!firstAABB)
@@ -849,7 +850,7 @@ void Editor::updateSelection()
 		}
 
 	if (!stemInstances.empty()) {
-		std::vector<Path::Segment> segments;
+		vector<Path::Segment> segments;
 		for (auto &instance : stemInstances) {
 			Stem *stem = instance.first;
 			Vec3 location = stem->getLocation();
@@ -911,8 +912,8 @@ void Editor::updateBuffers()
 	int pointOffset = 0;
 	int indexOffset = 0;
 	for (size_t m = 0; m < this->mesh.getMeshCount(); m++) {
-		const std::vector<pg::DVertex> *v = this->mesh.getVertices(m);
-		const std::vector<unsigned> *i = this->mesh.getIndices(m);
+		const vector<DVertex> *v = this->mesh.getVertices(m);
+		const vector<unsigned> *i = this->mesh.getIndices(m);
 		this->plantBuffer.update(v->data(), pointOffset, v->size());
 		this->plantBuffer.update(i->data(), indexOffset, i->size());
 		pointOffset += v->size();
@@ -950,7 +951,7 @@ bool Editor::isAnimating()
 
 void Editor::updateJoints()
 {
-	std::vector<pg::KeyFrame> frames;
+	vector<pg::KeyFrame> frames;
 	Stem *root = this->scene.plant.getRoot();
 	frames = this->scene.animation.getFrame(this->ticks, root);
 	size_t size = frames.size() * sizeof(pg::KeyFrame);
