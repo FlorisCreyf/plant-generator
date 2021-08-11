@@ -13,7 +13,8 @@
 \fancyhead[R]{\thepage}
 \renewcommand{\footrulewidth}{0pt}
 \renewcommand{\headrulewidth}{0.5pt}
-\newcommand\m[1]{\begin{bmatrix}#1\end{bmatrix}}
+\renewcommand{\vec}[1]{\mathbf{#1}}
+\newcommand\m[1]{\begin{pmatrix}#1\end{pmatrix}}
 \newcommand\h[0]{\hangindent=\parindent\hangafter=1\noindent}
 \makeatletter
 \begin{document}
@@ -35,7 +36,6 @@ The project is split in two parts. The editor handles all user input and provide
 \caption{A high-level overview of the program. The shaded boxes are defined in \textit{editor} and the unfilled boxes are defined in \textit{plant-generator}.}
 \end{figure}
 
-\newpage
 \section{Background}
 \subsection{Stems}
 Auxin (IAA) lengthens cells by increasing cell wall elasticity. It is transported away from light through the shifting of PIN proteins in cell membranes. This process results in stems bending towards light. A common hypothesis is that auxin determines the apical dominance of the plant through a source-sink model. Fully saturating stems with auxin prevents axillary buds from releasing auxin into the stem and prevents further growth. The effects of auxin are countered with cytokinins (CK) that stimulate growth.
@@ -132,14 +132,14 @@ Interpolating normals linearly causes a sharp junction where the collar ends. To
 \[ f(x) =
 \begin{cases}
 (\sqrt{2}x)^2 & 0 \leq x \leq \frac{1}{2}\\
--\left[\sqrt{2}(x-1)\right]^2 + 1 & \frac{1}{2} \leq x \leq 1 \\
+-\left(\sqrt{2}(x-1)\right)^2 + 1 & \frac{1}{2} \leq x \leq 1 \\
 \end{cases} \]
 
 \subsubsection{Bifurcation}
 \begin{enumerate}
 \item The first step is to avoid overlapping cross sections. Assuming that the paths are lines, the law of sines can be used to find a distance wherein no cross sections should be generated. Let $ d $ be the distance, $ r $ be the radius, and $ \theta $ be the angle between the vectors (Figure \ref{fig:forkside}).
-\[ d = r \cdot \frac{\sin[(\pi-\theta)\div2]}{\sin (\theta\div2)} \]
-A more flexible approach is to project points along one path onto the other path and measure the distances. The paths are evaluated in an alternating manner so that the algorithm exits the first time the paths stop intersecting so that not all points need to be evaluated. Alternation occurs whenever a check fails (Figure \ref{fig:path}).
+\[ d = r \cdot \frac{\sin((\pi-\theta)\div2)}{\sin (\theta\div2)} \]
+A more flexible approach is to project points along one path onto the other path and measure the distances. The paths are evaluated in an alternating manner so that the algorithm exits the first time the paths stop intersecting and so that not all points are evaluated. Alternation occurs whenever a check fails (Figure \ref{fig:path}).
 
 Another approach is to assume that the cross section are not overlapping. Cross sections between the first two control points of the stem path are eliminated, and the second control point is calculated in a manner that avoids overlapping.
 
@@ -159,9 +159,9 @@ Another approach is to assume that the cross section are not overlapping. Cross 
 
 \item The second step is to find two points on the cross section that will divide it in half. To avoid the situation illustrated in Figure \ref{fig:fork2}, it is necessary for cross sections to be rotated relatively to each other (i.e., subsequent rotations are concatenated with previous rotations).
 
-The cross section is rotated into the average of the two stem direction vectors (Figure \ref{fig:forkdiv}). One of the two child vectors is then projected on the plane of the cross section. Then, the angle between the projected vector and the first point on the cross section is measured. The range of the inverse cosine function is $ [0, \pi] $, so it takes two dot products to determine an angle $ \theta \in [0, 2\pi] $.
+The cross section is rotated into the average of the two stem direction vectors (Figure \ref{fig:forkdiv}). One of the two child vectors is then projected on the plane of the cross section. The angle between the projected vector and the first point on the cross section is measured. The range of the inverse cosine function is $ [0, \pi] $, so it takes two inner products to determine an angle $ \theta \in [0, 2\pi] $.
 
-This method stops working reliably when a vector points in the opposite direction of the parent stem direction (boundary points can get flipped). To select a better frame of reference, three dot products are taken with the average of all three (outward pointing) vectors. The smallest dot product becomes the parent cross section.
+This method stops working reliably when a vector points in the opposite direction of the parent stem direction (boundary points can get flipped). To select a better frame of reference, three inner products are taken with the average of all three (outward pointing) vectors. The smallest inner product becomes the parent cross section.
 
 \[ \text{midpoint} = \left\lfloor \frac{\theta}{2\pi \div \text{number of points}} \right\rceil \]
 
@@ -191,7 +191,7 @@ This method stops working reliably when a vector points in the opposite directio
   \caption{Points cannot be connected without distortion.} \label{fig:fork2}
  \end{minipage}
  \hfill
- \begin{minipage}[H]{0.4\textwidth}
+ \begin{minipage}[H]{0.42\textwidth}
   \centering
   \includesvg{resources/diagrams/fork3_topdown.svg}
   \caption{Points are connected without distortion but two extra triangles are needed.} \label{fig:fork3}
@@ -233,90 +233,63 @@ The camera produces matrices for transforming the world space into the screen sp
 \end{itemize}
 The x and z rotations are used to calculate a point on a sphere. The location of the camera is therefore: (\textit{location on sphere}) (\textit{distance}) + \textit{target}. The camera position is at $ (0, 0, 1)^T $ (looking down the negative z-axis) if both x and z rotations are zero.
 
-\[
-d\begin{pmatrix}
-\sin(-x)\sin(-z)\\
-\sin(-x)\cos(-z)\\
-\cos(-x)\\
-\end{pmatrix} + \vec{t}
-\]
+\[ d\m{\sin(-x)\sin(-z) \\ \sin(-x)\cos(-z) \\ \cos(-x)} + t \]
 
-The clipping volume contains objects that are visible to the camera and that will be projected onto the screen. The orthographic projection centers the clipping volume at the center of the world origin and scales the volume so that the corners are $ \vec{n} = (1, 1, 1)^T $ and $ \vec{f} = (-1, -1, -1)^T $.
-\[(TS)^{-1} = \begin{pmatrix}
+The clipping volume contains objects that are visible to the camera and that will be projected onto the screen. The orthographic projection centers the clipping volume at the center of the world origin and scales the volume so that the corners are $ n = (1, 1, 1)^T $ and $ f = (-1, -1, -1)^T $.
+\[ (TS)^{-1} = \m{
 \frac{2}{n_x-f_x} & 0 & 0 & 0 \\
 0 & \frac{2}{n_y-f_y} & 0 & 0 \\
 0 & 0 & \frac{2}{n_z-f_z} & 0 \\
-0 & 0 & 0 & 1 \\
-\end{pmatrix}
-\begin{pmatrix}
+0 & 0 & 0 & 1} \m{
 1 & 0 & 0 & -\frac{n_x + f_x}{2} \\
 0 & 1 & 0 & -\frac{n_y + f_y}{2} \\
 0 & 0 & 1 & -\frac{n_z + f_z}{2} \\
-0 & 0 & 0 & 1 \\
-\end{pmatrix} =
-\begin{pmatrix}
+0 & 0 & 0 & 1} = \m{
 \frac{2}{n_x-f_x} & 0 & 0 & -\frac{n_x + f_x}{n_x-f_x} \\
 0 & \frac{2}{n_y-f_y} & 0 & -\frac{n_y + f_y}{n_y-f_y} \\
 0 & 0 & \frac{2}{n_z-f_z} & -\frac{n_z + f_z}{n_z-f_z} \\
-0 & 0 & 0 & 1 \\
-\end{pmatrix}\]
+0 & 0 & 0 & 1} \]
 The perspective transform ($ P $) morphs a truncated pyramid into a cube. This is done by examining several points along the pyramid. Let $\phi$ be half the viewing angle.
-\[\begin{pmatrix}
+\[ \m{
 1 & 0 & 0 & 0 \\
 0 & 1 & 0 & 0 \\
 0 & 0 & a & b \\
-0 & 0 & -1 & 0 \\
-\end{pmatrix}
-\begin{pmatrix}
-x \\
-y \\
-z \\
-1 \\
-\end{pmatrix} =
-\begin{pmatrix}
-x \\
-y \\
-az + b \\
--z \\
-\end{pmatrix}
+0 & 0 & -1 & 0}
+\m{x \\ y \\ z \\ 1} =
+\m{x \\ y \\ az + b \\ -z}
 \hspace{5pt}
 \frac{an + b}{-n} = 1, \hspace{5pt}
 \frac{af + b}{-f} = -1
 \hspace{5pt}\rightarrow\hspace{5pt}
 b = \frac{2nf}{n-f}, \hspace{5pt}
-a = \frac{-n-f}{n-f}\]
-\[y = z\tan\phi, \hspace{5pt} \frac{y\cot\phi}{z} = 1, \hspace{5pt} \frac{-y\cot\phi}{z} = -1 \hspace{30pt} x = z\tan\phi, \hspace{5pt} \frac{x\cot\phi}{z} = 1, \hspace{5pt} \frac{-x\cot\phi}{z} = -1\]
-\[P = \begin{pmatrix}
+a = \frac{-n-f}{n-f} \]
+\[ y = z\tan\phi, \hspace{5pt} \frac{y\cot\phi}{z} = 1, \hspace{5pt} \frac{-y\cot\phi}{z} = -1 \hspace{30pt} x = z\tan\phi, \hspace{5pt} \frac{x\cot\phi}{z} = 1, \hspace{5pt} \frac{-x\cot\phi}{z} = -1 \]
+\[ P = \m{
 \cot\phi & 0 & 0 & 0 \\
 0 & \cot\phi & 0 & 0 \\
 0 & 0 &\frac{-n-f}{n-f} & \frac{2nf}{n-f} \\
-0 & 0 & -1 & 0 \\
-\end{pmatrix} \hspace{10pt}
-P^{-1} = \begin{pmatrix}
+0 & 0 & -1 & 0}
+\hspace{10pt}
+P^{-1} = \m{
 \tan\phi & 0 & 0 & 0 \\
 0 & \tan\phi & 0 & 0 \\
 0 & 0 & 0 & -1 \\
-0 & 0 & \frac{n-f}{2nf} & \frac{-n-f}{2nf} \\
-\end{pmatrix}\]
+0 & 0 & \frac{n-f}{2nf} & \frac{-n-f}{2nf}} \]
 The view matrix translates and rotates a portion of the scene into the clipping volume. For compactness, let angles $ -x = \theta $ and $ -z = \phi $.
-\[(TR_zR_x)^{-1} = \begin{pmatrix}
+\[ (TR_zR_x)^{-1} = \m{
 \cos\phi & -\sin\phi & 0 & 0 \\
 \cos\theta \sin\phi & \cos\theta \cos\phi & -\sin\theta & 0 \\
 \sin\theta \sin\phi & \sin\theta \cos\phi & \cos\theta & 0 \\
-0 & 0 & 0 & 1 \\
-\end{pmatrix}
-\begin{pmatrix}
+0 & 0 & 0 & 1} \m{
 1 & 0 & 0 & -t_x \\
 0 & 1 & 0 & -t_y \\
 0 & 0 & 1 & -t_z \\
-0 & 0 & 0 & 1 \\
-\end{pmatrix}\]
-\[(TR_zR_x)^{-1} = \begin{pmatrix}
+0 & 0 & 0 & 1} \]
+\[ (TR_zR_x)^{-1} = \m{
 \cos\phi & -\sin\phi & 0 & -t_x\cos\phi+t_y\sin\phi \\
 \cos\theta \sin\phi & \cos\theta \cos\phi & -\sin\theta & -t_x\cos\theta\sin\phi-t_y\cos\theta\cos\phi+t_z\sin\theta \\
 \sin\theta \sin\phi & \sin\theta \cos\phi & \cos\theta & -t_x\sin\theta\sin\phi-t_y\sin\theta\cos\phi-t_z\cos\theta \\
-0 & 0 & 0 & 1 \\
-\end{pmatrix}\]
+0 & 0 & 0 & 1} \]
 
 \subsection{Commands}
 The editor uses the command pattern to store all user invocable commands. This allows each command to be easily associated with a key combination, and this makes it possible to implement an undo/redo system without having to copy the entire application state. Commands are required to have execute, undo, and redo methods. The downside of this approach is that the the undo behavior of prior commands will be wrong if a command improperly undoes its changes.
@@ -330,7 +303,7 @@ There is also a need to move points along paths instead of straight through the 
 The internal properties of stems and leaves can be adjusted using the property editor. The program checks for changes within the selection whenever the property editor loses focus. A save command storing the original objects is inserted into the history if changes were made.
 
 \subsubsection{Generator Commands}
-Ideally, a generator command should not have to store generated objects in order to be able to redo the program state. The following options would increase the program complexity in one way or another.
+Generation commands should not have to store the objects they generated when undoing the program state. The following options would increase the program complexity in one way or another.
 
 \begin{itemize}
 \item If objects are identified by IDs, then the generator would have to be able to create objects with the same IDs. Some operations, such as reinserting stems, would require a lookup operation.
@@ -339,6 +312,23 @@ Ideally, a generator command should not have to store generated objects in order
 
 \subsection{Selection}
 The selection object contains structures for storing stem, point and leaf selections. The user creates a selection through a selector object. Removing camera and other scene information from the selection decreases the size of the history and coupling. Commands can update the selection directly through the selection object.
+
+Stems are selected using cone-ray intersection tests. The equation for a ray is substituted into the quadratic equation for a cone and the equation is solved for the length of the ray ($ t $). The cone is truncated along its height depending on the radii and length of the geometry. The ray is transformed into the object space of the cone by constructing a transformation that translates the geometry to the origin and rotates the direction of the geometry into the up vector.
+
+\[ \text{Let } (\rho x)^2 + (\rho y)^2 - (\chi z - 1)^2 = 0 \text{ and } R(t) = o + td \]
+\[ \rho^2(o_x + td_x)^2 + \rho^2(o_y + td_y)^2 - (\chi[o_z + td_z] - 1)^2 = 0 \]
+% \[ \rho^2(t^2d_x^2 + 2to_xd_x + o_x^2 + t^2d_y^2 + 2to_yd_y + o_y^2) -
+% t^2\chi^2d_z^2 - 2t\chi d_z(\chi o_z-1) - \chi o_z(\chi o_z-2) - 1 = 0 \]
+\[ t^2\underbrace{\left(\rho^2[d_x^2 + d_y^2] - \chi^2d_z^2\right)}_{\alpha} +
+t\underbrace{2\left(\rho^2[o_xd_x + o_yd_y] - \chi d_z[\chi o_z-1]\right)}_{\beta} +
+\underbrace{\rho^2\left(o_x^2 + o_y^2\right) - \chi o_z\left(\chi o_z-2\right) - 1}_{\gamma} \]
+\[ \text{Let radius } r_1 = \rho^{-1} \text{ and height } h_2 = \chi^{-1} \text{ be descriptors of the cone.} \]
+\[ \text{Then } h_2 = \frac{r_1h_1}{r_1-r_2} \text{, where } r_2 \le r_1 \text{ and } h_1 \le h_2 \text{, defines a cone for a segment of length } h_1 \text{.} \]
+
+Leaves could have any shape, so they are selected using triangle-ray intersections. The standard way to do this is to describe the intersection point with Barycentric weights ($ \alpha $, $ \beta $, and $ \gamma $ so that $ \alpha + \beta + \gamma = 1 $) and solve the  system of linear equations for $ \alpha $, $ \beta $, and $ t $. A closed form solution is obtained by using Cramer's rule to find $ B^{-1} $.
+
+\[ o + td = (1 - \alpha - \beta) p_1 + \alpha p_2 + \beta p_3 \Rightarrow o - p_0 = \alpha(p_2 - p_1) + \beta(p3 - p_1) - d \]
+\[ B \m{\alpha \\ \beta \\ t} = \m{|&|&|\\ p_2 - p_1 & p_3 - p_1 & -d \\|&|&|} \m{\alpha \\ \beta \\ t} = o - p_0 \]
 
 \subsection{Resources}
 A \texttt{SharedResources} object stores all the shader programs and materials that are needed across all OpenGL widgets. Default images are automatically loaded from the \texttt{resources} directory, and shaders are automatically loaded from the \texttt{shaders} directory. Signals are emitted whenever materials are modified so that property editors can adjust their combo boxes to match the global state.
@@ -361,5 +351,17 @@ The wind generator adds joints to each stem and simultaneously constructs an ani
 \subsubsection{Shadows}
 
 A separate framebuffer is used to store depth information from the perspective of a light source. When the scene is rendered, the vertices are transformed by both the light and camera transformations. The fragment shader discards fragments based on the camera transformation. Additionally, it uses the depth texture of the light source and the z values of the light transformed vertices to compare currently discarded fragments to previously discarded fragments.
+
+\subsubsection{Normal Maps}
+
+Assume a normal map is a plane facing in the positive z-axis. The plane needs to be rotated so that it is aligned with the surface normal and the texture is oriented in the right direction. The rotation is a basis containing the normal ($ n $), tangent ($ t $), and bitangent ($ b $). For stems, the normal is the radial direction (along the z-axis) and the tangent is the axial direction (along the y-axis). For arbitrary surfaces, the tangent and the bitangent are found by solving to following system.
+
+\[ \text{Let each vertex have texture coordinates } (u_i, v_i) \text{ and position } p_i \]
+\[ \m{u_2-u_1 & v_2-v_1 \\ u_3-u_1 & v_3-v_1} \m{b \\ t} = \m{p_2-p_1 \\ p_3-p_1}  \]
+\[ \text{Using Cramer's rule:} \]
+\[ b = \frac{(p_2 - p_1)(v_3-v_1)-(v_2-v_1)(p_3-p_1)}{(u_2-u_1)(v_3 - v_1)-(v_2-v_1)(u_3-u_1)} \hspace{20pt}
+t = \frac{ (u_2-u_1)(p_3-p_1)-(p_2-p_1)(u_3-u_1)
+ }{(u_2-u_1)(v_3-v_1)-(v_2-v_1)(u_3-u_1)}
+\]
 
 \end{document}

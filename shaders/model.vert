@@ -114,29 +114,38 @@ void main()
 
 #elif defined(MATERIAL)
 
-layout(location = 4) uniform mat4 lightTransform;
+layout(location = 1) uniform vec3 cameraPosition;
+layout(location = 2) uniform vec3 cameraDirection;
+layout(location = 7) uniform mat4 lightTransform;
+layout(location = 8) uniform bool isPerspective;
 out vec4 lightFragment;
 out vec3 vertexPosition;
 out vec3 vertexNormal;
+out vec3 vertexTangent;
+out vec3 vertexBitangent;
 out vec2 vertexUV;
-out mat3 surfaceBasis;
 
 void main()
 {
 	vec4 position2 = vec4(position, 1.0);
-	vec3 normal2 = normal;
-	vec3 tangent2 = tangent;
+	vec4 normal2 = vec4(normal, 0.0);
+	vec4 tangent2 = vec4(tangent, 0.0);
 #ifdef DYNAMIC
 	position2 = getAnimatedPoint(position2);
-	normal2 = getAnimatedNormal(vec4(normal2, 0.0)).xyz;
-	tangent2 = getAnimatedNormal(vec4(tangent2, 0.0)).xyz;
+	normal2 = getAnimatedNormal(normal2);
+	tangent2 = getAnimatedNormal(tangent2);
 #endif
 	gl_Position = transform * position2;
 	lightFragment = lightTransform * position2;
+
 	vertexPosition = position2.xyz;
-	vertexNormal = normal2;
+	vertexNormal = normal2.xyz;
+	vertexTangent = tangent2.xyz;
+	vertexBitangent = tangentScale * cross(normal2.xyz, tangent2.xyz);
 	vertexUV = uv;
-	surfaceBasis = mat3(tangent2, cross(tangent2, normal2), normal2);
+
+	if (!isPerspective && dot(cameraDirection, vertexNormal) > 0.0)
+		vertexNormal = -vertexNormal;
 }
 
 #elif defined(OUTLINE)

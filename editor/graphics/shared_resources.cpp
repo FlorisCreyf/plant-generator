@@ -40,16 +40,18 @@ void SharedResources::initialize()
 		QImage img("resources/dot.png");
 		this->textures[DotTexture] = addTexture(img, GL_RGBA, GL_RGBA8);
 		unsigned char black[3] = {0, 0, 0};
+		unsigned char gray[3] = {100, 100, 100};
 		unsigned char white[3] = {255, 255, 255};
 		unsigned char blue[3] = {127, 127, 255};
 		this->textures[BlackTexture] = addDefaultTexture(black);
+		this->textures[GrayTexture] = addDefaultTexture(gray);
 		this->textures[WhiteTexture] = addDefaultTexture(white);
 		this->textures[BlueTexture] = addDefaultTexture(blue);
 
 		for (ShaderParams &param : this->materials)
 			if (!param.isValid()) {
 				param.setDefaultTexture(Material::Albedo,
-					this->textures[BlackTexture]);
+					this->textures[GrayTexture]);
 				param.setDefaultTexture(Material::Opacity,
 					this->textures[WhiteTexture]);
 				param.setDefaultTexture(Material::Normal,
@@ -238,7 +240,7 @@ GLuint SharedResources::buildProgram(GLuint *shaders, int size)
 unsigned SharedResources::addMaterial(ShaderParams params)
 {
 	params.setDefaultTexture(Material::Albedo,
-		this->textures[BlackTexture]);
+		this->textures[GrayTexture]);
 	params.setDefaultTexture(Material::Opacity,
 		this->textures[WhiteTexture]);
 	params.setDefaultTexture(Material::Normal,

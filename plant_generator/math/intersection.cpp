@@ -178,9 +178,6 @@ float pg::intersectsFrontTriangle(Ray &ray, Vec3 p1, Vec3 p2, Vec3 p3)
 	return t;
 }
 
-/** The following equations are used to compute 't':
-... ray(t) = origin + t*direction
-... (ray(t) - rectangle_point) `dot` rectangle_normal = 0 */
 float pg::intersectsPlane(Ray &ray, Plane &plane)
 {
 	float a = dot(plane.normal, ray.direction);
@@ -190,8 +187,6 @@ float pg::intersectsPlane(Ray &ray, Plane &plane)
 		return 0.0f;
 }
 
-/** Intersect a ray with a plane and determine if the intersected point is
-within two edges of the rectangle on that plane. */
 float pg::intersectsRectangle(Ray ray, Vec3 a, Vec3 b, Vec3 d)
 {
 	Plane plane;
@@ -217,72 +212,44 @@ float pg::intersectsSphere(Ray &ray, Vec3 position, float radius)
 	Vec3 l = position - ray.origin;
 	float a = dot(l, ray.direction);
 	float b = dot(l, l);
-	if (a < 0.0f && b > pow(radius, 2))
+	if (a < 0.0f && b > std::pow(radius, 2))
 		return 0.0f;
 	float c = b - a*a;
-	if (c > pow(radius, 2))
+	if (c > std::pow(radius, 2))
 		return 0.0f;
-	float d = sqrt(pow(radius, 2) - c);
-	return b > pow(radius, 2) ? a - d : a + d;
+	float d = std::sqrt(std::pow(radius, 2) - c);
+	return b > std::pow(radius, 2) ? a - d : a + d;
 }
 
 bool findRoots(float a, float b, float c, float (&roots)[2])
 {
-	float discr = b*b - 4.0*a*c;
-	if (discr >= 0.0) {
-		float sq = sqrt(discr);
-		roots[0] = (-b + sq) / (2.0*a);
-		roots[1] = (-b - sq) / (2.0*a);
+	float d = b*b - 4.0*a*c;
+	if (d >= 0.0) {
+		float s = std::sqrt(d);
+		roots[0] = (-b + s) / (2.0*a);
+		roots[1] = (-b - s) / (2.0*a);
 		return true;
 	} else
 		return false;
 }
 
-float pg::intersectsTaperedCylinder(Ray ray, Vec3 start, Vec3 direction,
-	float height, float r1, float r2)
+float pg::intersectsTaperedCylinder(Ray ray, Vec3 o, Vec3 d, float height,
+	float r1, float r2)
 {
-	float rr1 = 1.0f / r1;
-	Vec3 s(rr1, (1.0f-r2*rr1)/height, rr1);
-	Vec3 p(0.0f, -1.0f, 0.0f);
-
-	float a = s.x*s.x;
-	float b = -s.y*s.y;
-	float c = s.z*s.z;
-	float g = 2.0f*s.x*p.x;
-	float h = -2.0f*s.y*p.y;
-	float i = 2.0f*s.z*p.z;
-	float j = p.x*p.x - p.y*p.y + p.z*p.z;
-
-	{ /* Transform ray into object space of cone. */
-		Vec3 yaxis(0.0f, 1.0f, 0.0f);
-		Quat q = rotateIntoVecQ(direction, yaxis);
-		ray.origin = ray.origin - start;
-		ray.direction = rotate(q, ray.direction);
-		ray.origin = rotate(q, ray.origin);
-	}
-
-	float aq = 0.0f, bq = 0.0f, cq = 0.0f;
-	aq += a*ray.direction.x*ray.direction.x;
-	aq += b*ray.direction.y*ray.direction.y;
-	aq += c*ray.direction.z*ray.direction.z;
-	bq += 2.0f*a*ray.direction.x*ray.origin.x + g*ray.direction.x;
-	bq += 2.0f*b*ray.direction.y*ray.origin.y + h*ray.direction.y;
-	bq += 2.0f*c*ray.direction.z*ray.origin.z + i*ray.direction.z;
-	cq += a*ray.origin.x*ray.origin.x + g*ray.origin.x;
-	cq += b*ray.origin.y*ray.origin.y + h*ray.origin.y;
-	cq += c*ray.origin.z*ray.origin.z + i*ray.origin.z;
-	cq += j;
-
+	Quat q = rotateIntoVecQ(d, Vec3(0.0f, 0.0f, 1.0f));
+	d = rotate(q, ray.direction);
+	o = rotate(q, ray.origin - o);
+	float r = 1.0f / (r1*r1);
+	float h = (r1 - r2) / (r1 * height);
+	float a = r*(d.x*d.x + d.y*d.y) - h*h*(d.z*d.z);;
+	float b = r*(d.x*o.x + d.y*o.y) - h*d.z*(h*o.z - 1.0f);
+	float c = r*(o.x*o.x + o.y*o.y) - h*o.z*(h*o.z - 2.0f) - 1.0f;
 	float t = 0.0f;
 	float roots[2];
-	if (findRoots(aq, bq, cq, roots)) {
+	if (findRoots(a, 2.0*b, c, roots)) {
 		t = roots[0] < roots[1] ? roots[0] : roots[1];
-		/* The intersection fails if the intersection falls under the
-		y-axis or above the height value. The cone is always along
-		the y-axis because the ray is transformed into the object
-		space of the cone. */
-		float y = (t*ray.direction.y + ray.origin.y);
-		if (y < 0 || y > height)
+		float z = t*d.z + o.z;
+		if (z < 0 || z > height)
 			t = 0.0f;
 	} else
 		t = 0.0f;

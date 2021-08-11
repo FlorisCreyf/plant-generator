@@ -172,7 +172,7 @@ void Wavefront::importFile(const char *filename, Geometry *geom)
 		while (iss >> descriptor) {
 			auto it = descriptors.find(descriptor);
 			if (it == descriptors.end()) {
-				DVertex point;
+				DVertex point = {};
 				shape.push_back(index);
 				descriptors.emplace(descriptor, index++);
 				unsigned s[3] = {0};

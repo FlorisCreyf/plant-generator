@@ -42,10 +42,12 @@ void main()
 #elif defined(MATERIAL)
 
 layout(location = 1) uniform vec3 cameraPosition;
-layout(location = 2) uniform vec3 ambient;
-layout(location = 3) uniform float shininess;
+layout(location = 2) uniform vec3 cameraDirection;
+layout(location = 3) uniform vec3 ambient;
+layout(location = 4) uniform float shininess;
 layout(location = 5) uniform vec3 lightDirection;
 layout(location = 6) uniform bool enableShadows;
+layout(location = 8) uniform bool isPerspective;
 layout(binding = 0) uniform sampler2D albedoMap;
 layout(binding = 1) uniform sampler2D opacityMap;
 layout(binding = 2) uniform sampler2D specularMap;
@@ -54,8 +56,9 @@ layout(binding = 4) uniform sampler2D shadowMap;
 in vec4 lightFragment;
 in vec3 vertexPosition;
 in vec3 vertexNormal;
+in vec3 vertexTangent;
+in vec3 vertexBitangent;
 in vec2 vertexUV;
-in mat3 surfaceBasis;
 
 float getIlluminance(vec4 position)
 {
@@ -67,30 +70,31 @@ float getIlluminance(vec4 position)
 	float angle = 1.0f - abs(dot(vertexNormal, lightDirection));
 	float bias = max(0.005 * angle, 0.0005);
 	vec2 size = 1.0 / textureSize(shadowMap, 0);
-	for (float x = -1.5; x <= 1.5; x += 1.0) {
+	for (float x = -1.5; x <= 1.5; x += 1.0)
 		for (float y = -1.5; y <= 1.5; y += 1.0) {
 			vec2 c = point.xy + size * vec2(x, y);
 			float d = texture(shadowMap, c).r;
 			illuminance += point.z + bias <= d ? 0.0 : 1.0;
 
 		}
-	}
 	return illuminance / 16.0;
 }
 
 void main()
 {
-	vec3 normal = texture(normalMap, vertexUV).rgb * 2.0 - 1.0;
-	normal = normalize(surfaceBasis * normal);
+	vec3 viewDirection = normalize(vertexPosition - cameraPosition);
+	vec3 normal = vertexNormal;
 	/* The normals are flipped based on the camera direction in order to
 	cope with double sided leaf surfaces */
-	vec3 cameraDirection = normalize(cameraPosition - vertexPosition);
-	if (dot(cameraDirection, vertexNormal) > 0.0)
+	if (isPerspective && dot(viewDirection, vertexNormal) > 0.0)
 		normal = -normal;
+	mat3 normalTransform = mat3(vertexBitangent, vertexTangent, normal);
+	normal = texture(normalMap, vertexUV).rgb * 2.0 - 1.0;
+	normal = normalize(normalTransform * normal);
 
-	float diffuse = max(dot(lightDirection, normal), 0.0) * 0.5 + 0.5;
-	vec3 reflection = reflect(-lightDirection, normal);
-	float specular = max(dot(lightDirection, reflection), 0.0);
+	float diffuse = max(dot(-lightDirection, normal), 0.0) * 0.5 + 0.5;
+	vec3 halfway = normalize(lightDirection + viewDirection);
+	float specular = max(dot(-halfway, normal), 0.0);
 	specular = pow(specular, shininess);
 
 	vec4 color = texture(albedoMap, vertexUV) * diffuse;
@@ -126,11 +130,11 @@ void drawOutline()
 	float dy = 1.0 / viewport.y;
 	float x = gl_FragCoord.x / viewport.x;
 	float y = gl_FragCoord.y / viewport.y;
-	float adjacentY = y - dy * thickness;
-	float adjacentX = 0.0;
-	float result = 0.0;
 	vec4 color = texture(silhouette, vec2(x, y));
 
+	float result = 0.0;
+	float adjacentY = y - dy * thickness;
+	float adjacentX = 0.0;
 	for (int w = 0; w <= 2 * thickness; w++) {
 		adjacentX = x - dx * thickness;
 		for (int h = 0; h <= 2 * thickness; h++) {

@@ -96,15 +96,18 @@ void MaterialViewer::paintGL()
 		scale = pg::scale(Vec3(aspect, 1.0f, 1.0f));
 	Mat4 projection = scale * this->camera.getTransform();
 	Vec3 position = this->camera.getPosition();
+	Vec3 direction = this->camera.getDirection();
 
 	this->buffer.use();
 	glUseProgram(this->shared->getShader(SharedResources::Material));
 	glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
 	glUniform3f(1, position.x, position.y, position.z);
-	glUniform3f(2, ambient.x, ambient.y, ambient.z);
-	glUniform1f(3, shininess);
-	glUniform3f(5, 0.0f, 0.0f, 1.0f);
+	glUniform3f(2, direction.x, direction.y, direction.z);
+	glUniform3f(3, ambient.x, ambient.y, ambient.z);
+	glUniform1f(4, shininess);
+	glUniform3f(5, direction.x, direction.y, direction.z);
 	glUniform1i(6, false);
+	glUniform1i(8, this->camera.isPerspective());
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, params.getTexture(Material::Albedo));
 	glActiveTexture(GL_TEXTURE1);

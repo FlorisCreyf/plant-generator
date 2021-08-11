@@ -146,7 +146,7 @@ void VertexBuffer::setVertexFormat()
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, stride, ptr);
 	glEnableVertexAttribArray(2);
 	ptr = (GLvoid *)(offsetof(DVertex, tangentScale));
-	glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, stride, ptr);
+	glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, stride, ptr);
 	glEnableVertexAttribArray(3);
 	ptr = (GLvoid *)(offsetof(DVertex, uv));
 	glVertexAttribPointer(4, 2, GL_FLOAT, GL_FALSE, stride, ptr);

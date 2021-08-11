@@ -699,10 +699,13 @@ void Editor::paintMaterial(const Mat4 &projection, const Vec3 &position)
 		glUseProgram(this->shared->getShader(type));
 	}
 	glUniformMatrix4fv(0, 1, GL_FALSE, &projection[0][0]);
+	Vec3 direction = this->camera.getDirection();
 	glUniform3f(1, position.x, position.y, position.z);
+	glUniform3f(2, direction.x, direction.y, direction.z);
 	glUniform3f(5, lightDirection.x, lightDirection.y, lightDirection.z);
 	glUniform1i(6, true);
-	glUniformMatrix4fv(4, 1, GL_FALSE, &lightTransform[0][0]);
+	glUniform1i(8, this->camera.isPerspective());
+	glUniformMatrix4fv(7, 1, GL_FALSE, &lightTransform[0][0]);
 	glActiveTexture(GL_TEXTURE4);
 	glBindTexture(GL_TEXTURE_2D, this->shadowMap);
 	for (size_t i = 0, start = 0; i < this->mesh.getMeshCount(); i++) {
@@ -711,8 +714,8 @@ void Editor::paintMaterial(const Mat4 &projection, const Vec3 &position)
 		Material material = p.getMaterial();
 		float shininess = material.getShininess();
 		Vec3 ambient = material.getAmbient();
-		glUniform3f(2, ambient.x, ambient.y, ambient.z);
-		glUniform1f(3, shininess);
+		glUniform3f(3, ambient.x, ambient.y, ambient.z);
+		glUniform1f(4, shininess);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, p.getTexture(Material::Albedo));
 		glActiveTexture(GL_TEXTURE1);
@@ -1015,10 +1018,16 @@ void Editor::load(const char *filename)
 	this->scene.reset();
 	this->shared->clearMaterials();
 	if (filename) {
-		std::ifstream stream(filename);
-		boost::archive::text_iarchive ia(stream);
-		ia >> this->scene;
-		stream.close();
+		try {
+			std::ifstream stream(filename);
+			boost::archive::text_iarchive ia(stream);
+			ia >> this->scene;
+			stream.close();
+		} catch (boost::archive::archive_exception &) {
+			this->scene.reset();
+			this->shared->clearMaterials();
+			this->scene.plant.setDefault();
+		}
 	} else
 		this->scene.plant.setDefault();
 	for (const Material &material : this->scene.plant.getMaterials())

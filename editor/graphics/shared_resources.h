@@ -41,6 +41,7 @@ public:
 	enum Texture {
 		DotTexture,
 		BlackTexture,
+		GrayTexture,
 		WhiteTexture,
 		BlueTexture,
 		TextureQuantity
