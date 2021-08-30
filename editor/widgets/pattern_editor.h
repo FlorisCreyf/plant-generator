@@ -43,12 +43,10 @@ class PatternEditor : public QWidget {
 		RPull, RPointDensity, DRSize};
 	SpinBox *irv[IRSize];
 	DoubleSpinBox *drv[DRSize];
-	enum {ISSize};
 	enum {SDensity, SDistance, SLength, SRadius, SAngleVariation, SNoise,
 		SRadiusThreshold, SFork, SForkAngle, SForkScale,
 		SInclineVariation, SPull, SRadiusVariation, SPointDensity,
 		DSSize};
-	SpinBox *isv[ISSize];
 	DoubleSpinBox *dsv[DSSize];
 	enum {LeavesPerNode, ILSize};
 	enum {LDensity, LDistance, LRotation, LMinUp, LMaxUp, LLocalUp,

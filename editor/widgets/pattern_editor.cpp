@@ -164,7 +164,6 @@ void PatternEditor::createStemGroup(QBoxLayout *layout)
 		[&] (StemData *d) {d->pointDensity =
 			this->dsv[SPointDensity]->value();}
 	};
-	std::function<void(StemData *)> g[ISSize] = {};
 
 	for (int i = 0; i < DSSize; i++) {
 		this->dsv[i] = new DoubleSpinBox(this);
@@ -173,13 +172,6 @@ void PatternEditor::createStemGroup(QBoxLayout *layout)
 		connect(this->dsv[i],
 			QOverload<double>::of(&DoubleSpinBox::valueChanged),
 			std::bind(&PatternEditor::changeField, this, f[i]));
-	}
-	for (int i = 0; i < ISSize; i++) {
-		this->isv[i] = new SpinBox(this);
-		this->isv[i]->setSingleStep(1);
-		connect(this->isv[i],
-			QOverload<int>::of(&SpinBox::valueChanged),
-			std::bind(&PatternEditor::changeField, this, g[i]));
 	}
 
 	QGroupBox *stemGroup = createGroup("Stem");
@@ -357,8 +349,6 @@ void PatternEditor::setEnabled(bool enable)
 		enable = false;
 	for (int i = 0; i < DSSize; i++)
 		this->dsv[i]->setEnabled(enable);
-	for (int i = 0; i < ISSize; i++)
-		this->isv[i]->setEnabled(enable);
 	for (int i = 0; i < DLSize; i++)
 		this->dlv[i]->setEnabled(enable);
 	for (int i = 0; i < ILSize; i++)
@@ -374,8 +364,6 @@ void PatternEditor::blockSignals(bool block)
 		this->irv[i]->blockSignals(block);
 	for (int i = 0; i < DSSize; i++)
 		this->dsv[i]->blockSignals(block);
-	for (int i = 0; i < ISSize; i++)
-		this->isv[i]->blockSignals(block);
 	for (int i = 0; i < DLSize; i++)
 		this->dlv[i]->blockSignals(block);
 	for (int i = 0; i < ILSize; i++)

@@ -20,7 +20,7 @@
 ComboBox::ComboBox(QWidget *parent) : QComboBox(parent)
 {
 	setFocusPolicy(Qt::StrongFocus);
-	this->setItemDelegate(new SID());
+	this->setItemDelegate(new SIDel());
 }
 
 void ComboBox::wheelEvent(QWheelEvent *event)
@@ -57,7 +57,7 @@ void DoubleSpinBox::wheelEvent(QWheelEvent *event)
 		QDoubleSpinBox::wheelEvent(event);
 }
 
-QSize SID::sizeHint(const QStyleOptionViewItem &, const QModelIndex &) const
+QSize SIDel::sizeHint(const QStyleOptionViewItem &, const QModelIndex &) const
 {
 	return QSize(1, 22);
 }

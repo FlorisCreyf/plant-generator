@@ -28,7 +28,6 @@ public:
 
 protected:
 	virtual void wheelEvent(QWheelEvent *event);
-
 };
 
 class SpinBox : public QSpinBox {
@@ -39,7 +38,6 @@ public:
 
 protected:
 	virtual void wheelEvent(QWheelEvent *event);
-
 };
 
 class DoubleSpinBox : public QDoubleSpinBox {
@@ -52,7 +50,7 @@ protected:
 	virtual void wheelEvent(QWheelEvent *event);
 };
 
-class SID : public QStyledItemDelegate {
+class SIDel : public QStyledItemDelegate {
 	Q_OBJECT
 
 public:
