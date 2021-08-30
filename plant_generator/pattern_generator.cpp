@@ -283,7 +283,7 @@ float PatternGenerator::setPath(Stem *stem, float ratio, Vec3 direction,
 	ratio = 1.0f;
 
 	for (int i = 0; i < points; i++) {
-		if (i < points) {
+		if (i < points-1) {
 			float t = i*increment / length;
 			ratio = bifurcatePath(stem, t, data);
 		}

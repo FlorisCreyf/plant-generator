@@ -164,13 +164,8 @@ int Spline::insertCubic(int index, Vec3 point)
 			center = index + 3;
 			++index;
 		} else {
-			Vec3 d;
-			if (index == 0)
-				d = -1.0f * controls[index];
-			else
-				d = controls[index-1] - controls[index];
+			Vec3 d = controls[index+1] - controls[index];
 			curve[1] = point;
-			d = controls[index+1] - controls[index];
 			curve[2] = d + point;
 			curve[0] = -1.0f * d + point;
 			center = index + 3;

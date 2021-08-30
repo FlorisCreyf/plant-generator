@@ -32,10 +32,8 @@
 #include <iterator>
 #include <boost/archive/text_iarchive.hpp>
 
-#ifdef _WIN32
 #undef near
 #undef far
-#endif
 
 using pg::Mat4;
 using pg::Vec3;
@@ -576,10 +574,6 @@ void Editor::paintGL()
 
 void Editor::paintOutline(const Mat4 &projection)
 {
-	GLuint defaultFramebuffer = this->context()->defaultFramebufferObject();
-	GLsizei size = this->mesh.getIndexCount();
-	GLvoid *offset;
-
 	if (isAnimating()) {
 		auto type = SharedResources::DynamicOutline;
 		glUseProgram(this->shared->getShader(type));
@@ -609,13 +603,14 @@ void Editor::paintOutline(const Mat4 &projection)
 		GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
 	this->staticBuffer.use();
+	GLuint defaultFramebuffer = this->context()->defaultFramebufferObject();
 	glBindFramebuffer(GL_FRAMEBUFFER, defaultFramebuffer);
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, this->silhouetteMap);
 	glUniformMatrix4fv(0, 1, GL_FALSE, &pg::identity()[0][0]);
 	glUniform1i(2, 2);
-	offset = (GLvoid *)this->segments.plane.istart;
-	size = this->segments.plane.icount;
+	GLvoid *offset = (GLvoid *)this->segments.plane.istart;
+	GLsizei size = this->segments.plane.icount;
 	glDrawElements(GL_TRIANGLES, size, GL_UNSIGNED_INT, offset);
 
 	/* Clear the alpha channel to an opaque value. */
@@ -821,7 +816,7 @@ void Editor::paintVolume(const Mat4 &projection)
 
 void Editor::displayVolume(bool display)
 {
-	if (display) {
+	if (display && !this->scene.updating) {
 		Geometry geometry;
 		const pg::Volume *volume = this->scene.generator.getVolume();
 		geometry.addVolume(volume);

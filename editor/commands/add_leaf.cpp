@@ -21,6 +21,7 @@ AddLeaf::AddLeaf(Selection *selection, const Camera *camera, int x, int y) :
 	selection(selection),
 	prevSelection(*selection),
 	moveStem(selection, camera, x, y, true),
+	leafIndex(0),
 	stem(nullptr)
 {
 

@@ -130,7 +130,7 @@ void ShaderParams::removeTexture(int index)
 	material.setTexture("", index);
 	bool exists = this->textures[index] != 0;
 	bool isDefault = this->textures[index] == this->defaultTextures[index];
-	if (exists & !isDefault)
+	if (exists && !isDefault)
 		f->glDeleteTextures(1, &this->textures[index]);
 	this->textures[index] = this->defaultTextures[index];
 }

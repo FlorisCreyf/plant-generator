@@ -99,12 +99,12 @@ TranslationAxes::Axis TranslationAxes::selectAxis(pg::Ray ray, float distance)
 {
 	pg::Aabb box;
 	float scale = distance / 15.0f * this->scale;
-	float t[3];
 
 	if (pg::intersectsSphere(ray, position, 0.5f * scale) > 0.0f) {
 		selection = Center;
 		return selection;
 	} else {
+		float t[3];
 		box.a.x = coneLength[0] * scale + position.x;
 		box.b.x = coneLength[1] * scale + position.x;
 		box.a.y = -radius * scale + position.y;

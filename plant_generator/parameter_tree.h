@@ -26,7 +26,7 @@
 
 namespace pg {
 	struct GeneratorState {
-		float concentration;
+		float suppression;
 		int node;
 
 		GeneratorState();

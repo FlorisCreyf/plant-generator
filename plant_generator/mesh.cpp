@@ -169,7 +169,7 @@ void Mesh::addSections(State &state, Segment parent, bool isFork, Stem *fork)
 		state.texOffset += getTextureLength(stem, section1, section2);
 		state.section = section2;
 		addSection(state, rotation, this->crossSection);
-	} else if (!fork && stem->getMinRadius() > 0.0f)
+	} else if (stem->getMinRadius() > 0.0f)
 		capStem(stem, state.mesh, state.prevIndex);
 }
 
@@ -1021,12 +1021,9 @@ DVertex Mesh::moveToSurface(DVertex vertex, Ray ray, Segment parent,
 
 	if (t == 0.0f)
 		return moveToForkSurface(vertex, ray, parent);
-	else if (t != 0.0f) {
+	else {
 		vertex.normal = normalize(vertex.normal);
 		vertex.position = ray.origin + t * ray.direction;
-		return vertex;
-	} else {
-		vertex.position = Vec3(std::numeric_limits<float>::infinity());
 		return vertex;
 	}
 }
@@ -1329,11 +1326,9 @@ void Mesh::updateJointState(State &state, Vec2 &indices, Vec2 &weights)
 		indices.x = static_cast<float>(state.jointID);
 		indices.y = static_cast<float>(prevID);
 	} else {
-		if (state.section != pathIndex) {
-			Vec3 point1 = path.get(state.section);
-			Vec3 point2 = path.get(state.section - 1);
-			state.jointOffset += magnitude(point1 - point2);
-		}
+		Vec3 point1 = path.get(state.section);
+		Vec3 point2 = path.get(state.section - 1);
+		state.jointOffset += magnitude(point1 - point2);
 		setJointInfo(stem, state.jointOffset, state.jointIndex,
 			weights, indices);
 	}

@@ -43,8 +43,8 @@ class GeneratorEditor : public QWidget {
 	Editor *editor;
 	GeneratorWorkload *workload;
 
-	enum {PrimaryRate, SecondaryRate, Suppression, SynthesisThreshold,
-		SynthesisRate, DSize};
+	enum {PrimaryRate, SecondaryRate, Suppression, SuppressionFalloff,
+		SynthesisThreshold, SynthesisRate, Optimization, DSize};
 	enum {Cycles, Nodes, Rays, Depth, Seed, ISize};
 
 	QPushButton *startButton;
@@ -53,6 +53,7 @@ class GeneratorEditor : public QWidget {
 	DoubleSpinBox *dv[DSize];
 
 	void createInterface();
+	void setValues();
 	void change();
 
 public:

@@ -286,6 +286,15 @@ float Plant::getIntermediateRadius(Stem *stem, float t) const
 	return z * (stem->maxRadius - stem->minRadius) + stem->minRadius;
 }
 
+float Plant::getRadiusAt(Stem *stem)
+{
+	Stem *parent = stem->getParent();
+	if (!parent)
+		return 0.0f;
+	else
+		return getIntermediateRadius(parent, stem->getDistance());
+}
+
 void Plant::addCurve(Curve curve)
 {
 	this->curves.push_back(curve);

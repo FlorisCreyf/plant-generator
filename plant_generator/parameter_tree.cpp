@@ -23,7 +23,7 @@ using namespace pg;
 const float pi = 3.14159265359f;
 
 
-GeneratorState::GeneratorState() : concentration(0.0f), node(0)
+GeneratorState::GeneratorState() : suppression(0.0f), node(0)
 {
 
 }

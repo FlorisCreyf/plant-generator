@@ -64,6 +64,7 @@ namespace pg {
 
 		float getRadius(Stem *stem, unsigned index) const;
 		float getIntermediateRadius(Stem *stem, float t) const;
+		float getRadiusAt(Stem *stem);
 
 		void addCurve(Curve curve);
 		void updateCurve(Curve curve, unsigned index);

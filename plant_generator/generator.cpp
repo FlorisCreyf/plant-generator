@@ -31,8 +31,10 @@ Generator::Generator(Plant *plant) :
 	secondaryGrowthRate(0.005f),
 	minRadius(0.001f),
 	suppression(0.0025f),
+	suppressionFalloff(0.002f),
 	synthesisRate(0.001f),
-	synthesisThreshold(0.5f),
+	synthesisThreshold(0.04f),
+	optimization(0.0f),
 	depth(2),
 	rays(10000),
 	cycles(5),
@@ -63,7 +65,7 @@ void Generator::grow()
 			setConcentration(root);
 			castRays(&this->volume);
 			generalizeFlux(this->volume.getRoot());
-			addNodes(&this->volume, root, j, nodes);
+			addNodes(&this->volume, root);
 		}
 	}
 }
@@ -117,7 +119,6 @@ void Generator::castRays(Volume *volume)
 		float x = dis1(this->mt);
 		float y = dis1(this->mt);
 		float z = this->width*1.5f;
-		Vec3 origin(x, y, z);
 		Ray ray;
 		ray.origin = Vec3(x, y, z);
 		x = dis2(this->mt);
@@ -148,11 +149,30 @@ void Generator::updateRadiantEnergy(Volume *volume, Ray ray)
 float Generator::setConcentration(Stem *stem)
 {
 	Stem *child = stem->getChild();
-	float total = this->suppression*this->suppression*pi;
-	while (child) {
+	float total = this->suppression;
+	if (!child)
+		return total;
+
+	float length = stem->getPath().getLength();
+	float distance = length - child->getDistance();
+
+	while (child) { /* Assume stems are ordered by location. */
 		total += setConcentration(child);
-		child->getState()->concentration = total;
-		child = child->getSibling();
+		if (total > 1.0f)
+			total = 1.0f;
+		total -= distance * this->suppressionFalloff;
+		if (total < 0.0f)
+			total = 0.0f;
+
+		child->getState()->suppression = total;
+
+		Stem *sibling = child->getSibling();
+		if (sibling) {
+			float p1 = child->getDistance();
+			float p2 = sibling->getDistance();
+			distance = p1 - p2;
+		}
+		child = sibling;
 	}
 	return total;
 }
@@ -216,26 +236,29 @@ float Generator::evaluateEfficiency(Volume *volume, Stem *stem)
 
 	float r = stem->getMaxRadius();
 	float l = stem->getPath().getLength();
-	float p = total/(total + l*r*r);
+	float p = total/(total + l*r);
 	if (stem->getParent() && p < this->synthesisThreshold)
 		this->plant->deleteStem(stem);
 
 	return total;
 }
 
-void Generator::addNodes(Volume *volume, Stem *stem, int i, int n)
+void Generator::addNodes(Volume *volume, Stem *stem)
 {
-	addNode(volume, stem, i, n);
+	addNode(volume, stem);
 	Stem *child = stem->getChild();
 	while (child) {
-		addNodes(volume, child, i, n);
+		addNodes(volume, child);
 		child = child->getSibling();
 	}
 }
 
-void Generator::updateRadius(Stem *stem)
+void Generator::updateRadius(Stem *stem, float radius)
 {
-	stem->setMaxRadius(stem->getMaxRadius() + this->secondaryGrowthRate);
+	if (stem->getMaxRadius() + stem->getMaxRadius() < radius) {
+		float r = stem->getMaxRadius() + this->secondaryGrowthRate;
+		stem->setMaxRadius(r);
+	}
 }
 
 Vec3 getDirection(Stem *stem, Vec3 origin, Vec3 direction, Volume *volume)
@@ -249,23 +272,23 @@ Vec3 getDirection(Stem *stem, Vec3 origin, Vec3 direction, Volume *volume)
 	return normalize(direction - d);
 }
 
-void Generator::addNode(Volume *volume, Stem *stem, int i, int n)
+float getGrowthRate(Stem *stem, float radius)
+{
+	float rate = 1.0f - stem->getState()->suppression / (2.0*radius*pi);
+	return rate > 0.1f ? rate : 0.0f;
+}
+
+void Generator::addNode(Volume *volume, Stem *stem)
 {
 	float rate = 1.0f;
 	if (stem->getParent()) {
-		Stem *parent = stem->getParent();
-		float distance = stem->getDistance();
-		float r = this->plant->getIntermediateRadius(parent, distance);
-		rate = 1.0f - stem->getState()->concentration / (r*r*pi);
-		rate *= (rate > 0.0f);
-		if (rate < 0.5f || static_cast<int>(rate*n) < i)
+		float radius = this->plant->getRadiusAt(stem);
+		rate = getGrowthRate(stem, radius);
+		if (rate == 0.0f)
 			return;
-		if (r >= 1.2f * stem->getSwelling().x * stem->getMaxRadius())
-			updateRadius(stem);
-		else
-			return;
+		updateRadius(stem, radius);
 	} else
-		updateRadius(stem);
+		updateRadius(stem, std::numeric_limits<float>::max());
 
 	Path path = stem->getPath();
 	Spline spline = path.getSpline();
@@ -277,7 +300,17 @@ void Generator::addNode(Volume *volume, Stem *stem, int i, int n)
 	Vec3 direction = getDirection(stem, ray.origin, ray.direction, volume);
 	Vec3 point = ray.origin + rate * this->primaryGrowthRate * direction;
 
-	controls.push_back(point);
+	size_t size = controls.size();
+	if (size > 2 && this->optimization > 0.0f) {
+		Vec3 d1 = normalize(controls[size-1] - controls[size-2]);
+		Vec3 d2 = normalize(point - controls[size-1]);
+		if (dot(d1, d2) < 1.0f - 2.0*this->optimization)
+			controls.push_back(point);
+		else
+			controls[size-1] = point;
+	} else
+		controls.push_back(point);
+
 	spline.setControls(controls);
 	path.setSpline(spline);
 	stem->setPath(path);
@@ -299,7 +332,7 @@ void Generator::addStems(Stem *stem, Volume *volume)
 		addStems(child, volume);
 		child = child->getSibling();
 	}
-	if (stem->getDepth() < 4)
+	if (stem->getMaxRadius() > stem->getMinRadius())
 		addStem(stem, volume);
 }
 

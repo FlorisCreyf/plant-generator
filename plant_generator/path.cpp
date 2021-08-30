@@ -135,10 +135,7 @@ size_t Path::getSize() const
 Vec3 Path::getIntermediate(float distance) const
 {
 	float total = 0.0f;
-	Vec3 point(
-		std::numeric_limits<float>::quiet_NaN(),
-		std::numeric_limits<float>::quiet_NaN(),
-		std::numeric_limits<float>::quiet_NaN());
+	Vec3 point(std::numeric_limits<float>::quiet_NaN());
 
 	for (size_t i = 0; i < this->path.size() - 1; i++) {
 		float length = magnitude(this->path[i + 1] - this->path[i]);

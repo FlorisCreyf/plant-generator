@@ -25,9 +25,9 @@
 class AddLeaf : public Command {
 	Selection *selection;
 	Selection prevSelection;
-	pg::Leaf leaf;
-	size_t leafIndex;
 	MoveStem moveStem;
+	size_t leafIndex;
+	pg::Leaf leaf;
 	pg::Stem *stem;
 
 public:

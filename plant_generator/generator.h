@@ -39,9 +39,9 @@ namespace pg {
 		void generalizeDensity(Volume::Node *);
 		void generalizeFlux(Volume::Node *);
 		float evaluateEfficiency(Volume *, Stem *);
-		void addNodes(Volume *, Stem *, int, int);
-		void addNode(Volume *, Stem *, int, int);
-		void updateRadius(Stem *);
+		void addNodes(Volume *, Stem *);
+		void addNode(Volume *, Stem *);
+		void updateRadius(Stem *, float);
 		void addStems(Stem *, Volume *);
 		void addStem(Stem *, Volume *);
 		void addLeaves(Stem *, int);
@@ -53,8 +53,10 @@ namespace pg {
 		float secondaryGrowthRate;
 		float minRadius;
 		float suppression;
+		float suppressionFalloff;
 		float synthesisRate;
 		float synthesisThreshold;
+		float optimization;
 		int depth;
 		int rays;
 		int cycles;

@@ -655,7 +655,6 @@ void PropertyEditor::removeCurve()
 	if (this->curveName->count() > 1) {
 		createCurveCommand();
 		int index = this->curveName->currentIndex();
-		QString name = this->curveName->currentText();
 		Plant *plant = this->editor->getPlant();
 		plant->removeCurve(index);
 		this->curveName->removeItem(index);
@@ -948,7 +947,6 @@ void PropertyEditor::removeMesh()
 {
 	if (this->meshName->count() > 1) {
 		int index = this->meshName->currentIndex();
-		QString name = this->meshName->currentText();
 		Plant *plant = this->editor->getPlant();
 		plant->removeLeafMesh(index);
 		this->meshName->removeItem(index);
