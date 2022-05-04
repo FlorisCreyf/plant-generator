@@ -83,7 +83,7 @@ void MeshViewer::resizeGL(int width, int height)
 void MeshViewer::mousePressEvent(QMouseEvent *event)
 {
 	QPoint p = event->pos();
-	if (event->button() == Qt::MidButton) {
+	if (event->button() == Qt::MiddleButton) {
 		this->camera.setStartCoordinates(p.x(), p.y());
 		if (event->modifiers() & Qt::ControlModifier)
 			this->camera.setAction(Camera::Zoom);
@@ -94,7 +94,7 @@ void MeshViewer::mousePressEvent(QMouseEvent *event)
 
 void MeshViewer::mouseReleaseEvent(QMouseEvent *event)
 {
-	if (event->button() == Qt::MidButton)
+	if (event->button() == Qt::MiddleButton)
 		this->camera.setAction(Camera::None);
 }
 

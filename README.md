@@ -1,6 +1,6 @@
 # Plant Generator
 
-Plant Generator generates plant geometry. The project is divided into a generator and editor component. The generator is licensed under the Apache License (version 2.0) and the editor is licensed under the GPL 3.0. The editor depends on Qt5, but the project can be partially built without a GUI. Both components depend on Boost for serialization and parsing command line arguments, but Boost is not a critical component of the program.
+Plant Generator generates plant geometry. The project is divided into a generator and editor component. The generator is licensed under the Apache License (version 2.0) and the editor is licensed under the GPL 3.0. The editor depends on Qt6, but the project can be partially built without a GUI. Both components depend on Boost for serialization and parsing command line arguments, but Boost is not a critical component of the program.
 
 ## Screenshot
 
@@ -34,25 +34,17 @@ Commands and key bindings can be viewed and edited in _keymap.xml_.
 ### Linux
 
 ```sh
-sudo dnf install qt5-devel
-sudo dnf install boost-devel
+sudo dnf install qt6-devel boost-devel
 cd ~/plant-generator
-make release
+cmake -S . -B release -DCMAKE_BUILD_TYPE=RELEASE
+cd release
+make
 ```
 
-### Windows (VS)
+### Windows
 
-1. Download Visual Studio, Qt VS Tools, Qt5, and Boost.
-2. Move the Boost directory to "C:\\Program Files\\boost" and/or modify the Qt project file.
-3. Use Qt VS Tools to generate a VS project.
-4. Build the project.
-5. Copy files into the debug/release directory.
-    - keymap.xml
-    - resources
-    - shaders
-    - Qt5Core.dll
-    - Qt5Gui.dll
-    - Qt5Widgets.dll
-    - Qt5OpenGL.dll
-    - Qt5Xml.dll
-    - platforms/qwindows.dll
+1. Download and install Visual Studio, Qt6, and Boost.
+2. Set environment variables to point to the locations of Qt and Boost. (System -> Advanced System Settings)
+    - Qt6_ROOT
+    - Boost_ROOT
+3. Open the project directory in Visual Studio and build the project.

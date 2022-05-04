@@ -39,6 +39,7 @@ PropertyEditor::PropertyEditor(SharedResources *shared, KeyMap *keymap,
 	keymap(keymap),
 	shared(shared),
 	saveStem(nullptr),
+	saveCurve(nullptr),
 	sameAsCurrent(false)
 {
 	createInterface();
@@ -55,7 +56,7 @@ void PropertyEditor::createInterface()
 {
 	createStemLeafFields();
 	QBoxLayout *layout = new QBoxLayout(QBoxLayout::TopToBottom, this);
-	layout->setMargin(0);
+	layout->setContentsMargins(0, 0, 0, 0);
 	layout->setSpacing(0);
 	createStemInterface(layout);
 	createLeafInterface(layout);
@@ -525,7 +526,7 @@ void PropertyEditor::createCurveInterface(QBoxLayout *layout)
 	QGroupBox *curveGroup = createGroup("Curve");
 	layout->addWidget(curveGroup);
 	QBoxLayout *vlayout = new QVBoxLayout(curveGroup);
-	vlayout->setMargin(0);
+	vlayout->setContentsMargins(0, 0, 0, 0);
 	vlayout->setSpacing(0);
 	this->curveEditor = new CurveEditor(this->shared, this->keymap, this);
 	vlayout->addWidget(this->curveEditor);
@@ -696,7 +697,7 @@ void PropertyEditor::createMaterialInterface(QBoxLayout *layout)
 	QGroupBox *materialGroup = createGroup("Material");
 	layout->addWidget(materialGroup);
 	QBoxLayout *vlayout = new QVBoxLayout(materialGroup);
-	vlayout->setMargin(0);
+	vlayout->setContentsMargins(0, 0, 0, 0);
 	vlayout->setSpacing(0);
 	this->materialViewer = new MaterialViewer(this->shared, this);
 	vlayout->addWidget(this->materialViewer);
@@ -881,7 +882,7 @@ void PropertyEditor::createMeshInterface(QBoxLayout *layout)
 	QGroupBox *meshGroup = createGroup("Mesh");
 	layout->addWidget(meshGroup);
 	QBoxLayout *vlayout = new QVBoxLayout(meshGroup);
-	vlayout->setMargin(0);
+	vlayout->setContentsMargins(0, 0, 0, 0);
 	vlayout->setSpacing(0);
 	this->meshViewer = new MeshViewer(shared, meshGroup);
 	vlayout->addWidget(this->meshViewer);

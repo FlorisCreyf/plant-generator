@@ -18,7 +18,7 @@
 #include "shader_params.h"
 #include <QImage>
 #include <QImageReader>
-#include <QOpenGLExtraFunctions>
+#include <QOpenGLFunctions_4_3_Core>
 
 using pg::Material;
 

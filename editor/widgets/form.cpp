@@ -54,7 +54,8 @@ QFormLayout *createForm(QWidget *widget)
 {
 	QFormLayout *form = new QFormLayout(widget);
 	form->setSpacing(UI_FORM_SPACING);
-	form->setMargin(UI_FORM_MARGIN);
+	form->setContentsMargins(UI_FORM_MARGIN, UI_FORM_MARGIN,
+		UI_FORM_MARGIN, UI_FORM_MARGIN);
 	return form;
 }
 
@@ -62,7 +63,8 @@ QFormLayout *createForm(QBoxLayout *layout)
 {
 	QFormLayout *form = new QFormLayout();
 	form->setSpacing(UI_FORM_SPACING);
-	form->setMargin(UI_FORM_MARGIN);
+	form->setContentsMargins(UI_FORM_MARGIN, UI_FORM_MARGIN,
+		UI_FORM_MARGIN, UI_FORM_MARGIN);
 	layout->addLayout(form);
 	return form;
 }
@@ -73,7 +75,7 @@ QWidget *createCBField(ComboBox *cb, QPushButton *b1, QPushButton *b2)
 	QWidget *field = new QWidget();
 	field->setLayout(row);
 	row->setSpacing(0);
-	row->setMargin(0);
+	row->setContentsMargins(0, 0, 0, 0);
 	b1->setFixedHeight(UI_FIELD_HEIGHT);
 	b1->setFixedWidth(UI_FIELD_HEIGHT);
 	b2->setFixedHeight(UI_FIELD_HEIGHT);
@@ -99,7 +101,7 @@ QWidget *createLEField(QLineEdit *le, QPushButton *b1, QPushButton *b2)
 	b2->setFixedWidth(UI_FIELD_HEIGHT);
 	b2->setFixedHeight(UI_FIELD_HEIGHT);
 	row->setSpacing(0);
-	row->setMargin(0);
+	row->setContentsMargins(0, 0, 0, 0);
 	row->addWidget(le);
 	row->addWidget(b1);
 	row->addWidget(b2);

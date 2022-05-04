@@ -191,10 +191,13 @@ void PatternGenerator::addLateralStem(Stem *parent, float position,
 
 float PatternGenerator::modifyRadius(const StemData &data, float radius)
 {
-	std::normal_distribution<float> dis(1.0f, data.radiusVariation);
-	float variation = dis(this->mt);
-	if (variation > 1.0f)
-		variation = 1.0f;
+	float variation = 1.0f;
+	if (data.radiusVariation > 0.0f) {
+		std::normal_distribution<float> dis(1.0f, data.radiusVariation);
+		variation = dis(this->mt);
+		if (variation > 1.0f)
+			variation = 1.0f;
+	}
 	return radius * data.radius * variation;
 }
 
@@ -211,8 +214,11 @@ Vec3 PatternGenerator::getDirection(Stem *stem, int index, Length length,
 
 	ratio = data.inclineCurve.getPoint(ratio).y;
 	float t = 2.0f * (ratio - 0.5f);
-	std::normal_distribution<float> dis2(0.0f, data.inclineVariation);
-	t += dis2(this->mt);
+	if (data.inclineVariation > 0.0f) {
+		std::normal_distribution<float> dis2(
+			0.0f, data.inclineVariation);
+		t += dis2(this->mt);
+	}
 	if (t < 0.0f) {
 		t *= -1.0f;
 		direction2 *= -1.0f;

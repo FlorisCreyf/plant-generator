@@ -42,12 +42,29 @@ Window::Window(int argc, char **argv)
 	initEditor();
 
 	this->widget.setupUi(this);
-	connect(this->widget.actionReportIssue, &QAction::triggered,
-		this, &Window::reportIssue);
+	createMenu();
+}
 
-	QMenu *menu = createPopupMenu();
+void Window::createMenu()
+{
+	QMenu *menu = menuBar()->addMenu("&File");
+	addAction("&New", menu, QKeySequence::New, &Window::newFile);
+	addAction("&Open", menu, QKeySequence::Open, &Window::openDialogBox);
+	addAction("&Save", menu, QKeySequence::Save, &Window::saveDialogBox);
+	addAction("Save As", menu, QKeySequence::SaveAs,
+		&Window::saveAsDialogBox);
+	addAction("Export Wavefront", menu, QKeySequence(),
+		&Window::exportWavefrontDialogBox);
+	addAction("Export Collada", menu, QKeySequence(),
+		&Window::exportColladaDialogBox);
+	addAction("&Quit", menu, QKeySequence::Quit, &Window::close);
+
+	menu = createPopupMenu();
 	menu->setTitle("Window");
-	menuBar()->insertMenu(this->widget.menuHelp->menuAction(), menu);
+	menuBar()->addMenu(menu);
+
+	menu = menuBar()->addMenu("Help");
+	addAction("Report Issue", menu, QKeySequence(), &Window::reportIssue);
 }
 
 QDockWidget *Window::createDW(const char *name, QWidget *widget, bool scroll)

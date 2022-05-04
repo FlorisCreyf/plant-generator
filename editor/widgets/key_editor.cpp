@@ -22,7 +22,8 @@ KeyEditor::KeyEditor(KeyMap *keymap, QWidget *parent) :
 	QWidget(parent), form(new QFormLayout(this)), keymap(keymap)
 {
 	this->form->setSpacing(UI_FORM_SPACING);
-	this->form->setMargin(UI_FORM_MARGIN);
+	this->form->setContentsMargins(UI_FORM_MARGIN, UI_FORM_MARGIN,
+		UI_FORM_MARGIN, UI_FORM_MARGIN);
 	this->form->setLabelAlignment(Qt::AlignRight);
 
 	auto bindings = keymap->getBindings();

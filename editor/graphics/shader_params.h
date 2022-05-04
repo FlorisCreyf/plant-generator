@@ -19,7 +19,7 @@
 #define SHADER_PARAMS_H
 
 #include "plant_generator/material.h"
-#include <QOpenGLFunctions_4_3_Core>
+#include <QOpenGLExtraFunctions>
 
 class ShaderParams {
 	GLuint textures[pg::Material::MapQuantity] = {};

@@ -25,7 +25,7 @@
 #include "key_editor.h"
 #include "editor/keymap.h"
 #include "editor/graphics/shared_resources.h"
-#include "editor/qt/ui_window.h"
+#include "qt/ui_window.h"
 #include <QtWidgets>
 
 class Window : public QMainWindow {
@@ -62,9 +62,20 @@ private:
 
 	void keyPressEvent(QKeyEvent *event);
 	void createPropertyBox();
+	void createMenu();
 	void createEditors();
 	QDockWidget *createDW(const char *, QWidget *, bool);
 	void setFilename(QString filename);
+
+	template<typename T>
+	void addAction(const char *name, QMenu *menu, QKeySequence keySequence,
+		T callback)
+	{
+		auto action = new QAction(name, this);
+		action->setShortcut(keySequence);
+		menu->addAction(action);
+		connect(action, &QAction::triggered, this, callback);
+	}
 };
 
 #endif

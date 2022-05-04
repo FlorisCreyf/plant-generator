@@ -23,6 +23,7 @@
 #include "editor/graphics/vertex_buffer.h"
 #include "editor/graphics/shared_resources.h"
 #include "plant_generator/material.h"
+#include <QOpenGLWidget>
 #include <QtWidgets>
 
 class MaterialViewer : public QOpenGLWidget,

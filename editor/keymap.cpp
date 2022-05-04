@@ -16,7 +16,7 @@
  */
 
 #include "keymap.h"
-#include <QtXml>
+#include <QDomElement>
 #include <QFile>
 
 void KeyMap::loadFromXMLFile(const char *filename)
@@ -92,7 +92,7 @@ QString KeyMap::toString(KeyMap::Binding binding) const
 	if (binding.key == Qt::Key_Delete)
 		return str + "DEL";
 	else
-		return str + binding.key;
+		return str + QChar(binding.key);
 }
 
 std::map<KeyMap::Binding, QString> KeyMap::getBindings() const

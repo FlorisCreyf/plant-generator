@@ -54,7 +54,7 @@ class CurveEditor : public QWidget {
 	void restrictOuterCubicControls(std::vector<pg::Vec3> &);
 	void restrictCubicControls(std::vector<pg::Vec3> &);
 	void restrictCubicControl(std::vector<pg::Vec3> &, int);
-	bool isCenterSelected(std::set<int>::iterator &);
+	bool isCenterSelected(std::set<int>::iterator &, std::set<int> &);
 	void parallelizeTangents();
 	void restrictOppositeCubicControls();
 	void truncateCubicControl(std::vector<pg::Vec3> &, int);

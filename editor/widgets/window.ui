@@ -29,8 +29,10 @@ QWidget {
 	margin:0;
 	font-size:11px;
 	color:#eee;
-	padding:5px 100px 5px 30px;
+	padding:5px 100px 5px 40px;
 	background-color:transparent;
+} QMenu::icon {
+	margin-left:5px;
 } QMenu::item:checked {
 } QMenu::item:disabled {
 	color:#aaa;
@@ -342,6 +344,7 @@ QWidget {
 	background-color:#444;
 } QComboBox QAbstractItemView::item {
 	border:0;
+	color:#eee;
 	padding-left:4px;
 	padding-right:4px;
 } QComboBox QListView {
@@ -371,228 +374,6 @@ QWidget {
 }
    </string>
   </property>
-  <property name="documentMode">
-   <bool>false</bool>
-  </property>
-  <widget class="QMenuBar" name="menuBar">
-   <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>0</y>
-     <width>1400</width>
-     <height>24</height>
-    </rect>
-   </property>
-   <widget class="QMenu" name="menuFile">
-    <property name="title">
-     <string>File</string>
-    </property>
-    <addaction name="actionNew"/>
-    <addaction name="actionOpen"/>
-    <addaction name="actionSave"/>
-    <addaction name="actionSaveAs"/>
-    <addaction name="actionExportCollada"/>
-    <addaction name="actionExportWavefront"/>
-    <addaction name="actionQuit"/>
-   </widget>
-   <widget class="QMenu" name="menuHelp">
-    <property name="title">
-     <string>Help</string>
-    </property>
-    <addaction name="actionAbout"/>
-    <addaction name="actionReportIssue"/>
-   </widget>
-   <addaction name="menuFile"/>
-   <addaction name="menuHelp"/>
-  </widget>
-  <action name="actionOpen">
-   <property name="text">
-    <string>&amp;Open...</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+O</string>
-   </property>
-  </action>
-  <action name="actionSave">
-   <property name="text">
-    <string>&amp;Save</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+S</string>
-   </property>
-  </action>
-  <action name="actionSaveAs">
-   <property name="text">
-    <string>Save &amp;As...</string>
-   </property>
-  </action>
-  <action name="actionExportWavefront">
-   <property name="text">
-    <string>Export Wavefront...</string>
-   </property>
-  </action>
-  <action name="actionExportCollada">
-   <property name="text">
-    <string>Export Collada...</string>
-   </property>
-  </action>
-  <action name="actionQuit">
-   <property name="text">
-    <string>&amp;Quit</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+Q</string>
-   </property>
-  </action>
-  <action name="actionAbout">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>&amp;About</string>
-   </property>
-  </action>
-  <action name="actionReportIssue">
-   <property name="enabled">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>&amp;Report Issue...</string>
-   </property>
-  </action>
-  <action name="actionNew">
-   <property name="text">
-    <string>&amp;New</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+N</string>
-   </property>
-  </action>
-  <action name="actionProperties">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>&amp;Properties</string>
-   </property>
-  </action>
  </widget>
  <resources/>
- <connections>
-  <connection>
-   <sender>actionQuit</sender>
-   <signal>triggered()</signal>
-   <receiver>Window</receiver>
-   <slot>close()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>actionNew</sender>
-   <signal>triggered()</signal>
-   <receiver>Window</receiver>
-   <slot>newFile()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>actionOpen</sender>
-   <signal>triggered()</signal>
-   <receiver>Window</receiver>
-   <slot>openDialogBox()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>actionSave</sender>
-   <signal>triggered()</signal>
-   <receiver>Window</receiver>
-   <slot>saveDialogBox()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>actionSaveAs</sender>
-   <signal>triggered()</signal>
-   <receiver>Window</receiver>
-   <slot>saveAsDialogBox()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>actionExportWavefront</sender>
-   <signal>triggered()</signal>
-   <receiver>Window</receiver>
-   <slot>exportWavefrontDialogBox()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>actionExportCollada</sender>
-   <signal>triggered()</signal>
-   <receiver>Window</receiver>
-   <slot>exportColladaDialogBox()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
 </ui>

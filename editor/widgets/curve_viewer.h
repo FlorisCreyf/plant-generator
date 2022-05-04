@@ -24,6 +24,8 @@
 #include "editor/graphics/vertex_buffer.h"
 #include "editor/graphics/shared_resources.h"
 #include <QtWidgets>
+#include <QOpenGLWidget>
+#include <QOpenGLFunctions_4_3_Core>
 
 class CurveViewer : public QOpenGLWidget, protected QOpenGLFunctions_4_3_Core {
 	Q_OBJECT

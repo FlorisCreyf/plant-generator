@@ -39,7 +39,7 @@ CurveEditor::CurveEditor(SharedResources *shared, KeyMap *keymap,
 {
 	this->layout->setSizeConstraint(QLayout::SetMinimumSize);
 	this->layout->setSpacing(0);
-	this->layout->setMargin(0);
+	this->layout->setContentsMargins(0, 0, 0, 0);
 	this->viewer = new CurveViewer(shared, this);
 	this->viewer->installEventFilter(this);
 	this->layout->addWidget(this->viewer);
@@ -348,26 +348,26 @@ void CurveEditor::restrictCubicControls(std::vector<Vec3> &controls)
 	if (this->moveLeft)
 		for (auto it = points.begin(); it != points.end(); it++) {
 			int point = *it;
-			int prevPoint = *std::prev(it);
-			int nextPoint = *std::next(it);
 			bool a = it == points.begin();
 			bool b = it == --points.end();
-			if (point % 3 == 1 && (!a && prevPoint == point - 1))
+			bool adjacent_p = !a && *std::prev(it) == point - 1;
+			bool adjacent_n = !b && *std::next(it) == point + 1;
+			if (point % 3 == 1 && adjacent_p)
 				continue;
-			if (point % 3 == 2 && (!b && nextPoint == point + 1))
+			if (point % 3 == 2 && adjacent_n)
 				continue;
 			restrictCubicControl(controls, *it);
 		}
 	else
 		for (auto it = points.rbegin(); it != points.rend(); it++) {
 			int point = *it;
-			int prevPoint = *std::prev(it);
-			int nextPoint = *std::next(it);
 			bool a = it == points.rbegin();
 			bool b = it == --points.rend();
-			if (point % 3 == 1 && (!b && prevPoint == point - 1))
+			bool adjacent_n = !b && *std::next(it) == point - 1;
+			bool adjacent_p = !a && *std::prev(it) == point + 1;
+			if (point % 3 == 1 && adjacent_n)
 				continue;
-			if (point % 3 == 2 && (!a && nextPoint == point + 1))
+			if (point % 3 == 2 && adjacent_p)
 				continue;
 			restrictCubicControl(controls, *it);
 		}
@@ -428,7 +428,8 @@ void CurveEditor::restrictOppositeCubicControls()
 				truncateCubicControl(controls, point + 1);
 		} else {
 			int l = controls.size() - 2;
-			if (!isCenterSelected(it) && point != 1 && point != l) {
+			bool center = isCenterSelected(it, points);
+			if (!center && point != 1 && point != l) {
 				point += (point % 3 == 1) ? -2 : 2;
 				truncateCubicControl(controls, point);
 			}
@@ -493,7 +494,7 @@ void CurveEditor::parallelizeTangents()
 {
 	auto points = this->selection.getPoints();
 	for (auto it = points.begin(); it != points.end(); ++it) {
-		if (!isCenterSelected(it)) {
+		if (!isCenterSelected(it, points)) {
 			int point = *it;
 			if (point % 3 == 1) {
 				if (points.find(point - 2) == points.end())
@@ -506,9 +507,9 @@ void CurveEditor::parallelizeTangents()
 	}
 }
 
-bool CurveEditor::isCenterSelected(std::set<int>::iterator &it)
+bool CurveEditor::isCenterSelected(std::set<int>::iterator &it,
+	std::set<int> &points)
 {
-	auto points = this->selection.getPoints();
 	int point = *it;
 	auto n = std::next(it);
 	auto p = std::prev(it);
@@ -516,7 +517,7 @@ bool CurveEditor::isCenterSelected(std::set<int>::iterator &it)
 	auto b = points.begin();
 	if (point % 3 == 1 && it != b && *p == point - 1)
 		return true;
-	else if (point % 3 == 2 && n != e && *n == point + 1)
+	else if (point % 3 == 2 && it != e && *n == point + 1)
 		return true;
 	else
 		return false;

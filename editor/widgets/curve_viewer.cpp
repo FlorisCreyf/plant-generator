@@ -17,10 +17,8 @@
 
 #include "curve_viewer.h"
 
-#ifdef _WIN32
 #undef near
 #undef far
-#endif
 
 using pg::Mat4;
 using pg::Vec3;
@@ -136,7 +134,7 @@ void CurveViewer::clear()
 void CurveViewer::mousePressEvent(QMouseEvent *event)
 {
 	QPoint pos = event->pos();
-	if (event->button() == Qt::MidButton) {
+	if (event->button() == Qt::MiddleButton) {
 		this->camera.setStartCoordinates(pos.x(), pos.y());
 		if (event->modifiers() & Qt::ControlModifier)
 			this->camera.setAction(Camera::Zoom);
@@ -154,7 +152,7 @@ void CurveViewer::mouseMoveEvent(QMouseEvent *event)
 
 void CurveViewer::mouseReleaseEvent(QMouseEvent *event)
 {
-	if (event->button() == Qt::MidButton)
+	if (event->button() == Qt::MiddleButton)
 		this->camera.setAction(Camera::None);
 }
 

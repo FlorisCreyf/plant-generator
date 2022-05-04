@@ -19,6 +19,7 @@
 #include "spline.h"
 #include <string>
 #include <vector>
+#include <functional>
 
 #ifdef PG_SERIALIZE
 #include <boost/archive/text_oarchive.hpp>

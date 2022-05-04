@@ -23,6 +23,9 @@
 #include "plant_generator/math/mat4.h"
 #include "plant_generator/math/intersection.h"
 
+#undef near
+#undef far
+
 class Camera {
 public:
 	enum Action {Zoom, Rotate, Pan, None};

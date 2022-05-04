@@ -52,7 +52,7 @@ QSize PatternEditor::sizeHint() const
 void PatternEditor::createInterface()
 {
 	QBoxLayout *layout = new QVBoxLayout(this);
-	layout->setMargin(0);
+	layout->setContentsMargins(0, 0, 0, 0);
 	layout->setSpacing(0);
 	createNodeGroup(layout);
 	createRootGroup(layout);
@@ -583,7 +583,7 @@ void PatternEditor::createCurveGroup(QBoxLayout *layout)
 	QGroupBox *curveGroup = createGroup("Curve");
 	layout->addWidget(curveGroup);
 	QBoxLayout *vlayout = new QVBoxLayout(curveGroup);
-	vlayout->setMargin(0);
+	vlayout->setContentsMargins(0, 0, 0, 0);
 	vlayout->setSpacing(0);
 	this->curveEditor = new CurveEditor(this->shared, this->keymap, this);
 	vlayout->addWidget(this->curveEditor);

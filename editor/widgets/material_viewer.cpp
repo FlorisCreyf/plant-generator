@@ -140,7 +140,7 @@ void MaterialViewer::resizeGL(int width, int height)
 void MaterialViewer::mousePressEvent(QMouseEvent *event)
 {
 	QPoint p = event->pos();
-	if (event->button() == Qt::MidButton) {
+	if (event->button() == Qt::MiddleButton) {
 		this->camera.setStartCoordinates(p.x(), p.y());
 		if (event->modifiers() & Qt::ControlModifier)
 			this->camera.setAction(Camera::Zoom);
@@ -151,7 +151,7 @@ void MaterialViewer::mousePressEvent(QMouseEvent *event)
 
 void MaterialViewer::mouseReleaseEvent(QMouseEvent *event)
 {
-	if (event->button() == Qt::MidButton)
+	if (event->button() == Qt::MiddleButton)
 		this->camera.setAction(Camera::None);
 }
 

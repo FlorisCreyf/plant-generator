@@ -23,7 +23,9 @@
 #include "editor/graphics/shared_resources.h"
 #include "plant_generator/geometry.h"
 #include <vector>
-#include <QtWidgets>
+#include <QOpenGLWidget>
+#include <QOpenGLFunctions_4_3_Core>
+#include <QMouseEvent>
 
 class MeshViewer : public QOpenGLWidget, protected QOpenGLFunctions_4_3_Core {
 	Q_OBJECT

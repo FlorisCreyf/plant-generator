@@ -74,7 +74,7 @@ Editor::Editor(SharedResources *shared, KeyMap *keymap, QWidget *parent) :
 void Editor::createToolBar()
 {
 	QHBoxLayout *layout = new QHBoxLayout(this);
-	layout->setMargin(0);
+	layout->setContentsMargins(0, 0, 0, 0);
 	layout->setAlignment(Qt::AlignBottom | Qt::AlignRight);
 	QToolBar *toolbar = new QToolBar(this);
 	this->perspectiveAction = toolbar->addAction("Perspective");
@@ -418,7 +418,7 @@ void Editor::mousePressEvent(QMouseEvent *event)
 			updateSelection();
 			update();
 		}
-	} else if (event->button() == Qt::MidButton) {
+	} else if (event->button() == Qt::MiddleButton) {
 		this->camera.setStartCoordinates(pos.x(), pos.y());
 		if (event->modifiers() & Qt::ControlModifier)
 			this->camera.setAction(Camera::Zoom);
@@ -449,7 +449,7 @@ void Editor::mouseReleaseEvent(QMouseEvent *event)
 {
 	if (this->command)
 		exitCommand(this->command->onMouseRelease(event));
-	else if (event->button() == Qt::MidButton)
+	else if (event->button() == Qt::MiddleButton)
 		this->camera.setAction(Camera::None);
 }
 
@@ -763,13 +763,13 @@ void Editor::paintAxes(const Mat4 &projection, const Vec3 &position)
 	}
 }
 
-void Editor::updateLight()
+pg::Aabb createAABB(pg::Mesh &mesh)
 {
 	pg::Aabb aabb = {};
 	bool firstAABB = true;
-	for (size_t i = 0; i < this->mesh.getMeshCount(); i++) {
-		const vector<DVertex> *v = this->mesh.getVertices(i);
-		if (v->size() > 0) {
+	for (size_t i = 0; i < mesh.getMeshCount(); i++) {
+		const vector<DVertex> *v = mesh.getVertices(i);
+		if (!v->empty()) {
 			pg::Aabb a = pg::createAABB(&v->at(0), v->size());
 			if (!firstAABB)
 				aabb = pg::combineAABB(aabb, a);
@@ -779,6 +779,12 @@ void Editor::updateLight()
 			}
 		}
 	}
+	return aabb;
+}
+
+void Editor::updateLight()
+{
+	pg::Aabb aabb = createAABB(this->mesh);
 	this->light.setOrientation(pi*0.3f, pi*0.0f);
 	this->light.setDistance(0.0f);
 	this->light.scaleOrthographicVolume(false);
