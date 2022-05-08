@@ -18,55 +18,12 @@
   <property name="styleSheet">
    <string notr="true">
 QWidget {
-	font-size:11px;
-	color:#eee;
-} QMenu {
-	background-color:#505050;
-	border:0px solid #555;
-	font-size:11px;
-	color:#eee;
-} QMenu::item {
-	margin:0;
-	font-size:11px;
-	color:#eee;
-	padding:5px 100px 5px 40px;
-	background-color:transparent;
-} QMenu::icon {
-	margin-left:5px;
-} QMenu::item:checked {
-} QMenu::item:disabled {
-	color:#aaa;
-} QMenu::item:selected {
-	background:#666;
-} QMenu::shortcut {
-} QMenu::separator {
-	background-color:#555;
-	height:1px;
+	font-size:12px;
 } QMenuBar {
 	font-size:11px;
 	margin:0;
 	spacing:0;
 	background-color:#333;
-} QMenu::indicator:non-exclusive:unchecked {
-	width:8px;
-	height:8px;
-	margin-left:10px;
-	image:none;
-} QMenu::indicator:non-exclusive:unchecked:selected {
-	width:8px;
-	height:8px;
-	margin-left:10px;
-	image:none;
-} QMenu::indicator:non-exclusive:checked {
-	width:8px;
-	height:8px;
-	margin-left:10px;
-	image:url(&quot;resources/check.png&quot;);
-} QMenu::indicator:non-exclusive:checked:selected {
-	width:8px;
-	height:8px;
-	margin-left:10px;
-	image:url(&quot;resources/check.png&quot;);
 } QMenuBar::item {
 	color:#eee;
 	spacing:0;
@@ -83,19 +40,16 @@ QWidget {
 	font-size:11px;
 	margin-left:5px;
 } QDockWidget QWidget {
-	color:#eee;
-	font-size:11px;
 	border-image:none;
 	border:0px transparent black;
 	outline:0;
 } QDockWidget QFrame {
 	border:0;
 } QDockWidget {
-	font-size:11px;
-	color:#eee;
 	background:#666;
 	titlebar-normal-icon:url(&quot;resources/popup.png&quot;);
 	titlebar-close-icon:url(&quot;resources/close.png&quot;);
+	color:#eee;
 } QDockWidget::title {
 	font-size:12px;
 	background:#3d3d3d;
@@ -145,6 +99,7 @@ QWidget {
 	padding-right:0px;
 	padding-left:2px;
 	background:#555;
+	color:#eee;
 	height:20px;
 } QDockWidget QSpinBox::up-button,
   QDockWidget QDoubleSpinBox::up-button {
@@ -282,18 +237,6 @@ QWidget {
 	border-image:none;
 } QToolButton::menu-indicator {
 	image:none;
-} QDockWidget QMenu {
-	background-color:#505050;
-	border:0;
-} QDockWidget QMenu::item {
-	border:0;
-	padding-left:8px;
-} QDockWidget QMenu::item:disabled {
-	color:#aaa;
-} QDockWidget QMenu::item:selected {
-	border:1px solid #404040;
-	background-color:#444;
-	padding-left:7px;
 } QToolBar {
 	padding:0;
 	margin:0;
@@ -315,6 +258,7 @@ QWidget {
 	border:0;
 } QComboBox {
 	font-size:11px;
+	color:#eee;
 	border:0;
 	padding-left:4px;
 	padding-right:15px;
