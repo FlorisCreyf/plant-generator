@@ -17,7 +17,7 @@
 #define PG_GENERATOR_H
 
 #include "plant.h"
-#include "mesh.h"
+#include "mesh/mesh.h"
 #include "volume.h"
 #include "math/intersection.h"
 #include <vector>

@@ -20,7 +20,7 @@
 
 #include "camera.h"
 #include "selection.h"
-#include "plant_generator/mesh.h"
+#include "plant_generator/mesh/mesh.h"
 #include <QtGui/QMouseEvent>
 
 class Selector {
@@ -28,9 +28,8 @@ class Selector {
 
 	bool selectPoint(const QMouseEvent *, Selection *);
 	void selectMesh(const QMouseEvent *, const pg::Mesh *, Selection *);
-	std::pair<float, pg::Stem *> getStem(pg::Ray &, pg::Stem *,
-		pg::Plant *);
-	std::pair<float, pg::Segment> getLeaf(pg::Ray, const pg::Mesh *);
+	std::pair<float, pg::Stem *> getStem(pg::Ray, pg::Stem *, pg::Plant *);
+	std::pair<float, pg::Mesh::Segment> getLeaf(pg::Ray, const pg::Mesh *);
 
 public:
 	Selector(const Camera *camera);

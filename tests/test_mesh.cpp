@@ -1,7 +1,7 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "../plant_generator/mesh.h"
+#include "../plant_generator/mesh/generator.h"
 
 using namespace pg;
 namespace bt = boost::unit_test;
@@ -40,8 +40,8 @@ BOOST_AUTO_TEST_CASE(test_index_bounds)
 		stem->setSwelling(Vec2(1.1f, 1.1f));
 	}
 
-	Mesh mesh(&plant);
-	mesh.generate();
+	MeshGenerator generator(&plant);
+	const Mesh &mesh = generator.generate();
 	size_t zeroCount = 0;
 	size_t vertexCount = mesh.getVertexCount();
 	std::vector<unsigned> indices = mesh.getIndices();

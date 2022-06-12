@@ -15,7 +15,7 @@
 
 #include "generator.h"
 #include "pattern_generator.h"
-#include "mesh.h"
+#include "mesh/generator.h"
 #include "scene.h"
 #include "file/wavefront.h"
 #include <iostream>
@@ -125,8 +125,8 @@ int main(int argc, char **argv)
 	generator.grow();
 #endif
 
-	pg::Mesh mesh(&scene.plant);
-	mesh.generate();
+	pg::MeshGenerator meshGenerator(&scene.plant);
+	const pg::Mesh &mesh = meshGenerator.generate();
 
 	pg::Wavefront obj;
 	obj.exportFile((filename + ".obj").c_str(), mesh, scene.plant);

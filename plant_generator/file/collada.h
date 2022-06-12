@@ -17,7 +17,7 @@
 #define PG_COLLADA_H
 
 #include "../scene.h"
-#include "../mesh.h"
+#include "../mesh/mesh.h"
 #include <string>
 
 namespace pg {

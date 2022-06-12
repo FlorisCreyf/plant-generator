@@ -31,7 +31,7 @@
 #include "editor/graphics/shared_resources.h"
 
 #include "plant_generator/plant.h"
-#include "plant_generator/mesh.h"
+#include "plant_generator/mesh/generator.h"
 #include "plant_generator/pattern_generator.h"
 #include "plant_generator/scene.h"
 #include "plant_generator/wind.h"
@@ -111,9 +111,10 @@ private:
 	GLuint shadowMap;
 	int shadowMapSize;
 
-	std::vector<pg::Segment> selections;
+	std::vector<pg::Mesh::Segment> selections;
 	pg::Scene scene;
-	pg::Mesh mesh;
+	pg::MeshGenerator meshGenerator;
+	const pg::Mesh &mesh;
 	Path path;
 
 	Camera camera;

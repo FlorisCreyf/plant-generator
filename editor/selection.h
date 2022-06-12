@@ -20,7 +20,7 @@
 
 #include "point_selection.h"
 #include "plant_generator/plant.h"
-#include "plant_generator/mesh.h"
+#include "plant_generator/mesh/mesh.h"
 #include <map>
 #include <vector>
 #include <set>

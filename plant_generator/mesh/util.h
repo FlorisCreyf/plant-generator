@@ -1,4 +1,4 @@
-/* Copyright 2020 Floris Creyf
+/* Copyright 2022 Floris Creyf
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,21 @@
  * limitations under the License.
  */
 
-#ifndef PG_WAVEFRONT_H
-#define PG_WAVEFRONT_H
+#ifndef PG_MESH_UTIL_H
+#define PG_MESH_UTIL_H
 
 #include "../plant.h"
-#include "../geometry.h"
-#include "../mesh/mesh.h"
-#include <string>
+#include "../stem.h"
 
-namespace pg {
-	class Wavefront {
-		std::string exportMaterials(std::string, const Plant &);
-
-	public:
-		void importFile(const char *filename, Geometry *geom);
-		void exportFile(std::string filename, const Mesh &mesh,
-			const Plant &plant);
-	};
+inline float getAspect(const pg::Plant *plant, const pg::Stem *stem)
+{
+	float aspect = 1.0f;
+	long materialID = stem->getMaterial(pg::Stem::Outer);
+	if (materialID > 0) {
+		pg::Material m = plant->getMaterial(materialID);
+		aspect = m.getRatio();
+	}
+	return aspect;
 }
 
 #endif

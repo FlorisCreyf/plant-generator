@@ -14,6 +14,10 @@ set(PLANT_SOURCE_FILES
 	plant_generator/math/vec2.cpp
 	plant_generator/math/vec3.cpp
 	plant_generator/math/vec4.cpp
+	plant_generator/mesh/collar.cpp
+	plant_generator/mesh/fork.cpp
+	plant_generator/mesh/generator.cpp
+	plant_generator/mesh/mesh.cpp
 	plant_generator/animation.cpp
 	plant_generator/cross_section.cpp
 	plant_generator/curve.cpp
@@ -22,7 +26,6 @@ set(PLANT_SOURCE_FILES
 	plant_generator/joint.cpp
 	plant_generator/leaf.cpp
 	plant_generator/material.cpp
-	plant_generator/mesh.cpp
 	plant_generator/parameter_tree.cpp
 	plant_generator/path.cpp
 	plant_generator/plant.cpp

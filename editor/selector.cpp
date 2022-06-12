@@ -68,7 +68,7 @@ void Selector::selectMesh(const QMouseEvent *event, const Mesh *mesh,
 	Plant *plant = selection->getPlant();
 	Stem *root = plant->getRoot();
 	pair<float, Stem *> stemPair = getStem(ray, root, plant);
-	pair<float, pg::Segment> leafPair = getLeaf(ray, mesh);
+	pair<float, pg::Mesh::Segment> leafPair = getLeaf(ray, mesh);
 
 	/* Remove previous selections if no modifier key is pressed. */
 	if (!ctrl)
@@ -88,7 +88,7 @@ void Selector::selectMesh(const QMouseEvent *event, const Mesh *mesh,
 
 /** Performs cylinder intersection tests to determine which stem was clicked
 on. A stem and the distance to its intersection is returned. */
-pair<float, Stem *> Selector::getStem(pg::Ray &ray, Stem *stem, Plant *plant)
+pair<float, Stem *> Selector::getStem(pg::Ray ray, Stem *stem, Plant *plant)
 {
 	float max = std::numeric_limits<float>::max();
 	pair<float, Stem *> selection1(max, nullptr);
@@ -123,12 +123,12 @@ pair<float, Stem *> Selector::getStem(pg::Ray &ray, Stem *stem, Plant *plant)
 	return selection1;
 }
 
-pair<float, pg::Segment> Selector::getLeaf(pg::Ray ray, const Mesh *mesh)
+pair<float, pg::Mesh::Segment> Selector::getLeaf(pg::Ray ray, const Mesh *mesh)
 {
 	unsigned indexOffset = 0;
 	unsigned vertexOffset = 0;
 
-	pair<float, pg::Segment> selection;
+	pair<float, pg::Mesh::Segment> selection;
 	selection.first = std::numeric_limits<float>::max();
 	selection.second.stem = nullptr;
 
@@ -137,7 +137,7 @@ pair<float, pg::Segment> Selector::getLeaf(pg::Ray ray, const Mesh *mesh)
 		auto indices = mesh->getIndices(m);
 		auto leaves = mesh->getLeaves(m);
 		for (auto pair : leaves) {
-			pg::Segment segment = pair.second;
+			pg::Mesh::Segment segment = pair.second;
 			segment.indexStart -= indexOffset;
 
 			size_t len = segment.indexStart + segment.indexCount;

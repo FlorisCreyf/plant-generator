@@ -39,6 +39,7 @@ using pg::Mat4;
 using pg::Vec3;
 using pg::Stem;
 using pg::Material;
+using pg::Mesh;
 using pg::DVertex;
 using std::vector;
 
@@ -51,7 +52,8 @@ Editor::Editor(SharedResources *shared, KeyMap *keymap, QWidget *parent) :
 	keymap(keymap),
 	shared(shared),
 	shader(SharedResources::Solid),
-	mesh(&scene.plant),
+	meshGenerator(&scene.plant),
+	mesh(meshGenerator.getMesh()),
 	selection(&scene.plant),
 	updatedLight(false),
 	perspective(true),
@@ -763,7 +765,7 @@ void Editor::paintAxes(const Mat4 &projection, const Vec3 &position)
 	}
 }
 
-pg::Aabb createAABB(pg::Mesh &mesh)
+pg::Aabb createAABB(const pg::Mesh &mesh)
 {
 	pg::Aabb aabb = {};
 	bool firstAABB = true;
@@ -898,26 +900,26 @@ void Editor::updateBuffers()
 	if (!isValid())
 		return;
 
-	this->mesh.generate();
+	const Mesh &mesh = this->meshGenerator.generate();
 	makeCurrent();
 	this->plantBuffer.use();
 
 	size_t capacity;
 	capacity = this->plantBuffer.getCapacity(VertexBuffer::Points);
-	if (this->mesh.getVertexCount() > capacity) {
-		size_t count = this->mesh.getVertexCount() * 2;
+	if (mesh.getVertexCount() > capacity) {
+		size_t count = mesh.getVertexCount() * 2;
 		this->plantBuffer.allocatePointMemory(count);
 	}
 	capacity = this->plantBuffer.getCapacity(VertexBuffer::Indices);
-	if (this->mesh.getIndexCount() > capacity) {
-		size_t count = this->mesh.getIndexCount() * 2;
+	if (mesh.getIndexCount() > capacity) {
+		size_t count = mesh.getIndexCount() * 2;
 		this->plantBuffer.allocateIndexMemory(count);
 	}
 	int pointOffset = 0;
 	int indexOffset = 0;
-	for (size_t m = 0; m < this->mesh.getMeshCount(); m++) {
-		const vector<DVertex> *v = this->mesh.getVertices(m);
-		const vector<unsigned> *i = this->mesh.getIndices(m);
+	for (size_t m = 0; m < mesh.getMeshCount(); m++) {
+		const vector<DVertex> *v = mesh.getVertices(m);
+		const vector<unsigned> *i = mesh.getIndices(m);
 		this->plantBuffer.update(v->data(), pointOffset, v->size());
 		this->plantBuffer.update(i->data(), indexOffset, i->size());
 		pointOffset += v->size();
@@ -1099,7 +1101,7 @@ History *Editor::getHistory()
 
 const pg::Mesh *Editor::getMesh()
 {
-	return &this->mesh;
+	return &this->meshGenerator.getMesh();
 }
 
 void Editor::undo()
