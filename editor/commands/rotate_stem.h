@@ -56,6 +56,7 @@ public:
 	bool onKeyPress(QKeyEvent *);
 	void execute();
 	void undo();
+	static bool isValid(const Selection &selection);
 };
 
 #endif

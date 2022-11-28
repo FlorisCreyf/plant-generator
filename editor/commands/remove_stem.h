@@ -29,6 +29,7 @@ class RemoveStem : public Command {
 		pg::Leaf leaf;
 		pg::Stem *stem;
 	};
+
 	Selection *selection;
 	Selection prevSelection;
 	std::vector<LeafState> leaves;
@@ -44,6 +45,7 @@ public:
 	RemoveStem &operator=(const RemoveStem &original);
 	void execute();
 	void undo();
+	static bool isValid(const Selection &selection);
 };
 
 #endif

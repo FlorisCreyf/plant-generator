@@ -276,6 +276,56 @@ Fork::Section Fork::getMiddle(Stem *fork[2], Mesh::State &state)
 	return middle;
 }
 
+void mergePoints(DVertex *x, DVertex *y, Fork::Section mid)
+{
+	if (mid.offset > 0) {
+		y[mid.edge2].position = x[mid.edge2].position;
+		y[mid.edge1].position = x[mid.edge1].position;
+		y[mid.edge2].normal = x[mid.edge2].normal;
+		y[mid.edge1].normal = x[mid.edge1].normal;
+		y[mid.edge2].tangent = x[mid.edge2].tangent;
+		y[mid.edge1].tangent = x[mid.edge1].tangent;
+	}
+}
+
+void mergePoints(int sd, int cd, size_t size,
+	DVertex *x, DVertex *y, DVertex *z)
+{
+	for (int i = 0; i < cd || i == 0; i++) {
+		size_t a = i*(sd+1);
+		size_t b = a + sd;
+		x[b-size].position = x[a-size].position;
+		x[b-size].normal = x[a-size].normal;
+		x[b-size].tangent = x[a-size].tangent;
+		x[b-size].weights = x[a-size].weights;
+		x[b-size].indices = x[a-size].indices;
+		x[b-size].uv.y = x[a-size].uv.y;
+		x[b-size].uv.x = 0.0f;
+		y[b].position = y[a].position;
+		y[b].normal = y[a].normal;
+		y[b].tangent = y[a].tangent;
+		y[b].weights = y[a].weights;
+		y[b].indices = y[a].indices;
+		y[b].uv.y = y[a].uv.y;
+		y[b].uv.x = 0.0f;
+		z[b].position = z[a].position;
+		z[b].normal = z[a].normal;
+		z[b].tangent = z[a].tangent;
+		z[b].weights = z[a].weights;
+		z[b].indices = z[a].indices;
+		z[b].uv.y = z[a].uv.y;
+		z[b].uv.x = 0.0f;
+	}
+}
+
+Vec3 getBaseNormal(Vec3 direction1, Vec3 direction2)
+{
+	Vec3 n1 = cross(direction2, direction1);
+	Vec3 n2 = normalize(cross(n1, direction2));
+	Vec3 n3 = normalize(cross(n1, direction1));
+	return normalize(n2 + n3);
+}
+
 void Fork::connectForks(Stem *fork[2], Mesh::Segment segments[2],
 	Mesh::State fs[2], Mesh::State &state, Section mid)
 {
@@ -303,13 +353,9 @@ void Fork::connectForks(Stem *fork[2], Mesh::Segment segments[2],
 	plane2.normal = normalize(state.prevDirection+direction2);
 	Plane plane3;
 	plane3.point = plane1.point;
-	{
-		Vec3 n1 = cross(direction2, direction1);
-		Vec3 n2 = normalize(cross(n1, direction2));
-		Vec3 n3 = normalize(cross(n1, direction1));
-		plane3.normal = normalize(n2 + n3);
-	}
+	plane3.normal = getBaseNormal(direction1, direction2);
 
+	/* Insert curves along one side. */
 	for (int i = 0; i <= mid.length; i++) {
 		int k = mid.edge1 + i;
 		k -= (k >= sd) * sd;
@@ -326,6 +372,7 @@ void Fork::connectForks(Stem *fork[2], Mesh::Segment segments[2],
 		v1[k].uv.y += v0[k].uv.y;
 		insertCurve(sd+1, cd, size, false, &v0[k-size], &v1[k]);
 	}
+	/* Insert curves along one side. */
 	for (int i = mid.offset; i <= mid.length - mid.offset; i++) {
 		int k = mid.edge2 + i;
 		k -= (k >= sd) * sd;
@@ -342,14 +389,8 @@ void Fork::connectForks(Stem *fork[2], Mesh::Segment segments[2],
 		v2[k].uv.y += v0[k].uv.y;
 		insertCurve(sd+1, cd, size, false, &v0[k-size], &v2[k]);
 	}
-	if (mid.offset > 0) {
-		v2[mid.edge2].position = v1[mid.edge2].position;
-		v2[mid.edge1].position = v1[mid.edge1].position;
-		v2[mid.edge2].normal = v1[mid.edge2].normal;
-		v2[mid.edge1].normal = v1[mid.edge1].normal;
-		v2[mid.edge2].tangent = v1[mid.edge2].tangent;
-		v2[mid.edge1].tangent = v1[mid.edge1].tangent;
-	}
+	mergePoints(v1, v2, mid);
+	/* Insert curves in the middle. */
 	for (int i = mid.offset; i <= mid.length - mid.offset; i++) {
 		int k1 = mid.edge1 - 1 + mid.offset - i;
 		int k2 = mid.edge1 + i;
@@ -374,31 +415,7 @@ void Fork::connectForks(Stem *fork[2], Mesh::Segment segments[2],
 		insertCurve(sd+1, cd, &v2[mid.edge2], &v0[mid.edge2]);
 		insertCurve(sd+1, cd, &v2[mid.edge1], &v0[mid.edge1]);
 	}
-	for (int i = 0; i < cd || i == 0; i++) {
-		size_t a = i*(sd+1);
-		size_t b = a + sd;
-		v0[b-size].position = v0[a-size].position;
-		v0[b-size].normal = v0[a-size].normal;
-		v0[b-size].tangent = v0[a-size].tangent;
-		v0[b-size].weights = v0[a-size].weights;
-		v0[b-size].indices = v0[a-size].indices;
-		v0[b-size].uv.y = v0[a-size].uv.y;
-		v0[b-size].uv.x = 0.0f;
-		v1[b].position = v1[a].position;
-		v1[b].normal = v1[a].normal;
-		v1[b].tangent = v1[a].tangent;
-		v1[b].weights = v1[a].weights;
-		v1[b].indices = v1[a].indices;
-		v1[b].uv.y = v1[a].uv.y;
-		v1[b].uv.x = 0.0f;
-		v2[b].position = v2[a].position;
-		v2[b].normal = v2[a].normal;
-		v2[b].tangent = v2[a].tangent;
-		v2[b].weights = v2[a].weights;
-		v2[b].indices = v2[a].indices;
-		v2[b].uv.y = v2[a].uv.y;
-		v2[b].uv.x = 0.0f;
-	}
+	mergePoints(sd, cd, size, v0, v1, v2);
 	if (cd > 0) {
 		setBaseUVs(state.segment.stem, sd+1, cd, &v0[-size]);
 		setForkUVs(fork[0], sd+1, cd, &v1[0]);
@@ -412,41 +429,38 @@ void Fork::connectForks(Stem *fork[2], Mesh::Segment segments[2],
 void Fork::addForkTriangles(const Mesh::State &state, const Mesh::State fs[2],
 	Stem *fork[2], const Mesh::Segment segments[2])
 {
-	const int cdivisions = fork[0]->getPath().getInitialDivisions();
-	const int sdivisions = state.segment.stem->getSectionDivisions() + 1;
+	const Mesh::Segment &segment = state.segment;
+	const int cd = fork[0]->getPath().getInitialDivisions();
+	const int sd = segment.stem->getSectionDivisions() + 1;
 
 	unsigned *indices = &this->mesh.indices[state.mesh][
-		state.segment.indexStart + state.segment.indexCount -
+		segment.indexStart + segment.indexCount -
 		getForkIndexCount(fork[0])];
-	size_t index1 =
-		state.segment.vertexStart + state.segment.vertexCount -
-		getForkVertexCount(fork[0]) - sdivisions*2;
-	size_t index2 = index1 + sdivisions;
-	for (int i = 0; i < cdivisions; i++) {
-		indices += this->mesh.insertTriangleRing(
-			index2, index1, sdivisions-1, indices);
-		index1 = index2;
-		index2 += sdivisions;
+	size_t i1 = segment.vertexStart + segment.vertexCount -
+		getForkVertexCount(fork[0]) - sd*2;
+	size_t i2 = i1 + sd;
+	for (int i = 0; i < cd; i++) {
+		indices += this->mesh.insertTriangleRing(i2, i1, sd-1, indices);
+		i1 = i2;
+		i2 += sd;
 	}
 
 	indices = &this->mesh.indices[fs[0].mesh][segments[0].indexStart];
-	index1 = segments[0].vertexStart;
-	index2 = index1 + sdivisions;
-	for (int i = 0; i < cdivisions; i++) {
-		indices += this->mesh.insertTriangleRing(
-			index2, index1, sdivisions-1, indices);
-		index1 = index2;
-		index2 += sdivisions;
+	i1 = segments[0].vertexStart;
+	i2 = i1 + sd;
+	for (int i = 0; i < cd; i++) {
+		indices += this->mesh.insertTriangleRing(i2, i1, sd-1, indices);
+		i1 = i2;
+		i2 += sd;
 	}
 
 	indices = &this->mesh.indices[fs[1].mesh][segments[1].indexStart];
-	index1 = segments[1].vertexStart;
-	index2 = index1 + sdivisions;
-	for (int i = 0; i < cdivisions; i++) {
-		indices += this->mesh.insertTriangleRing(
-			index2, index1, sdivisions-1, indices);
-		index1 = index2;
-		index2 += sdivisions;
+	i1 = segments[1].vertexStart;
+	i2 = i1 + sd;
+	for (int i = 0; i < cd; i++) {
+		indices += this->mesh.insertTriangleRing(i2, i1, sd-1, indices);
+		i1 = i2;
+		i2 += sd;
 	}
 }
 

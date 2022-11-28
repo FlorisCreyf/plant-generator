@@ -31,6 +31,13 @@ AddStem::AddStem(
 
 }
 
+bool AddStem::isValid(const Selection &selection)
+{
+	Stem *root = selection.getPlant()->getRoot();
+	size_t stemCount = selection.getStemInstances().size();
+	return stemCount == 1 || !root;
+}
+
 void AddStem::create()
 {
 	Plant *plant = this->selection->getPlant();
@@ -42,10 +49,10 @@ void AddStem::create()
 		this->addition = plant->addStem(this->parent);
 		this->addition->setSectionDivisions(
 			this->parent->getSectionDivisions());
-		this->addition->setMaterial(Stem::Outer,
-			this->parent->getMaterial(Stem::Outer));
-		this->addition->setMaterial(Stem::Inner,
-			this->parent->getMaterial(Stem::Inner));
+		this->addition->setMaterial(
+			Stem::Outer, this->parent->getMaterial(Stem::Outer));
+		this->addition->setMaterial(
+			Stem::Inner, this->parent->getMaterial(Stem::Inner));
 		pathDivisions = this->parent->getPath().getDivisions();
 	} else if (instances.empty()) {
 		this->addition = plant->createRoot();

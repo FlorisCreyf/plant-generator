@@ -51,6 +51,11 @@ RemoveStem &RemoveStem::operator=(const RemoveStem &original)
 	return *this;
 }
 
+bool RemoveStem::isValid(const Selection &selection)
+{
+	return selection.hasStems() || selection.hasLeaves();
+}
+
 /** This should be called after stems are removed. Leaves do not need to be
 removed from the plant if their stem is removed. */
 void RemoveStem::removeLeaves()

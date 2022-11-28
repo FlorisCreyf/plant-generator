@@ -227,18 +227,15 @@ void Editor::keyPressEvent(QKeyEvent *event)
 		event->modifiers() & Qt::AltModifier);
 
 	if (commandName == "Add Leaf") {
-		size_t stemCount = this->selection.getStemInstances().size();
-		if (stemCount == 1) {
+		if (AddLeaf::isValid(this->selection)) {
 			this->command = new AddLeaf(
-				&this->selection,
-				&this->camera, x, y);
+				&this->selection, &this->camera, x, y);
 			this->command->execute();
 			change();
 			emit selectionChanged();
 		}
 	} else if (commandName == "Add Stem") {
-		size_t stemCount = this->selection.getStemInstances().size();
-		if (stemCount == 1 || !root) {
+		if (AddStem::isValid(this->selection)) {
 			this->command = new AddStem(
 				&this->selection,
 				&this->translationAxes,
@@ -248,7 +245,7 @@ void Editor::keyPressEvent(QKeyEvent *event)
 			emit selectionChanged();
 		}
 	} else if (commandName == "Extrude") {
-		if (this->selection.hasPoints()) {
+		if (ExtrudeStem::isValid(this->selection)) {
 			ExtrudeStem *extrude = new ExtrudeStem(
 				&this->selection,
 				&this->translationAxes,
@@ -259,8 +256,7 @@ void Editor::keyPressEvent(QKeyEvent *event)
 			emit selectionChanged();
 		}
 	} else if (commandName == "Move Point") {
-		bool hasFirstPoint = this->selection.hasPoint(0);
-		if (this->selection.hasPoints() && !hasFirstPoint) {
+		if (MovePath::isValid(this->selection)) {
 			MovePath *movePath = new MovePath(
 				&this->selection,
 				&this->translationAxes,
@@ -271,13 +267,9 @@ void Editor::keyPressEvent(QKeyEvent *event)
 			this->command = movePath;
 		}
 	} else if (commandName == "Move Stem") {
-		bool hasStems = this->selection.hasStems();
-		bool hasLeaves = this->selection.hasLeaves();
-		bool containsRoot = this->selection.contains(root);
-		if ((hasStems || hasLeaves) && !containsRoot)
+		if (MoveStem::isValid(this->selection))
 			this->command = new MoveStem(
-				&this->selection,
-				&this->camera, x, y);
+				&this->selection, &this->camera, x, y);
 	} else if (commandName == "Reduce To Ancestors") {
 		if (this->selection.hasStems()) {
 			SaveSelection *copy;
@@ -286,9 +278,7 @@ void Editor::keyPressEvent(QKeyEvent *event)
 			addSelectionToHistory(copy);
 		}
 	} else if (commandName == "Remove") {
-		bool hasStems = this->selection.hasStems();
-		bool hasLeaves = this->selection.hasLeaves();
-		if (hasStems || hasLeaves) {
+		if (RemoveStem::isValid(this->selection)) {
 			RemoveStem *removeStem;
 			removeStem = new RemoveStem(&this->selection);
 			removeStem->execute();
@@ -298,9 +288,7 @@ void Editor::keyPressEvent(QKeyEvent *event)
 			change();
 		}
 	} else if (commandName == "Rotate") {
-		bool hasStems = this->selection.hasStems();
-		bool hasLeaves = this->selection.hasLeaves();
-		if (hasStems || hasLeaves) {
+		if (RotateStem::isValid(this->selection)) {
 			RotateStem *rotate = new RotateStem(
 				&this->selection,
 				&this->rotationAxes,

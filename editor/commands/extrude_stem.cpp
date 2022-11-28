@@ -30,6 +30,11 @@ ExtrudeStem::ExtrudeStem(Selection *selection, TranslationAxes *axes,
 
 }
 
+bool ExtrudeStem::isValid(const Selection &selection)
+{
+	return selection.hasPoints();
+}
+
 void ExtrudeStem::setClickOffset(int x, int y)
 {
 	pg::Vec3 average = this->selection->getAveragePosition();

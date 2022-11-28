@@ -29,6 +29,11 @@ MovePath::MovePath(const Selection *selection, TranslationAxes *axes,
 
 }
 
+bool MovePath::isValid(const Selection &selection)
+{
+	return selection.hasPoints() && !selection.hasPoint(0);
+}
+
 void MovePath::setClickOffset(int x, int y)
 {
 	this->clickOffset[0] = x;

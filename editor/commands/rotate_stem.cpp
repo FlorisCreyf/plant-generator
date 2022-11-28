@@ -43,6 +43,11 @@ RotateStem::RotateStem(Selection *selection, RotationAxes *axes,
 	checkValidity();
 }
 
+bool RotateStem::isValid(const Selection &selection)
+{
+	return selection.hasStems() || selection.hasLeaves();
+}
+
 void RotateStem::checkValidity()
 {
 	auto instances = this->selection->getStemInstances();

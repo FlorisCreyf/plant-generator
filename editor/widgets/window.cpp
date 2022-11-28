@@ -106,6 +106,7 @@ void Window::createEditors()
 	tabifyDockWidget(dw[1], dw[3]);
 	tabifyDockWidget(dw[1], dw[2]);
 	tabifyDockWidget(dw[1], dw[0]);
+	dw[3]->hide();
 }
 
 void Window::initEditor()

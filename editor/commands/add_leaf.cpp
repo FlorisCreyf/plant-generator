@@ -27,6 +27,11 @@ AddLeaf::AddLeaf(Selection *selection, const Camera *camera, int x, int y) :
 
 }
 
+bool AddLeaf::isValid(const Selection &selection)
+{
+	return selection.getStemInstances().size() == 1;
+}
+
 void AddLeaf::execute()
 {
 	auto instances = this->selection->getStemInstances();

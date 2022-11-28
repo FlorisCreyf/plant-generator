@@ -35,6 +35,15 @@ MoveStem::MoveStem(Selection *selection, const Camera *camera, int x, int y,
 	setLeafOffsets(Vec3(x, y, 0.0f));
 }
 
+bool MoveStem::isValid(const Selection &selection)
+{
+	Stem *root = selection.getPlant()->getRoot();
+	bool hasStems = selection.hasStems();
+	bool hasLeaves = selection.hasLeaves();
+	bool containsRoot = selection.contains(root);
+	return (hasStems || hasLeaves) && !containsRoot;
+}
+
 void MoveStem::setStemOffsets(Vec3 point)
 {
 	auto stemInstances = this->selection->getStemInstances();

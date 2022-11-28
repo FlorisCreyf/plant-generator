@@ -53,7 +53,51 @@ const Mesh &MeshGenerator::generate()
 	return this->mesh;
 }
 
-size_t getSectionCount(Stem *stem, Stem *fork)
+Segment MeshGenerator::addStem(
+	Stem *stem, State &state, State parentState, bool isFork)
+{
+	Stem *fork[2];
+	stem->getFork(fork);
+	if (!this->forkGenerator.isValidFork(stem, fork))
+		fork[0] = fork[1] = nullptr;
+
+	state.mesh = stem->getMaterial(Stem::Outer);
+	state.segment.stem = stem;
+	state.segment.vertexStart = this->mesh.vertices[state.mesh].size();
+	state.segment.indexStart = this->mesh.indices[state.mesh].size();
+	setInitialJointState(state, parentState);
+	addSections(state, parentState.segment, isFork, fork[0]);
+	state.segment.vertexCount = this->mesh.vertices[state.mesh].size();
+	state.segment.vertexCount -= state.segment.vertexStart;
+	state.segment.indexCount = this->mesh.indices[state.mesh].size();
+	state.segment.indexCount -= state.segment.indexStart;
+	addLeaves(stem, state);
+
+	if (fork[0])
+		createFork(fork, state);
+	if (!isFork)
+		/* The parent stem finishes generating both forks and will
+		generate child stems afterwards. */
+		addChildStems(stem, fork, state);
+
+	return state.segment;
+}
+
+void MeshGenerator::addChildStems(Stem *stem, Stem *fork[2], State &state)
+{
+	this->mesh.stems[state.mesh].emplace(stem, state.segment);
+	Stem *child = stem->getChild();
+	while (child) {
+		if (fork[0] != child && fork[1] != child) {
+			State childState;
+			setInitialRotation(child, childState);
+			addStem(child, childState, state, false);
+		}
+		child = child->getSibling();
+	}
+}
+
+static size_t getSectionCount(Stem *stem, Stem *fork)
 {
 	const Path &path = stem->getPath();
 	if (fork)
@@ -139,50 +183,6 @@ void MeshGenerator::addSection(
 		vertex.weights = weights;
 		vertex.indices = indices;
 		this->mesh.vertices[state.mesh].push_back(vertex);
-	}
-}
-
-Segment MeshGenerator::addStem(
-	Stem *stem, State &state, State parentState, bool isFork)
-{
-	Stem *fork[2];
-	stem->getFork(fork);
-	if (!this->forkGenerator.isValidFork(stem, fork))
-		fork[0] = fork[1] = nullptr;
-
-	state.mesh = stem->getMaterial(Stem::Outer);
-	state.segment.stem = stem;
-	state.segment.vertexStart = this->mesh.vertices[state.mesh].size();
-	state.segment.indexStart = this->mesh.indices[state.mesh].size();
-	setInitialJointState(state, parentState);
-	addSections(state, parentState.segment, isFork, fork[0]);
-	state.segment.vertexCount = this->mesh.vertices[state.mesh].size();
-	state.segment.vertexCount -= state.segment.vertexStart;
-	state.segment.indexCount = this->mesh.indices[state.mesh].size();
-	state.segment.indexCount -= state.segment.indexStart;
-	addLeaves(stem, state);
-
-	if (fork[0])
-		createFork(fork, state);
-	if (!isFork)
-		/* The parent stem finishes generating both forks and will
-		generate child stems afterwards. */
-		addChildStems(stem, fork, state);
-
-	return state.segment;
-}
-
-void MeshGenerator::addChildStems(Stem *stem, Stem *fork[2], State &state)
-{
-	this->mesh.stems[state.mesh].emplace(stem, state.segment);
-	Stem *child = stem->getChild();
-	while (child) {
-		if (fork[0] != child && fork[1] != child) {
-			State childState;
-			setInitialRotation(child, childState);
-			addStem(child, childState, state, false);
-		}
-		child = child->getSibling();
 	}
 }
 
@@ -291,17 +291,19 @@ void MeshGenerator::setInitialRotation(Stem *stem, State &state)
 	const Path &path = stem->getPath();
 	Vec3 stemDirection = path.getDirection(0);
 
-	Vec3 up(0.0f, 0.0f, 1.0f);
+	Vec3 up(0.0f, 0.0f, 1.0f); // initial surface normal
 	state.prevRotation = rotateIntoVecQ(up, stemDirection);
 	state.prevDirection = stemDirection;
 
-	Vec3 sideways(1.0f, 0.0f, 0.0f);
+	Vec3 sideways(1.0f, 0.0f, 0.0f); // position of first point
 	sideways = normalize(rotate(state.prevRotation, sideways));
 	up = projectOntoPlane(parentDirection, stemDirection);
-	up = normalize(dot(up, sideways) * up);
-
-	Quat rotation = rotateIntoVecQ(sideways, up);
-	state.prevRotation = rotation * state.prevRotation;
+	float angle = dot(up, sideways);
+	if (angle != 0.0f) {
+		up = normalize(angle * up);
+		Quat rotation = rotateIntoVecQ(sideways, up);
+		state.prevRotation = rotation * state.prevRotation;
+	}
 }
 
 Quat MeshGenerator::rotateSection(State &state)

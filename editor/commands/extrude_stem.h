@@ -41,6 +41,7 @@ public:
 	void execute();
 	void undo();
 	void redo();
+	static bool isValid(const Selection &selection);
 };
 
 #endif
