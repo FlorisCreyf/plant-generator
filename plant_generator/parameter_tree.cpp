@@ -258,6 +258,8 @@ ParameterNode *ParameterTree::get(string name) const
 {
 	if (name.empty() || !this->root)
 		return nullptr;
+	else if (name == "root")
+		return getRoot();
 	else
 		return getNode(name, 0, this->root->child);
 }
@@ -347,7 +349,7 @@ void ParameterTree::updateField(std::function<void(StemData *)> function,
 
 void ParameterTree::updateFields(std::function<void(StemData *)> function)
 {
-	updateFields(function, this->root->child);
+	updateFields(function, this->root);
 }
 
 void ParameterTree::updateFields(std::function<void(StemData *)> function,

@@ -38,15 +38,12 @@ class PatternEditor : public QWidget {
 	QPushButton *removeButton;
 	std::string name;
 
-	enum {RMaxDepth, Seed, IRSize};
-	enum {RLength, RFork, RForkAngle, RForkScale, RThreshold, RNoise,
-		RPull, RPointDensity, DRSize};
-	SpinBox *irv[IRSize];
-	DoubleSpinBox *drv[DRSize];
+	enum {SMaxDepth, SSeed, ISSize};
 	enum {SDensity, SDistance, SLength, SRadius, SAngleVariation, SNoise,
 		SRadiusThreshold, SFork, SForkAngle, SForkScale,
 		SInclineVariation, SPull, SRadiusVariation, SPointDensity,
 		DSSize};
+	SpinBox *isv[ISSize];
 	DoubleSpinBox *dsv[DSSize];
 	enum {LeavesPerNode, ILSize};
 	enum {LDensity, LDistance, LRotation, LMinUp, LMaxUp, LLocalUp,
@@ -60,7 +57,6 @@ class PatternEditor : public QWidget {
 	void createStemGroup(QBoxLayout *);
 	void createLeafGroup(QBoxLayout *);
 	void createNodeGroup(QBoxLayout *);
-	void createRootGroup(QBoxLayout *);
 	void removeCurrent();
 	void blockSignals(bool);
 	void setEnabled(bool);
@@ -68,7 +64,6 @@ class PatternEditor : public QWidget {
 	void setFields(const pg::ParameterTree &, std::string);
 	void setStemData(pg::StemData);
 	void setLeafData(pg::LeafData);
-	pg::StemData getRootData(pg::StemData);
 
 	CurveEditor *curveEditor;
 	ComboBox *curveDegree;

@@ -55,7 +55,6 @@ void PatternEditor::createInterface()
 	layout->setContentsMargins(0, 0, 0, 0);
 	layout->setSpacing(0);
 	createNodeGroup(layout);
-	createRootGroup(layout);
 	createStemGroup(layout);
 	createLeafGroup(layout);
 	createCurveGroup(layout);
@@ -89,80 +88,43 @@ void PatternEditor::createNodeGroup(QBoxLayout *layout)
 		this, &PatternEditor::removeNode);
 }
 
-void PatternEditor::createRootGroup(QBoxLayout *layout)
-{
-	for (int i = 0; i < DRSize; i++) {
-		this->drv[i] = new DoubleSpinBox(this);
-		this->drv[i]->setSingleStep(0.001);
-		this->drv[i]->setDecimals(3);
-		connect(this->drv[i],
-			QOverload<double>::of(&DoubleSpinBox::valueChanged),
-			this, &PatternEditor::change);
-	}
-	for (int i = 0; i < IRSize; i++) {
-		this->irv[i] = new SpinBox(this);
-		this->irv[i]->setSingleStep(1);
-		connect(this->irv[i],
-			QOverload<int>::of(&SpinBox::valueChanged),
-			this, &PatternEditor::change);
-	}
-
-	QGroupBox *rootGroup = createGroup("Root");
-	QFormLayout *form = createForm(rootGroup);
-	const int min = std::numeric_limits<int>::min();
-	const int max = std::numeric_limits<int>::max();
-	this->irv[Seed]->setRange(min, max);
-	form->addRow("Seed", this->irv[Seed]);
-	form->addRow("Point Density", this->drv[RPointDensity]);
-	this->drv[RPointDensity]->setSingleStep(0.01);
-	form->addRow("Length", this->drv[RLength]);
-	this->drv[RLength]->setSingleStep(0.01);
-	this->drv[RLength]->setRange(0.0, std::numeric_limits<float>::max());
-	form->addRow("Noise", this->drv[RNoise]);
-	this->drv[RPull]->setRange(min, max);
-	form->addRow("Gravity", this->drv[RPull]);
-	form->addRow("Bifurcation", this->drv[RFork]);
-	form->addRow("Bifurcation Angle", this->drv[RForkAngle]);
-	form->addRow("Bifurcation Radius", this->drv[RForkScale]);
-	this->irv[RMaxDepth]->setRange(0, 10);
-	form->addRow("Radius Threshold", this->drv[RThreshold]);
-	form->addRow("Max Depth", this->irv[RMaxDepth]);
-
-	setFormLayout(form);
-	layout->addWidget(rootGroup);
-}
-
 void PatternEditor::createStemGroup(QBoxLayout *layout)
 {
-	std::function<void(StemData *)> f[DSSize] = {
-		[&] (StemData *d) {d->density =
-			this->dsv[SDensity]->value();},
-		[&] (StemData *d) {d->distance =
-			this->dsv[SDistance]->value();},
-		[&] (StemData *d) {d->length =
-			this->dsv[SLength]->value();},
-		[&] (StemData *d) {d->radius =
-			this->dsv[SRadius]->value();},
-		[&] (StemData *d) {d->angleVariation =
-			this->dsv[SAngleVariation]->value();},
-		[&] (StemData *d) {d->noise =
-			this->dsv[SNoise]->value();},
-		[&] (StemData *d) {d->radiusThreshold =
-			this->dsv[SRadiusThreshold]->value();},
-		[&] (StemData *d) {d->fork =
-			this->dsv[SFork]->value();},
-		[&] (StemData *d) {d->forkAngle =
-			this->dsv[SForkAngle]->value();},
-		[&] (StemData *d) {d->forkScale =
-			this->dsv[SForkScale]->value();},
-		[&] (StemData *d) {d->inclineVariation =
-			this->dsv[SInclineVariation]->value();},
-		[&] (StemData *d) {d->gravity =
-			this->dsv[SPull]->value();},
-		[&] (StemData *d) {d->radiusVariation =
-			this->dsv[SRadiusVariation]->value();},
-		[&] (StemData *d) {d->pointDensity =
-			this->dsv[SPointDensity]->value();}
+	std::function<void(StemData *)> fd[DSSize] = {
+		[&] (StemData *d) {
+		d->density = this->dsv[SDensity]->value();},
+		[&] (StemData *d) {
+		d->distance = this->dsv[SDistance]->value();},
+		[&] (StemData *d) {
+		d->length = this->dsv[SLength]->value();},
+		[&] (StemData *d) {
+		d->radius = this->dsv[SRadius]->value();},
+		[&] (StemData *d) {
+		d->angleVariation = this->dsv[SAngleVariation]->value();},
+		[&] (StemData *d) {
+		d->noise = this->dsv[SNoise]->value();},
+		[&] (StemData *d) {
+		d->radiusThreshold = this->dsv[SRadiusThreshold]->value();},
+		[&] (StemData *d) {
+		d->fork = this->dsv[SFork]->value();},
+		[&] (StemData *d) {
+		d->forkAngle = this->dsv[SForkAngle]->value();},
+		[&] (StemData *d) {
+		d->forkScale = this->dsv[SForkScale]->value();},
+		[&] (StemData *d) {
+		d->inclineVariation = this->dsv[SInclineVariation]->value();},
+		[&] (StemData *d) {
+		d->gravity = this->dsv[SPull]->value();},
+		[&] (StemData *d) {
+		d->radiusVariation = this->dsv[SRadiusVariation]->value();},
+		[&] (StemData *d) {
+		d->pointDensity = this->dsv[SPointDensity]->value();}
+	};
+	std::function<void(StemData *)> fi[ISSize] = {
+		[&] (StemData *d) {
+		d->maxDepth = this->isv[SMaxDepth]->value();},
+		[&] (StemData *d) {
+		d->seed = this->isv[SSeed]->value();}
 	};
 
 	for (int i = 0; i < DSSize; i++) {
@@ -171,13 +133,26 @@ void PatternEditor::createStemGroup(QBoxLayout *layout)
 		this->dsv[i]->setDecimals(3);
 		connect(this->dsv[i],
 			QOverload<double>::of(&DoubleSpinBox::valueChanged),
-			std::bind(&PatternEditor::changeField, this, f[i]));
+			std::bind(&PatternEditor::changeField, this, fd[i]));
+	}
+	for (int i = 0; i < ISSize; i++) {
+		this->isv[i] = new SpinBox(this);
+		this->isv[i]->setSingleStep(1);
+		connect(this->isv[i],
+			QOverload<int>::of(&SpinBox::valueChanged),
+			std::bind(&PatternEditor::changeField, this, fi[i]));
 	}
 
 	QGroupBox *stemGroup = createGroup("Stem");
 	QFormLayout *form = createForm(stemGroup);
-	const float min = std::numeric_limits<float>::lowest();
-	const float max = std::numeric_limits<float>::max();
+	const int imin = std::numeric_limits<int>::min();
+	const int imax = std::numeric_limits<int>::max();
+	this->isv[SSeed]->setRange(imin, imax);
+	form->addRow("Seed", this->isv[SSeed]);
+	this->isv[SMaxDepth]->setRange(0, 10);
+	form->addRow("Max Depth", this->isv[SMaxDepth]);
+	const float fmin = std::numeric_limits<float>::lowest();
+	const float fmax = std::numeric_limits<float>::max();
 	form->addRow("Stem Density", this->dsv[SDensity]);
 	form->addRow("Point Density", this->dsv[SPointDensity]);
 	this->dsv[SPointDensity]->setSingleStep(0.01);
@@ -187,7 +162,7 @@ void PatternEditor::createStemGroup(QBoxLayout *layout)
 	this->dsv[SLength]->setRange(0.0, std::numeric_limits<float>::max());
 	form->addRow("Noise", this->dsv[SNoise]);
 	form->addRow("Gravity", this->dsv[SPull]);
-	this->dsv[SPull]->setRange(min, max);
+	this->dsv[SPull]->setRange(fmin, fmax);
 	form->addRow("Bifurcation", this->dsv[SFork]);
 	form->addRow("Bifurcation Angle", this->dsv[SForkAngle]);
 	form->addRow("Bifurcation Radius", this->dsv[SForkScale]);
@@ -203,36 +178,36 @@ void PatternEditor::createStemGroup(QBoxLayout *layout)
 void PatternEditor::createLeafGroup(QBoxLayout *layout)
 {
 	std::function<void(StemData *)> fd[DLSize] = {
-		[&] (StemData *d) {d->leaf.density =
-			this->dlv[LDensity]->value();},
-		[&] (StemData *d) {d->leaf.distance =
-			this->dlv[LDistance]->value();},
-		[&] (StemData *d) {d->leaf.rotation =
-			this->dlv[LRotation]->value();},
-		[&] (StemData *d) {d->leaf.minUp =
-			this->dlv[LMinUp]->value();},
-		[&] (StemData *d) {d->leaf.maxUp =
-			this->dlv[LMaxUp]->value();},
-		[&] (StemData *d) {d->leaf.localUp =
-			this->dlv[LLocalUp]->value();},
-		[&] (StemData *d) {d->leaf.globalUp =
-			this->dlv[LGlobalUp]->value();},
-		[&] (StemData *d) {d->leaf.minForward =
-			this->dlv[LMinForward]->value();},
-		[&] (StemData *d) {d->leaf.maxForward =
-			this->dlv[LMaxForward]->value();},
-		[&] (StemData *d) {d->leaf.gravity =
-			this->dlv[LPull]->value();},
-		[&] (StemData *d) {d->leaf.scale.x =
-			this->dlv[LScaleX]->value();},
-		[&] (StemData *d) {d->leaf.scale.y =
-			this->dlv[LScaleY]->value();},
-		[&] (StemData *d) {d->leaf.scale.z =
-			this->dlv[LScaleZ]->value();}
+		[&] (StemData *d) {
+		d->leaf.density = this->dlv[LDensity]->value();},
+		[&] (StemData *d) {
+		d->leaf.distance = this->dlv[LDistance]->value();},
+		[&] (StemData *d) {
+		d->leaf.rotation = this->dlv[LRotation]->value();},
+		[&] (StemData *d) {
+		d->leaf.minUp = this->dlv[LMinUp]->value();},
+		[&] (StemData *d) {
+		d->leaf.maxUp = this->dlv[LMaxUp]->value();},
+		[&] (StemData *d) {
+		d->leaf.localUp = this->dlv[LLocalUp]->value();},
+		[&] (StemData *d) {
+		d->leaf.globalUp = this->dlv[LGlobalUp]->value();},
+		[&] (StemData *d) {
+		d->leaf.minForward = this->dlv[LMinForward]->value();},
+		[&] (StemData *d) {
+		d->leaf.maxForward = this->dlv[LMaxForward]->value();},
+		[&] (StemData *d) {
+		d->leaf.gravity = this->dlv[LPull]->value();},
+		[&] (StemData *d) {
+		d->leaf.scale.x = this->dlv[LScaleX]->value();},
+		[&] (StemData *d) {
+		d->leaf.scale.y = this->dlv[LScaleY]->value();},
+		[&] (StemData *d) {
+		d->leaf.scale.z = this->dlv[LScaleZ]->value();}
 	};
 	std::function<void(StemData *)> fi[ILSize] = {
-		[&] (StemData *d) {d->leaf.leavesPerNode =
-			this->ilv[LeavesPerNode]->value();}
+		[&] (StemData *d) {
+		d->leaf.leavesPerNode = this->ilv[LeavesPerNode]->value();}
 	};
 
 	for (int i = 0; i < DLSize; i++) {
@@ -280,23 +255,10 @@ void PatternEditor::createLeafGroup(QBoxLayout *layout)
 	layout->addWidget(leafGroup);
 }
 
-StemData PatternEditor::getRootData(StemData data)
-{
-	data.seed = this->irv[Seed]->value();
-	data.maxDepth = this->irv[RMaxDepth]->value();
-	data.length = this->drv[RLength]->value();
-	data.fork = this->drv[RFork]->value();
-	data.forkAngle = this->drv[RForkAngle]->value();
-	data.forkScale = this->drv[RForkScale]->value();
-	data.radiusThreshold = this->drv[RThreshold]->value();
-	data.noise = this->drv[RNoise]->value();
-	data.gravity = this->drv[RPull]->value();
-	data.pointDensity = this->drv[RPointDensity]->value();
-	return data;
-}
-
 void PatternEditor::setStemData(StemData data)
 {
+	this->isv[SSeed]->setValue(data.seed);
+	this->isv[SMaxDepth]->setValue(data.maxDepth);
 	this->dsv[SDensity]->setValue(data.density);
 	this->dsv[SDistance]->setValue(data.distance);
 	this->dsv[SLength]->setValue(data.length);
@@ -341,14 +303,29 @@ void PatternEditor::setEnabled(bool enable)
 	this->childButton->setEnabled(enable);
 	this->siblingButton->setEnabled(enable);
 	this->removeButton->setEnabled(enable);
-	for (int i = 0; i < DRSize; i++)
-		this->drv[i]->setEnabled(enable);
-	for (int i = 0; i < IRSize; i++)
-		this->irv[i]->setEnabled(enable);
-	if (this->nodeValue->currentIndex() == 0)
+
+	if (this->nodeValue->currentText().isEmpty())
 		enable = false;
 	for (int i = 0; i < DSSize; i++)
 		this->dsv[i]->setEnabled(enable);
+	for (int i = 0; i < ISSize; i++)
+		this->isv[i]->setEnabled(enable);
+
+	if (this->nodeValue->currentText() == "root") {
+		this->dsv[SDistance]->setEnabled(false);
+		this->dsv[SAngleVariation]->setEnabled(false);
+		this->dsv[SInclineVariation]->setEnabled(false);
+		this->dsv[SRadiusVariation]->setEnabled(false);
+		this->dsv[SRadiusThreshold]->setEnabled(false);
+		this->dsv[SDensity]->setEnabled(false);
+		this->dsv[SRadius]->setEnabled(false);
+		enable = false;
+	} else if (!this->nodeValue->currentText().isEmpty()) {
+		this->isv[SSeed]->setEnabled(false);
+		this->isv[SMaxDepth]->setEnabled(false);
+		enable = true;
+	}
+
 	for (int i = 0; i < DLSize; i++)
 		this->dlv[i]->setEnabled(enable);
 	for (int i = 0; i < ILSize; i++)
@@ -358,12 +335,10 @@ void PatternEditor::setEnabled(bool enable)
 void PatternEditor::blockSignals(bool block)
 {
 	this->nodeValue->blockSignals(block);
-	for (int i = 0; i < DRSize; i++)
-		this->drv[i]->blockSignals(block);
-	for (int i = 0; i < IRSize; i++)
-		this->irv[i]->blockSignals(block);
 	for (int i = 0; i < DSSize; i++)
 		this->dsv[i]->blockSignals(block);
+	for (int i = 0; i < ISSize; i++)
+		this->isv[i]->blockSignals(block);
 	for (int i = 0; i < DLSize; i++)
 		this->dlv[i]->blockSignals(block);
 	for (int i = 0; i < ILSize; i++)
@@ -381,8 +356,8 @@ void PatternEditor::setFields()
 		ParameterNode *root = tree.getRoot();
 		if (tree.get(this->name))
 			setFields(tree, this->name);
-		else if (root && root->getChild())
-			setFields(tree, "1");
+		else if (root)
+			setFields(tree, "root");
 		else
 			setFields(tree, "");
 	}
@@ -391,32 +366,16 @@ void PatternEditor::setFields()
 void PatternEditor::setFields(const ParameterTree &tree, string name)
 {
 	blockSignals(true);
-	StemData data;
-	ParameterNode *node = name == "" ? nullptr : tree.get(name);
 	this->nodeValue->clear();
-	this->nodeValue->addItem("");
 	if (tree.getRoot()) {
+		this->nodeValue->addItem("root");
 		std::vector<string> names = tree.getNames();
 		for (string name : names)
 			this->nodeValue->addItem(QString::fromStdString(name));
+	} else
+		this->nodeValue->addItem("");
 
-		StemData data = tree.getRoot()->getData();
-		this->irv[Seed]->setValue(data.seed);
-		this->irv[RMaxDepth]->setValue(data.maxDepth);
-		this->drv[RLength]->setValue(data.length);
-		this->drv[RFork]->setValue(data.fork);
-		this->drv[RForkAngle]->setValue(data.forkAngle);
-		this->drv[RForkScale]->setValue(data.forkScale);
-		this->drv[RNoise]->setValue(data.noise);
-		this->drv[RThreshold]->setValue(data.radiusThreshold);
-		this->drv[RPull]->setValue(data.gravity);
-		this->drv[RPointDensity]->setValue(data.pointDensity);
-	} else {
-		for (int i = 0; i < DRSize; i++)
-			this->drv[i]->setValue(0);
-		for (int i = 0; i < IRSize; i++)
-			this->irv[i]->setValue(0.0);
-	}
+	ParameterNode *node = name == "" ? nullptr : tree.get(name);
 	if (node) {
 		this->nodeValue->setCurrentText(QString::fromStdString(name));
 		setStemData(node->getData());
@@ -437,11 +396,6 @@ void PatternEditor::change()
 	if (!tree.getRoot())
 		tree.createRoot();
 
-	StemData data = getRootData(tree.getRoot()->getData());
-	tree.getRoot()->setData(data);
-	for (auto instance : instances)
-		instance.first->setParameterTree(tree);
-
 	this->generate->execute();
 	this->editor->change();
 }
@@ -456,7 +410,7 @@ void PatternEditor::changeField(std::function<void(StemData *)> function)
 	Stem *stem = instances.begin()->first;
 	ParameterTree tree = stem->getParameterTree();
 
-	if (this->nodeValue->currentIndex()) {
+	if (!this->nodeValue->currentText().isEmpty()) {
 		Qt::KeyboardModifiers km = QGuiApplication::keyboardModifiers();
 		if (km.testFlag(Qt::ShiftModifier))
 			tree.updateFields(function);

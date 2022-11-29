@@ -4,6 +4,8 @@
 *.log
 *.swp
 *.pdf
+env.sh
+.vscode
 plant
 test
 resources/
