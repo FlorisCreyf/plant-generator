@@ -2,13 +2,9 @@
 
 Plant Generator generates plant geometry. The project is divided into a generator and editor component. The generator is licensed under the Apache License (version 2.0) and the editor is licensed under the GPL 3.0. The editor depends on Qt6, but the project can be partially built without a GUI. Both components depend on Boost for serialization and parsing command line arguments, but Boost is not a critical component of the program.
 
-## Screenshot
-
-![Plant Generator](https://www.fcreyf.com/static/plant/pg.jpg)
-
 ## Design Document
 
-The design document is intended to provide some intuition on how the program works. A compiled LaTeX document can be found at [www.fcreyf.com/static/plant/documentation.pdf](https://www.fcreyf.com/static/plant/documentation.pdf).
+The design document is intended to provide some intuition on how the program works.
 
 ```sh
 pdflatex --shell-escape documentation.tex
